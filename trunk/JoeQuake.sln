@@ -1,0 +1,25 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JoeQuake", "JoeQuake.vcxproj", "{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		GL Debug|Win32 = GL Debug|Win32
+		GL Release|Win32 = GL Release|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.GL Debug|Win32.ActiveCfg = GL Debug|Win32
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.GL Debug|Win32.Build.0 = GL Debug|Win32
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.GL Release|Win32.ActiveCfg = GL Release|Win32
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.GL Release|Win32.Build.0 = GL Release|Win32
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Release|Win32.ActiveCfg = Release|Win32
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		VisualSVNWorkingCopyRoot = .
+	EndGlobalSection
+EndGlobal
