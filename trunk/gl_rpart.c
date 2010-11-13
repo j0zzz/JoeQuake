@@ -955,7 +955,7 @@ void d8to24col (col_t colourv, int colour)
 
 __inline static void AddParticle (part_type_t type, vec3_t org, int count, float size, float time, col_t col, vec3_t dir)
 {
-	int			i, j, k, colorMod = 0;
+	int			i, j, colorMod = 0;
 	float		tempSize, stage;
 	byte		*color;
 	col_t		colorMap;
@@ -973,6 +973,15 @@ __inline static void AddParticle (part_type_t type, vec3_t org, int count, float
 
 	pt = &particle_types[particle_type_index[type]];
 
+	if (type == p_q3explosion)
+	{
+		count *= 8;
+	}
+	else if (type == p_q3blood || type == p_q3gunshot)
+	{
+		count *= 3;
+	}
+
 	for (i = 0 ; i < count && free_particles ; i++)
 	{
 		if (colorMapped)
@@ -984,6 +993,7 @@ __inline static void AddParticle (part_type_t type, vec3_t org, int count, float
 		{
 			color = col ? col : ColorForParticle (type);
 		}
+
 		INIT_NEW_PARTICLE(pt, p, color, size, time);
 
 		switch (type)
@@ -1042,21 +1052,13 @@ __inline static void AddParticle (part_type_t type, vec3_t org, int count, float
 			break;
 
 		case p_q3explosion:
-			p->texindex = 0;
+			p->size = size + i * 2;
+			p->start = cl.time + (i * time / 2.0);
+			p->die = p->start + time;
+			p->texindex = i % count;
 			VectorCopy (org, p->org);
 			VectorClear (p->vel);
 			p->growth = 50;
-			for (j=1 ; j<8 ; j++)
-			{
-				INIT_NEW_PARTICLE(pt, p, color, size, time);
-				p->size = size + j * 2;
-				p->start = cl.time + (j * time / 2.0);
-				p->die = p->start + time;
-				p->texindex = j;
-				VectorCopy (org, p->org);
-				VectorClear (p->vel);
-				p->growth = 50;
-			}
 			break;
 
 		case p_sparkray:
@@ -1100,20 +1102,12 @@ __inline static void AddParticle (part_type_t type, vec3_t org, int count, float
 			break;
 
 		case p_q3blood:
+			p->start = cl.time + (i * time);
+			p->die = p->start + time;
 			p->texindex = q3blood_texindex++ % 5;
-			for (k=0 ; k<3 ; k++)
-				p->org[k] = org[k] + (rand() & 15) - 8;
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = org[j] + (rand() & 15) - 8;
 			VectorClear (p->vel);
-			for (j=1 ; j<3 ; j++)
-			{
-				INIT_NEW_PARTICLE(pt, p, color, size, time);
-				p->start = cl.time + (j * time);
-				p->die = p->start + time;
-				p->texindex = q3blood_texindex++ % 5;
-				for (k=0 ; k<3 ; k++)
-					p->org[k] = org[k] + (rand() & 15) - 8;
-				VectorClear (p->vel);
-			}
 			break;
 
 		case p_flame:
@@ -1147,16 +1141,10 @@ __inline static void AddParticle (part_type_t type, vec3_t org, int count, float
 			break;
 
 		case p_q3gunshot:
-			p->texindex = 0;	// used for animation here
+			p->start = cl.time + (i * time / 2.0);
+			p->die = p->start + time;
+			p->texindex = (i > 0) ? i + 1 : i;	// skins 0, 2 and 3 are the best looking sequence
 			VectorCopy (org, p->org);
-			for (j=1 ; j<3 ; j++)
-			{
-				INIT_NEW_PARTICLE(pt, p, color, size, time);
-				p->start = cl.time + (j * time / 2.0);
-				p->die = p->start + time;
-				p->texindex = j + 1;
-				VectorCopy (org, p->org);
-			}
 			break;
 
 		case p_glow:
