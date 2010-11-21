@@ -700,6 +700,16 @@ void CL_RelinkEntities (void)
 		if (ent->effects & EF_BRIGHTFIELD)
 			R_EntityParticles (ent);
 
+		// joe: powerup glows
+		if (ent->model->modhint == MOD_QUAD)
+		{
+			CL_NewDlight(i, ent->origin, 200 + (rand() & 31), 0.1, lt_blue);
+		}
+		if (ent->model->modhint == MOD_PENT)
+		{
+			CL_NewDlight(i, ent->origin, 200 + (rand() & 31), 0.1, lt_red);
+		}
+
 		if ((ent->effects & EF_MUZZLEFLASH) && cl_muzzleflash.value)
 		{
 			vec3_t	fv;
@@ -824,7 +834,21 @@ void CL_RelinkEntities (void)
 			}
 		// EF_DIMLIGHT is for powerup glows and enforcer's laser
 			else if (ent->effects & EF_DIMLIGHT)
-				CL_NewDlight (i, ent->origin, 200 + (rand() & 31), 0.1, lt_default);
+			{
+				dlighttype_t lighttype = lt_default;
+
+				if (i == cl.viewentity)
+				{
+					if ((cl.items & IT_QUAD) && (cl.items & IT_INVULNERABILITY))
+						lighttype = lt_redblue;
+					else if (cl.items & IT_QUAD)
+						lighttype = lt_blue;
+					else if (cl.items & IT_INVULNERABILITY)
+						lighttype = lt_red;
+				}
+
+				CL_NewDlight (i, ent->origin, 200 + (rand() & 31), 0.1, lighttype);
+			}
 		}
 
 		if (model->flags)

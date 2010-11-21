@@ -1743,6 +1743,10 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 		 !strcmp(mod->name, "progs/v_plasma.mdl") ||	// ?
 		 !strcmp(mod->name, "progs/v_star.mdl"))		// ?
 		mod->modhint = MOD_WEAPON;
+	else if (!strcmp(mod->name, "progs/quaddama.mdl"))
+		mod->modhint = MOD_QUAD;
+	else if (!strcmp(mod->name, "progs/invulner.mdl"))
+		mod->modhint = MOD_PENT;
 	else if (!strcmp(mod->name, "progs/lavaball.mdl"))
 		mod->modhint = MOD_LAVABALL;
 	else if (!strcmp(mod->name, "progs/spike.mdl") ||
