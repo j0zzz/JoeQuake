@@ -1190,13 +1190,23 @@ qboolean COM_WriteFile (char *filename, void *data, int len)
 	FILE	*f;
 	char	name[MAX_OSPATH];
 
-	Q_snprintfz (name, MAX_OSPATH, "%s/%s", com_basedir, filename);
+	if (!COM_IsAbsolutePath(filename))
+	{
+		Q_snprintfz (name, MAX_OSPATH, "%s/%s", com_basedir, filename);
+	}
+	else
+	{
+		Q_strncpyz (name, filename, MAX_OSPATH);
+	}
 
 	if (!(f = fopen(name, "wb")))
 	{
 		COM_CreatePath (name);
 		if (!(f = fopen(name, "wb")))
+		{
+			Con_Printf ("ERROR: Couldn't open %s\n", filename);
 			return false;
+		}
 	}	
 
 	Sys_Printf ("COM_WriteFile: %s\n", name);
@@ -1226,6 +1236,18 @@ void COM_CreatePath (char *path)
 			*ofs = '/';
 		}
 	}
+}
+
+/*
+============
+COM_IsAbsolutePath
+
+Checks whether the given path is absolute or relative.
+============
+*/
+qboolean COM_IsAbsolutePath (char *path)
+{
+	return strstr(path, ":\\") != NULL;
 }
 
 /*

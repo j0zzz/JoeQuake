@@ -80,7 +80,7 @@ void Movie_Start_f (void)
 		Q_strncpyz (name, Cmd_Argv(1), sizeof(name));
 		COM_ForceExtension (name, ".avi");
 
-		Q_snprintfz (path, sizeof(path), "%s/%s", capture_dir.string, name);
+		Q_snprintfz (path, sizeof(path), "%s/%s", !COM_IsAbsolutePath(capture_dir.string) ? va("%s/%s", com_basedir, capture_dir.string) : capture_dir.string, name);
 		if (!(moviefile = fopen(path, "wb")))
 		{
 			COM_CreatePath (path);
@@ -166,8 +166,6 @@ void Movie_Init (void)
 	Cvar_Register (&capture_dir);
 	Cvar_Register (&capture_console);
 	Cvar_Register (&capture_avi);
-
-	Cvar_Set (&capture_dir, va("%s/%s", com_basedir, capture_dir.string));
 
 	ACM_LoadLibrary ();
 	if (!acm_loaded)

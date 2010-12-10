@@ -225,6 +225,7 @@ void COM_CreatePath (char *path);
 qboolean COM_FindFile (char *filename);
 qboolean COM_WriteFile (char *filename, void *data, int len);
 int COM_FOpenFile (char *filename, FILE **file);
+qboolean COM_IsAbsolutePath (char *path);
 
 byte *COM_LoadFile (char *path, int usehunk);
 byte *COM_LoadStackFile (char *path, void *buffer, int bufsize);
