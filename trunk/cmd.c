@@ -456,7 +456,10 @@ static qboolean Cmd_LegacyCommand (void)
 	strcat (text, " ");
 	strncat (text, Cmd_Args(), sizeof(text) - strlen(text) - 1);
 
-	assert (!recursive);
+	if (recursive)
+	{
+		Host_Error("Cmd_LegacyCommand: resursive call detected.");
+	}
 	recursive = true;
 	Cmd_ExecuteString (text, src_command);
 	recursive = false;

@@ -254,7 +254,7 @@ static byte *ColorForParticle (part_type_t type)
 		break;
 
 	default:
-		assert (!"ColorForParticle: unexpected type");
+		Host_Error ("ColorForParticle: unexpected type");
 		break;
 	}
 
@@ -656,7 +656,7 @@ static void QMB_UpdateParticles (void)
 				break;
 
 			default:
-				assert (!"QMB_UpdateParticles: unexpected pt->move");
+				Host_Error ("QMB_UpdateParticles: unexpected pt->move");
 				break;
 			}
 		}
@@ -916,7 +916,7 @@ void QMB_DrawParticles (void)
 			break;
 
 		default:
-			assert (!"QMB_DrawParticles: unexpected drawtype");
+			Host_Error ("QMB_DrawParticles: unexpected drawtype");
 			break;
 		}
 	}
@@ -964,12 +964,14 @@ __inline static void AddParticle (part_type_t type, vec3_t org, int count, float
 	static unsigned long q3blood_texindex = 0;
 
 	if (!qmb_initialized)
-		Sys_Error ("QMB particle added without initialization");
-
-	assert (size > 0 && time > 0);
+	{
+		Host_Error ("QMB particle added without initialization");
+	}
 
 	if (type < 0 || type >= num_particletypes)
-		Sys_Error ("AddParticle: Invalid type (%d)", type);
+	{
+		Host_Error ("AddParticle: Invalid type (%d)", type);
+	}
 
 	pt = &particle_types[particle_type_index[type]];
 
@@ -1162,7 +1164,7 @@ __inline static void AddParticle (part_type_t type, vec3_t org, int count, float
 			break;
 
 		default:
-			assert (!"AddParticle: unexpected type");
+			Host_Error ("AddParticle: unexpected type");
 			break;
 		}
 	}
@@ -1179,12 +1181,14 @@ __inline static void AddParticleTrail (part_type_t type, vec3_t start, vec3_t en
 	static float rotangle = 0;
 
 	if (!qmb_initialized)
-		Sys_Error ("QMB particle added without initialization");
-
-	assert (size > 0 && time > 0);
+	{
+		Host_Error ("QMB particle added without initialization");
+	}
 
 	if (type < 0 || type >= num_particletypes)
-		Sys_Error ("AddParticle: Invalid type (%d)", type);
+	{
+		Host_Error ("AddParticle: Invalid type (%d)", type);
+	}
 
 	pt = &particle_types[particle_type_index[type]];
 
@@ -1231,7 +1235,7 @@ __inline static void AddParticleTrail (part_type_t type, vec3_t start, vec3_t en
 		break;
 
 	default:
-		assert (!"AddParticleTrail: unexpected type");
+		Host_Error ("AddParticleTrail: unexpected type");
 		break;
 	}
 
@@ -1325,7 +1329,7 @@ __inline static void AddParticleTrail (part_type_t type, vec3_t start, vec3_t en
 			break;
 
 		default:
-			assert (!"AddParticleTrail: unexpected type");
+			Host_Error ("AddParticleTrail: unexpected type");
 			break;
 		}
 
