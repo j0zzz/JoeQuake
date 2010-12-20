@@ -700,7 +700,7 @@ void CL_RelinkEntities (void)
 		if (ent->effects & EF_BRIGHTFIELD)
 			R_EntityParticles (ent);
 
-		// joe: powerup glows
+		// joe: force colored powerup glows for relevant models
 		if (ent->model->modhint == MOD_QUAD)
 		{
 			CL_NewDlight(i, ent->origin, 200 + (rand() & 31), 0.1, lt_blue);

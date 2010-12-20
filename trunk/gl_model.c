@@ -2014,6 +2014,7 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		 !strcmp(mod->name, "progs/invisibl.md3") ||
 		 !strcmp(mod->name, "progs/quaddama.md3") ||
 		 !strcmp(mod->name, "progs/armor.md3") ||
+		 !strcmp(mod->name, "progs/backpack.md3") ||
 		 !strcmp(mod->name, "progs/b_g_key.md3") ||
 		 !strcmp(mod->name, "progs/b_s_key.md3") ||
 		 !strcmp(mod->name, "progs/m_g_key.md3") ||
@@ -2034,7 +2035,8 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 	else if (!strcmp(mod->name, "progs/h_player.md3") ||
 		 !strcmp(mod->name, "progs/gib1.md3") ||
 		 !strcmp(mod->name, "progs/gib2.md3") ||
-		 !strcmp(mod->name, "progs/gib3.md3"))
+		 !strcmp(mod->name, "progs/gib3.md3") ||
+		 !strcmp(mod->name, "progs/zom_gib.md3"))
 		mod->flags |= EF_GIB;
 
 // some models are special
@@ -2049,6 +2051,10 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		 !strcmp(mod->name, "progs/v_rock.md3")	||
 		 !strcmp(mod->name, "progs/v_rock2.md3"))
 		mod->modhint = MOD_WEAPON;
+	else if (!strcmp(mod->name, "progs/quaddama.md3"))
+		mod->modhint = MOD_QUAD;
+	else if (!strcmp(mod->name, "progs/invulner.md3"))
+		mod->modhint = MOD_PENT;
 	else if (!strcmp(mod->name, "progs/lavaball.md3"))
 		mod->modhint = MOD_LAVABALL;
 	else if (!strcmp(mod->name, "progs/spike.md3") ||
