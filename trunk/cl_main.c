@@ -58,6 +58,7 @@ cvar_t	cl_gibfilter = {"cl_gibfilter", "0"};
 cvar_t	cl_maxfps = {"cl_maxfps", "72", CVAR_SERVER};
 cvar_t	cl_advancedcompletion = {"cl_advancedcompletion", "1"};
 cvar_t	cl_independentphysics = {"cl_independentphysics", "0", CVAR_INIT};
+cvar_t	cl_viewweapons = {"cl_viewweapons", "0"};
 
 client_static_t	cls;
 client_state_t	cl;
@@ -566,6 +567,52 @@ qboolean Model_isHead (int modelindex)
 	return false;
 }
 
+int ConvertViewWeaponModel(void)
+{
+	model_t *weaponmodel = cl.viewent.model;
+	int vwep_modelindex;
+
+	switch (cl.stats[STAT_ACTIVEWEAPON])
+	{
+	case IT_SHOTGUN:
+		vwep_modelindex = mi_w_shot;
+		break;
+
+	case IT_SUPER_SHOTGUN:
+		vwep_modelindex = mi_w_shot2;
+		break;
+
+	case IT_NAILGUN:
+		vwep_modelindex = mi_w_nail;
+		break;
+
+	case IT_SUPER_NAILGUN:
+		vwep_modelindex = mi_w_nail2;
+		break;
+
+	case IT_GRENADE_LAUNCHER:
+		vwep_modelindex = mi_w_rock;
+		break;
+
+	case IT_ROCKET_LAUNCHER:
+		vwep_modelindex = mi_w_rock2;
+		break;
+
+	case IT_LIGHTNING:
+		vwep_modelindex = mi_w_light;
+		break;
+
+	default:
+		vwep_modelindex = -1;
+		break;
+	}
+
+	return vwep_modelindex;
+}
+
+qboolean r_loadviewweapons = false;
+entity_t vwepmodel;
+
 /*
 ===============
 CL_RelinkEntities
@@ -573,7 +620,7 @@ CL_RelinkEntities
 */
 void CL_RelinkEntities (void)
 {
-	int			i, j;
+	int			i, j, vwep_modelindex;
 	float		frac, f, d, bobjrotate;
 	vec3_t		delta, oldorg;
 	entity_t	*ent;
@@ -977,6 +1024,68 @@ void CL_RelinkEntities (void)
 
 		if (cl_numvisedicts < MAX_VISEDICTS)
 			cl_visedicts[cl_numvisedicts++] = ent;
+
+		// view weapon support
+		if (ent->modelindex == cl_modelindex[mi_vwplayer] &&
+			r_loadviewweapons && (vwep_modelindex = ConvertViewWeaponModel()) != -1)
+		{
+			entity_t *vwepent = &vwepmodel, *player = ent;
+
+			memset (vwepent, 0, sizeof(entity_t));
+
+			vwepent->forcelink = player->forcelink;
+			vwepent->update_type = player->update_type;
+			memcpy (&vwepent->baseline, &player->baseline, sizeof(entity_state_t));
+
+			vwepent->msgtime = player->msgtime;
+			memcpy (vwepent->msg_origins, player->msg_origins, sizeof(vwepent->msg_origins));
+			VectorCopy (player->origin, vwepent->origin);
+			memcpy (vwepent->msg_angles, player->msg_angles, sizeof(vwepent->msg_angles));
+			VectorCopy (player->angles, vwepent->angles);
+
+			vwepent->model = cl.model_precache[cl_modelindex[vwep_modelindex]];
+			vwepent->efrag = player->efrag;
+
+			vwepent->frame = player->frame;
+			vwepent->syncbase = player->syncbase;
+			vwepent->colormap = player->colormap;
+			vwepent->effects = player->effects;
+			vwepent->skinnum = player->skinnum;
+			vwepent->visframe = player->visframe;
+			vwepent->dlightframe = player->dlightframe;
+			vwepent->dlightbits = player->dlightbits;
+
+			vwepent->trivial_accept = player->trivial_accept;
+			vwepent->topnode = player->topnode;
+
+			vwepent->modelindex = cl_modelindex[vwep_modelindex];
+			VectorCopy (player->trail_origin, vwepent->trail_origin);
+			vwepent->traildrawn = player->traildrawn;
+			vwepent->noshadow = player->noshadow;
+
+			vwepent->frame_start_time = player->frame_start_time;
+			vwepent->frame_interval = player->frame_interval;
+			vwepent->pose1 = player->pose1;
+			vwepent->pose2 = player->pose2;
+			vwepent->framelerp = player->framelerp;
+
+			vwepent->translate_start_time = player->translate_start_time;
+			VectorCopy (player->origin1, vwepent->origin1);
+			VectorCopy (player->origin2, vwepent->origin2);
+
+			vwepent->rotate_start_time = player->rotate_start_time;
+			VectorCopy (player->angles1, vwepent->angles1);
+			VectorCopy (player->angles2, vwepent->angles2);
+
+			vwepent->transparency = player->transparency;
+			vwepent->smokepuff_time = player->smokepuff_time;
+			vwepent->istransparent = player->istransparent;
+
+			if (cl_numvisedicts < MAX_VISEDICTS)
+			{
+				cl_visedicts[cl_numvisedicts++] = vwepent;
+			}
+		}
 	}
 }
 
@@ -1217,6 +1326,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_advancedcompletion);
 	Cvar_Register (&cl_independentphysics);
+	Cvar_Register (&cl_viewweapons);
 
 	Cmd_AddCommand ("entities", CL_PrintEntities_f);
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);

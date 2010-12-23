@@ -92,8 +92,9 @@ void CL_InitModelnames (void)
 	memset (cl_modelnames, 0, sizeof(cl_modelnames));
 
 	cl_modelnames[mi_player] = "progs/player.mdl";
-	cl_modelnames[mi_q3torso] = "progs/player/upper.md3";
 	cl_modelnames[mi_q3head] = "progs/player/head.md3";
+	cl_modelnames[mi_q3torso] = "progs/player/upper.md3";
+	cl_modelnames[mi_q3legs] = "progs/player/lower.md3";
 	cl_modelnames[mi_h_player] = "progs/h_player.mdl";
 	cl_modelnames[mi_eyes] = "progs/eyes.mdl";
 	cl_modelnames[mi_rocket] = "progs/missile.mdl";
@@ -130,6 +131,14 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_h_vore] = "progs/h_shal.mdl";
 	cl_modelnames[mi_h_shambler] = "progs/h_shams.mdl";
 	cl_modelnames[mi_h_zombie] = "progs/h_zombie.mdl";
+	cl_modelnames[mi_vwplayer] = "progs/vwplayer.mdl";
+	cl_modelnames[mi_w_shot] = "progs/w_shot.mdl";
+	cl_modelnames[mi_w_shot2] = "progs/w_shot2.mdl";
+	cl_modelnames[mi_w_nail] = "progs/w_nail.mdl";
+	cl_modelnames[mi_w_nail2] = "progs/w_nail2.mdl";
+	cl_modelnames[mi_w_rock] = "progs/w_rock.mdl";
+	cl_modelnames[mi_w_rock2] = "progs/w_rock2.mdl";
+	cl_modelnames[mi_w_light] = "progs/w_light.mdl";
 
 	for (i = 0 ; i < NUM_MODELINDEX ; i++)
 	{
@@ -264,9 +273,10 @@ CL_ParseServerInfo
 void CL_ParseServerInfo (void)
 {
 	int	i, nummodels, numsounds;
-	char	*str, tempname[MAX_QPATH];
+	char	*str, tempname[MAX_QPATH], vwplayername[MAX_QPATH];
 	char	model_precache[MAX_MODELS][MAX_QPATH], sound_precache[MAX_SOUNDS][MAX_QPATH];
 	extern	void R_PreMapLoad (char *);
+	extern qboolean r_loadviewweapons;
 #ifdef GLQUAKE
 	extern qboolean r_loadq3player;
 #endif
@@ -321,15 +331,32 @@ void CL_ParseServerInfo (void)
 		if (nummodels == MAX_MODELS)
 			Host_Error ("Server sent too many model precaches");
 
+		if (cl_viewweapons.value &&
+			!strcmp(str, cl_modelnames[mi_player]) && 
+			COM_FindFile(cl_modelnames[mi_vwplayer]) && 
+			COM_FindFile(cl_modelnames[mi_w_shot]) &&
+			COM_FindFile(cl_modelnames[mi_w_shot2]) &&
+			COM_FindFile(cl_modelnames[mi_w_nail]) &&
+			COM_FindFile(cl_modelnames[mi_w_nail2]) &&
+			COM_FindFile(cl_modelnames[mi_w_rock]) &&
+			COM_FindFile(cl_modelnames[mi_w_rock2]) &&
+			COM_FindFile(cl_modelnames[mi_w_light]))
+		{
+			Q_strncpyz (vwplayername, cl_modelnames[mi_vwplayer], MAX_QPATH);
+			str = vwplayername;
+			cl_modelindex[mi_player] = nummodels;
+			r_loadviewweapons = true;
+		}
+
 #ifdef GLQUAKE
 		if (gl_loadq3models.value)
 		{
 			if (!strcmp(str, cl_modelnames[mi_player]) && 
 			    COM_FindFile(cl_modelnames[mi_q3head]) && 
 			    COM_FindFile(cl_modelnames[mi_q3torso]) && 
-			    COM_FindFile("progs/player/lower.md3"))
+			    COM_FindFile(cl_modelnames[mi_q3legs]))
 			{
-				Q_strncpyz (tempname, "progs/player/lower.md3", MAX_QPATH);
+				Q_strncpyz (tempname, cl_modelnames[mi_q3legs], MAX_QPATH);
 				str = tempname;
 				cl_modelindex[mi_player] = nummodels;
 				r_loadq3player = true;
@@ -340,7 +367,9 @@ void CL_ParseServerInfo (void)
 				strcat (tempname, ".md3");
 
 				if (COM_FindFile(tempname))
+				{
 					str = tempname;
+				}
 			}
 		}
 #endif
@@ -367,6 +396,32 @@ void CL_ParseServerInfo (void)
 	{
 		Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_flame0], sizeof(model_precache[nummodels]));
 		cl_modelindex[mi_flame0] = nummodels++;
+	}
+// load the view weapon models
+	if (r_loadviewweapons)
+	{
+		if (nummodels + 6 >= MAX_MODELS)
+		{
+			Con_Printf ("Server sent too many model precaches -> can't load view weapon models\n");
+			Q_strncpyz (model_precache[cl_modelindex[mi_player]], cl_modelnames[mi_player], sizeof(model_precache[cl_modelindex[mi_player]]));
+		}
+		else
+		{
+			Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_w_shot], sizeof(model_precache[nummodels]));
+			cl_modelindex[mi_w_shot] = nummodels++;
+			Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_w_shot2], sizeof(model_precache[nummodels]));
+			cl_modelindex[mi_w_shot2] = nummodels++;
+			Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_w_nail], sizeof(model_precache[nummodels]));
+			cl_modelindex[mi_w_nail] = nummodels++;
+			Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_w_nail2], sizeof(model_precache[nummodels]));
+			cl_modelindex[mi_w_nail2] = nummodels++;
+			Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_w_rock], sizeof(model_precache[nummodels]));
+			cl_modelindex[mi_w_rock] = nummodels++;
+			Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_w_rock2], sizeof(model_precache[nummodels]));
+			cl_modelindex[mi_w_rock2] = nummodels++;
+			Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_w_light], sizeof(model_precache[nummodels]));
+			cl_modelindex[mi_w_light] = nummodels++;
+		}
 	}
 // load the rest of the q3 player model if possible
 	if (r_loadq3player)

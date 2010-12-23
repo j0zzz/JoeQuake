@@ -2253,7 +2253,7 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 	mod->radius = radiusmax;
 
 // load the animation frames if loading the player model
-	if (!strcmp(mod->name, "progs/player/lower.md3"))
+	if (!strcmp(mod->name, cl_modelnames[mi_q3legs]))
 		Mod_LoadQ3Animation ();
 
 	texture_flag = TEX_MIPMAP;

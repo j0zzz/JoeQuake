@@ -1327,9 +1327,9 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 
 	pose = frame;
 
-	if (!strcmp(clmodel->name, "progs/player/lower.md3"))
+	if (!strcmp(clmodel->name, cl_modelnames[mi_q3legs]))
 		ent->frame_interval = anims[legsanim].interval;
-	else if (!strcmp(clmodel->name, "progs/player/upper.md3"))
+	else if (!strcmp(clmodel->name, cl_modelnames[mi_q3torso]))
 		ent->frame_interval = anims[bodyanim].interval;
 	else
 		ent->frame_interval = 0.1;
@@ -1582,9 +1582,9 @@ void R_SetupQ3Frame (entity_t *ent)
 	model_t		*clmodel = ent->model;
 	tagentity_t	*tagent;
 
-	if (!strcmp(clmodel->name, "progs/player/lower.md3"))
+	if (!strcmp(clmodel->name, cl_modelnames[mi_q3legs]))
 		frame = legsframe;
-	else if (!strcmp(clmodel->name, "progs/player/upper.md3"))
+	else if (!strcmp(clmodel->name, cl_modelnames[mi_q3torso]))
 		frame = bodyframe;
 	else
 		frame = ent->frame;
@@ -1761,7 +1761,7 @@ void R_DrawQ3Model (entity_t *ent)
 	if (gl_affinemodels.value)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
-	if (!strcmp(clmodel->name, "progs/player/lower.md3"))
+	if (!strcmp(clmodel->name, cl_modelnames[mi_q3legs]))
 	{
 		R_ReplaceQ3Frame (ent->frame);
 		ent->noshadow = true;
