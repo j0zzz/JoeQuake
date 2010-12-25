@@ -132,6 +132,7 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_h_shambler] = "progs/h_shams.mdl";
 	cl_modelnames[mi_h_zombie] = "progs/h_zombie.mdl";
 	cl_modelnames[mi_vwplayer] = "progs/vwplayer.mdl";
+	cl_modelnames[mi_vwplayer_md3] = "progs/vwplayer.md3";
 	cl_modelnames[mi_w_shot] = "progs/w_shot.mdl";
 	cl_modelnames[mi_w_shot2] = "progs/w_shot2.mdl";
 	cl_modelnames[mi_w_nail] = "progs/w_nail.mdl";
@@ -333,7 +334,7 @@ void CL_ParseServerInfo (void)
 
 		if (cl_viewweapons.value &&
 			!strcmp(str, cl_modelnames[mi_player]) && 
-			COM_FindFile(cl_modelnames[mi_vwplayer]) && 
+			(COM_FindFile(cl_modelnames[mi_vwplayer]) || COM_FindFile(cl_modelnames[mi_vwplayer_md3])) && 
 			COM_FindFile(cl_modelnames[mi_w_shot]) &&
 			COM_FindFile(cl_modelnames[mi_w_shot2]) &&
 			COM_FindFile(cl_modelnames[mi_w_nail]) &&

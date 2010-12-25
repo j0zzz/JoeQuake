@@ -317,8 +317,8 @@ typedef	enum modelindex_s {
 	mi_scrag, mi_ogre, mi_fiend, mi_vore, mi_shambler,
 	mi_h_dog, mi_h_soldier, mi_h_enforcer, mi_h_knight, mi_h_hknight, mi_h_scrag,
 	mi_h_ogre, mi_h_fiend, mi_h_vore, mi_h_shambler, mi_h_zombie, mi_h_player,
-	mi_gib1, mi_gib2, mi_gib3, mi_vwplayer, mi_w_shot, mi_w_shot2, mi_w_nail,
-	mi_w_nail2, mi_w_rock, mi_w_rock2, mi_w_light, NUM_MODELINDEX
+	mi_gib1, mi_gib2, mi_gib3, mi_vwplayer, mi_vwplayer_md3, mi_w_shot, mi_w_shot2,
+	mi_w_nail, mi_w_nail2, mi_w_rock, mi_w_rock2, mi_w_light, NUM_MODELINDEX
 } modelindex_t;
 
 extern	modelindex_t cl_modelindex[NUM_MODELINDEX];

@@ -1713,7 +1713,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 // some models are special
 	// NOTE: comparing not only with player.mdl, but with all models
 	// begin with "player" coz we need to support DME models as well!
-	if (!strncmp(mod->name, "progs/player", 12))
+	if (!strncmp(mod->name, "progs/player", 12) || !strcmp(mod->name, "progs/vwplayer.mdl"))
 		mod->modhint = MOD_PLAYER;
 	else if (!strcmp(mod->name, "progs/eyes.mdl"))
 		mod->modhint = MOD_EYES;
@@ -2040,7 +2040,7 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		mod->flags |= EF_GIB;
 
 // some models are special
-	if (!strncmp(mod->name, "progs/player", 12))
+	if (!strncmp(mod->name, "progs/player", 12) || !strcmp(mod->name, "progs/vwplayer.md3"))
 		mod->modhint = MOD_PLAYER;
 	else if (!strcmp(mod->name, "progs/flame.md3"))
 		mod->modhint = MOD_FLAME;

@@ -611,7 +611,7 @@ int ConvertViewWeaponModel(void)
 }
 
 qboolean r_loadviewweapons = false;
-entity_t vwepmodel;
+entity_t view_weapons[MAX_SCOREBOARD];
 
 /*
 ===============
@@ -620,7 +620,7 @@ CL_RelinkEntities
 */
 void CL_RelinkEntities (void)
 {
-	int			i, j, vwep_modelindex;
+	int			i, j, vwep_modelindex, num_vweps;
 	float		frac, f, d, bobjrotate;
 	vec3_t		delta, oldorg;
 	entity_t	*ent;
@@ -652,6 +652,9 @@ void CL_RelinkEntities (void)
 	
 	bobjrotate = anglemod (100 * cl.time);
 	
+	// counting number of view weapon models
+	num_vweps = 0;
+
 	// start on the entity after the world
 	for (i = 1, ent = cl_entities + 1 ; i < cl.num_entities ; i++, ent++)
 	{
@@ -1026,10 +1029,10 @@ void CL_RelinkEntities (void)
 			cl_visedicts[cl_numvisedicts++] = ent;
 
 		// view weapon support
-		if (ent->modelindex == cl_modelindex[mi_vwplayer] &&
+		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && 
 			r_loadviewweapons && (vwep_modelindex = ConvertViewWeaponModel()) != -1)
 		{
-			entity_t *vwepent = &vwepmodel, *player = ent;
+			entity_t *vwepent = &view_weapons[num_vweps++], *player = ent;
 
 			memset (vwepent, 0, sizeof(entity_t));
 
