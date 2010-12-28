@@ -561,7 +561,7 @@ void CL_ParseUpdate (int bits)
 	ent->frame = (bits & U_FRAME) ? MSG_ReadByte() : ent->baseline.frame;
 
 	i = (bits & U_COLORMAP) ? MSG_ReadByte() : ent->baseline.colormap;
-	if (i && i <= cl.maxclients && ent->model && ent->model->modhint == MOD_PLAYER)
+	if (i && i <= cl.maxclients && Mod_IsAnyKindOfPlayerModel(ent->model))
 		ent->colormap = cl.scores[i-1].translations;
 	else
 		ent->colormap = vid.colormap;

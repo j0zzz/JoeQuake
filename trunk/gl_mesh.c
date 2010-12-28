@@ -412,7 +412,7 @@ void GL_MakeAliasModelDisplayLists (model_t *mod, aliashdr_t *hdr)
 	{
 		if (mod->modhint == MOD_WEAPON)
 			RemoveMuzzleFlash("shot1", "shot2", 10, true);
-		else if (mod->modhint == MOD_PLAYER)
+		else if (Mod_IsAnyKindOfPlayerModel(mod))
 		{
 			RemoveMuzzleFlash("nailatt2", "nailatt1", 10, false);
 			RemoveMuzzleFlash("rockatt6", "rockatt1", 10, false);

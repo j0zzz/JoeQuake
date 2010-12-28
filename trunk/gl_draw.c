@@ -1844,14 +1844,11 @@ int GL_LoadTexturePixels (byte *data, char *identifier, int width, int height, i
 	return GL_LoadTexture (identifier, width, height, data, mode, 4);
 }
 
-byte	player_texels32[1024*1024*4];	//HEAVY TESTING!!!
-int	player32_width, player32_height;
-
 int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int matchheight, int mode)
 {
-	int		texnum;
-	byte		*data;
-	gltexture_t	*gltexture;
+	int texnum;
+	byte *data;
+	gltexture_t *gltexture;
 
 	if (no24bit)
 		return 0;
@@ -1868,13 +1865,6 @@ int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int m
 	else
 	{
 		texnum = GL_LoadTexturePixels (data, identifier, image_width, image_height, mode);
-		// save 32 bit texels if hi-res player skin found
-		if (!strncmp(identifier, "player_", 7))
-		{
-			memcpy (player_texels32, data, image_width * image_height * 4);
-			player32_width = image_width;
-			player32_height = image_height;
-		}
 		free (data);
 	}
 

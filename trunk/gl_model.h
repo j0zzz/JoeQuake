@@ -442,7 +442,7 @@ typedef enum
 // some models are special
 typedef enum
 {
-	MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_WEAPON,
+	MOD_NORMAL, MOD_PLAYER, MOD_PLAYER_DME, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_WEAPON,
 	MOD_QUAD, MOD_PENT, MOD_LAVABALL, MOD_SPIKE, MOD_SHAMBLER, MOD_SOLDIER,
 	MOD_ENFORCER, MOD_Q3GUNSHOT, MOD_Q3TELEPORT
 } modhint_t;
@@ -535,5 +535,7 @@ void Mod_TouchModel (char *name);
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model);
+
+qboolean Mod_IsAnyKindOfPlayerModel(model_t *mod);
 
 #endif	// __MODEL__

@@ -1587,6 +1587,9 @@ void Mod_LoadAliasModelTexture (char *identifier, int flags, int *gl_texnum, int
 	}
 }
 
+int	player_32bit_skins[14] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+qboolean player_32bit_skins_loaded = false;
+
 /*
 ===============
 Mod_LoadAllSkins
@@ -1617,12 +1620,31 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 		{
 			Mod_FloodFillSkin (skin, pheader->skinwidth, pheader->skinheight);
 
-			// save 8 bit texels for the player model to remap
-			if (loadmodel->modhint == MOD_PLAYER)
+			if (Mod_IsAnyKindOfPlayerModel(loadmodel))
 			{
+				// save 8 bit texels for the player model to remap
 				texels = Hunk_AllocName (size, loadname);
 				pheader->texels[i] = texels - (byte *)pheader;
 				memcpy (texels, (byte *)(pskintype + 1), size);
+
+				// try to load all 14 colorful player suits if loading the original or view weapon player model
+				if (loadmodel->modhint == MOD_PLAYER)
+				{
+					int c;
+					qboolean failed = false;
+
+					for (c = 0; c < 14; c++)
+					{
+						Mod_LoadAliasModelTexture (va("player_skin_%i", c), texture_flag, &player_32bit_skins[c], &fb_texnum);
+						if (!player_32bit_skins[c])
+						{
+							failed = true;
+							break;
+						}
+					}
+
+					player_32bit_skins_loaded = !failed;
+				}
 			}
 
 			Q_snprintfz (identifier, sizeof(identifier), "%s_%i", basename, i);
@@ -1711,10 +1733,11 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	daliasskintype_t *pskintype;
 
 // some models are special
-	// NOTE: comparing not only with player.mdl, but with all models
-	// begin with "player" coz we need to support DME models as well!
-	if (!strncmp(mod->name, "progs/player", 12) || !strcmp(mod->name, "progs/vwplayer.mdl"))
+	if (!strcmp(mod->name, "progs/player.mdl") || !strcmp(mod->name, "progs/vwplayer.mdl"))
 		mod->modhint = MOD_PLAYER;
+	// player*.mdl models are DME models
+	else if (!strncmp(mod->name, "progs/player", 12))
+		mod->modhint = MOD_PLAYER_DME;
 	else if (!strcmp(mod->name, "progs/eyes.mdl"))
 		mod->modhint = MOD_EYES;
 	else if (!strcmp(mod->name, "progs/flame0.mdl") ||
@@ -2040,7 +2063,7 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		mod->flags |= EF_GIB;
 
 // some models are special
-	if (!strncmp(mod->name, "progs/player", 12) || !strcmp(mod->name, "progs/vwplayer.md3"))
+	if (!strcmp(mod->name, "progs/player.md3") || !strcmp(mod->name, "progs/vwplayer.md3"))
 		mod->modhint = MOD_PLAYER;
 	else if (!strcmp(mod->name, "progs/flame.md3"))
 		mod->modhint = MOD_FLAME;
@@ -2573,4 +2596,14 @@ void Mod_Print (void)
 	Con_Printf ("Cached models:\n");
 	for (i = 0, mod = mod_known ; i < mod_numknown ; i++, mod++)
 		Con_Printf ("%8p : %s\n", mod->cache.data, mod->name);
+}
+
+/*
+================
+Mod_IsPlayerModel
+================
+*/
+qboolean Mod_IsAnyKindOfPlayerModel(model_t *mod)
+{
+	return mod ? mod->modhint == MOD_PLAYER || mod->modhint == MOD_PLAYER_DME : false;
 }

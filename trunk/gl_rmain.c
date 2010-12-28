@@ -738,7 +738,7 @@ void R_SetupLighting (entity_t *ent)
 	}
 
 	// never allow players to go totally black
-	if (clmodel->modhint == MOD_PLAYER)
+	if (Mod_IsAnyKindOfPlayerModel(clmodel))
 	{
 		if (ambientlight < 8)
 			ambientlight = shadelight = 8;
@@ -914,8 +914,18 @@ void R_DrawAliasModel (entity_t *ent)
 
 		if (i > 0 && i <= cl.maxclients)
 		{
-			texture = playertextures - 1 + i;
-			fb_texture = fb_skins[i-1];
+			extern int player_32bit_skins[14];
+			extern qboolean player_32bit_skins_loaded;
+
+			if (clmodel->modhint == MOD_PLAYER && player_32bit_skins_loaded)
+			{
+				texture = player_32bit_skins[cl.scores[i-1].colors / 16];
+			}
+			else
+			{
+				texture = playertextures - 1 + i;
+				fb_texture = player_fb_skins[i-1];
+			}
 		}
 	}
 

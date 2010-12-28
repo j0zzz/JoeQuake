@@ -773,7 +773,7 @@ void CL_RelinkEntities (void)
 			dl->minlight = 32;
 			dl->die = cl.time + 0.1;
 #ifdef GLQUAKE
-			if ((ent->modelindex == cl_modelindex[mi_shambler] || (ent->model->modhint == MOD_PLAYER && cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)) &&
+			if ((ent->modelindex == cl_modelindex[mi_shambler] || (Mod_IsAnyKindOfPlayerModel(ent->model) && cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)) &&
 				qmb_initialized && gl_part_lightning.value)
 				dl->type = lt_blue;
 			else if (ent->modelindex == cl_modelindex[mi_scrag] && qmb_initialized)
@@ -864,8 +864,8 @@ void CL_RelinkEntities (void)
 		}
 
 		if (ent->modelindex != cl_modelindex[mi_eyes] && 
-		    ((ent->modelindex != cl_modelindex[mi_player] && ent->model->modhint != MOD_PLAYER && 
-		      ent->modelindex != cl_modelindex[mi_h_player]) || (r_powerupglow.value && cl.stats[STAT_HEALTH] > 0)))
+		    ((!Mod_IsAnyKindOfPlayerModel(ent->model) && ent->modelindex != cl_modelindex[mi_h_player]) || 
+			(r_powerupglow.value && cl.stats[STAT_HEALTH] > 0)))
 		{
 			if ((ent->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED))
 				CL_NewDlight (i, ent->origin, 200 + (rand() & 31), 0.1, lt_redblue);

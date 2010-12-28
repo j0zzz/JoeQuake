@@ -60,7 +60,7 @@ void R_InitTextures (void)
 	}
 }
 
-int	fb_skins[MAX_SCOREBOARD];
+int	player_fb_skins[MAX_SCOREBOARD];
 
 /*
 ===============
@@ -125,10 +125,7 @@ void R_TranslatePlayerSkin (int playernum)
 	// c'mon, it's 2006 already....
 	if (gl_lerptextures.value)
 	{
-		byte	*translated;
-		static unsigned translated32[1024*1024];
-		extern byte	player_texels32[1024*1024*4];
-		extern int	player32_width, player32_height;
+		byte *translated;
 
 		// 8 bit
 		translated = Q_malloc (inwidth * inheight);
@@ -138,31 +135,16 @@ void R_TranslatePlayerSkin (int playernum)
 
 		GL_Upload8 (translated, inwidth, inheight, 0);
 
-		fb_skins[playernum] = 0;
+		player_fb_skins[playernum] = 0;
 		if (Img_HasFullbrights(original, inwidth * inheight))
 		{
-			fb_skins[playernum] = playertextures + playernum + MAX_SCOREBOARD;
+			player_fb_skins[playernum] = playertextures + playernum + MAX_SCOREBOARD;
 
-			GL_Bind (fb_skins[playernum]);
+			GL_Bind (player_fb_skins[playernum]);
 			GL_Upload8 (translated, inwidth, inheight, TEX_FULLBRIGHT);
 		}
 
 		free (translated);
-
-		// 32 bit - FIXME
-/*		for (i=0 ; i<256 ; i++)
-			translate32[i] = d_8to24table[translate[i]];
-
-		size = player32_width * player32_height;
-		for (i = 0, j = 0 ; i < size ; i++, j += 4)
-		{
-			byte	avg;
-
-			avg = (player_texels32[j+0] + player_texels32[j+1] + player_texels32[j+2]) / 3;
-			translated32[i] = translate32[avg];
-		}
-
-		GL_Upload32 (translated32, player32_width, player32_height, 0);*/
 	}
 	else
 	{
@@ -197,12 +179,12 @@ void R_TranslatePlayerSkin (int playernum)
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		fb_skins[playernum] = 0;
+		player_fb_skins[playernum] = 0;
 		if (Img_HasFullbrights(original, inwidth * inheight))
 		{
-			fb_skins[playernum] = playertextures + playernum + MAX_SCOREBOARD;
+			player_fb_skins[playernum] = playertextures + playernum + MAX_SCOREBOARD;
 
-			GL_Bind (fb_skins[playernum]);
+			GL_Bind (player_fb_skins[playernum]);
 
 			out = pixels;
 			memset (pixels, 0, sizeof(pixels));
