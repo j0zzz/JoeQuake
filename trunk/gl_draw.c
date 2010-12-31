@@ -340,27 +340,6 @@ mpic_t *Draw_CachePic (char *path)
 	return &pic->pic;
 }
 
-void Draw_CharToConback (int num, byte *dest)
-{
-	int		row, col, drawline, x;
-	byte	*source;
-
-	row = num >> 4;
-	col = num & 15;
-	source = draw_chars + (row<<10) + (col<<3);
-
-	drawline = 8;
-
-	while (drawline--)
-	{
-		for (x = 0 ; x < 8 ; x++)
-			if (source[x] != 255)
-				dest[x] = 0x60 + source[x];
-		source += 128;
-		dest += 320;
-	}
-}
-
 void Draw_InitConback (void)
 {
 	int		start;
@@ -393,10 +372,10 @@ void Draw_InitConback (void)
 	Hunk_FreeToLowMark (start);
 }
 
-#define Q_ROUND_POWER2(in, out)				\
-	{						\
-		for (out = 1 ; out < in ; out <<= 1)	\
-			;				\
+#define Q_ROUND_POWER2(in, out)\
+	{\
+		for (out = 1 ; out < in ; out <<= 1)\
+			;\
 	}
 
 qboolean OnChange_gl_max_size (cvar_t *var, char *string)
@@ -472,30 +451,39 @@ qboolean OnChange_gl_texturemode (cvar_t *var, char *string)
 	return false;
 }
 
-static int Draw_LoadCharset (char *name)
+static qboolean Draw_LoadCharset (char *name)
 {
 	int	texnum;
 
 	if (!Q_strcasecmp(name, "original"))
 	{
-		int		i;
-		char	buf[128*256], *src, *dest;
-
-		// Convert the 128*128 conchars texture to 128*256 leaving empty space between 
-		// rows so that chars don't stumble on each other because of texture smoothing.
-		// This hack costs us 64K of GL texture memory
-		memset (buf, 255, sizeof(buf));
-		src = draw_chars;
-		dest = buf;
-		for (i = 0 ; i < 16 ; i++)
+		if ((texnum = GL_LoadCharsetImage(va("textures/wad/%s", "conchars"), "pic:charset")) ||
+			(texnum = GL_LoadCharsetImage(va("gfx/%s", "conchars"), "pic:charset")))
 		{
-			memcpy (dest, src, 128 * 8);
-			src += 128 * 8;
-			dest += 128 * 8 * 2;
+			char_texture = texnum;
+			goto done;
 		}
+		else
+		{
+			int		i;
+			char	buf[128*256], *src, *dest;
 
-		char_texture = GL_LoadTexture ("pic:charset", 128, 256, buf, TEX_ALPHA, 1);
-		goto done;
+			// Convert the 128*128 conchars texture to 128*256 leaving empty space between 
+			// rows so that chars don't stumble on each other because of texture smoothing.
+			// This hack costs us 64K of GL texture memory
+			memset (buf, 255, sizeof(buf));
+			src = draw_chars;
+			dest = buf;
+			for (i = 0 ; i < 16 ; i++)
+			{
+				memcpy (dest, src, 128 * 8);
+				src += 128 * 8;
+				dest += 128 * 8 * 2;
+			}
+
+			char_texture = GL_LoadTexture ("pic:charset", 128, 256, buf, TEX_ALPHA, 1);
+			goto done;
+		}
 	}
 
 	if ((texnum = GL_LoadCharsetImage(va("textures/charsets/%s", name), "pic:charset")))
@@ -505,7 +493,7 @@ static int Draw_LoadCharset (char *name)
 	}
 
 	Con_Printf ("Couldn't load charset \"%s\"\n", name);
-	return 1;
+	return true;
 
 done:
 	if (!gl_smoothfont.value)
@@ -514,7 +502,7 @@ done:
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
-	return 0;
+	return false;
 }
 
 qboolean OnChange_gl_consolefont (cvar_t *var, char *string)
