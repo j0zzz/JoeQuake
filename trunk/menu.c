@@ -54,6 +54,7 @@ void M_Menu_Main_f (void);
 	void M_Menu_NehDemos_f (void);
 	void M_Menu_Maps_f (void);
 	void M_Menu_Demos_f (void);
+	void M_Menu_Help_f (void);
 	void M_Menu_Quit_f (void);
 void M_Menu_SerialConfig_f (void);
 	void M_Menu_ModemConfig_f (void);
@@ -492,7 +493,7 @@ void M_List_Key (int k, int num_elements, int num_lines)
 /* MAIN MENU */
 
 int	m_main_cursor;
-int	MAIN_ITEMS = 6;
+int	MAIN_ITEMS = 7;
 
 void M_Menu_Main_f (void)
 {
@@ -698,6 +699,10 @@ void M_Main_Key (int key)
 				break;
 
 			case 5:
+				M_Menu_Help_f ();
+				break;
+
+			case 6:
 				M_Menu_Quit_f ();
 				break;
 			}
