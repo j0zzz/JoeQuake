@@ -1767,24 +1767,24 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	if (COM_FOpenFile(name, &f) != -1)
 	{
 		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadTGA(f, name, matchwidth, matchheight)))
-			return data;
-	}
 
-	Q_snprintfz (name, sizeof(name), "%s.png", basename);
-	if (COM_FOpenFile(name, &f) != -1)
-	{
-		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadPNG(f, name, matchwidth, matchheight)))
-			return data;
-	}
+		switch (com_filetype)
+		{
+		case image_TGA:
+			data = Image_LoadTGA(f, name, matchwidth, matchheight);
+			break;
+		case image_PNG:
+			data = Image_LoadPNG(f, name, matchwidth, matchheight);
+			break;
+		case image_JPG:
+			data = Image_LoadJPEG(f, name, matchwidth, matchheight);
+			break;
+		}
 
-	Q_snprintfz (name, sizeof(name), "%s.jpg", basename);
-	if (COM_FOpenFile(name, &f) != -1)
-	{
-		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadJPEG(f, name, matchwidth, matchheight)))
+		if (data)
+		{
 			return data;
+		}
 	}
 
 	if (mode & TEX_COMPLAIN)

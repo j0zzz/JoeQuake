@@ -1065,6 +1065,8 @@ QUAKE FILESYSTEM
 int     com_filesize;
 char	com_netpath[MAX_OSPATH];
 
+filetype_t com_filetype;
+
 // on disk
 typedef struct
 {
@@ -1284,6 +1286,33 @@ void COM_CopyFile (char *netpath, char *cachepath)
 	fclose (out);
 }
 
+int SearchFileInPak(char *filename, FILE **file, searchpath_t *search)
+{
+	int i;
+	pack_t *pak;
+
+	// look through all the pak file elements
+	pak = search->pack;
+	for (i=0 ; i<pak->numfiles ; i++)
+	{
+		if (!strcmp(pak->files[i].name, filename))	// found it!
+		{
+			if (developer.value)
+				Sys_Printf ("PackFile: %s : %s\n", pak->filename, filename);
+			// open a new file on the pakfile
+			if (!(*file = fopen(pak->filename, "rb")))
+				Sys_Error ("Couldn't reopen %s", pak->filename);
+			fseek (*file, pak->files[i].filepos, SEEK_SET);
+			com_filesize = pak->files[i].filelen;
+
+			Q_snprintfz (com_netpath, sizeof(com_netpath), "%s#%i", pak->filename, i);
+			return com_filesize;
+		}
+	}
+
+	return -1;
+}
+
 /*
 =================
 COM_FOpenFile
@@ -1294,34 +1323,48 @@ Sets com_filesize and one of handle or file
 */
 int COM_FOpenFile (char *filename, FILE **file)
 {
-	searchpath_t	*search;
-	pack_t		*pak;
-	int		i;
+	qboolean image = false;
+	searchpath_t *search;
 
 	com_filesize = -1;
 	com_netpath[0] = 0;
 
+	if (!strcmp(COM_FileExtension(filename), "tga"))
+	{
+		image = true;
+	}
+
 	// search through the path, one element at a time
 	for (search = com_searchpaths ; search ; search = search->next)
 	{
+		if (image)
+		{
+			com_filetype = image_TGA;
+			COM_ForceExtension(filename, ".tga");
+		}
+
 		// is the element a pak file?
 		if (search->pack)
 		{
-			// look through all the pak file elements
-			pak = search->pack;
-			for (i=0 ; i<pak->numfiles ; i++)
+			if (SearchFileInPak(filename, file, search) != -1)
 			{
-				if (!strcmp(pak->files[i].name, filename))	// found it!
-				{
-					if (developer.value)
-						Sys_Printf ("PackFile: %s : %s\n", pak->filename, filename);
-					// open a new file on the pakfile
-					if (!(*file = fopen(pak->filename, "rb")))
-						Sys_Error ("Couldn't reopen %s", pak->filename);
-					fseek (*file, pak->files[i].filepos, SEEK_SET);
-					com_filesize = pak->files[i].filelen;
+				return com_filesize;
+			}
 
-					Q_snprintfz (com_netpath, sizeof(com_netpath), "%s#%i", pak->filename, i);
+			// try to search for various types of image
+			if (image)
+			{
+				com_filetype = image_PNG;
+				COM_ForceExtension(filename, ".png");
+				if (SearchFileInPak(filename, file, search) != -1)
+				{
+					return com_filesize;
+				}
+
+				com_filetype = image_JPG;
+				COM_ForceExtension(filename, ".jpg");
+				if (SearchFileInPak(filename, file, search) != -1)
+				{
 					return com_filesize;
 				}
 			}
@@ -1332,7 +1375,31 @@ int COM_FOpenFile (char *filename, FILE **file)
 			Q_snprintfz (com_netpath, sizeof(com_netpath), "%s/%s", search->filename, filename);
 
 			if (!(*file = fopen(com_netpath, "rb")))
-				continue;
+			{
+				// try to search for various types of image
+				if (image)
+				{
+					com_filetype = image_PNG;
+					COM_ForceExtension(filename, ".png");
+					Q_snprintfz (com_netpath, sizeof(com_netpath), "%s/%s", search->filename, filename);
+
+					if (!(*file = fopen(com_netpath, "rb")))
+					{
+						com_filetype = image_JPG;
+						COM_ForceExtension(filename, ".jpg");
+						Q_snprintfz (com_netpath, sizeof(com_netpath), "%s/%s", search->filename, filename);
+
+						if (!(*file = fopen(com_netpath, "rb")))
+						{
+							continue;
+						}
+					}
+				}
+				else
+				{
+					continue;
+				}
+			}
 
 			if (developer.value)
 				Sys_Printf ("FOpenFile: %s\n", com_netpath);

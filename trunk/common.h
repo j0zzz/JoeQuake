@@ -189,8 +189,13 @@ char *CopyString (char *s);
 
 //============================================================================
 
-extern	int	com_filesize;
+extern	int		com_filesize;
 extern	char	com_netpath[MAX_OSPATH];
+
+typedef enum { image_TGA, image_PNG, image_JPG, other } filetype_t;
+
+extern	filetype_t com_filetype;
+
 struct	cache_user_s;
 
 extern	char	com_gamedir[MAX_OSPATH];
