@@ -38,6 +38,7 @@ cvar_t	gl_texturemode = {"gl_texturemode", "GL_LINEAR_MIPMAP_NEAREST", 0, OnChan
 
 cvar_t	gl_externaltextures_world = {"gl_externaltextures_world", "1"};
 cvar_t	gl_externaltextures_bmodels = {"gl_externaltextures_bmodels", "1"};
+cvar_t	gl_externaltextures_models = {"gl_externaltextures_models", "1"};
 
 qboolean OnChange_gl_crosshairimage (cvar_t *var, char *string);
 cvar_t	gl_crosshairimage = {"crosshairimage", "", 0, OnChange_gl_crosshairimage};
@@ -615,6 +616,7 @@ void Draw_Init (void)
 	Cvar_Register (&gl_texturemode);
 	Cvar_Register (&gl_externaltextures_world);
 	Cvar_Register (&gl_externaltextures_bmodels);
+	Cvar_Register (&gl_externaltextures_models);
 
 	glGetIntegerv (GL_MAX_TEXTURE_SIZE, &gl_max_size_default);
 	Cvar_SetDefault (&gl_max_size, gl_max_size_default);

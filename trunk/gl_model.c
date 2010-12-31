@@ -1573,6 +1573,9 @@ void Mod_LoadAliasModelTexture (char *identifier, int flags, int *gl_texnum, int
 {
 	char	loadpath[64];
 
+	if (!gl_externaltextures_models.value)
+		return;
+
 	Q_snprintfz (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
 	*gl_texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, flags);
 	if (*gl_texnum)

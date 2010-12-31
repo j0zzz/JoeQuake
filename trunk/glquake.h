@@ -215,6 +215,7 @@ extern	cvar_t	gl_decal_explosions;
 
 extern	cvar_t	gl_externaltextures_world;
 extern	cvar_t	gl_externaltextures_bmodels;
+extern	cvar_t	gl_externaltextures_models;
 
 extern	int	lightmode;
 
