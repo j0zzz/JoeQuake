@@ -917,7 +917,7 @@ void R_DrawAliasModel (entity_t *ent)
 			extern int player_32bit_skins[14];
 			extern qboolean player_32bit_skins_loaded;
 
-			if (clmodel->modhint == MOD_PLAYER && player_32bit_skins_loaded)
+			if (clmodel->modhint == MOD_PLAYER && player_32bit_skins_loaded && gl_externaltextures_models.value)
 			{
 				texture = player_32bit_skins[cl.scores[i-1].colors / 16];
 			}
