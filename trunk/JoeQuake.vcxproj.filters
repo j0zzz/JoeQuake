@@ -390,6 +390,9 @@
     <ClCompile Include="zone.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
+    <ClCompile Include="gl_fakegl.c">
+      <Filter>Source Files\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="adivtab.h">
@@ -556,6 +559,9 @@
     </ClInclude>
     <ClInclude Include="zone.h">
       <Filter>Header Files\Misc_h</Filter>
+    </ClInclude>
+    <ClInclude Include="fakegl.h">
+      <Filter>Header Files\OpenGL_h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

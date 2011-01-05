@@ -508,7 +508,11 @@ void GL_EndRendering (void)
 			wglSwapIntervalEXT (vid_vsync.value ? 1 : 0);
 		update_vsync = false;
 
+#ifdef USEFAKEGL
+		FakeSwapBuffers ();
+#else
 		SwapBuffers (maindc);
+#endif
 	}
 
 	// handle the mouse state when windowed if that's changed
