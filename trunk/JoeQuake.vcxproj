@@ -121,7 +121,7 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>.\scitech\lib\win32\vc\mgllt.lib;.\dxsdk\sdk\lib\dxguid.lib;wsock32.lib;winmm.lib;libpng.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>.\release_sw\joequake.exe</OutputFile>
+      <OutputFile>.\..\..\..\joequake.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -172,7 +172,7 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>.\dxsdk\lib\dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>.\release_gl\joequake-gl.exe</OutputFile>
+      <OutputFile>.\..\..\..\joequake-gl.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -223,7 +223,7 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>.\dxsdk\lib\dxguid.lib;.\dxsdk\lib\d3d8.lib;.\dxsdk\lib\d3dx8.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>.\release_d3d\joequake-d3d.exe</OutputFile>
+      <OutputFile>.\..\..\..\joequake-d3d.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -275,7 +275,7 @@
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>.\dxsdk\lib\dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <OutputFile>D:\Games\Quake\joequake-gl-DEV.exe</OutputFile>
+      <OutputFile>.\..\..\..\joequake-gl-DEV.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
