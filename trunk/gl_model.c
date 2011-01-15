@@ -1630,7 +1630,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 				pheader->texels[i] = texels - (byte *)pheader;
 				memcpy (texels, (byte *)(pskintype + 1), size);
 
-				// try to load all 14 colorful player suits if loading the original or view weapon player model
+				// try to load all 14 colorful player suits if loading the original player model
 				if (loadmodel->modhint == MOD_PLAYER)
 				{
 					int c;
@@ -2051,12 +2051,17 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		 !strcmp(mod->name, "progs/end2.md3") ||
 		 !strcmp(mod->name, "progs/end3.md3") ||
 		 !strcmp(mod->name, "progs/end4.md3") ||
+	// weapons
 		 !strcmp(mod->name, "progs/g_shot.md3")	||
 		 !strcmp(mod->name, "progs/g_nail.md3")	||
 		 !strcmp(mod->name, "progs/g_nail2.md3") ||
 		 !strcmp(mod->name, "progs/g_rock.md3")	||
 		 !strcmp(mod->name, "progs/g_rock2.md3") ||
-		 !strcmp(mod->name, "progs/g_light.md3"))
+		 !strcmp(mod->name, "progs/g_light.md3") ||
+	// hipnotic weapons
+		 !strcmp(mod->name, "progs/g_hammer.md3") ||
+		 !strcmp(mod->name, "progs/g_laserg.md3") ||
+		 !strcmp(mod->name, "progs/g_prox.md3"))
 		mod->flags |= EF_ROTATE;
 	else if (!strcmp(mod->name, "progs/h_player.md3") ||
 		 !strcmp(mod->name, "progs/gib1.md3") ||
@@ -2075,7 +2080,18 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		 !strcmp(mod->name, "progs/v_nail.md3")	||
 		 !strcmp(mod->name, "progs/v_nail2.md3") ||
 		 !strcmp(mod->name, "progs/v_rock.md3")	||
-		 !strcmp(mod->name, "progs/v_rock2.md3"))
+		 !strcmp(mod->name, "progs/v_rock2.md3") ||
+	// hipnotic weapons
+		 !strcmp(mod->name, "progs/v_laserg.md3") ||
+		 !strcmp(mod->name, "progs/v_prox.md3") ||
+	// rogue weapons
+		 !strcmp(mod->name, "progs/v_grpple.md3") ||	// ?
+		 !strcmp(mod->name, "progs/v_lava.md3") ||
+		 !strcmp(mod->name, "progs/v_lava2.md3") ||
+		 !strcmp(mod->name, "progs/v_multi.md3") ||
+		 !strcmp(mod->name, "progs/v_multi2.md3") ||
+		 !strcmp(mod->name, "progs/v_plasma.md3") ||	// ?
+		 !strcmp(mod->name, "progs/v_star.md3"))		// ?
 		mod->modhint = MOD_WEAPON;
 	else if (!strcmp(mod->name, "progs/quaddama.md3"))
 		mod->modhint = MOD_QUAD;
@@ -2100,6 +2116,8 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		Sys_Error ("Mod_LoadQ3Model: %s has wrong version number (%i should be %i)", mod->name, version, MD3_VERSION);
 
 // endian-adjust all data
+	header->flags = LittleLong (header->flags);
+
 	header->numframes = LittleLong (header->numframes);
 	if (header->numframes < 1)
 		Sys_Error ("Mod_LoadQ3Model: model %s has no frames", mod->name);
@@ -2277,6 +2295,8 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 	VectorCopy (md3bboxmins, mod->mins);
 	VectorCopy (md3bboxmaxs, mod->maxs);
 	mod->radius = radiusmax;
+
+	mod->flags |= header->flags;
 
 // load the animation frames if loading the player model
 	if (!strcmp(mod->name, cl_modelnames[mi_q3legs]))
