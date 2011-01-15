@@ -721,9 +721,9 @@ void CL_RelinkEntities (void)
 			 ent->modelindex == cl_modelindex[mi_gib3] || Model_isHead(ent->modelindex)))
 			continue;
 
+		// remove sprites if needed
 		if (ent->modelindex == cl_modelindex[mi_explo1] || ent->modelindex == cl_modelindex[mi_explo2])
 		{
-			// software removal of sprites
 			if (r_explosiontype.value == 2 || r_explosiontype.value == 3)
 				continue;
 #ifdef GLQUAKE
@@ -887,7 +887,7 @@ void CL_RelinkEntities (void)
 			{
 				dlighttype_t lighttype = lt_default;
 
-				if (i == cl.viewentity)
+				if (i == cl.viewentity || ent->model->modhint == MOD_PLAYER)
 				{
 					if ((cl.items & IT_QUAD) && (cl.items & IT_INVULNERABILITY))
 						lighttype = lt_redblue;
