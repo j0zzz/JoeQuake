@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #endif
 
-#define	IMAGE_MAX_DIMENSIONS	4096
+#define	IMAGE_MAX_DIMENSIONS	8192
 
 int	image_width, image_height;
 

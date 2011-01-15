@@ -54,7 +54,7 @@ extern	byte	color_white[4], color_black[4];
 #define TEX_FULLBRIGHT		16
 #define	TEX_BRIGHTEN		32
 
-#define	MAX_GLTEXTURES	1024
+#define	MAX_GLTEXTURES	2048
 
 void GL_SelectTexture (GLenum target);
 void GL_DisableMultitexture (void);

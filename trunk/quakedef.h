@@ -73,8 +73,8 @@ void VID_UnlockBuffer (void);
 // per-level limits
 #define	MAX_EDICTS		2048
 #define	MAX_LIGHTSTYLES	64
-#define	MAX_MODELS		256		// these are sent over the net as bytes
-#define	MAX_SOUNDS		256		// so they cannot be blindly increased
+#define	MAX_MODELS		512		// these are sent over the net as bytes
+#define	MAX_SOUNDS		512		// so they cannot be blindly increased
 
 #define	SAVEGAME_COMMENT_LENGTH	39
 
