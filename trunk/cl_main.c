@@ -887,7 +887,7 @@ void CL_RelinkEntities (void)
 			{
 				dlighttype_t lighttype = lt_default;
 
-				if (i == cl.viewentity || ent->model->modhint == MOD_PLAYER)
+				if (i == cl.viewentity || ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_PLAYER_DME)
 				{
 					if ((cl.items & IT_QUAD) && (cl.items & IT_INVULNERABILITY))
 						lighttype = lt_redblue;
