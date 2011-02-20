@@ -1054,6 +1054,7 @@ void Host_Init (quakeparms_t *parms)
 	        Neh_DoBindings ();
 
 	R_GetParticleMode ();
+	R_GetDecalsState ();
 #endif
 }
 

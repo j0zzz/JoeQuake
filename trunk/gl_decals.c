@@ -57,6 +57,8 @@ static	int		r_numdecals;
 
 static	plane_t	leftPlane, rightPlane, bottomPlane, topPlane, backPlane, frontPlane;
 
+qboolean use_decals;
+
 cvar_t	gl_decaltime = {"gl_decaltime", "12"};
 cvar_t	gl_decal_viewdistance = {"gl_decal_viewdistance", "1024"};
 
@@ -564,7 +566,7 @@ void R_DrawDecals (void)
 		scale = (p->die - cl.time) < 0.5 ? 2 * (p->die - cl.time) : 1;
 		if (p->texture == decal_q3blood)
 		{
-			glColor4f (0.7 * dcolor * scale, 0, 0, dcolor * scale);
+			glColor4f (0.47 * dcolor * scale, 0, 0, dcolor * scale);
 		}
 		else
 		{
@@ -600,4 +602,31 @@ void R_DrawDecals (void)
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glDepthMask (GL_TRUE);
 	glShadeModel (GL_FLAT);
+}
+
+void R_GetDecalsState (void)
+{
+	use_decals = gl_decal_explosions.value || gl_decal_blood.value || gl_decal_bullets.value || gl_decal_sparks.value;
+}
+
+/*
+===============
+R_ToggleDecals_f
+
+function that turns on/off the use of decals
+===============
+*/
+void R_ToggleDecals_f (void)
+{
+	if (cmd_source != src_command)
+		return;
+
+	use_decals = !use_decals;
+	Cvar_SetValue (&gl_decal_explosions, use_decals);
+	Cvar_SetValue (&gl_decal_blood, use_decals);
+	Cvar_SetValue (&gl_decal_bullets, use_decals);
+	Cvar_SetValue (&gl_decal_sparks, use_decals);
+
+	if (key_dest != key_menu)
+		Con_Printf ("Decals are %sdisplayed\n", use_decals ? "" : "not ");
 }

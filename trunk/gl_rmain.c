@@ -2381,10 +2381,12 @@ R_Init
 void R_Init (void)
 {	
 	void R_ToggleParticles_f (void);
+	void R_ToggleDecals_f (void);
 
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);
 	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
 	Cmd_AddCommand ("toggleparticles", R_ToggleParticles_f);
+	Cmd_AddCommand ("toggledecals", R_ToggleDecals_f);
 	Cmd_AddCommand ("set_interpolated_weapon", Set_Interpolated_Weapon_f);
 
 	Cvar_Register (&r_lightmap);

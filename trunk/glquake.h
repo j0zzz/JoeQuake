@@ -124,6 +124,8 @@ extern	qboolean	qmb_initialized;
 
 void R_GetParticleMode (void);
 
+void R_GetDecalsState (void);
+
 //====================================================
 
 extern	entity_t	r_worldentity;

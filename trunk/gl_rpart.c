@@ -225,7 +225,7 @@ static byte *ColorForParticle (part_type_t type)
 
 	case p_q3blood:
 	case p_q3blood_trail:
-		color[0] = 180;
+		color[0] = 120;
 		color[1] = color[2] = 0;
 		break;
 
@@ -2050,7 +2050,7 @@ char *R_NameForParticleMode (void)
 ===============
 R_ToggleParticles_f
 
-function that toggles between classic and QMB particles
+function that toggles between classic, QMB and Quake3 style particles
 ===============
 */
 void R_ToggleParticles_f (void)
