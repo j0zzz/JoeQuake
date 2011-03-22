@@ -319,11 +319,13 @@ extern	trivertx_t	*poseverts[MAXALIASFRAMES];
 ==============================================================================
 */
 
+#define	MAXMD3PATH	64
+
 typedef struct
 {
 	int			ident;
 	int			version;
-	char		name[MAX_QPATH];
+	char		name[MAXMD3PATH];
 	int			flags;
 	int			numframes;
 	int			numtags;
@@ -345,7 +347,7 @@ typedef struct
 
 typedef struct
 {
-	char		name[MAX_QPATH];
+	char		name[MAXMD3PATH];
 	vec3_t		pos;
 	vec3_t		rot[3];
 } md3tag_t;
@@ -353,7 +355,7 @@ typedef struct
 typedef struct
 {
 	int			ident;
-	char		name[MAX_QPATH];
+	char		name[MAXMD3PATH];
 	int			flags;
 	int			numframes;
 	int			numshaders;
@@ -368,13 +370,13 @@ typedef struct
 
 typedef struct
 {
-	char		name[MAX_QPATH];
+	char		name[MAXMD3PATH];
 	int			index;
 } md3shader_t;
 
 typedef struct
 {
-	char		name[MAX_QPATH];
+	char		name[MAXMD3PATH];
 	int			index;
 	int			gl_texnum, fb_texnum;
 } md3shader_mem_t;
@@ -406,11 +408,11 @@ typedef struct
 #define	MD3_XYZ_SCALE	(1.0 / 64)
 
 #define	MAXMD3FRAMES	1024
-#define	MAXMD3TAGS	16
-#define	MAXMD3SURFS	32
+#define	MAXMD3TAGS		16
+#define	MAXMD3SURFS		32
 #define	MAXMD3SHADERS	256
-#define	MAXMD3VERTS	4096
-#define	MAXMD3TRIS	8192
+#define	MAXMD3VERTS		4096
+#define	MAXMD3TRIS		8192
 
 typedef struct animdata_s
 {

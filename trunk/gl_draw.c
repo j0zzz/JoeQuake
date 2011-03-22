@@ -1754,7 +1754,7 @@ static qboolean CheckTextureLoaded (int mode)
 
 byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int mode)
 {
-	char	basename[MAX_QPATH], name[MAX_QPATH];
+	char	basename[256], name[256];
 	byte	*c, *data;
 	FILE	*f;
 

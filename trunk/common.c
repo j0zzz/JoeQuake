@@ -1085,7 +1085,7 @@ typedef struct
 
 char	com_gamedir[MAX_OSPATH];
 char	com_basedir[MAX_OSPATH];
-char	com_gamedirname[MAX_QPATH];
+char	com_gamedirname[MAX_OSPATH];
 
 searchpath_t	*com_base_searchpaths;	// without id1 and its packs
 

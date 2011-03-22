@@ -1993,7 +1993,7 @@ Mod_LoadQ3ModelTexture
 */
 void Mod_LoadQ3ModelTexture (char *identifier, int flags, int *gl_texnum, int *fb_texnum)
 {
-	char	loadpath[64];
+	char	loadpath[256];
 
 	Q_snprintfz (loadpath, sizeof(loadpath), "textures/q3models/%s", identifier);
 	*gl_texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, flags);
@@ -2009,6 +2009,21 @@ void Mod_LoadQ3ModelTexture (char *identifier, int flags, int *gl_texnum, int *f
 	}
 }
 
+qboolean Mod_IsTransparentSurface (md3surface_t *surf)
+{
+	if (strstr(surf->name, "energy") ||
+		strstr(surf->name, "f_") ||
+		strstr(surf->name, "flare") ||
+		strstr(surf->name, "flash") ||
+		strstr(surf->name, "Sphere") ||
+		strstr(surf->name, "telep") ||
+	   !strcmp(surf->name, "bolt"))
+	{
+		return true;
+	}
+
+	return false;
+}
 /*
 =================
 Mod_LoadQ3Model
@@ -2017,7 +2032,7 @@ Mod_LoadQ3Model
 void Mod_LoadQ3Model (model_t *mod, void *buffer)
 {
 	int			i, j, size, base, texture_flag, version, gl_texnum, fb_texnum, numskinsfound;
-	char		basename[MAX_QPATH], pathname[MAX_QPATH], **skinsfound;
+	char		basename[MAXMD3PATH], pathname[MAXMD3PATH], **skinsfound;
 	float		radiusmax;
 	md3header_t	*header;
 	md3frame_t	*frame;
@@ -2035,6 +2050,10 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		mod->flags |= EF_ROCKET;
 	else if (!strcmp(mod->name, "progs/grenade.md3"))
 		mod->flags |= EF_GRENADE;
+	else if (!strcmp(mod->name, "progs/bolt.md3") ||
+		 !strcmp(mod->name, "progs/bolt2.md3") ||
+		 !strcmp(mod->name, "progs/bolt3.md3"))
+		mod->modhint = MOD_THUNDERBOLT;
 	else if (!strcmp(mod->name, "progs/invulner.md3") ||
 		 !strcmp(mod->name, "progs/suit.md3") ||
 		 !strcmp(mod->name, "progs/invisibl.md3") ||
@@ -2129,9 +2148,7 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		Sys_Error ("Mod_LoadQ3Model: model %s has too many tags", mod->name);
 
 	header->numsurfs = LittleLong (header->numsurfs);
-	if (header->numsurfs < 1)
-		Sys_Error ("Mod_LoadQ3Model: model %s has no surfaces", mod->name);
-	else if (header->numsurfs > MAXMD3SURFS)
+	if (header->numsurfs > MAXMD3SURFS)
 		Sys_Error ("Mod_LoadQ3Model: model %s has too many surfaces", mod->name);
 
 	header->numskins = LittleLong (header->numskins);
@@ -2253,8 +2270,8 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 	skinsfound = (char **)Q_malloc (numskinsfound * sizeof(char *));
 	for (i = 0 ; i < numskinsfound ; i++)
 	{
-		skinsfound[i] = Q_malloc (MAX_QPATH);
-		Q_snprintfz (skinsfound[i], MAX_QPATH, "%s/%s", pathname, filelist[i].name);
+		skinsfound[i] = Q_malloc (MAX_OSPATH);
+		Q_snprintfz (skinsfound[i], MAX_OSPATH, "%s/%s", pathname, filelist[i].name);
 	}
 
 // allocate extra size for structures different in memory
@@ -2307,12 +2324,7 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 	surf = (md3surface_t *)((byte *)header + header->ofssurfs);
 	for (i = 0 ; i < header->numsurfs; i++)
 	{
-		if (strstr(surf->name, "energy") ||
-			strstr(surf->name, "f_") ||
-			strstr(surf->name, "flare") ||
-			strstr(surf->name, "flash") ||
-			strstr(surf->name, "Sphere") ||
-			strstr(surf->name, "telep"))
+		if (Mod_IsTransparentSurface(surf))
 		{
 			mod->flags |= EF_Q3TRANS;
 		}
@@ -2365,7 +2377,7 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 			if (mod->modhint == MOD_Q3TELEPORT)
 				Q_strncpyz (basename, "teleportEffect2", sizeof(basename));
 			else
-				COM_StripExtension (COM_SkipPath(memshader[j].name), basename);
+				COM_StripExtension (memshader[j].name, basename);
 
 			gl_texnum = fb_texnum = 0;
 			Mod_LoadQ3ModelTexture (basename, texture_flag, &gl_texnum, &fb_texnum);

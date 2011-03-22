@@ -1308,7 +1308,6 @@ void R_ReplaceQ3Frame (int frame)
 	oldlegsanim = legsanim;
 }
 
-int			multimodel_level;
 qboolean	surface_transparent;
 
 /*
@@ -1537,17 +1536,15 @@ void R_DrawQ3Shadow (entity_t *ent, float lheight, float s1, float c1, trace_t d
 	tag += ent->pose2 * pmd3hdr->numtags;
 	for (i = 0 ; i < pmd3hdr->numtags ; i++, tag++)
 	{
-		if (multimodel_level == 0 && !strcmp(tag->name, "tag_torso"))
+		if (ent->modelindex == cl_modelindex[mi_q3legs] && !strcmp(tag->name, "tag_torso"))
 		{
 			tagent = &q3player_body;
 			ent = &q3player_body.ent;
-			multimodel_level++;
 		}
-		else if (multimodel_level == 1 && !strcmp(tag->name, "tag_head"))
+		else if (ent->modelindex == cl_modelindex[mi_q3torso] && !strcmp(tag->name, "tag_head"))
 		{
 			tagent = &q3player_head;
 			ent = &q3player_head.ent;
-			multimodel_level++;
 		}
 		else
 		{
@@ -1591,6 +1588,7 @@ void R_SetupQ3Frame (entity_t *ent)
 	md3tag_t	*tag;
 	model_t		*clmodel = ent->model;
 	tagentity_t	*tagent;
+	extern qboolean Mod_IsTransparentSurface (md3surface_t *surf);
 
 	if (!strcmp(clmodel->name, cl_modelnames[mi_q3legs]))
 		frame = legsframe;
@@ -1612,13 +1610,7 @@ void R_SetupQ3Frame (entity_t *ent)
 		{
 			md3shader_mem_t	*shader;
 
-			surface_transparent = ( strstr(pmd3surf->name, "energy") ||
-									strstr(pmd3surf->name, "f_") ||
-									strstr(pmd3surf->name, "flare") ||
-									strstr(pmd3surf->name, "flash") ||
-									strstr(pmd3surf->name, "Sphere") ||
-									strstr(pmd3surf->name, "telep"));
-
+			surface_transparent = Mod_IsTransparentSurface(pmd3surf);
 			if ((!i && surface_transparent) || (i && !surface_transparent))
 			{
 				pmd3surf = (md3surface_t *)((byte *)pmd3surf + pmd3surf->ofsend);
@@ -1686,17 +1678,37 @@ void R_SetupQ3Frame (entity_t *ent)
 	tag += frame * pmd3hdr->numtags;
 	for (i = 0 ; i < pmd3hdr->numtags ; i++, tag++)
 	{
-		if (multimodel_level == 0 && !strcmp(tag->name, "tag_torso"))
+		if (ent->modelindex == cl_modelindex[mi_q3legs] && !strcmp(tag->name, "tag_torso"))
 		{
 			tagent = &q3player_body;
 			ent = &q3player_body.ent;
-			multimodel_level++;
 		}
-		else if (multimodel_level == 1 && !strcmp(tag->name, "tag_head"))
+		else if (ent->modelindex == cl_modelindex[mi_q3torso] && !strcmp(tag->name, "tag_head"))
 		{
 			tagent = &q3player_head;
 			ent = &q3player_head.ent;
-			multimodel_level++;
+		}
+		else if ((ent->modelindex == cl_modelindex[mi_q3head] || ent->model->modhint == MOD_WEAPON) && 
+				 !strcmp(tag->name, "tag_weapon"))
+		{
+			int gwep_modelindex, vwep_modelindex;
+			extern void GetViewWeaponModel(int *, int *);
+
+			tagent = &q3player_weapon;
+			ent = &q3player_weapon.ent;
+			
+			GetViewWeaponModel(&gwep_modelindex, &vwep_modelindex);
+			if (gwep_modelindex != -1)
+			{
+				ent->model = cl.model_precache[cl_modelindex[gwep_modelindex]];
+				ent->modelindex = cl_modelindex[gwep_modelindex];
+			}
+			else
+			{
+				//FIXME
+				ent->model = cl.viewent.model;
+				ent->modelindex = cl.viewent.modelindex;
+			}
 		}
 		else
 		{
@@ -1729,8 +1741,12 @@ void R_DrawQ3Model (entity_t *ent)
 
 	if (ent->angles[0] || ent->angles[1] || ent->angles[2])
 	{
-		if (R_CullSphere(ent->origin, clmodel->radius))
-			return;
+		// don't remove empty Q3 hand-weapon models
+		if (clmodel->modhint != MOD_WEAPON)
+		{
+			if (R_CullSphere(ent->origin, clmodel->radius))
+				return;
+		}
 	}
 	else
 	{
@@ -1777,7 +1793,6 @@ void R_DrawQ3Model (entity_t *ent)
 		ent->noshadow = true;
 	}
 
-	multimodel_level = 0;
 	R_SetupQ3Frame (ent);
 
 	glShadeModel (GL_FLAT);
@@ -1827,7 +1842,6 @@ void R_DrawQ3Model (entity_t *ent)
 			glStencilOp (GL_KEEP, GL_KEEP, GL_INCR);
 		}
 
-		multimodel_level = 0;
 		R_DrawQ3Shadow (ent, lheight, s1, c1, downtrace);
 
 		glDepthMask (GL_TRUE);

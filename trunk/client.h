@@ -305,7 +305,7 @@ int CL_NextDemo (void);
 extern	int		cl_numvisedicts;
 extern	entity_t *cl_visedicts[MAX_VISEDICTS];
 
-extern	tagentity_t	q3player_body, q3player_head;
+extern	tagentity_t	q3player_body, q3player_head, q3player_weapon;
 
 char *CL_MapName (void);
 
@@ -317,11 +317,13 @@ typedef	enum modelindex_s {
 	mi_scrag, mi_ogre, mi_fiend, mi_vore, mi_shambler,
 	mi_h_dog, mi_h_soldier, mi_h_enforcer, mi_h_knight, mi_h_hknight, mi_h_scrag,
 	mi_h_ogre, mi_h_fiend, mi_h_vore, mi_h_shambler, mi_h_zombie, mi_h_player,
-	mi_gib1, mi_gib2, mi_gib3, mi_vwplayer, mi_vwplayer_md3, mi_w_shot, mi_w_shot2,
-	mi_w_nail, mi_w_nail2, mi_w_rock, mi_w_rock2, mi_w_light, NUM_MODELINDEX
+	mi_gib1, mi_gib2, mi_gib3, mi_vwplayer, mi_vwplayer_md3,
+	mi_w_shot, mi_w_shot2, mi_w_nail, mi_w_nail2, mi_w_rock, mi_w_rock2, mi_w_light, 
+	mi_g_shot, mi_g_nail, mi_g_nail2, mi_g_rock, mi_g_rock2, mi_g_light,
+	NUM_MODELINDEX
 } modelindex_t;
 
-extern	modelindex_t cl_modelindex[NUM_MODELINDEX];
+extern	int			cl_modelindex[NUM_MODELINDEX];
 extern	char		*cl_modelnames[NUM_MODELINDEX];
 
 // cl_input.c

@@ -945,16 +945,11 @@ void V_CalcViewRoll (void)
 
 void V_AddViewWeapon (float bob)
 {
-	int		i;
+	int			i;
 	vec3_t		forward, right, up;
 	entity_t	*view;
 
 	view = &cl.viewent;
-
-	// angles
-	view->angles[YAW] = r_refdef.viewangles[YAW];
-	view->angles[PITCH] = -r_refdef.viewangles[PITCH];
-	view->angles[ROLL] = r_refdef.viewangles[ROLL];
 
 	// origin
 	AngleVectors (r_refdef.viewangles, forward, right, up);
@@ -964,22 +959,24 @@ void V_AddViewWeapon (float bob)
 
 	V_BoundOffsets ();
 
-	// set up gun position
-	VectorCopy (cl.viewangles, view->angles);
+	// angles
 	CalcGunAngle ();
 
 	VectorCopy (r_refdef.vieworg, view->origin);
 	VectorMA (view->origin, bob * 0.4, forward, view->origin);
 
 	// fudge position around to keep amount of weapon visible roughly equal with different FOV
-	if (scr_viewsize.value == 110)
-		view->origin[2] += 1;
-	else if (scr_viewsize.value == 100)
-		view->origin[2] += 2;
-	else if (scr_viewsize.value == 90)
-		view->origin[2] += 1;
-	else if (scr_viewsize.value == 80)
-		view->origin[2] += 0.5;
+	//if (scr_viewsize.value == 110)
+	//	view->origin[2] += 1;
+	//else if (scr_viewsize.value == 100)
+	//	view->origin[2] += 2;
+	//else if (scr_viewsize.value == 90)
+	//	view->origin[2] += 1;
+	//else if (scr_viewsize.value == 80)
+	//	view->origin[2] += 0.5;
+	
+	// FIXME: better position for quake3 weapon models
+	view->origin[2] -= 4;
 
 	view->model = cl.model_precache[cl.stats[STAT_WEAPON]];
 	view->frame = cl.stats[STAT_WEAPONFRAME];
@@ -1021,7 +1018,7 @@ V_CalcRefdef
 */
 void V_CalcRefdef (void)
 {
-	entity_t	*ent, *view;
+	entity_t	*ent;
 	vec3_t		forward;
 	float		bob;
 
@@ -1029,8 +1026,6 @@ void V_CalcRefdef (void)
 
 	// ent is the player model (visible when out of body)
 	ent = &cl_entities[cl.viewentity];
-	// view is the weapon model (only visible from inside body)
-	view = &cl.viewent;
 	
 	// transform the view offset by the model's matrix to get the offset from
 	// model origin for the view

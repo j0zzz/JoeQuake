@@ -308,8 +308,8 @@ char	*NehDemos[][2] =
 
 #define	NUMNEHDEMOS	(sizeof(NehDemos)/sizeof(NehDemos[0]))
 
-char	demodir[MAX_QPATH] = "";
-char	prevdir[MAX_QPATH] = "";
+char	demodir[MAX_OSPATH] = "";
+char	prevdir[MAX_OSPATH] = "";
 char	searchfile[MAX_FILELENGTH] = "";
 
 static	int	list_cursor = 0, list_base = 0, num_searchs = 0;

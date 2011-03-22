@@ -72,10 +72,10 @@ dlight_t		cl_dlights[MAX_DLIGHTS];
 int				cl_numvisedicts;
 entity_t		*cl_visedicts[MAX_VISEDICTS];
 
-modelindex_t		cl_modelindex[NUM_MODELINDEX];
+int				cl_modelindex[NUM_MODELINDEX];
 char			*cl_modelnames[NUM_MODELINDEX];
 
-tagentity_t		q3player_body, q3player_head;
+tagentity_t		q3player_body, q3player_head, q3player_weapon;
 
 extern qboolean physframe;
 
@@ -567,47 +567,50 @@ qboolean Model_isHead (int modelindex)
 	return false;
 }
 
-int ConvertViewWeaponModel(void)
+void GetViewWeaponModel(int *gwep_modelindex, int *vwep_modelindex)
 {
-	model_t *weaponmodel = cl.viewent.model;
-	int vwep_modelindex;
-
 	switch (cl.stats[STAT_ACTIVEWEAPON])
 	{
 	case IT_SHOTGUN:
-		vwep_modelindex = mi_w_shot;
+		*vwep_modelindex = mi_w_shot;
+		*gwep_modelindex = -1;
 		break;
 
 	case IT_SUPER_SHOTGUN:
-		vwep_modelindex = mi_w_shot2;
+		*vwep_modelindex = mi_w_shot2;
+		*gwep_modelindex = mi_g_shot;
 		break;
 
 	case IT_NAILGUN:
-		vwep_modelindex = mi_w_nail;
+		*vwep_modelindex = mi_w_nail;
+		*gwep_modelindex = mi_g_nail;
 		break;
 
 	case IT_SUPER_NAILGUN:
-		vwep_modelindex = mi_w_nail2;
+		*vwep_modelindex = mi_w_nail2;
+		*gwep_modelindex = mi_g_nail2;
 		break;
 
 	case IT_GRENADE_LAUNCHER:
-		vwep_modelindex = mi_w_rock;
+		*vwep_modelindex = mi_w_rock;
+		*gwep_modelindex = mi_g_rock;
 		break;
 
 	case IT_ROCKET_LAUNCHER:
-		vwep_modelindex = mi_w_rock2;
+		*vwep_modelindex = mi_w_rock2;
+		*gwep_modelindex = mi_g_rock2;
 		break;
 
 	case IT_LIGHTNING:
-		vwep_modelindex = mi_w_light;
+		*vwep_modelindex = mi_w_light;
+		*gwep_modelindex = mi_g_light;
 		break;
 
 	default:
-		vwep_modelindex = -1;
+		*vwep_modelindex = -1;
+		*gwep_modelindex = -1;
 		break;
 	}
-
-	return vwep_modelindex;
 }
 
 qboolean r_loadviewweapons = false;
@@ -620,7 +623,7 @@ CL_RelinkEntities
 */
 void CL_RelinkEntities (void)
 {
-	int			i, j, vwep_modelindex, num_vweps;
+	int			i, j, vwep_modelindex, gwep_modelindex, num_vweps;
 	float		frac, f, d, bobjrotate;
 	vec3_t		delta, oldorg;
 	entity_t	*ent;
@@ -1029,8 +1032,8 @@ void CL_RelinkEntities (void)
 			cl_visedicts[cl_numvisedicts++] = ent;
 
 		// view weapon support
-		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && 
-			r_loadviewweapons && (vwep_modelindex = ConvertViewWeaponModel()) != -1)
+		GetViewWeaponModel(&vwep_modelindex, &gwep_modelindex);
+		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && r_loadviewweapons && (vwep_modelindex != -1))
 		{
 			entity_t *vwepent = &view_weapons[num_vweps++], *player = ent;
 
@@ -1047,8 +1050,9 @@ void CL_RelinkEntities (void)
 			VectorCopy (player->angles, vwepent->angles);
 
 			vwepent->model = cl.model_precache[cl_modelindex[vwep_modelindex]];
-			vwepent->efrag = player->efrag;
+			vwepent->modelindex = cl_modelindex[vwep_modelindex];
 
+			vwepent->efrag = player->efrag;
 			vwepent->frame = player->frame;
 			vwepent->syncbase = player->syncbase;
 			vwepent->colormap = player->colormap;
@@ -1061,7 +1065,6 @@ void CL_RelinkEntities (void)
 			vwepent->trivial_accept = player->trivial_accept;
 			vwepent->topnode = player->topnode;
 
-			vwepent->modelindex = cl_modelindex[vwep_modelindex];
 			VectorCopy (player->trail_origin, vwepent->trail_origin);
 			vwepent->traildrawn = player->traildrawn;
 			vwepent->noshadow = player->noshadow;
@@ -1168,9 +1171,18 @@ void CL_CopyPlayerInfo (entity_t *ent, entity_t *player)
 	memcpy (ent->msg_angles, player->msg_angles, sizeof(ent->msg_angles));
 	VectorCopy (player->angles, ent->angles);
 
-	ent->model = (ent == &q3player_body.ent) ? cl.model_precache[cl_modelindex[mi_q3torso]] : cl.model_precache[cl_modelindex[mi_q3head]];
-	ent->efrag = player->efrag;
+	if (ent == &q3player_body.ent)
+	{
+		ent->model = cl.model_precache[cl_modelindex[mi_q3torso]];
+		ent->modelindex = cl_modelindex[mi_q3torso];
+	}
+	else if (ent == &q3player_head.ent)
+	{
+		ent->model = cl.model_precache[cl_modelindex[mi_q3head]];
+		ent->modelindex = cl_modelindex[mi_q3head];
+	}
 
+	ent->efrag = player->efrag;
 	ent->frame = player->frame;
 	ent->syncbase = player->syncbase;
 	ent->colormap = player->colormap;
@@ -1183,7 +1195,6 @@ void CL_CopyPlayerInfo (entity_t *ent, entity_t *player)
 	ent->trivial_accept = player->trivial_accept;
 	ent->topnode = player->topnode;
 
-	ent->modelindex = (ent == &q3player_body.ent) ? cl_modelindex[mi_q3torso] : cl_modelindex[mi_q3head];
 	VectorCopy (player->trail_origin, ent->trail_origin);
 	ent->traildrawn = player->traildrawn;
 	ent->noshadow = player->noshadow;

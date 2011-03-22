@@ -140,6 +140,12 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_w_rock] = "progs/w_rock.mdl";
 	cl_modelnames[mi_w_rock2] = "progs/w_rock2.mdl";
 	cl_modelnames[mi_w_light] = "progs/w_light.mdl";
+	cl_modelnames[mi_g_shot] = "progs/g_shot.md3";
+	cl_modelnames[mi_g_nail] = "progs/g_nail.md3";
+	cl_modelnames[mi_g_nail2] = "progs/g_nail2.md3";
+	cl_modelnames[mi_g_rock] = "progs/g_rock.md3";
+	cl_modelnames[mi_g_rock2] = "progs/g_rock2.md3";
+	cl_modelnames[mi_g_light] = "progs/g_light.md3";
 
 	for (i = 0 ; i < NUM_MODELINDEX ; i++)
 	{
