@@ -60,6 +60,7 @@ cvar_t	cl_rollangle = {"cl_rollangle", "2.0"};
 cvar_t	cl_bob = {"cl_bob", "0.02"};
 cvar_t	cl_bobcycle = {"cl_bobcycle", "0.6"};
 cvar_t	cl_bobup = {"cl_bobup", "0.5"};
+cvar_t	cl_oldbob = {"cl_oldbob", "0"};
 
 cvar_t	v_kicktime = {"v_kicktime", "0.5"};
 cvar_t	v_kickroll = {"v_kickroll", "0.6"};
@@ -95,6 +96,7 @@ cvar_t	v_dlightcshift = {"v_dlightcshift", "1"};
 cvar_t	v_bonusflash = {"cl_bonusflash", "1"};
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
+float	xyspeed;
 
 
 /*
@@ -127,9 +129,9 @@ V_CalcBob
 */
 float V_CalcBob (void)
 {
-	static	float	bob;
-	float		cycle;
-	
+	float			cycle;
+	static float	bob;
+
 	if (cl_bobcycle.value <= 0)
 		return 0;
 
@@ -140,9 +142,7 @@ float V_CalcBob (void)
 	else
 		cycle = M_PI + M_PI * (cycle - cl_bobup.value) / (1.0 - cl_bobup.value);
 
-// bob is proportional to velocity in the xy plane
-// (don't count Z, or jumping messes it up)
-	bob = sqrt(cl.velocity[0]*cl.velocity[0] + cl.velocity[1]*cl.velocity[1]) * cl_bob.value;
+	bob = xyspeed * cl_bob.value;
 	bob = bob * 0.3 + bob * 0.7 * sin(cycle);
 	bob = bound(-7, bob, 4);
 
@@ -831,6 +831,9 @@ float angledelta (float a)
 	return a;
 }
 
+#define	LAND_DEFLECT_TIME	150
+#define	LAND_RETURN_TIME	300
+
 /*
 ==================
 CalcGunAngle
@@ -838,52 +841,130 @@ CalcGunAngle
 */
 void CalcGunAngle (void)
 {	
-	float		yaw, pitch, move;
-	static	float	oldyaw = 0, oldpitch = 0;
+	float			yaw, pitch, move, scale, fracsin, bobfracsin, delta, landchange;
+	static float	oldyaw = 0, oldpitch = 0, prevbobfracsin1 = 0, prevbobfracsin2 = 0, landtime = 0, topheight = 0, prevtopheight = 0;
+	static int		turnaround = 1;
+	static qboolean oldonground = true;
 
-	yaw = r_refdef.viewangles[YAW];
-	pitch = -r_refdef.viewangles[PITCH];
-
-	yaw = angledelta(yaw - r_refdef.viewangles[YAW]) * 0.4;
-	yaw = bound(-10, yaw, 10);
-
-	pitch = angledelta(-pitch - r_refdef.viewangles[PITCH]) * 0.4;
-	pitch = bound(-10, pitch, 10);
-
-	move = host_frametime * 20;
-	if (yaw > oldyaw)
-	{
-		if (oldyaw + move < yaw)
-			yaw = oldyaw + move;
-	}
-	else
-	{
-		if (oldyaw - move > yaw)
-			yaw = oldyaw - move;
-	}
-	
-	if (pitch > oldpitch)
-	{
-		if (oldpitch + move < pitch)
-			pitch = oldpitch + move;
-	}
-	else
-	{
-		if (oldpitch - move > pitch)
-			pitch = oldpitch - move;
-	}
-	
-	oldyaw = yaw;
-	oldpitch = pitch;
-
-	cl.viewent.angles[PITCH] = -(r_refdef.viewangles[PITCH] + pitch);
-	cl.viewent.angles[YAW] = r_refdef.viewangles[YAW] + yaw;
-// joe: this makes it fix when strafing
+	cl.viewent.angles[PITCH] = -r_refdef.viewangles[PITCH];
+	cl.viewent.angles[YAW] = r_refdef.viewangles[YAW];
 	cl.viewent.angles[ROLL] = r_refdef.viewangles[ROLL];
 
 	cl.viewent.angles[PITCH] -= v_idlescale.value * sin(cl.time * v_ipitch_cycle.value) * v_ipitch_level.value;
 	cl.viewent.angles[YAW] -= v_idlescale.value * sin(cl.time * v_iyaw_cycle.value) * v_iyaw_level.value;
 	cl.viewent.angles[ROLL] -= v_idlescale.value * sin(cl.time * v_iroll_cycle.value) * v_iroll_level.value;
+
+	if (cl_oldbob.value)
+	{
+		yaw = r_refdef.viewangles[YAW];
+		pitch = -r_refdef.viewangles[PITCH];
+
+		yaw = angledelta(yaw - r_refdef.viewangles[YAW]) * 0.4;
+		yaw = bound(-10, yaw, 10);
+
+		pitch = angledelta(-pitch - r_refdef.viewangles[PITCH]) * 0.4;
+		pitch = bound(-10, pitch, 10);
+
+		move = host_frametime * 20;
+		if (yaw > oldyaw)
+		{
+			if (oldyaw + move < yaw)
+				yaw = oldyaw + move;
+		}
+		else
+		{
+			if (oldyaw - move > yaw)
+				yaw = oldyaw - move;
+		}
+	
+		if (pitch > oldpitch)
+		{
+			if (oldpitch + move < pitch)
+				pitch = oldpitch + move;
+		}
+		else
+		{
+			if (oldpitch - move > pitch)
+				pitch = oldpitch - move;
+		}
+	
+		oldyaw = yaw;
+		oldpitch = pitch;
+
+		cl.viewent.angles[PITCH] -= pitch;
+		cl.viewent.angles[YAW] -= yaw;
+	}
+	else
+	{
+		if (r_viewmodelsize.value == 2)
+		{
+			return;
+		}
+
+		if (cl.onground)
+		{
+			// on odd legs, invert some angles
+			bobfracsin = fabs(sin((((int)(cl.time * 300)) & 127) / 127.0 * M_PI));
+			if (prevbobfracsin2 >= prevbobfracsin1 && prevbobfracsin1 < bobfracsin)
+			{
+				turnaround = -turnaround;
+			}
+			scale = xyspeed * turnaround;
+
+			// gun angles from bobbing
+			cl.viewent.angles[PITCH] -= xyspeed * bobfracsin * 0.005;
+			cl.viewent.angles[YAW] += scale * bobfracsin * 0.01;
+			cl.viewent.angles[ROLL] += scale * bobfracsin * 0.005;
+			prevbobfracsin2 = prevbobfracsin1;
+			prevbobfracsin1 = bobfracsin;
+		}
+
+		// drop the weapon when landing
+
+		// we just reached ground
+		if (cl.onground != oldonground)
+		{
+			if (cl.onground)
+			{
+				landtime = cl.time;
+				prevtopheight = topheight;
+			}
+			else
+			{
+				topheight = -99999;
+			}
+		}
+	
+		// search for the top height value if not on ground
+		if (!cl.onground && cl.viewent.origin[2] > topheight)
+		{
+			topheight = cl.viewent.origin[2];
+		}
+	
+		// weapon drop amount is the difference between top and actual height
+		landchange = (cl.viewent.origin[2] - prevtopheight) / 5.375;
+		// never drop way too much
+		landchange = max(landchange, -24);
+
+		// count the drop
+		delta = (cl.time - landtime) * 1000;
+		if (delta < LAND_DEFLECT_TIME)
+		{
+			cl.viewent.origin[2] += landchange * 0.25 * delta / LAND_DEFLECT_TIME;
+		}
+		else if (delta < LAND_DEFLECT_TIME + LAND_RETURN_TIME)
+		{
+			cl.viewent.origin[2] += landchange * 0.25 * (LAND_DEFLECT_TIME + LAND_RETURN_TIME - delta) / LAND_RETURN_TIME;
+		}
+		oldonground = cl.onground;
+
+		// idle drift
+		scale = xyspeed + 40;
+		fracsin = sin(cl.time);
+		cl.viewent.angles[PITCH] += scale * fracsin * 0.01;
+		cl.viewent.angles[YAW] += scale * fracsin * 0.01;
+		cl.viewent.angles[ROLL] += scale * fracsin * 0.01;
+	}
 }
 
 /*
@@ -946,37 +1027,32 @@ void V_CalcViewRoll (void)
 void V_AddViewWeapon (float bob)
 {
 	int			i;
+	float		fovOffset;
 	vec3_t		forward, right, up;
 	entity_t	*view;
+	extern cvar_t scr_fov;
 
 	view = &cl.viewent;
 
 	// origin
 	AngleVectors (r_refdef.viewangles, forward, right, up);
 
-	for (i=0 ; i<3 ; i++)
+	for (i = 0; i < 3; i++)
+	{
 		r_refdef.vieworg[i] += scr_ofsx.value * forward[i] + scr_ofsy.value * right[i] + scr_ofsz.value * up[i];
+	}
 
 	V_BoundOffsets ();
-
-	// angles
-	CalcGunAngle ();
 
 	VectorCopy (r_refdef.vieworg, view->origin);
 	VectorMA (view->origin, bob * 0.4, forward, view->origin);
 
-	// fudge position around to keep amount of weapon visible roughly equal with different FOV
-	//if (scr_viewsize.value == 110)
-	//	view->origin[2] += 1;
-	//else if (scr_viewsize.value == 100)
-	//	view->origin[2] += 2;
-	//else if (scr_viewsize.value == 90)
-	//	view->origin[2] += 1;
-	//else if (scr_viewsize.value == 80)
-	//	view->origin[2] += 0.5;
-	
-	// FIXME: better position for quake3 weapon models
-	view->origin[2] -= 4;
+	// angles
+	CalcGunAngle ();
+
+	// drop gun lower at higher fov
+	fovOffset = (scr_fov.value > 90) ? -0.2 * (scr_fov.value - 90) : 0;
+	VectorMA (view->origin, fovOffset, vup, view->origin);
 
 	view->model = cl.model_precache[cl.stats[STAT_WEAPON]];
 	view->frame = cl.stats[STAT_WEAPONFRAME];
@@ -1026,13 +1102,14 @@ void V_CalcRefdef (void)
 
 	// ent is the player model (visible when out of body)
 	ent = &cl_entities[cl.viewentity];
-	
+
 	// transform the view offset by the model's matrix to get the offset from
 	// model origin for the view
 	ent->angles[YAW] = cl.viewangles[YAW];		// the model should face the view dir
 	ent->angles[PITCH] = -cl.viewangles[PITCH];	//
 										
-	bob = V_CalcBob ();
+	xyspeed = sqrt(cl.velocity[0]*cl.velocity[0] + cl.velocity[1]*cl.velocity[1]);
+	bob = cl_oldbob.value ? V_CalcBob() : 0.0;
 	
 	// set up the refresh position
 	VectorCopy (ent->origin, r_refdef.vieworg);
@@ -1517,9 +1594,11 @@ void V_Init (void)
 
 	Cvar_Register (&cl_rollspeed);
 	Cvar_Register (&cl_rollangle);
+
 	Cvar_Register (&cl_bob);
 	Cvar_Register (&cl_bobcycle);
 	Cvar_Register (&cl_bobup);
+	Cvar_Register (&cl_oldbob);
 
 	Cvar_Register (&v_kicktime);
 	Cvar_Register (&v_kickroll);
