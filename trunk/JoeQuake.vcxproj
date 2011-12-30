@@ -13,8 +13,8 @@
       <Configuration>GL Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
+    <ProjectConfiguration Include="Software Release|Win32">
+      <Configuration>Software Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Software Debug|Win32">
@@ -41,7 +41,7 @@
     <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -66,7 +66,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
@@ -77,13 +77,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.21006.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\release_sw\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">.\release_sw\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">.\debug_sw\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\release_sw\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">.\release_sw\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">.\debug_sw\</IntDir>
-    <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">*.asm;*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;$(TargetPath)</ExtensionsToDeleteOnClean>
+    <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">*.asm;*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;$(TargetPath)</ExtensionsToDeleteOnClean>
     <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">*.asm;*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;$(TargetPath)</ExtensionsToDeleteOnClean>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">.\release_gl\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">.\release_d3d\</OutDir>
@@ -98,7 +98,7 @@
     <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">*.asm;*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;$(TargetPath)</ExtensionsToDeleteOnClean>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</LinkIncremental>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">
     <Midl>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MkTypLibCompatible>true</MkTypLibCompatible>
@@ -372,54 +372,54 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gl_decals.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_draw.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_fakegl.c" />
     <ClCompile Include="gl_mesh.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_model.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_refrag.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_rlight.c">
       <OmitFramePointers Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</OmitFramePointers>
       <OmitFramePointers Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</OmitFramePointers>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_rmain.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_rmisc.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_rpart.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_rsurf.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_screen.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_warp.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="cd_win.c" />
@@ -574,11 +574,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="vid_common_gl.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="vid_wgl.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="vid_win.c">
@@ -614,7 +614,7 @@
     <ClCompile Include="movie.c" />
     <ClCompile Include="movie_avi.c" />
     <ClCompile Include="nehahra.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="sbar.c" />
@@ -710,7 +710,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -720,7 +720,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="d_draw16.s">
@@ -746,7 +746,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -756,7 +756,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="d_parta.s">
@@ -782,7 +782,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -792,7 +792,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="d_polysa.s">
@@ -818,7 +818,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -828,7 +828,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="d_scana.s">
@@ -854,7 +854,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -864,7 +864,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="d_spr8.s">
@@ -890,7 +890,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -900,7 +900,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="d_varsa.s">
@@ -926,7 +926,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -936,7 +936,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="math.s">
@@ -959,7 +959,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -969,7 +969,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="r_aclipa.s">
@@ -995,7 +995,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1005,7 +1005,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="r_aliasa.s">
@@ -1031,7 +1031,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1041,7 +1041,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="r_drawa.s">
@@ -1067,7 +1067,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1077,7 +1077,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="r_edgea.s">
@@ -1103,7 +1103,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1113,7 +1113,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="r_varsa.s">
@@ -1139,7 +1139,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1149,7 +1149,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="snd_mixa.s">
@@ -1172,7 +1172,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1182,7 +1182,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="surf8.s">
@@ -1208,7 +1208,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1218,7 +1218,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="sys_x86.s">
@@ -1241,7 +1241,7 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1251,7 +1251,7 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="worlda.s">
@@ -1277,9 +1277,9 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+      <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp

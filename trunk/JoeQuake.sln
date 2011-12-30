@@ -19,8 +19,8 @@ Global
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.GL Release|Win32.Build.0 = GL Release|Win32
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Debug|Win32.ActiveCfg = Software Debug|Win32
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Debug|Win32.Build.0 = Software Debug|Win32
-		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Release|Win32.ActiveCfg = Release|Win32
-		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Release|Win32.Build.0 = Release|Win32
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Release|Win32.ActiveCfg = Software Release|Win32
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Release|Win32.Build.0 = Software Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
