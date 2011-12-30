@@ -204,10 +204,14 @@ typedef struct
 #include "server.h"
 
 #ifdef GLQUAKE
+
 #include "gl_model.h"
+
 #else
+
 #include "r_model.h"
 #include "d_iface.h"
+
 #endif
 
 #include "input.h"
@@ -222,8 +226,20 @@ typedef struct
 #include "image.h"
 
 #ifdef GLQUAKE
+
 #include "glquake.h"
 #include "nehahra.h"
+
+#else
+
+#ifdef _WIN32
+#pragma warning (disable : 4244)     // MIPS
+#pragma warning (disable : 4136)     // X86
+#pragma warning (disable : 4051)     // ALPHA
+
+#include <windows.h>
+#endif
+
 #endif
 
 #include "iplog.h"

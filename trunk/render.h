@@ -66,6 +66,8 @@ typedef struct entity_s
 	vec3_t	trail_origin;
 	qboolean traildrawn;
 
+	vec3_t	oldorigin;
+
 #ifdef GLQUAKE
 	qboolean noshadow;
 
@@ -86,8 +88,6 @@ typedef struct entity_s
 	float	smokepuff_time;
 
 	qboolean istransparent;
-
-	vec3_t	oldorigin;
 #endif
 } entity_t;
 

@@ -1069,6 +1069,7 @@ void CL_RelinkEntities (void)
 
 			VectorCopy (player->trail_origin, vwepent->trail_origin);
 			vwepent->traildrawn = player->traildrawn;
+#ifdef GLQUAKE
 			vwepent->noshadow = player->noshadow;
 
 			vwepent->frame_start_time = player->frame_start_time;
@@ -1088,6 +1089,7 @@ void CL_RelinkEntities (void)
 			vwepent->transparency = player->transparency;
 			vwepent->smokepuff_time = player->smokepuff_time;
 			vwepent->istransparent = player->istransparent;
+#endif
 
 			if (cl_numvisedicts < MAX_VISEDICTS)
 			{

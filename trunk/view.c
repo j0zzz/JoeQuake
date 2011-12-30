@@ -896,6 +896,9 @@ void CalcGunAngle (void)
 	}
 	else
 	{
+#ifndef GLQUAKE
+		extern cvar_t r_drawviewmodel;
+#endif
 		if (r_drawviewmodel.value == 2)
 		{
 			return;

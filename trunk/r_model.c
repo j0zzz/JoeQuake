@@ -1750,3 +1750,13 @@ void Mod_Print (void)
 		Con_Printf ("\n");
 	}
 }
+
+/*
+================
+Mod_IsPlayerModel
+================
+*/
+qboolean Mod_IsAnyKindOfPlayerModel(model_t *mod)
+{
+	return mod ? mod->modhint == MOD_PLAYER || mod->modhint == MOD_PLAYER_DME : false;
+}
