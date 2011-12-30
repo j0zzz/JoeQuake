@@ -1757,6 +1757,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 		 !strcmp(mod->name, "progs/v_nail2.mdl") ||
 		 !strcmp(mod->name, "progs/v_rock.mdl") ||
 		 !strcmp(mod->name, "progs/v_rock2.mdl") ||
+		 !strcmp(mod->name, "progs/v_light.mdl") ||
 	// hipnotic weapons
 		 !strcmp(mod->name, "progs/v_laserg.mdl") ||
 		 !strcmp(mod->name, "progs/v_prox.mdl") ||
@@ -2100,6 +2101,7 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		 !strcmp(mod->name, "progs/v_nail2.md3") ||
 		 !strcmp(mod->name, "progs/v_rock.md3")	||
 		 !strcmp(mod->name, "progs/v_rock2.md3") ||
+		 !strcmp(mod->name, "progs/v_light.md3") ||
 	// hipnotic weapons
 		 !strcmp(mod->name, "progs/v_laserg.md3") ||
 		 !strcmp(mod->name, "progs/v_prox.md3") ||
@@ -2324,7 +2326,8 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 	surf = (md3surface_t *)((byte *)header + header->ofssurfs);
 	for (i = 0 ; i < header->numsurfs; i++)
 	{
-		if (Mod_IsTransparentSurface(surf))
+		// some flash models have empty surface names, so we need to assume by filename
+		if (Mod_IsTransparentSurface(surf) || strstr(mod->name, "flash"))
 		{
 			mod->flags |= EF_Q3TRANS;
 		}

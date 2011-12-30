@@ -917,18 +917,18 @@ void CL_RelinkEntities (void)
 			}
 
 			if (model->flags & EF_GIB)
-				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, BIG_BLOOD_TRAIL);
+				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ent->oldorigin, BIG_BLOOD_TRAIL);
 			else if (model->flags & EF_ZOMGIB)
-				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, BLOOD_TRAIL);
+				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ent->oldorigin, BLOOD_TRAIL);
 			else if (model->flags & EF_TRACER)
-				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, TRACER1_TRAIL);
+				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ent->oldorigin, TRACER1_TRAIL);
 			else if (model->flags & EF_TRACER2)
-				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, TRACER2_TRAIL);
+				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ent->oldorigin, TRACER2_TRAIL);
 			else if (model->flags & EF_ROCKET)
 			{
 				if (model->modhint == MOD_LAVABALL)
 				{
-					R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, LAVA_TRAIL);
+					R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ent->oldorigin, LAVA_TRAIL);
 
 					dl = CL_AllocDlight (i);
 					VectorCopy (ent->origin, dl->origin);
@@ -942,7 +942,7 @@ void CL_RelinkEntities (void)
 				{
 					// R_RocketTrail _must_ run in QMB, even if rockettrail is 0
 					if (r_rockettrail.value)
-						R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ROCKET_TRAIL);
+						R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ent->oldorigin, ROCKET_TRAIL);
 
 					if (r_rocketlight.value)
 					{
@@ -975,15 +975,15 @@ void CL_RelinkEntities (void)
 #ifdef GLQUAKE
 				if (ent->transparency == -1 && cl.time >= ent->smokepuff_time)
 				{
-					R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, NEHAHRA_SMOKE);
+					R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ent->oldorigin, NEHAHRA_SMOKE);
 					ent->smokepuff_time = cl.time + 0.14;
 				}
 				else
 #endif
-					R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, GRENADE_TRAIL);
+					R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ent->oldorigin, GRENADE_TRAIL);
 			}
 			else if (model->flags & EF_TRACER3)
-				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, VOOR_TRAIL);
+				R_RocketTrail (oldorg, ent->origin, &ent->trail_origin, ent->oldorigin, VOOR_TRAIL);
 		}
 
 #ifdef GLQUAKE
@@ -1014,7 +1014,7 @@ void CL_RelinkEntities (void)
 					VectorCopy (ent->trail_origin, oldorg);
 				}
 
-				QMB_RocketTrail (oldorg, ent->origin, &ent->trail_origin, BUBBLE_TRAIL);
+				QMB_RocketTrail (oldorg, ent->origin, &ent->trail_origin, NULL, BUBBLE_TRAIL);
 			}
 		}
 #endif
@@ -1027,6 +1027,8 @@ void CL_RelinkEntities (void)
 		// nehahra support
 		if (ent->effects & EF_NODRAW)
 			continue;
+
+		VectorCopy(ent->origin, ent->oldorigin);
 
 		if (cl_numvisedicts < MAX_VISEDICTS)
 			cl_visedicts[cl_numvisedicts++] = ent;

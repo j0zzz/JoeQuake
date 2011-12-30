@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 qboolean	r_loadq3player = false;
 
+tagentity_t q3player_weapon_flash;
+
 void CL_CopyPlayerInfo (entity_t *ent, entity_t *player);
 
 void R_InitOtherTextures (void)
@@ -267,6 +269,8 @@ void R_NewMap (void)
 		CL_CopyPlayerInfo (&q3player_head.ent, &cl_entities[cl.viewentity]);
 		memset (&q3player_weapon, 0, sizeof(tagentity_t));
 		CL_CopyPlayerInfo (&q3player_weapon.ent, &cl_entities[cl.viewentity]);
+		memset (&q3player_weapon_flash, 0, sizeof(tagentity_t));
+		CL_CopyPlayerInfo (&q3player_weapon_flash.ent, &cl_entities[cl.viewentity]);
 	}
 }
 

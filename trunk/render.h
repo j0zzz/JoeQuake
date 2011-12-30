@@ -86,6 +86,8 @@ typedef struct entity_s
 	float	smokepuff_time;
 
 	qboolean istransparent;
+
+	vec3_t	oldorigin;
 #endif
 } entity_t;
 
@@ -160,7 +162,7 @@ typedef enum trail_type_s
 
 void R_ParseParticleEffect (void);
 void R_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count);
-void R_RocketTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type_t type);
+void R_RocketTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, vec3_t oldorigin, trail_type_t type);
 
 void R_EntityParticles (entity_t *ent);
 void R_BlobExplosion (vec3_t org);

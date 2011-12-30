@@ -1012,11 +1012,11 @@ void R_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count)
 #endif
 }
 
-void R_RocketTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type_t type)
+void R_RocketTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, vec3_t oldorigin, trail_type_t type)
 {
 #ifdef GLQUAKE
 	if (qmb_initialized && gl_part_trails.value)
-		QMB_RocketTrail (start, end, trail_origin, type);
+		QMB_RocketTrail (start, end, trail_origin, oldorigin, type);
 	else
 #endif
 		Classic_RocketTrail (start, end, trail_origin, type);

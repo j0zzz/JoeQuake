@@ -225,8 +225,8 @@ static byte *ColorForParticle (part_type_t type)
 
 	case p_q3blood:
 	case p_q3blood_trail:
-		color[0] = 120;
-		color[1] = color[2] = 0;
+		color[0] = 122;
+		color[1] = color[2] = 25;
 		break;
 
 	case p_flame:
@@ -522,23 +522,6 @@ static void QMB_UpdateParticles (void)
 			switch (pt->move)
 			{
 			case pm_static:
-			/*	VectorCopy (p->org, oldorg);
-				VectorMA (p->org, frametime, p->vel, p->org);
-				TraceLineN (oldorg, p->org, stop, normal);
-				if (stop != p->org && VectorLength(stop) != 0)
-				{
-					vec3_t	tangent;
-
-					VectorCopy (stop, p->org);
-					VectorCopy (normal, p->vel);
-					CrossProduct (normal, p->vel, tangent);
-					if (pt->id == p_q3explosion && gl_decal_explosions.value)
-						R_SpawnDecal (p->org, normal, tangent, decal_burn, 32);
-					else if (pt->id == p_q3gunshot && gl_decal_bullets.value)
-						R_SpawnDecal (p->org, normal, tangent, decal_mark, 10);
-				}
-				VectorCopy (oldorg, p->org);
-				VectorClear (p->vel);*/
 				break;
 
 			case pm_normal:
@@ -596,8 +579,6 @@ static void QMB_UpdateParticles (void)
 							R_SpawnDecal (p->org, normal, tangent, decal_blood1, 12);
 						else if (pt->id == p_blood2 && gl_decal_blood.value)
 							R_SpawnDecal (p->org, normal, tangent, decal_blood2, 12);
-						else if (pt->id == p_q3blood_trail && gl_decal_blood.value)
-							R_SpawnDecal (p->org, normal, tangent, decal_q3blood, 48);
 					}
 					VectorCopy (oldorg, p->org);
 					VectorClear (p->vel);
@@ -1349,6 +1330,10 @@ void QMB_ParticleExplosion (vec3_t org)
 		if (gl_part_explosions.value == 2)
 		{
 			AddParticle (p_q3explosion, org, 1, 36, 0.2, NULL, zerodir);
+			if (gl_decal_explosions.value)
+			{
+				R_SpawnDecalStatic (org, decal_burn, 70);
+			}
 		}
 		else
 		{
@@ -1365,6 +1350,10 @@ void QMB_ParticleExplosion (vec3_t org)
 		if (gl_part_explosions.value == 2)
 		{
 			AddParticle (p_q3explosion, org, 1, 36, 0.2, NULL, zerodir);
+			if (gl_decal_explosions.value)
+			{
+				R_SpawnDecalStatic (org, decal_burn, 70);
+			}
 		}
 		else
 		{
@@ -1453,8 +1442,8 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count)
 
 	switch (count)
 	{
-	case 9:
-	case 10:
+	case 9:		// nailgun
+	case 10:	//
 		if (nehahra && count == 10)	// ventillation's wind
 		{
 			for (i = 0 ; i < count ; i++)
@@ -1471,22 +1460,33 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count)
 		else
 		{
 			if (gl_part_spikes.value == 2)
+			{
 				AddParticle (p_q3gunshot, org, 1, 1, 0.3, NULL, zerodir);
+			}
 			else
+			{
 				AddParticle (p_spark, org, 6, 70, 0.6, NULL, zerodir);
-
+			}
 			if (gl_decal_bullets.value)
-				R_SpawnDecalStatic (org, decal_mark, 8);
+			{
+				R_SpawnDecalStatic (org, decal_mark, 15);
+			}
 		}
 		break;
 
-	case 20:
+	case 20:	// super nailgun
 		if (gl_part_spikes.value == 2)
+		{
 			AddParticle (p_q3gunshot, org, 1, 1, 0.3, NULL, zerodir);
+		}
 		else
+		{
 			AddParticle (p_spark, org, 12, 85, 0.6, NULL, zerodir);
+		}
 		if (gl_decal_bullets.value)
-			R_SpawnDecalStatic (org, decal_mark, 10);
+		{
+			R_SpawnDecalStatic (org, decal_mark, 20);
+		}
 		break;
 
 	case 21:	// gunshot
@@ -1508,7 +1508,9 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count)
 			}
 		}
 		if (gl_decal_bullets.value)
-			R_SpawnDecalStatic (org, decal_mark, 8);
+		{
+			R_SpawnDecalStatic (org, decal_mark, 15);
+		}
 		break;
 
 	case 30:
@@ -1520,6 +1522,10 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count)
 		{
 			AddParticle (p_chunk, org, 10, 1, 4, NULL, zerodir);
 			AddParticle (p_spark, org, 8, 105, 0.9, NULL, zerodir);
+		}
+		if (gl_decal_bullets.value)
+		{
+			R_SpawnDecalStatic (org, decal_mark, 15);
 		}
 		break;
 
@@ -1574,10 +1580,10 @@ void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int col, int count)
 	}
 }
 
-void QMB_RocketTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type_t type)
+void QMB_RocketTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, vec3_t oldorigin, trail_type_t type)
 {
 	col_t	color;
-	
+
 	switch (type)
 	{
 	case GRENADE_TRAIL:
@@ -1612,6 +1618,17 @@ void QMB_RocketTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type
 			AddParticleTrail (p_q3blood_trail, start, end, 15, 2, NULL);
 		else
 			AddParticleTrail (p_blood3, start, end, type == BLOOD_TRAIL ? 1.35 : 2.4, 2, NULL);
+		if (gl_decal_blood.value)
+		{
+			int length;
+			vec3_t delta;
+
+			VectorSubtract (oldorigin, end, delta);
+			if ((length = VectorLength(delta)))
+			{
+				R_SpawnDecalStatic (end, decal_q3blood, 48);
+			}
+		}
 		break;
 
 	case TRACER1_TRAIL:
@@ -1917,7 +1934,7 @@ void QMB_LightningBeam (vec3_t start, vec3_t end)
 		{
 			QMB_LightningSplash (neworg);
 			if (gl_decal_sparks.value)
-				R_SpawnDecalStatic (neworg, decal_glow, 10);
+				R_SpawnDecalStatic (neworg, decal_glow, 15);
 		}
 	}
 }

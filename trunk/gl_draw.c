@@ -51,7 +51,7 @@ cvar_t	gl_crosshairalpha = {"crosshairalpha", "1"};
 qboolean OnChange_gl_smoothfont (cvar_t *var, char *string);
 cvar_t gl_smoothfont = {"gl_smoothfont", "1", 0, OnChange_gl_smoothfont};
 
-static qboolean no24bit;
+qboolean draw_no24bit;
 
 byte	*draw_chars;			// 8*8 graphic characters
 mpic_t	*draw_disc;
@@ -621,7 +621,7 @@ void Draw_Init (void)
 	glGetIntegerv (GL_MAX_TEXTURE_SIZE, &gl_max_size_default);
 	Cvar_SetDefault (&gl_max_size, gl_max_size_default);
 
-	no24bit = COM_CheckParm("-no24bit") ? true : false;
+	draw_no24bit = COM_CheckParm("-no24bit") ? true : false;
 
 	// 3dfx can only handle 256 wide textures
 	if (!Q_strncasecmp((char *)gl_renderer, "3dfx", 4) || strstr((char *)gl_renderer, "Glide"))
@@ -1789,7 +1789,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 
 	if (mode & TEX_COMPLAIN)
 	{
-		if (!no24bit)
+		if (!draw_no24bit)
 			Con_Printf ("\x02" "Couldn't load %s image\n", COM_SkipPath(filename));
 	}
 
@@ -1840,7 +1840,7 @@ int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int m
 	byte *data;
 	gltexture_t *gltexture;
 
-	if (no24bit)
+	if (draw_no24bit)
 		return 0;
 
 	if (!identifier)
@@ -1869,7 +1869,7 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 	byte		*data, *src, *dest, *buf;
 	static	mpic_t	pic;
 
-	if (no24bit)
+	if (draw_no24bit)
 		return NULL;
 
 	if (!(data = GL_LoadImagePixels(filename, matchwidth, matchheight, 0)))
@@ -1934,7 +1934,7 @@ int GL_LoadCharsetImage (char *filename, char *identifier)
 	byte		*data, *buf, *dest, *src;
 	qboolean	transparent = false;
 
-	if (no24bit)
+	if (draw_no24bit)
 		return 0;
 
 	if (!(data = GL_LoadImagePixels(filename, 0, 0, 0)))

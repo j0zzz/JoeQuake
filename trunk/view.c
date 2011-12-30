@@ -119,7 +119,7 @@ float V_CalcRoll (vec3_t angles, vec3_t velocity)
 
 	side = (side < cl_rollspeed.value) ? side * cl_rollangle.value / cl_rollspeed.value : cl_rollangle.value;
 
-	return side * sign;	
+	return side * sign;
 }
 
 /*
@@ -842,7 +842,7 @@ CalcGunAngle
 void CalcGunAngle (void)
 {	
 	float			yaw, pitch, move, scale, fracsin, bobfracsin, delta, landchange;
-	static float	oldyaw = 0, oldpitch = 0, prevbobfracsin1 = 0, prevbobfracsin2 = 0, landtime = 0, topheight = 0, prevtopheight = 0;
+	static float	oldyaw = 0, oldpitch = 0, prevbobfracsin1 = 2.0, prevbobfracsin2 = 2.0, landtime = 0, topheight = 0, prevtopheight = 0, bobtime = 0;
 	static int		turnaround = 1;
 	static qboolean oldonground = true;
 
@@ -896,15 +896,17 @@ void CalcGunAngle (void)
 	}
 	else
 	{
-		if (r_viewmodelsize.value == 2)
+		if (r_drawviewmodel.value == 2)
 		{
 			return;
 		}
 
-		if (cl.onground)
+		if (cl.onground && key_dest != key_console)
 		{
 			// on odd legs, invert some angles
-			bobfracsin = fabs(sin((((int)(cl.time * 300)) & 127) / 127.0 * M_PI));
+			bobtime += 0.01388888888888888888888888888889;
+			//Con_Printf("%f\n", bobtime);
+			bobfracsin = fabs(sin((((int)(bobtime * 300)) & 127) / 127.0 * M_PI));
 			if (prevbobfracsin2 >= prevbobfracsin1 && prevbobfracsin1 < bobfracsin)
 			{
 				turnaround = -turnaround;
@@ -915,8 +917,16 @@ void CalcGunAngle (void)
 			cl.viewent.angles[PITCH] -= xyspeed * bobfracsin * 0.005;
 			cl.viewent.angles[YAW] += scale * bobfracsin * 0.01;
 			cl.viewent.angles[ROLL] += scale * bobfracsin * 0.005;
-			prevbobfracsin2 = prevbobfracsin1;
-			prevbobfracsin1 = bobfracsin;
+
+			if (bobfracsin != prevbobfracsin1)
+			{
+				prevbobfracsin2 = prevbobfracsin1;
+				prevbobfracsin1 = bobfracsin;
+			}
+
+			// add angles based on bob
+			r_refdef.viewangles[PITCH] += xyspeed * bobfracsin * 0.002;
+			r_refdef.viewangles[ROLL] += xyspeed * bobfracsin * 0.002 * turnaround;
 		}
 
 		// drop the weapon when landing
@@ -961,7 +971,7 @@ void CalcGunAngle (void)
 		// idle drift
 		scale = xyspeed + 40;
 		fracsin = sin(cl.time);
-		cl.viewent.angles[PITCH] += scale * fracsin * 0.01;
+		cl.viewent.angles[PITCH] -= scale * fracsin * 0.01;
 		cl.viewent.angles[YAW] += scale * fracsin * 0.01;
 		cl.viewent.angles[ROLL] += scale * fracsin * 0.01;
 	}

@@ -105,7 +105,7 @@ void QMB_ClearParticles (void);
 void QMB_DrawParticles (void);
 
 void QMB_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count);
-void QMB_RocketTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type_t type);
+void QMB_RocketTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, vec3_t oldorigin, trail_type_t type);
 void QMB_BlobExplosion (vec3_t org);
 void QMB_ParticleExplosion (vec3_t org);
 void QMB_LavaSplash (vec3_t org);

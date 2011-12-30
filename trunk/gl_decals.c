@@ -170,7 +170,8 @@ void R_SpawnDecal (vec3_t center, vec3_t normal, vec3_t tangent, int tex, int si
 	CrossProduct (normal, tangent, binormal);
 	VectorNormalize (binormal);
 
-	width = RandomMinMax (size * 0.5, size);
+	//width = RandomMinMax (size * 0.5, size);
+	width = size;
 	height = width;
 	depth = width * 0.5;
 	dec->radius = max(max(width, height), depth);
@@ -210,7 +211,7 @@ void R_SpawnDecal (vec3_t center, vec3_t normal, vec3_t tangent, int tex, int si
 	// Clip decal to bsp
 	DecalWalkBsp_R (dec, cl.worldmodel->nodes);
 
-	// This happens when a decal is to far from any surface or the surface is to steeply sloped
+	// This happens when a decal is too far from any surface or the surface is too steeply sloped
 	if (dec->triangleCount == 0)
 	{	// deallocate decal
 		active_decals = dec->next;
@@ -238,7 +239,7 @@ void R_SpawnDecal (vec3_t center, vec3_t normal, vec3_t tangent, int tex, int si
 void R_SpawnDecalStatic (vec3_t org, int tex, int size)
 {
 	int		i;
-	float	frac, bestfrac;
+	qboolean foundimpact;
 	vec3_t	tangent, v, bestorg, normal, bestnormal, org2;
 
 	if (!qmb_initialized)
@@ -247,41 +248,190 @@ void R_SpawnDecalStatic (vec3_t org, int tex, int size)
 	VectorClear (bestorg);
 	VectorClear (bestnormal);
 
-	bestfrac = 10;
-	for (i = 0 ; i < 14 ; i++)
+	//for (i = 0 ; i < 14 ; i++)
+	for (i = 0 ; i < 22 ; i++)
 	{
-		VectorRandom (org2);
-		VectorMA (org, 20, org2, org2);
-		TraceLineN (org, org2, v, normal);
-		frac = 0.5;
-		if (bestfrac > frac)
+		if (i == 0)
 		{
-			bestfrac = frac;
-			VectorCopy (v, bestorg);
-			VectorCopy (normal, bestnormal);
-			CrossProduct (normal, bestnormal, tangent);
+			org2[0] = 1;
+			org2[1] = 0;
+			org2[2] = 0;
+		}
+		else if (i == 1)
+		{
+			org2[0] = -1;
+			org2[1] = 0;
+			org2[2] = 0;
+		}
+		else if (i == 2)
+		{
+			org2[0] = 0;
+			org2[1] = 1;
+			org2[2] = 0;
+		}
+		else if (i == 3)
+		{
+			org2[0] = 0;
+			org2[1] = -1;
+			org2[2] = 0;
+		}
+		else if (i == 4)
+		{
+			org2[0] = 0;
+			org2[1] = 0;
+			org2[2] = 1;
+		}
+		else if (i == 5)
+		{
+			org2[0] = 0;
+			org2[1] = 0;
+			org2[2] = -1;
+		}
+		else if (i == 6)
+		{
+			org2[0] = 1;
+			org2[1] = 1;
+			org2[2] = 0;
+		}
+		else if (i == 7)
+		{
+			org2[0] = -1;
+			org2[1] = 1;
+			org2[2] = 0;
+		}
+		else if (i == 8)
+		{
+			org2[0] = 1;
+			org2[1] = -1;
+			org2[2] = 0;
+		}
+		else if (i == 9)
+		{
+			org2[0] = -1;
+			org2[1] = -1;
+			org2[2] = 0;
+		}
+		else if (i == 10)
+		{
+			org2[0] = 1;
+			org2[1] = 0;
+			org2[2] = 1;
+		}
+		else if (i == 11)
+		{
+			org2[0] = 1;
+			org2[1] = 0;
+			org2[2] = -1;
+		}
+		else if (i == 12)
+		{
+			org2[0] = -1;
+			org2[1] = 0;
+			org2[2] = 1;
+		}
+		else if (i == 13)
+		{
+			org2[0] = -1;
+			org2[1] = 0;
+			org2[2] = -1;
+		}
+		else if (i == 14)
+		{
+			org2[0] = 1;
+			org2[1] = 1;
+			org2[2] = 1;
+		}
+		else if (i == 15)
+		{
+			org2[0] = -1;
+			org2[1] = 1;
+			org2[2] = 1;
+		}
+		else if (i == 16)
+		{
+			org2[0] = 1;
+			org2[1] = -1;
+			org2[2] = 1;
+		}
+		else if (i == 17)
+		{
+			org2[0] = 1;
+			org2[1] = 1;
+			org2[2] = -1;
+		}
+		else if (i == 18)
+		{
+			org2[0] = -1;
+			org2[1] = -1;
+			org2[2] = 1;
+		}
+		else if (i == 19)
+		{
+			org2[0] = -1;
+			org2[1] = 1;
+			org2[2] = -1;
+		}
+		else if (i == 20)
+		{
+			org2[0] = 1;
+			org2[1] = -1;
+			org2[2] = -1;
+		}
+		else if (i == 21)
+		{
+			org2[0] = -1;
+			org2[1] = -1;
+			org2[2] = -1;
 		}
 
-		if (bestnormal && bestorg)
+		//VectorRandom (org2);
+		if (tex == decal_q3blood)	// blood
+		{
+			VectorMA (org, 1, org2, org2);
+		}
+		else if (tex == decal_burn)	// explosion burn
+		{
+			VectorMA (org, 10, org2, org2);
+		}
+		else if (tex == decal_mark)	// gun shots, spike shots
+		{
+			VectorMA (org, 5, org2, org2);
+		}
+		else if (tex == decal_glow)	// lightning burn
+		{
+			VectorMA (org, 1, org2, org2);
+		}
+		foundimpact = TraceLineN (org, org2, v, normal);
+		if (!foundimpact)
 		{
 			continue;
 		}
-		else
-		{
-			VectorNegate (org2, org2);
-			VectorMA (org, 20, org2, org2);
-			TraceLineN (org, org2, v, normal);
-			VectorCopy (v, bestorg);
-			VectorCopy (normal, bestnormal);
-			CrossProduct (normal, bestnormal, tangent);
-		} 
+		VectorCopy (v, bestorg);
+		VectorCopy (normal, bestnormal);
+		CrossProduct (normal, bestnormal, tangent);
+		break;
 
-		if (bestnormal && bestorg)
-			continue;
+		//if (bestnormal && bestorg)
+		//{
+		//	continue;
+		//}
+		//else
+		//{
+		//	VectorNegate (org2, org2);
+		//	VectorMA (org, 20, org2, org2);
+		//	TraceLineN (org, org2, v, normal);
+		//	VectorCopy (v, bestorg);
+		//	VectorCopy (normal, bestnormal);
+		//	CrossProduct (normal, bestnormal, tangent);
+		//} 
+
+		//if (bestnormal && bestorg)
+		//{
+		//	continue;
+		//}
 	}
 
-	if (bestfrac < 1)	  		
-		R_SpawnDecal (bestorg, bestnormal, tangent, tex, size);
+	R_SpawnDecal (bestorg, bestnormal, tangent, tex, size);
 }
 
 void DecalWalkBsp_R (decal_t *dec, mnode_t *node)
@@ -566,7 +716,7 @@ void R_DrawDecals (void)
 		scale = (p->die - cl.time) < 0.5 ? 2 * (p->die - cl.time) : 1;
 		if (p->texture == decal_q3blood)
 		{
-			glColor4f (0.47 * dcolor * scale, 0, 0, dcolor * scale);
+			glColor4f (0.5 * dcolor * scale, 0.1, 0.1, dcolor * scale);
 		}
 		else
 		{

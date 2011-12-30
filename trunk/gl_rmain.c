@@ -774,6 +774,8 @@ R_SetupInterpolateDistance
 */
 void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *distance)
 {
+	extern qboolean draw_no24bit;
+
 	*distance = INTERP_MAXDIST;
 
 	if (ent->model->modhint == MOD_FLAME)
@@ -782,7 +784,7 @@ void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *dist
 	}
 	else
 	{
-		if (!gl_part_muzzleflash.value)
+		if (!gl_part_muzzleflash.value || draw_no24bit)
 		{
 			char *framename = paliashdr->frames[ent->frame].name;
 
@@ -1586,19 +1588,19 @@ void R_SetupQ3Frame (entity_t *ent)
 	md3header_t	*pmd3hdr;
 	md3surface_t *pmd3surf;
 	md3tag_t	*tag;
-	model_t		*clmodel = ent->model;
 	tagentity_t	*tagent;
+	entity_t	*newent;
 	extern qboolean Mod_IsTransparentSurface (md3surface_t *surf);
 
-	if (!strcmp(clmodel->name, cl_modelnames[mi_q3legs]))
+	if (!strcmp(ent->model->name, cl_modelnames[mi_q3legs]))
 		frame = legsframe;
-	else if (!strcmp(clmodel->name, cl_modelnames[mi_q3torso]))
+	else if (!strcmp(ent->model->name, cl_modelnames[mi_q3torso]))
 		frame = bodyframe;
 	else
 		frame = ent->frame;
 
 	// locate the proper data
-	pmd3hdr = (md3header_t *)Mod_Extradata (clmodel);
+	pmd3hdr = (md3header_t *)Mod_Extradata(ent->model);
 
 	// draw all the triangles
 
@@ -1610,7 +1612,8 @@ void R_SetupQ3Frame (entity_t *ent)
 		{
 			md3shader_mem_t	*shader;
 
-			surface_transparent = Mod_IsTransparentSurface(pmd3surf);
+			//surface_transparent = Mod_IsTransparentSurface(pmd3surf);
+			surface_transparent = ent->model->flags & EF_Q3TRANS;
 			if ((!i && surface_transparent) || (i && !surface_transparent))
 			{
 				pmd3surf = (md3surface_t *)((byte *)pmd3surf + pmd3surf->ofsend);
@@ -1681,12 +1684,12 @@ void R_SetupQ3Frame (entity_t *ent)
 		if (ent->modelindex == cl_modelindex[mi_q3legs] && !strcmp(tag->name, "tag_torso"))
 		{
 			tagent = &q3player_body;
-			ent = &q3player_body.ent;
+			newent = &q3player_body.ent;
 		}
 		else if (ent->modelindex == cl_modelindex[mi_q3torso] && !strcmp(tag->name, "tag_head"))
 		{
 			tagent = &q3player_head;
-			ent = &q3player_head.ent;
+			newent = &q3player_head.ent;
 		}
 		else if ((ent->modelindex == cl_modelindex[mi_q3head] || ent->model->modhint == MOD_WEAPON) && 
 				 !strcmp(tag->name, "tag_weapon"))
@@ -1695,20 +1698,39 @@ void R_SetupQ3Frame (entity_t *ent)
 			extern void GetViewWeaponModel(int *, int *);
 
 			tagent = &q3player_weapon;
-			ent = &q3player_weapon.ent;
+			newent = &q3player_weapon.ent;
 			
 			GetViewWeaponModel(&gwep_modelindex, &vwep_modelindex);
 			if (gwep_modelindex != -1)
 			{
-				ent->model = cl.model_precache[cl_modelindex[gwep_modelindex]];
-				ent->modelindex = cl_modelindex[gwep_modelindex];
+				newent->model = cl.model_precache[cl_modelindex[gwep_modelindex]];
+				newent->modelindex = cl_modelindex[gwep_modelindex];
 			}
 			else
 			{
-				//FIXME
-				ent->model = cl.viewent.model;
-				ent->modelindex = cl.viewent.modelindex;
+				continue;
 			}
+		}
+		else if ((ent->modelindex == cl_modelindex[mi_g_shot] || ent->modelindex == cl_modelindex[mi_g_nail] || 
+				  ent->modelindex == cl_modelindex[mi_g_nail2] || ent->modelindex == cl_modelindex[mi_g_rock] || 
+				  ent->modelindex == cl_modelindex[mi_g_rock2] || ent->modelindex == cl_modelindex[mi_g_light]) && 
+				  !strncmp(tag->name, "tag_flash", 9))
+		{
+			model_t *flashmodel;
+			char basemodelname[64], *flashname;
+			extern tagentity_t q3player_weapon_flash;
+
+			COM_StripExtension(ent->model->name, basemodelname);
+			flashname = strchr(tag->name, '_');
+			flashmodel = Mod_ForName(va("%s%s.md3", basemodelname, flashname), false);
+			if (!flashmodel)
+			{
+				continue;
+			}
+
+			tagent = &q3player_weapon_flash;
+			newent = &q3player_weapon_flash.ent;
+			newent->model = flashmodel;
 		}
 		else
 		{
@@ -1718,7 +1740,7 @@ void R_SetupQ3Frame (entity_t *ent)
 		glPushMatrix ();
 		R_RotateForTagEntity (tagent, tag, m);
 		glMultMatrixf (m);
-		R_SetupQ3Frame (ent);
+		R_SetupQ3Frame (newent);
 		glPopMatrix ();
 	}
 }
