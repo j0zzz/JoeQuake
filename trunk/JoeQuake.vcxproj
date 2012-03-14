@@ -147,6 +147,7 @@
       <ProgramDatabaseFile>.\release_sw\joequake.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <SetChecksum>true</SetChecksum>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">
@@ -204,6 +205,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
     <PostBuildEvent>
       <Command>copy D:\Games\Quake\joequake-DEV.exe D:\Games\Quake\src\JoeQuake\TEST\joequake.exe</Command>

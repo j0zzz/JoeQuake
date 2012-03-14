@@ -61,6 +61,8 @@ cvar_t	cl_bob = {"cl_bob", "0.02"};
 cvar_t	cl_bobcycle = {"cl_bobcycle", "0.6"};
 cvar_t	cl_bobup = {"cl_bobup", "0.5"};
 cvar_t	cl_oldbob = {"cl_oldbob", "0"};
+cvar_t	cl_oldgunposition = {"cl_oldgunposition", "0"};
+cvar_t	cl_hand = {"cl_hand", "0"};
 
 cvar_t	v_kicktime = {"v_kicktime", "0.5"};
 cvar_t	v_kickroll = {"v_kickroll", "0.6"};
@@ -320,7 +322,8 @@ qboolean V_CheckGamma (void)
 }
 #endif // GLQUAKE
 
-float	damagetime = 0, damagecount;
+double	damagetime = 0, damagecount;
+vec3_t	damage_screen_pos;
 
 /*
 ===============
@@ -329,7 +332,7 @@ V_ParseDamage
 */
 void V_ParseDamage (void)
 {
-	int		i, armor, blood;
+	int			i, armor, blood;
 	float		side, fraction;
 	vec3_t		from, forward, right, up;
 	entity_t	*ent;
@@ -342,7 +345,10 @@ void V_ParseDamage (void)
 	damagecount = blood * 0.5 + armor * 0.5;
 	if (damagecount < 10)
 		damagecount = 10;
-	damagetime = cl.time;		// joe: for Q3 on-screen damage splash
+
+	damagetime = cl.time;														// joe: for Q3 on-screen damage splash
+	damage_screen_pos[0] = (vid.width >> 2) + (rand() % (vid.width >> 1));		//
+	damage_screen_pos[1] = (vid.height >> 2) + (rand() % (vid.height >> 1));	//
 
 	cl.faceanimtime = cl.time + 0.2;	// put sbar face into pain frame
 
@@ -1064,8 +1070,11 @@ void V_AddViewWeapon (float bob)
 	CalcGunAngle ();
 
 	// drop gun lower at higher fov
-	fovOffset = (scr_fov.value > 90) ? -0.2 * (scr_fov.value - 90) : 0;
-	VectorMA (view->origin, fovOffset, vup, view->origin);
+	if (!cl_oldgunposition.value)
+	{
+		fovOffset = (scr_fov.value > 90) ? -0.2 * (scr_fov.value - 90) : 0;
+		VectorMA (view->origin, fovOffset, vup, view->origin);
+	}
 
 	view->model = cl.model_precache[cl.stats[STAT_WEAPON]];
 	view->frame = cl.stats[STAT_WEAPONFRAME];
@@ -1161,7 +1170,7 @@ void V_CalcRefdef (void)
 
 	V_AddViewWeapon (bob);
 
-	if (chase_active.value)
+	if (cl_thirdperson.value)
 		Chase_Update ();
 }
 
@@ -1612,11 +1621,12 @@ void V_Init (void)
 	Cvar_Register (&cl_bobcycle);
 	Cvar_Register (&cl_bobup);
 	Cvar_Register (&cl_oldbob);
+	Cvar_Register (&cl_oldgunposition);
+	Cvar_Register (&cl_hand);
 
 	Cvar_Register (&v_kicktime);
 	Cvar_Register (&v_kickroll);
 	Cvar_Register (&v_kickpitch);	
-	
 	Cvar_Register (&v_gunkick);
 
 	Cvar_Register (&v_bonusflash);

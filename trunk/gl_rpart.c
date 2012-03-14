@@ -893,7 +893,22 @@ void QMB_DrawParticles (void)
 
 		case pd_q3teleport:
 			for (p = pt->start ; p ; p = p->next)
-				QMB_Q3Teleport (p->org, (float)p->color[3] / 255.0);
+			{
+				float alpha = (float)p->color[3] / 255.0;
+
+				if (gl_part_telesplash.value == 3)
+				{
+					if (cl.time < p->die - ((p->die - p->start) / 2.0))
+					{
+						alpha = 1.0;
+					}
+					else
+					{
+						alpha = (p->die - cl.time) / ((p->die - p->start) / 2.0);
+					}
+				}
+				QMB_Q3Teleport (p->org, alpha);
+			}
 			break;
 
 		default:
@@ -1769,7 +1784,7 @@ void QMB_TeleportSplash (vec3_t org)
 	vec3_t	neworg, angle;
 	col_t	color;
 
-	if (gl_part_telesplash.value == 2)
+	if (gl_part_telesplash.value == 2 || gl_part_telesplash.value == 3)
 	{
 		AddParticle (p_q3teleport, org, 1, 1, 1.0, NULL, zerodir);
 		return;
@@ -1970,15 +1985,24 @@ void QMB_Q3Gunshot (vec3_t org, int skinnum, float alpha)
 void QMB_Q3Teleport (vec3_t org, float alpha)
 {
 	entity_t	*ent;
-	extern model_t *cl_q3teleport_mod;
+	extern model_t *cl_q3teleport_mod, *cl_qlteleport_mod;
 
 	if (!(ent = CL_NewTempEntity()))
 		return;
 
 	VectorCopy (org, ent->origin);
-	if (!cl_q3teleport_mod)
-		cl_q3teleport_mod = Mod_ForName ("progs/telep.md3", true);
-	ent->model = cl_q3teleport_mod;
+	if (gl_part_telesplash.value == 2)
+	{
+		if (!cl_q3teleport_mod)
+			cl_q3teleport_mod = Mod_ForName ("progs/telep.md3", true);
+		ent->model = cl_q3teleport_mod;
+	}
+	else if (gl_part_telesplash.value == 3)
+	{
+		if (!cl_qlteleport_mod)
+			cl_qlteleport_mod = Mod_ForName ("progs/pop.md3", true);
+		ent->model = cl_qlteleport_mod;
+	}
 	ent->transparency = alpha;
 	ent->istransparent = true;
 

@@ -41,6 +41,7 @@ mpic_t		*sb_faces[5][2];	// 0 is dead, 1-4 are alive
 mpic_t		*sb_face_invis;
 mpic_t		*sb_face_quad;
 mpic_t		*sb_face_invuln;
+mpic_t		*sb_face_invuln_quad;
 mpic_t		*sb_face_invis_invuln;
 
 qboolean	sb_showscores;
@@ -250,6 +251,7 @@ void Sbar_Init (void)
 	sb_face_invuln = Draw_PicFromWad ("face_invul2");
 	sb_face_invis_invuln = Draw_PicFromWad ("face_inv2");
 	sb_face_quad = Draw_PicFromWad ("face_quad");
+	sb_face_invuln_quad = Draw_PicFromWad ("face_invul1");
 
 	Cvar_Register (&scr_centersbar);
 
@@ -891,6 +893,11 @@ void Sbar_DrawFace (void)
 	if ((cl.items & (IT_INVISIBILITY | IT_INVULNERABILITY)) == (IT_INVISIBILITY | IT_INVULNERABILITY))
 	{
 		Sbar_DrawPic (112, 0, sb_face_invis_invuln);
+		return;
+	}
+	if ((cl.items & (IT_QUAD | IT_INVULNERABILITY)) == (IT_QUAD | IT_INVULNERABILITY))
+	{
+		Sbar_DrawPic (112, 0, sb_face_invuln_quad);
 		return;
 	}
 	if (cl.items & IT_QUAD)

@@ -30,7 +30,7 @@ static	vec3_t	playerbeam_end;
 float		ExploColor[3];		// joe: for color mapped explosions
 
 model_t		*cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod, *cl_beam_mod;
-model_t		*cl_q3gunshot_mod, *cl_q3teleport_mod;
+model_t		*cl_q3gunshot_mod, *cl_q3teleport_mod, *cl_qlteleport_mod;
 
 sfx_t		*cl_sfx_wizhit, *cl_sfx_knighthit, *cl_sfx_tink1;
 sfx_t		*cl_sfx_ric1, *cl_sfx_ric2, *cl_sfx_ric3, *cl_sfx_r_exp3;
@@ -59,7 +59,7 @@ CL_ClearTEnts
 void CL_ClearTEnts (void)
 {
 	cl_bolt1_mod = cl_bolt2_mod = cl_bolt3_mod = cl_beam_mod = NULL;
-	cl_q3gunshot_mod = cl_q3teleport_mod = NULL;
+	cl_q3gunshot_mod = cl_q3teleport_mod = cl_qlteleport_mod = NULL;
 
 	memset (&cl_beams, 0, sizeof(cl_beams));
 }
@@ -314,6 +314,8 @@ void CL_ParseTEnt (void)
 #ifdef GLQUAKE
 		if (gl_part_telesplash.value == 2 && !cl_q3teleport_mod)
 			cl_q3teleport_mod = Mod_ForName ("progs/telep.md3", true);
+		else if (gl_part_telesplash.value == 3 && !cl_qlteleport_mod)
+			cl_qlteleport_mod = Mod_ForName ("progs/pop.md3", true);
 #endif
 		R_TeleportSplash (pos);
 		break;

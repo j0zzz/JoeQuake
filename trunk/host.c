@@ -831,7 +831,7 @@ void _Host_Frame (double time)
 	{
 		if (cl_cheatfree)
 		{
-			Cvar_SetValue (&chase_active, 0);
+			Cvar_SetValue (&cl_thirdperson, 0);
 #ifdef GLQUAKE
 			Cvar_SetValue (&r_wateralpha, 1);
 #endif

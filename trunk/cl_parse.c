@@ -140,6 +140,7 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_w_rock] = "progs/w_rock.mdl";
 	cl_modelnames[mi_w_rock2] = "progs/w_rock2.mdl";
 	cl_modelnames[mi_w_light] = "progs/w_light.mdl";
+	cl_modelnames[mi_g_shot0] = "progs/g_shot0.md3";
 	cl_modelnames[mi_g_shot] = "progs/g_shot.md3";
 	cl_modelnames[mi_g_nail] = "progs/g_nail.md3";
 	cl_modelnames[mi_g_nail2] = "progs/g_nail2.md3";
@@ -358,7 +359,7 @@ void CL_ParseServerInfo (void)
 #ifdef GLQUAKE
 		if (gl_loadq3models.value)
 		{
-			if (!strcmp(str, cl_modelnames[mi_player]) && 
+			if ((!strcmp(str, cl_modelnames[mi_player]) || !strcmp(str, cl_modelnames[mi_vwplayer])) && 
 			    COM_FindFile(cl_modelnames[mi_q3head]) && 
 			    COM_FindFile(cl_modelnames[mi_q3torso]) && 
 			    COM_FindFile(cl_modelnames[mi_q3legs]))
@@ -410,7 +411,6 @@ void CL_ParseServerInfo (void)
 		if (nummodels + 6 >= MAX_MODELS)
 		{
 			Con_Printf ("Server sent too many model precaches -> can't load view weapon models\n");
-			Q_strncpyz (model_precache[cl_modelindex[mi_player]], cl_modelnames[mi_player], sizeof(model_precache[cl_modelindex[mi_player]]));
 		}
 		else
 		{
@@ -444,6 +444,13 @@ void CL_ParseServerInfo (void)
 			cl_modelindex[mi_q3torso] = nummodels++;
 			Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_q3head], sizeof(model_precache[nummodels]));
 			cl_modelindex[mi_q3head] = nummodels++;
+
+			// load the md3 shotgun too, if available
+			if (COM_FindFile(cl_modelnames[mi_g_shot0]))
+			{
+				Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_g_shot0], sizeof(model_precache[nummodels]));
+				cl_modelindex[mi_g_shot0] = nummodels++;
+			}
 		}
 	}
 #endif

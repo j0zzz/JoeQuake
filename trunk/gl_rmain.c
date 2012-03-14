@@ -77,7 +77,6 @@ int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 cvar_t	r_drawentities = {"r_drawentities", "1"};
 cvar_t	r_drawviewmodel = {"r_drawviewmodel", "1"};
-cvar_t	r_viewmodelsize = {"r_viewmodelsize", "0.9"};
 cvar_t	r_speeds = {"r_speeds", "0"};
 cvar_t	r_fullbright = {"r_fullbright", "0"};
 cvar_t	r_lightmap = {"r_lightmap", "0"};
@@ -658,7 +657,7 @@ void R_SetupLighting (entity_t *ent)
 		full_light = ent->noshadow = true;
 		return;
 	}
-	else if (clmodel->modhint == MOD_Q3GUNSHOT || clmodel->modhint == MOD_Q3TELEPORT)
+	else if (clmodel->modhint == MOD_Q3GUNSHOT || clmodel->modhint == MOD_Q3TELEPORT || clmodel->modhint == MOD_QLTELEPORT)
 	{
 		ambientlight = 128;
 		shadelight = 0;
@@ -838,6 +837,7 @@ void R_DrawAliasModel (entity_t *ent)
 	aliashdr_t	*paliashdr;
 	model_t		*clmodel = ent->model;
 	qboolean	islumaskin;
+	extern cvar_t cl_oldgunposition, cl_hand;
 
 	VectorAdd (ent->origin, clmodel->mins, mins);
 	VectorAdd (ent->origin, clmodel->maxs, maxs);
@@ -885,9 +885,16 @@ void R_DrawAliasModel (entity_t *ent)
 	}
 	else if (ent == &cl.viewent)
 	{
-		float	scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
+		float scale = 1;
+		int hand_offset = cl_hand.value == 1 ? -3 : cl_hand.value == 2 ? 3 : 0;
 
-		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1] + hand_offset, paliashdr->scale_origin[2]);
+
+		if (cl_oldgunposition.value)
+		{
+			extern cvar_t scr_fov;
+			scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
+		}
 		glScalef (paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
 	}
 	else
@@ -1218,6 +1225,7 @@ void R_RotateForTagEntity (tagentity_t *tagent, md3tag_t *tag, float *m)
 
 int			bodyframe = 0, legsframe = 0;
 animtype_t	bodyanim, legsanim;
+qboolean	player_jumped = false;
 
 void R_ReplaceQ3Frame (int frame)
 {
@@ -1225,6 +1233,7 @@ void R_ReplaceQ3Frame (int frame)
 	static animtype_t oldbodyanim, oldlegsanim;
 	static float	bodyanimtime, legsanimtime;
 	static qboolean	deathanim = false;
+	extern kbutton_t in_jump, in_back, in_left, in_right;
 
 	if (deathanim)
 	{
@@ -1267,6 +1276,27 @@ void R_ReplaceQ3Frame (int frame)
 	else if (frame >= 119)			// axe attacks
 	{
 		bodyanim = torso_attack2;
+	}
+
+	if (player_jumped && cl.onground)
+	{
+		player_jumped = false;
+	}
+
+	if (!deathanim)
+	{
+		if (player_jumped)
+		{
+			legsanim = in_back.state & 3 ? legs_jumpb : legs_jump;
+		}
+		if (in_back.state & 3)
+		{
+			legsanim = legs_back;
+		}
+		else if (in_left.state & 3 || in_right.state & 3)
+		{
+			legsanim = legs_turn;
+		}
 	}
 
 	currbodyanim = &anims[bodyanim];
@@ -1371,7 +1401,7 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 	if (surface_transparent)
 	{
 		glEnable (GL_BLEND);
-		if (clmodel->modhint == MOD_Q3GUNSHOT || clmodel->modhint == MOD_Q3TELEPORT)
+		if (clmodel->modhint == MOD_Q3GUNSHOT || clmodel->modhint == MOD_Q3TELEPORT || clmodel->modhint == MOD_QLTELEPORT)
 			glBlendFunc (GL_SRC_ALPHA, GL_ONE);
 		else
 			glBlendFunc (GL_ONE, GL_ONE);
@@ -1591,6 +1621,7 @@ void R_SetupQ3Frame (entity_t *ent)
 	tagentity_t	*tagent;
 	entity_t	*newent;
 	extern qboolean Mod_IsTransparentSurface (md3surface_t *surf);
+	extern kbutton_t in_attack;
 
 	if (!strcmp(ent->model->name, cl_modelnames[mi_q3legs]))
 		frame = legsframe;
@@ -1691,7 +1722,7 @@ void R_SetupQ3Frame (entity_t *ent)
 			tagent = &q3player_head;
 			newent = &q3player_head.ent;
 		}
-		else if ((ent->modelindex == cl_modelindex[mi_q3head] || ent->model->modhint == MOD_WEAPON) && 
+		else if ((ent->modelindex == cl_modelindex[mi_q3torso] || ent->model->modhint == MOD_WEAPON) &&	// MOD_WEAPON check is needed for hand model tag
 				 !strcmp(tag->name, "tag_weapon"))
 		{
 			int gwep_modelindex, vwep_modelindex;
@@ -1703,18 +1734,27 @@ void R_SetupQ3Frame (entity_t *ent)
 			GetViewWeaponModel(&gwep_modelindex, &vwep_modelindex);
 			if (gwep_modelindex != -1)
 			{
-				newent->model = cl.model_precache[cl_modelindex[gwep_modelindex]];
-				newent->modelindex = cl_modelindex[gwep_modelindex];
+				if (cl_modelindex[gwep_modelindex] != -1)
+				{
+					newent->model = cl.model_precache[cl_modelindex[gwep_modelindex]];
+					newent->modelindex = cl_modelindex[gwep_modelindex];
+				}
+				else
+				{
+					// the model is not precached, so load it just now
+					newent->model = Mod_ForName(cl_modelnames[gwep_modelindex], false);
+				}
 			}
 			else
 			{
 				continue;
 			}
 		}
-		else if ((ent->modelindex == cl_modelindex[mi_g_shot] || ent->modelindex == cl_modelindex[mi_g_nail] || 
-				  ent->modelindex == cl_modelindex[mi_g_nail2] || ent->modelindex == cl_modelindex[mi_g_rock] || 
-				  ent->modelindex == cl_modelindex[mi_g_rock2] || ent->modelindex == cl_modelindex[mi_g_light]) && 
-				  !strncmp(tag->name, "tag_flash", 9))
+		else if ((ent->modelindex == cl_modelindex[mi_g_shot0] || ent->modelindex == cl_modelindex[mi_g_shot] ||
+				  ent->modelindex == cl_modelindex[mi_g_nail] || ent->modelindex == cl_modelindex[mi_g_nail2] || 
+				  ent->modelindex == cl_modelindex[mi_g_rock] || ent->modelindex == cl_modelindex[mi_g_rock2] || 
+				  ent->modelindex == cl_modelindex[mi_g_light]) && 
+				  !strncmp(tag->name, "tag_flash", 9) && (in_attack.state & 3))
 		{
 			model_t *flashmodel;
 			char basemodelname[64], *flashname;
@@ -1754,6 +1794,7 @@ void R_DrawQ3Model (entity_t *ent)
 {
 	vec3_t		mins, maxs, md3_scale_origin = {0, 0, 0};
 	model_t		*clmodel = ent->model;
+	extern cvar_t cl_oldgunposition, cl_hand;
 
 	if (clmodel->modhint == MOD_Q3TELEPORT)
 		ent->origin[2] -= 30;
@@ -1793,14 +1834,25 @@ void R_DrawQ3Model (entity_t *ent)
 
 	if (ent == &cl.viewent)
 	{
-		float	scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
+		int hand_offset = cl_hand.value == 1 ? -3 : cl_hand.value == 2 ? 3 : 0;
+		glTranslatef (md3_scale_origin[0], md3_scale_origin[1] + hand_offset, md3_scale_origin[2]);
 
-		glTranslatef (md3_scale_origin[0], md3_scale_origin[1], md3_scale_origin[2]);
-		glScalef (scale, 1, 1);
+		if (cl_oldgunposition.value)
+		{
+			extern cvar_t scr_fov;
+			float	scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
+
+			glScalef (scale, 1, 1);
+		}
 	}
 	else
 	{
 		glTranslatef (md3_scale_origin[0], md3_scale_origin[1], md3_scale_origin[2]);
+
+		if (clmodel->modhint == MOD_QLTELEPORT)
+		{
+			glRotatef((cl.time - floor(cl.time)) * 360.0, 0, 1, 0);
+		}
 	}
 
 	if (gl_smoothmodels.value)
@@ -2094,7 +2146,7 @@ void R_DrawViewModel (void)
 {
 	currententity = &cl.viewent;
 
-	if (!r_drawviewmodel.value || chase_active.value || !r_drawentities.value || 
+	if (!r_drawviewmodel.value || cl_thirdperson.value || !r_drawentities.value || 
 	    (cl.stats[STAT_HEALTH] <= 0) || !currententity->model)
 		return;
 
@@ -2197,9 +2249,9 @@ R_Q3DamageDraw
 */
 void R_Q3DamageDraw (void)
 {
-	float		scale, halfwidth, halfheight;
-	vec3_t		center;
-	extern float damagetime, damagecount;
+	float		scale, halfwidth;
+	extern double damagetime, damagecount;
+	extern vec3_t damage_screen_pos;
 
 	if (!qmb_initialized || !gl_part_damagesplash.value || damagetime + 0.5 < cl.time)
 	{
@@ -2220,22 +2272,19 @@ void R_Q3DamageDraw (void)
 
 	glPushMatrix ();
 
-	center[0] = vid.width / 2;
-	center[1] = vid.height / 2;
-	scale = 1 + damagecount / 100;
+	scale = 1 + damagecount / 50;
 	halfwidth = vid.width * scale / 2;
-	halfheight = vid.height * scale / 2;
-	glColor4f (1, 1, 1, 0.8 * (damagetime + 0.5 - cl.time));
+	glColor4ub (122, 25, 25, max(0, 200 * (damagetime + 0.5 - cl.time)));
 
 	glBegin (GL_QUADS);
 	glTexCoord2f (0, 0);
-	glVertex2f (center[0] - halfwidth, center[1] - halfheight);
-	glTexCoord2f (0, 1);
-	glVertex2f (center[0] + halfwidth, center[1] - halfheight);
-	glTexCoord2f (1, 1);
-	glVertex2f (center[0] + halfwidth, center[1] + halfheight);
+	glVertex2f (damage_screen_pos[0] - halfwidth, damage_screen_pos[1] - halfwidth);
 	glTexCoord2f (1, 0);
-	glVertex2f (center[0] - halfwidth, center[1] + halfheight);
+	glVertex2f (damage_screen_pos[0] + halfwidth, damage_screen_pos[1] - halfwidth);
+	glTexCoord2f (1, 1);
+	glVertex2f (damage_screen_pos[0] + halfwidth, damage_screen_pos[1] + halfwidth);
+	glTexCoord2f (0, 1);
+	glVertex2f (damage_screen_pos[0] - halfwidth, damage_screen_pos[1] + halfwidth);
 	glEnd ();
 
 	glPopMatrix ();
@@ -2429,7 +2478,6 @@ void R_Init (void)
 	Cvar_Register (&r_fullbright);
 	Cvar_Register (&r_drawentities);
 	Cvar_Register (&r_drawviewmodel);
-	Cvar_Register (&r_viewmodelsize);
 	Cvar_Register (&r_shadows);
 	Cvar_Register (&r_wateralpha);
 	Cvar_Register (&r_dynamic);

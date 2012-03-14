@@ -426,7 +426,7 @@ typedef enum animtype_s
 {
 	both_death1, both_death2, both_death3, both_dead1, both_dead2, both_dead3,
 	torso_attack, torso_attack2, torso_stand, torso_stand2,
-	legs_run, legs_idle,
+	legs_run, legs_back, legs_jump, legs_jumpb, legs_idle, legs_turn,
 	NUM_ANIMTYPES
 } animtype_t;
 
@@ -446,7 +446,7 @@ typedef enum
 {
 	MOD_NORMAL, MOD_PLAYER, MOD_PLAYER_DME, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_WEAPON,
 	MOD_QUAD, MOD_PENT, MOD_LAVABALL, MOD_SPIKE, MOD_SHAMBLER, MOD_SOLDIER,
-	MOD_ENFORCER, MOD_Q3GUNSHOT, MOD_Q3TELEPORT
+	MOD_ENFORCER, MOD_Q3GUNSHOT, MOD_Q3TELEPORT, MOD_QLTELEPORT
 } modhint_t;
 
 #define	EF_ROCKET	1		// leave a trail

@@ -113,7 +113,6 @@ cvar_t	r_waterwarp = {"r_waterwarp", "1"};
 cvar_t	r_fullbright = {"r_fullbright", "0"};
 cvar_t	r_drawentities = {"r_drawentities", "1"};
 cvar_t	r_drawviewmodel = {"r_drawviewmodel", "1"};
-cvar_t	r_viewmodelsize = {"r_viewmodelsize", "0.9"};
 cvar_t	r_aliasstats = {"r_polymodelstats", "0"};
 cvar_t	r_dspeeds = {"r_dspeeds", "0"};
 cvar_t	r_drawflat = {"r_drawflat", "0"};
@@ -194,7 +193,6 @@ void R_Init (void)
 	Cvar_Register (&r_fullbright);
 	Cvar_Register (&r_drawentities);
 	Cvar_Register (&r_drawviewmodel);
-	Cvar_Register (&r_viewmodelsize);
 	Cvar_Register (&r_aliasstats);
 	Cvar_Register (&r_dspeeds);
 	Cvar_Register (&r_reportsurfout);
@@ -605,7 +603,7 @@ void R_DrawViewModel (void)
 
 	currententity = &cl.viewent;
 
-	if (!r_drawviewmodel.value || chase_active.value || !r_drawentities.value || 
+	if (!r_drawviewmodel.value || cl_thirdperson.value || !r_drawentities.value || 
 	    (cl.items & IT_INVISIBILITY) || (cl.stats[STAT_HEALTH] <= 0) || !currententity->model)
 		return;
 

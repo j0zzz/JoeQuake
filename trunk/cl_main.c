@@ -573,7 +573,7 @@ void GetViewWeaponModel(int *gwep_modelindex, int *vwep_modelindex)
 	{
 	case IT_SHOTGUN:
 		*vwep_modelindex = mi_w_shot;
-		*gwep_modelindex = -1;
+		*gwep_modelindex = mi_g_shot0;
 		break;
 
 	case IT_SUPER_SHOTGUN:
@@ -613,6 +613,7 @@ void GetViewWeaponModel(int *gwep_modelindex, int *vwep_modelindex)
 	}
 }
 
+extern qboolean r_loadq3player;
 qboolean r_loadviewweapons = false;
 entity_t view_weapons[MAX_SCOREBOARD];
 
@@ -1021,7 +1022,7 @@ void CL_RelinkEntities (void)
 
 		ent->forcelink = false;
 
-		if (i == cl.viewentity && !chase_active.value)
+		if (i == cl.viewentity && !cl_thirdperson.value)
 			continue;
 
 		// nehahra support
@@ -1034,8 +1035,8 @@ void CL_RelinkEntities (void)
 			cl_visedicts[cl_numvisedicts++] = ent;
 
 		// view weapon support
-		GetViewWeaponModel(&vwep_modelindex, &gwep_modelindex);
-		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && r_loadviewweapons && (vwep_modelindex != -1))
+		GetViewWeaponModel(&gwep_modelindex, &vwep_modelindex);
+		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && r_loadviewweapons && !r_loadq3player && (vwep_modelindex != -1))
 		{
 			entity_t *vwepent = &view_weapons[num_vweps++], *player = ent;
 

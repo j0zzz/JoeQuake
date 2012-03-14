@@ -303,7 +303,7 @@ extern	int	minimum_memory;
 extern	char	*argv0;
 
 // chase
-extern	cvar_t	chase_active;
+extern	cvar_t	cl_thirdperson;
 
 void Chase_Init (void);
 void Chase_Update (void);

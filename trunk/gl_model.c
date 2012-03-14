@@ -1980,9 +1980,17 @@ void Mod_LoadQ3Animation (void)
 	ofs_legs = tmp2.offset - tmp1.offset;
 
 	Mod_GetQ3AnimData (animdata, "LEGS_RUN", &anims[legs_run]);
-	Mod_GetQ3AnimData (animdata, "LEGS_IDLE", &anims[legs_idle]);
 	anims[legs_run].offset -= ofs_legs;
+	Mod_GetQ3AnimData (animdata, "LEGS_BACK", &anims[legs_back]);
+	anims[legs_back].offset -= ofs_legs;
+	Mod_GetQ3AnimData (animdata, "LEGS_JUMP", &anims[legs_jump]);
+	anims[legs_jump].offset -= ofs_legs;
+	Mod_GetQ3AnimData (animdata, "LEGS_JUMPB", &anims[legs_jumpb]);
+	anims[legs_jumpb].offset -= ofs_legs;
+	Mod_GetQ3AnimData (animdata, "LEGS_IDLE", &anims[legs_idle]);
 	anims[legs_idle].offset -= ofs_legs;
+	Mod_GetQ3AnimData (animdata, "LEGS_TURN", &anims[legs_turn]);
+	anims[legs_turn].offset -= ofs_legs;
 
 	Z_Free (animdata);
 }
@@ -2127,6 +2135,8 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		mod->modhint = MOD_Q3GUNSHOT;
 	else if (!strcmp(mod->name, "progs/telep.md3"))
 		mod->modhint = MOD_Q3TELEPORT;
+	else if (!strcmp(mod->name, "progs/pop.md3"))
+		mod->modhint = MOD_QLTELEPORT;
 	else
 		mod->modhint = MOD_NORMAL;
 

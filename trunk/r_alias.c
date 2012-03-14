@@ -312,7 +312,7 @@ void R_AliasSetUpTransform (int trivial_accept)
 	static float	tmatrix[3][4];
 	static float	viewmatrix[3][4];
 	vec3_t		angles;
-	extern	cvar_t	r_viewmodelsize;
+	extern cvar_t cl_oldgunposition;
 
 // TODO: should really be stored with the entity instead of being reconstructed
 // TODO: should use a look-up table
@@ -327,10 +327,10 @@ void R_AliasSetUpTransform (int trivial_accept)
 	tmatrix[1][1] = pmdl->scale[1];
 	tmatrix[2][2] = pmdl->scale[2];
 
-	// joe: from FuhQuake
-	if (currententity == &cl.viewent)
+	if (currententity == &cl.viewent && cl_oldgunposition.value)
 	{
-		float	scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
+		extern cvar_t scr_fov;
+		float	scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
 
 		tmatrix[0][0] *= scale;
 	}
