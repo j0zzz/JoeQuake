@@ -330,6 +330,9 @@ void CL_ParseServerInfo (void)
 	for (i=0 ; i<NUM_MODELINDEX ; i++)
 		cl_modelindex[i] = -1;
 
+	r_loadq3player = false;
+	r_loadviewweapons = false;
+
 	memset (cl.model_precache, 0, sizeof(cl.model_precache));
 	for (nummodels = 1 ; ; nummodels++)
 	{
@@ -359,10 +362,10 @@ void CL_ParseServerInfo (void)
 #ifdef GLQUAKE
 		if (gl_loadq3models.value)
 		{
-			if ((!strncmp(str, cl_modelnames[mi_player], 12) || !strcmp(str, cl_modelnames[mi_vwplayer])) && 
-			    COM_FindFile(cl_modelnames[mi_q3head]) && 
-			    COM_FindFile(cl_modelnames[mi_q3torso]) && 
-			    COM_FindFile(cl_modelnames[mi_q3legs]))
+			if ((!strncmp(str, cl_modelnames[mi_player], 12) || !strcmp(str, cl_modelnames[mi_vwplayer])) &&
+				COM_FindFile(cl_modelnames[mi_q3head]) && 
+				COM_FindFile(cl_modelnames[mi_q3torso]) && 
+				COM_FindFile(cl_modelnames[mi_q3legs]))
 			{
 				Q_strncpyz (tempname, cl_modelnames[mi_q3legs], MAX_QPATH);
 				str = tempname;

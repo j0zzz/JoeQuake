@@ -1042,59 +1042,11 @@ void CL_RelinkEntities (void)
 		GetViewWeaponModel(&gwep_modelindex, &vwep_modelindex);
 		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && r_loadviewweapons && !r_loadq3player && (vwep_modelindex != -1))
 		{
-			entity_t *vwepent = &view_weapons[num_vweps++], *player = ent;
+			entity_t *vwepent = &view_weapons[num_vweps];
+			extern void CL_CopyEntity(entity_t *, entity_t *, int);
 
-			memset (vwepent, 0, sizeof(entity_t));
-
-			vwepent->forcelink = player->forcelink;
-			vwepent->update_type = player->update_type;
-			memcpy (&vwepent->baseline, &player->baseline, sizeof(entity_state_t));
-
-			vwepent->msgtime = player->msgtime;
-			memcpy (vwepent->msg_origins, player->msg_origins, sizeof(vwepent->msg_origins));
-			VectorCopy (player->origin, vwepent->origin);
-			memcpy (vwepent->msg_angles, player->msg_angles, sizeof(vwepent->msg_angles));
-			VectorCopy (player->angles, vwepent->angles);
-
-			vwepent->model = cl.model_precache[cl_modelindex[vwep_modelindex]];
-			vwepent->modelindex = cl_modelindex[vwep_modelindex];
-
-			vwepent->efrag = player->efrag;
-			vwepent->frame = player->frame;
-			vwepent->syncbase = player->syncbase;
-			vwepent->colormap = player->colormap;
-			vwepent->effects = player->effects;
-			vwepent->skinnum = player->skinnum;
-			vwepent->visframe = player->visframe;
-			vwepent->dlightframe = player->dlightframe;
-			vwepent->dlightbits = player->dlightbits;
-
-			vwepent->trivial_accept = player->trivial_accept;
-			vwepent->topnode = player->topnode;
-
-			VectorCopy (player->trail_origin, vwepent->trail_origin);
-			vwepent->traildrawn = player->traildrawn;
-#ifdef GLQUAKE
-			vwepent->noshadow = player->noshadow;
-
-			vwepent->frame_start_time = player->frame_start_time;
-			vwepent->frame_interval = player->frame_interval;
-			vwepent->pose1 = player->pose1;
-			vwepent->pose2 = player->pose2;
-			vwepent->framelerp = player->framelerp;
-
-			vwepent->translate_start_time = player->translate_start_time;
-			VectorCopy (player->origin1, vwepent->origin1);
-			VectorCopy (player->origin2, vwepent->origin2);
-
-			vwepent->rotate_start_time = player->rotate_start_time;
-			VectorCopy (player->angles1, vwepent->angles1);
-			VectorCopy (player->angles2, vwepent->angles2);
-
-			vwepent->transparency = player->transparency;
-			vwepent->smokepuff_time = player->smokepuff_time;
-			vwepent->istransparent = player->istransparent;
-#endif
+			CL_CopyEntity(vwepent, ent, vwep_modelindex);
+			num_vweps++;
 
 			if (cl_numvisedicts < MAX_VISEDICTS)
 			{
@@ -1170,47 +1122,57 @@ void CL_CalcCrouch (void)
 }
 
 #ifdef GLQUAKE
-void CL_CopyPlayerInfo (entity_t *ent, entity_t *player)
+void CL_CopyEntity (entity_t *dst, entity_t *src, int modelindex)
 {
-	memcpy (&ent->baseline, &player->baseline, sizeof(entity_state_t));
+	memset (dst, 0, sizeof(entity_t));
 
-	ent->msgtime = player->msgtime;
-	memcpy (ent->msg_origins, player->msg_origins, sizeof(ent->msg_origins));
-	VectorCopy (player->origin, ent->origin);
-	memcpy (ent->msg_angles, player->msg_angles, sizeof(ent->msg_angles));
-	VectorCopy (player->angles, ent->angles);
+	dst->forcelink = src->forcelink;
+	dst->update_type = src->update_type;
+	memcpy (&dst->baseline, &src->baseline, sizeof(entity_state_t));
 
-	if (ent == &q3player_body.ent)
-	{
-		ent->model = cl.model_precache[cl_modelindex[mi_q3torso]];
-		ent->modelindex = cl_modelindex[mi_q3torso];
-	}
-	else if (ent == &q3player_head.ent)
-	{
-		ent->model = cl.model_precache[cl_modelindex[mi_q3head]];
-		ent->modelindex = cl_modelindex[mi_q3head];
-	}
+	dst->msgtime = src->msgtime;
+	memcpy (dst->msg_origins, src->msg_origins, sizeof(dst->msg_origins));
+	VectorCopy (src->origin, dst->origin);
+	memcpy (dst->msg_angles, src->msg_angles, sizeof(dst->msg_angles));
+	VectorCopy (src->angles, dst->angles);
 
-	ent->efrag = player->efrag;
-	ent->frame = player->frame;
-	ent->syncbase = player->syncbase;
-	ent->colormap = player->colormap;
-	ent->effects = player->effects;
-	ent->skinnum = player->skinnum;
-	ent->visframe = player->visframe;
-	ent->dlightframe = player->dlightframe;
-	ent->dlightbits = player->dlightbits;
+	dst->model = cl.model_precache[cl_modelindex[modelindex]];
+	dst->modelindex = cl_modelindex[modelindex];
 
-	ent->trivial_accept = player->trivial_accept;
-	ent->topnode = player->topnode;
+	dst->efrag = src->efrag;
+	dst->frame = src->frame;
+	dst->syncbase = src->syncbase;
+	dst->colormap = src->colormap;
+	dst->effects = src->effects;
+	dst->skinnum = src->skinnum;
+	dst->visframe = src->visframe;
+	dst->dlightframe = src->dlightframe;
+	dst->dlightbits = src->dlightbits;
 
-	VectorCopy (player->trail_origin, ent->trail_origin);
-	ent->traildrawn = player->traildrawn;
-	ent->noshadow = player->noshadow;
+	dst->trivial_accept = src->trivial_accept;
+	dst->topnode = src->topnode;
 
-	ent->istransparent = player->istransparent;
-	ent->transparency = player->transparency;
-	ent->smokepuff_time = player->smokepuff_time;
+	VectorCopy (src->trail_origin, dst->trail_origin);
+	dst->traildrawn = src->traildrawn;
+	dst->noshadow = src->noshadow;
+
+	dst->frame_start_time = src->frame_start_time;
+	dst->frame_interval = src->frame_interval;
+	dst->pose1 = src->pose1;
+	dst->pose2 = src->pose2;
+	dst->framelerp = src->framelerp;
+
+	dst->translate_start_time = src->translate_start_time;
+	VectorCopy (src->origin1, dst->origin1);
+	VectorCopy (src->origin2, dst->origin2);
+
+	dst->rotate_start_time = src->rotate_start_time;
+	VectorCopy (src->angles1, dst->angles1);
+	VectorCopy (src->angles2, dst->angles2);
+
+	dst->transparency = src->transparency;
+	dst->smokepuff_time = src->smokepuff_time;
+	dst->istransparent = src->istransparent;
 }
 #endif
 

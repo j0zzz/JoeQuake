@@ -262,14 +262,19 @@ void R_NewMap (void)
 	// HACK HACK HACK - create extra entities if drawing the player's multimodel
 	if (r_loadq3player)
 	{
+		extern void CL_CopyEntity(entity_t *, entity_t *, int);
+
 		memset (&q3player_body, 0, sizeof(tagentity_t));
-		CL_CopyPlayerInfo (&q3player_body.ent, &cl_entities[cl.viewentity]);
+		CL_CopyEntity (&q3player_body.ent, &cl_entities[cl.viewentity], mi_q3torso);
+
 		memset (&q3player_head, 0, sizeof(tagentity_t));
-		CL_CopyPlayerInfo (&q3player_head.ent, &cl_entities[cl.viewentity]);
+		CL_CopyEntity (&q3player_head.ent, &cl_entities[cl.viewentity], mi_q3head);
+
 		memset (&q3player_weapon, 0, sizeof(tagentity_t));
-		CL_CopyPlayerInfo (&q3player_weapon.ent, &cl_entities[cl.viewentity]);
+		CL_CopyEntity (&q3player_weapon.ent, &cl_entities[cl.viewentity], mi_q3legs); //FIXME
+
 		memset (&q3player_weapon_flash, 0, sizeof(tagentity_t));
-		CL_CopyPlayerInfo (&q3player_weapon_flash.ent, &cl_entities[cl.viewentity]);
+		CL_CopyEntity (&q3player_weapon_flash.ent, &cl_entities[cl.viewentity], mi_q3legs); //FIXME
 	}
 }
 
