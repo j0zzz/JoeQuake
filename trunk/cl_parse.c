@@ -91,7 +91,7 @@ void CL_InitModelnames (void)
 
 	memset (cl_modelnames, 0, sizeof(cl_modelnames));
 
-	cl_modelnames[mi_player] = "progs/player.mdl";
+	cl_modelnames[mi_player] = "progs/player";	// this is intended, as we have to check DME models too (playersg, playergr, etc)
 	cl_modelnames[mi_q3head] = "progs/player/head.md3";
 	cl_modelnames[mi_q3torso] = "progs/player/upper.md3";
 	cl_modelnames[mi_q3legs] = "progs/player/lower.md3";
@@ -340,7 +340,7 @@ void CL_ParseServerInfo (void)
 			Host_Error ("Server sent too many model precaches");
 
 		if (cl_viewweapons.value &&
-			!strcmp(str, cl_modelnames[mi_player]) && 
+			!strncmp(str, cl_modelnames[mi_player], 12) && 
 			(COM_FindFile(cl_modelnames[mi_vwplayer]) || COM_FindFile(cl_modelnames[mi_vwplayer_md3])) && 
 			COM_FindFile(cl_modelnames[mi_w_shot]) &&
 			COM_FindFile(cl_modelnames[mi_w_shot2]) &&
@@ -359,7 +359,7 @@ void CL_ParseServerInfo (void)
 #ifdef GLQUAKE
 		if (gl_loadq3models.value)
 		{
-			if ((!strcmp(str, cl_modelnames[mi_player]) || !strcmp(str, cl_modelnames[mi_vwplayer])) && 
+			if ((!strncmp(str, cl_modelnames[mi_player], 12) || !strcmp(str, cl_modelnames[mi_vwplayer])) && 
 			    COM_FindFile(cl_modelnames[mi_q3head]) && 
 			    COM_FindFile(cl_modelnames[mi_q3torso]) && 
 			    COM_FindFile(cl_modelnames[mi_q3legs]))
@@ -436,7 +436,7 @@ void CL_ParseServerInfo (void)
 		if (nummodels + 1 >= MAX_MODELS)
 		{
 			Con_Printf ("Server sent too many model precaches -> can't load Q3 player model\n");
-			Q_strncpyz (model_precache[cl_modelindex[mi_player]], cl_modelnames[mi_player], sizeof(model_precache[cl_modelindex[mi_player]]));
+			Q_strncpyz (model_precache[cl_modelindex[mi_player]], "progs/player.mdl", sizeof(model_precache[cl_modelindex[mi_player]]));
 		}
 		else
 		{
@@ -478,9 +478,25 @@ void CL_ParseServerInfo (void)
 		cl.model_precache[i] = Mod_ForName (model_precache[i], false);
 		if (!cl.model_precache[i])
 		{
-			Con_Printf ("\nThe required model file '%s' could not be found\n\n", model_precache[i]);
-			Host_EndGame ("Server disconnected\n");
-			return;
+			qboolean model_failed = true;
+
+			// this is a common issue when trying to play back such QdQ demo that is referring to a DME model
+			if (!strcmp(model_precache[i], "progs/playax.mdl") ||
+				!strncmp(model_precache[i], "progs/player", 12))
+			{
+				cl.model_precache[i] = Mod_ForName ("progs/player.mdl", false);
+				if (cl.model_precache[i])
+				{
+					model_failed = false;
+				}
+			}
+
+			if (model_failed)
+			{
+				Con_Printf ("\nThe required model file '%s' could not be found\n\n", model_precache[i]);
+				Host_EndGame ("Server disconnected\n");
+				return;
+			}
 		}
 		CL_KeepaliveMessage ();
 	}

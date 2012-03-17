@@ -150,6 +150,8 @@ void Neh_ResetSFX (void)
 }
 #endif
 
+extern qboolean q3legs_anim_inprogress;
+
 /*
 =====================
 CL_Disconnect
@@ -197,6 +199,8 @@ void CL_Disconnect (void)
 	if (nehahra)
 	        Neh_ResetSFX ();
 #endif
+
+	q3legs_anim_inprogress = false;
 }
 
 void CL_Disconnect_f (void)

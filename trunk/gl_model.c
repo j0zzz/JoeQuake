@@ -1736,10 +1736,12 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	daliasskintype_t *pskintype;
 
 // some models are special
-	if (!strcmp(mod->name, "progs/player.mdl") || !strcmp(mod->name, "progs/vwplayer.mdl"))
+	if (!strcmp(mod->name, "progs/player.mdl") ||
+		!strcmp(mod->name, "progs/vwplayer.mdl"))
 		mod->modhint = MOD_PLAYER;
 	// player*.mdl models are DME models
-	else if (!strncmp(mod->name, "progs/player", 12))
+	else if (!strcmp(mod->name, "progs/playax.mdl") ||
+		!strncmp(mod->name, "progs/player", 12))
 		mod->modhint = MOD_PLAYER_DME;
 	else if (!strcmp(mod->name, "progs/eyes.mdl"))
 		mod->modhint = MOD_EYES;
@@ -1945,6 +1947,8 @@ void Mod_GetQ3AnimData (char *buf, char *animtype, animdata_t *adata)
 		adata->num_frames = data[1];
 		adata->loop_frames = data[2];
 		adata->interval = 1.0 / (float)data[3];
+		if (!strcmp(animtype, "LEGS_LAND"))
+			adata->interval = 1.0 / 30.0;
 	}
 }
 
@@ -1983,10 +1987,16 @@ void Mod_LoadQ3Animation (void)
 	anims[legs_run].offset -= ofs_legs;
 	Mod_GetQ3AnimData (animdata, "LEGS_BACK", &anims[legs_back]);
 	anims[legs_back].offset -= ofs_legs;
+	Mod_GetQ3AnimData (animdata, "LEGS_SWIM", &anims[legs_swim]);
+	anims[legs_swim].offset -= ofs_legs;
 	Mod_GetQ3AnimData (animdata, "LEGS_JUMP", &anims[legs_jump]);
 	anims[legs_jump].offset -= ofs_legs;
+	Mod_GetQ3AnimData (animdata, "LEGS_LAND", &anims[legs_land]);
+	anims[legs_land].offset -= ofs_legs;
 	Mod_GetQ3AnimData (animdata, "LEGS_JUMPB", &anims[legs_jumpb]);
 	anims[legs_jumpb].offset -= ofs_legs;
+	Mod_GetQ3AnimData (animdata, "LEGS_LANDB", &anims[legs_landb]);
+	anims[legs_landb].offset -= ofs_legs;
 	Mod_GetQ3AnimData (animdata, "LEGS_IDLE", &anims[legs_idle]);
 	anims[legs_idle].offset -= ofs_legs;
 	Mod_GetQ3AnimData (animdata, "LEGS_TURN", &anims[legs_turn]);
@@ -2099,7 +2109,8 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		mod->flags |= EF_GIB;
 
 // some models are special
-	if (!strcmp(mod->name, "progs/player.md3") || !strcmp(mod->name, "progs/vwplayer.md3"))
+	if (!strcmp(mod->name, "progs/player.md3") ||
+		!strcmp(mod->name, "progs/vwplayer.md3"))
 		mod->modhint = MOD_PLAYER;
 	else if (!strcmp(mod->name, "progs/flame.md3"))
 		mod->modhint = MOD_FLAME;

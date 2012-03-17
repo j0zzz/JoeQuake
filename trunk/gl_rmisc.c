@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 qboolean	r_loadq3player = false;
-
 tagentity_t q3player_weapon_flash;
 
 void CL_CopyPlayerInfo (entity_t *ent, entity_t *player);

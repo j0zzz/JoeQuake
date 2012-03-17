@@ -426,7 +426,7 @@ typedef enum animtype_s
 {
 	both_death1, both_death2, both_death3, both_dead1, both_dead2, both_dead3,
 	torso_attack, torso_attack2, torso_stand, torso_stand2,
-	legs_run, legs_back, legs_jump, legs_jumpb, legs_idle, legs_turn,
+	legs_run, legs_back, legs_swim, legs_jump, legs_land, legs_jumpb, legs_landb, legs_idle, legs_turn,
 	NUM_ANIMTYPES
 } animtype_t;
 

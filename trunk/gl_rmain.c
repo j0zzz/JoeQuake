@@ -1225,14 +1225,16 @@ void R_RotateForTagEntity (tagentity_t *tagent, md3tag_t *tag, float *m)
 
 int			bodyframe = 0, legsframe = 0;
 animtype_t	bodyanim, legsanim;
-qboolean	player_jumped = false;
+qboolean	player_jumped = false, q3legs_anim_inprogress = false;
 
 void R_ReplaceQ3Frame (int frame)
 {
+	qboolean isGoingBack = false;
 	animdata_t		*currbodyanim, *currlegsanim;
 	static animtype_t oldbodyanim, oldlegsanim;
 	static float	bodyanimtime, legsanimtime;
 	static qboolean	deathanim = false;
+	static vec3_t	oldviewangles;
 	extern kbutton_t in_jump, in_back, in_left, in_right;
 
 	if (deathanim)
@@ -1244,25 +1246,18 @@ void R_ReplaceQ3Frame (int frame)
 	if (frame < 41 || frame > 102)
 		deathanim = false;
 
-	if (frame >= 0 && frame <= 5)		// axrun
+	// body frames
+	if ((frame >= 0 && frame <= 5) ||		// axrun
+		(frame >= 17 && frame <= 28) ||		// axstand
+		(frame >= 29 && frame <= 34))		// axpain
 	{
 		bodyanim = torso_stand2;
-		legsanim = legs_run;
 	}
-	else if (frame >= 6 && frame <= 11)	// rockrun
+	else if ((frame >= 6 && frame <= 11) ||		// rockrun
+			 (frame >= 12 && frame <= 16) ||	// stand
+			 (frame >= 35 && frame <= 40))		// pain
 	{
 		bodyanim = torso_stand;
-		legsanim = legs_run;
-	}
-	else if ((frame >= 12 && frame <= 16) || (frame >= 35 && frame <= 40))	// stand, pain
-	{
-		bodyanim = torso_stand;
-		legsanim = legs_idle;
-	}
-	else if ((frame >= 17 && frame <= 28) || (frame >= 29 && frame <= 34))	// axstand, axpain
-	{
-		bodyanim = torso_stand2;
-		legsanim = legs_idle;
 	}
 	else if (frame >= 41 && frame <= 102 && !deathanim)	// axdeath, deatha, b, c, d, e
 	{
@@ -1278,29 +1273,7 @@ void R_ReplaceQ3Frame (int frame)
 		bodyanim = torso_attack2;
 	}
 
-	if (player_jumped && cl.onground)
-	{
-		player_jumped = false;
-	}
-
-	if (!deathanim)
-	{
-		if (player_jumped)
-		{
-			legsanim = in_back.state & 3 ? legs_jumpb : legs_jump;
-		}
-		if (in_back.state & 3)
-		{
-			legsanim = legs_back;
-		}
-		else if (in_left.state & 3 || in_right.state & 3)
-		{
-			legsanim = legs_turn;
-		}
-	}
-
 	currbodyanim = &anims[bodyanim];
-	currlegsanim = &anims[legsanim];
 
 	if (bodyanim == oldbodyanim)
 	{
@@ -1319,14 +1292,80 @@ void R_ReplaceQ3Frame (int frame)
 		bodyanimtime = cl.time;
 	}
 
+	if (!deathanim)
+	{
+		// legs frames
+		if ((frame >= 0 && frame <= 5) ||	// axrun
+			(frame >= 6 && frame <= 11))	// rockrun
+		{
+			legsanim = legs_run;
+		}
+		else if ((frame >= 12 && frame <= 16) ||	// stand
+				 (frame >= 35 && frame <= 40) ||	// pain
+				 (frame >= 17 && frame <= 28) ||	// axstand
+				 (frame >= 29 && frame <= 34))		// axpain
+		{
+			if (!q3legs_anim_inprogress)
+			{
+				legsanim = legs_idle;
+			}
+		}
+		
+		if (legsanim == legs_idle)
+		{
+			if (oldlegsanim != legs_idle)
+			{
+				VectorCopy(cl_entities[cl.viewentity].angles, oldviewangles);
+			}
+
+			if (!VectorL2Compare(cl_entities[cl.viewentity].angles, oldviewangles, 20))
+			{
+				legsanim = legs_turn;
+			}
+		}
+
+		if (player_jumped && (cl.onground || cl.inwater))
+		{
+			player_jumped = false;
+
+			if (cl.onground)
+			{
+				legsanim = legs_land;
+			}
+		}
+
+		if (player_jumped)
+		{
+			legsanim = legs_jump;
+		}
+		else if (cl.inwater && !cl.onground)
+		{
+			legsanim = legs_swim;
+		}
+		else if (isGoingBack) //FIXME
+		{
+			legsanim = legs_back;
+		}
+	}
+
+	currlegsanim = &anims[legsanim];
+
 	if (legsanim == oldlegsanim)
 	{
 		if (cl.time >= legsanimtime + currlegsanim->interval)
 		{
-			if (currlegsanim->loop_frames && legsframe + 1 == currlegsanim->offset + currlegsanim->loop_frames)
-				legsframe = currlegsanim->offset;
+			if (legsframe + 1 == currlegsanim->offset + currlegsanim->num_frames)
+			{
+				if (currlegsanim->loop_frames)
+				{
+					legsframe = currlegsanim->offset;
+				}
+				q3legs_anim_inprogress = false;
+			}
 			else if (legsframe + 1 < currlegsanim->offset + currlegsanim->num_frames)
+			{
 				legsframe++;
+			}
 			legsanimtime = cl.time;
 		}
 	}
@@ -1334,6 +1373,7 @@ void R_ReplaceQ3Frame (int frame)
 	{
 		legsframe = currlegsanim->offset;
 		legsanimtime = cl.time;
+		q3legs_anim_inprogress = !currlegsanim->loop_frames || legsanim == legs_turn;
 	}
 
 	oldbodyanim = bodyanim;
