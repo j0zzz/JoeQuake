@@ -141,6 +141,8 @@ cvar_t	gl_decal_explosions = {"gl_decal_explosions", "0"};
 
 int		lightmode = 2;
 
+float	pitch_rot;
+
 void R_MarkLeaves (void);
 void R_InitBubble (void);
 
@@ -257,7 +259,10 @@ void R_RotateForEntity (entity_t *ent, qboolean shadow)
 	glRotatef (ent->angles1[1] + (lerpfrac * d[1]), 0, 0, 1);
 	if (!shadow)
 	{
-		glRotatef (-ent->angles1[0] + (-lerpfrac * d[0]), 0, 1, 0);
+		pitch_rot = -ent->angles1[0] + (-lerpfrac * d[0]);
+
+		if (ent->modelindex != cl_modelindex[mi_q3legs])
+			glRotatef (pitch_rot, 0, 1, 0);
 		glRotatef (ent->angles1[2] + (lerpfrac * d[2]), 1, 0, 0);
 	}
 }
@@ -1310,19 +1315,20 @@ void R_ReplaceQ3Frame (int frame)
 				legsanim = legs_idle;
 			}
 		}
-		
-		if (legsanim == legs_idle)
-		{
-			if (oldlegsanim != legs_idle)
-			{
-				VectorCopy(cl_entities[cl.viewentity].angles, oldviewangles);
-			}
 
-			if (!VectorL2Compare(cl_entities[cl.viewentity].angles, oldviewangles, 20))
-			{
-				legsanim = legs_turn;
-			}
-		}
+		// FIXME
+		//if (legsanim == legs_idle)
+		//{
+		//	if (oldlegsanim != legs_idle)
+		//	{
+		//		VectorCopy(cl_entities[cl.viewentity].angles, oldviewangles);
+		//	}
+
+		//	if (!VectorL2Compare(cl_entities[cl.viewentity].angles, oldviewangles, 20))
+		//	{
+		//		legsanim = legs_turn;
+		//	}
+		//}
 
 		if (player_jumped && (cl.onground || cl.inwater))
 		{
@@ -1661,11 +1667,10 @@ void R_SetupQ3Frame (entity_t *ent)
 	tagentity_t	*tagent;
 	entity_t	*newent;
 	extern qboolean Mod_IsTransparentSurface (md3surface_t *surf);
-	extern kbutton_t in_attack;
 
-	if (!strcmp(ent->model->name, cl_modelnames[mi_q3legs]))
+	if (ent->modelindex == cl_modelindex[mi_q3legs])
 		frame = legsframe;
-	else if (!strcmp(ent->model->name, cl_modelnames[mi_q3torso]))
+	else if (ent->modelindex == cl_modelindex[mi_q3torso])
 		frame = bodyframe;
 	else
 		frame = ent->frame;
@@ -1794,7 +1799,7 @@ void R_SetupQ3Frame (entity_t *ent)
 				  ent->modelindex == cl_modelindex[mi_g_nail] || ent->modelindex == cl_modelindex[mi_g_nail2] || 
 				  ent->modelindex == cl_modelindex[mi_g_rock] || ent->modelindex == cl_modelindex[mi_g_rock2] || 
 				  ent->modelindex == cl_modelindex[mi_g_light]) && 
-				  !strncmp(tag->name, "tag_flash", 9) && (in_attack.state & 3))
+				  !strncmp(tag->name, "tag_flash", 9) && (ent->effects & EF_MUZZLEFLASH))
 		{
 			model_t *flashmodel;
 			char basemodelname[64], *flashname;
@@ -1818,9 +1823,15 @@ void R_SetupQ3Frame (entity_t *ent)
 		}
 
 		glPushMatrix ();
+
 		R_RotateForTagEntity (tagent, tag, m);
 		glMultMatrixf (m);
+
+		if (ent->modelindex == cl_modelindex[mi_q3legs])
+			glRotatef (pitch_rot, 0, 1, 0);
+
 		R_SetupQ3Frame (newent);
+
 		glPopMatrix ();
 	}
 }

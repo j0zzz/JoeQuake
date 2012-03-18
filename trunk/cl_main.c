@@ -75,7 +75,8 @@ entity_t		*cl_visedicts[MAX_VISEDICTS];
 int				cl_modelindex[NUM_MODELINDEX];
 char			*cl_modelnames[NUM_MODELINDEX];
 
-tagentity_t		q3player_body, q3player_head, q3player_weapon;
+tagentity_t		q3player_body, q3player_head, q3player_weapon, q3player_weapon_flash;
+qboolean		r_loadq3player = false;
 
 extern qboolean physframe;
 
@@ -617,7 +618,6 @@ void GetViewWeaponModel(int *gwep_modelindex, int *vwep_modelindex)
 	}
 }
 
-extern qboolean r_loadq3player;
 qboolean r_loadviewweapons = false;
 entity_t view_weapons[MAX_SCOREBOARD];
 
@@ -634,6 +634,7 @@ void CL_RelinkEntities (void)
 	entity_t	*ent;
 	dlight_t	*dl;
 	model_t		*model;
+	extern void CL_CopyEntity(entity_t *, entity_t *, int);
 
 	// determine partial update time	
 	frac = CL_LerpPoint ();
@@ -1038,12 +1039,20 @@ void CL_RelinkEntities (void)
 		if (cl_numvisedicts < MAX_VISEDICTS)
 			cl_visedicts[cl_numvisedicts++] = ent;
 
+		// q3 multimodel support
+		if (gl_loadq3models.value && ent->modelindex == cl_modelindex[mi_player] && r_loadq3player)
+		{
+			CL_CopyEntity(&q3player_body.ent, ent, mi_q3torso);
+			CL_CopyEntity(&q3player_head.ent, ent, mi_q3head);
+			CL_CopyEntity(&q3player_weapon.ent, ent, -1); //FIXME
+			CL_CopyEntity(&q3player_weapon_flash.ent, ent, -1); //FIXME
+		}
+
 		// view weapon support
 		GetViewWeaponModel(&gwep_modelindex, &vwep_modelindex);
 		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && r_loadviewweapons && !r_loadq3player && (vwep_modelindex != -1))
 		{
 			entity_t *vwepent = &view_weapons[num_vweps];
-			extern void CL_CopyEntity(entity_t *, entity_t *, int);
 
 			CL_CopyEntity(vwepent, ent, vwep_modelindex);
 			num_vweps++;
@@ -1124,8 +1133,6 @@ void CL_CalcCrouch (void)
 #ifdef GLQUAKE
 void CL_CopyEntity (entity_t *dst, entity_t *src, int modelindex)
 {
-	memset (dst, 0, sizeof(entity_t));
-
 	dst->forcelink = src->forcelink;
 	dst->update_type = src->update_type;
 	memcpy (&dst->baseline, &src->baseline, sizeof(entity_state_t));
@@ -1136,8 +1143,11 @@ void CL_CopyEntity (entity_t *dst, entity_t *src, int modelindex)
 	memcpy (dst->msg_angles, src->msg_angles, sizeof(dst->msg_angles));
 	VectorCopy (src->angles, dst->angles);
 
-	dst->model = cl.model_precache[cl_modelindex[modelindex]];
-	dst->modelindex = cl_modelindex[modelindex];
+	if (modelindex != -1)
+	{
+		dst->model = cl.model_precache[cl_modelindex[modelindex]];
+		dst->modelindex = cl_modelindex[modelindex];
+	}
 
 	dst->efrag = src->efrag;
 	dst->frame = src->frame;
@@ -1155,20 +1165,6 @@ void CL_CopyEntity (entity_t *dst, entity_t *src, int modelindex)
 	VectorCopy (src->trail_origin, dst->trail_origin);
 	dst->traildrawn = src->traildrawn;
 	dst->noshadow = src->noshadow;
-
-	dst->frame_start_time = src->frame_start_time;
-	dst->frame_interval = src->frame_interval;
-	dst->pose1 = src->pose1;
-	dst->pose2 = src->pose2;
-	dst->framelerp = src->framelerp;
-
-	dst->translate_start_time = src->translate_start_time;
-	VectorCopy (src->origin1, dst->origin1);
-	VectorCopy (src->origin2, dst->origin2);
-
-	dst->rotate_start_time = src->rotate_start_time;
-	VectorCopy (src->angles1, dst->angles1);
-	VectorCopy (src->angles2, dst->angles2);
 
 	dst->transparency = src->transparency;
 	dst->smokepuff_time = src->smokepuff_time;
