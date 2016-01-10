@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 void S_Play_f (void);
+void S_Play2_f (void);
 void S_PlayVol_f (void);
 void S_SoundList_f (void);
 void S_Update_ ();
@@ -69,16 +70,16 @@ int 	desired_bits = 16;
 int		sound_started = 0;
 
 cvar_t	bgmvolume = {"bgmvolume", "1", CVAR_ARCHIVE};
-cvar_t	s_volume = {"s_volume", "0.7", CVAR_ARCHIVE};
-cvar_t	s_nosound = {"s_nosound", "0"};
-cvar_t	s_precache = {"s_precache", "1"};
-cvar_t	s_loadas8bit = {"s_loadas8bit", "0"};
-cvar_t	s_bgmbuffer = {"s_bgmbuffer", "4096"};
-cvar_t	s_ambientlevel = {"s_ambientlevel", "0.3"};
-cvar_t	s_ambientfade = {"s_ambientfade", "100"};
-cvar_t	s_noextraupdate = {"s_noextraupdate", "0"};
-cvar_t	s_show = {"s_show", "0"};
-cvar_t	s_mixahead = {"s_mixahead", "0.1", CVAR_ARCHIVE};
+cvar_t	s_volume = {"volume", "0.7", CVAR_ARCHIVE};
+cvar_t	s_nosound = {"nosound", "0"};
+cvar_t	s_precache = {"precache", "1"};
+cvar_t	s_loadas8bit = {"loadas8bit", "0"};
+cvar_t	s_bgmbuffer = {"bgmbuffer", "4096"};
+cvar_t	s_ambientlevel = {"ambient_level", "0.3"};
+cvar_t	s_ambientfade = {"ambient_fade", "100"};
+cvar_t	s_noextraupdate = {"snd_noextraupdate", "0"};
+cvar_t	s_show = {"snd_show", "0"};
+cvar_t	s_mixahead = {"_snd_mixahead", "0.1", CVAR_ARCHIVE};
 cvar_t	s_khz = {"s_khz", "11", CVAR_INIT};
 
 // ====================================================================
@@ -169,17 +170,6 @@ void S_Init (void)
 	Cvar_Register (&s_mixahead);
 	Cvar_Register (&s_khz);
 
-	// compatibility with old configs
-	Cmd_AddLegacyCommand ("volume", "s_volume");
-	Cmd_AddLegacyCommand ("nosound", "s_nosound");
-	Cmd_AddLegacyCommand ("precache", "s_precache");
-	Cmd_AddLegacyCommand ("loadas8bit", "s_loadas8bit");
-	Cmd_AddLegacyCommand ("ambient_level", "s_ambientlevel");
-	Cmd_AddLegacyCommand ("ambient_fade", "s_ambientfade");
-	Cmd_AddLegacyCommand ("snd_noextraupdate", "s_noextraupdate");
-	Cmd_AddLegacyCommand ("snd_show", "s_show");
-	Cmd_AddLegacyCommand ("_snd_mixahead", "s_mixahead");
-
 	if (COM_CheckParm("-nosound"))
 		return;
 
@@ -187,14 +177,13 @@ void S_Init (void)
 		fakedma = true;
 
 	Cmd_AddCommand ("play", S_Play_f);
+	Cmd_AddCommand ("play2", S_Play2_f);
 	Cmd_AddCommand ("playvol", S_PlayVol_f);
 	Cmd_AddCommand ("stopsound", S_StopAllSounds_f);
 	Cmd_AddCommand ("soundlist", S_SoundList_f);
 	Cmd_AddCommand ("soundinfo", S_SoundInfo_f);
 	Cmd_AddCommand ("volumedown", S_VolumeDown_f);
 	Cmd_AddCommand ("volumeup", S_VolumeUp_f);
-
-	Cmd_AddLegacyCommand ("play2", "play");
 
 	if (host_parms.memsize < 0x800000)
 	{
@@ -441,13 +430,17 @@ void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float 
 	channel_t	*target_chan, *check;
 	sfxcache_t	*sc;
 	int		vol, ch_idx, skip;
+#ifdef GLQUAKE
 	extern qboolean player_jumped;
+#endif
 
 	if (!sound_started || !sfx || s_nosound.value)
 		return;
 
+#ifdef GLQUAKE
 	if (!strcmp(sfx->name, "player/plyrjmp8.wav"))
 		player_jumped = true;
+#endif
 
 	vol = fvol * 255;
 
@@ -873,26 +866,42 @@ console functions
 ===============================================================================
 */
 
-void S_Play_f (void)
+void S_Play (float att)
 {
-	int		i;
-	static	int	hash = 345;
-	char	name[256];
-	sfx_t	*sfx;
-
-	if (Cmd_Argc() != 2)
-	{
-		Con_Printf ("Usage: play <filename>\n");
-		return;
-	}
+	int			i;
+	static		int	hash = 345;
+	char		name[256];
+	sfx_t		*sfx;
 
 	for (i = 1 ; i < Cmd_Argc() ; i++)
 	{
 		Q_strcpy (name, Cmd_Argv(i));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound (name);
-		S_StartSound (hash++, 0, sfx, listener_origin, 1.0, 0.0);
+		S_StartSound (hash++, 0, sfx, listener_origin, 1.0, att);
 	}
+}
+
+void S_Play_f (void)
+{
+	if (Cmd_Argc() != 2)
+	{
+		Con_Printf ("Usage: play <filename>\n");
+		return;
+	}
+
+	S_Play (1.0f);
+}
+
+void S_Play2_f (void)
+{
+	if (Cmd_Argc() != 2)
+	{
+		Con_Printf ("Usage: play2 <filename>\n");
+		return;
+	}
+
+	S_Play (0.0f);
 }
 
 void S_PlayVol_f (void)
@@ -915,7 +924,7 @@ void S_PlayVol_f (void)
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound (name);
 		vol = Q_atof (Cmd_Argv(i+1));
-		S_StartSound (hash++, 0, sfx, listener_origin, vol, 0.0);
+		S_StartSound (hash++, 0, sfx, listener_origin, vol, 1.0);
 	}
 }
 

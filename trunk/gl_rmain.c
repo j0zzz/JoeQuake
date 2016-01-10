@@ -261,6 +261,7 @@ void R_RotateForEntity (entity_t *ent, qboolean shadow)
 	{
 		pitch_rot = -ent->angles1[0] + (-lerpfrac * d[0]);
 
+		// skip pitch rotation for the legs model
 		if (ent->modelindex != cl_modelindex[mi_q3legs])
 			glRotatef (pitch_rot, 0, 1, 0);
 		glRotatef (ent->angles1[2] + (lerpfrac * d[2]), 1, 0, 0);
@@ -1688,8 +1689,8 @@ void R_SetupQ3Frame (entity_t *ent)
 		{
 			md3shader_mem_t	*shader;
 
-			//surface_transparent = Mod_IsTransparentSurface(pmd3surf);
-			surface_transparent = ent->model->flags & EF_Q3TRANS;
+			surface_transparent = Mod_IsTransparentSurface(pmd3surf);
+			//surface_transparent = ent->model->flags & EF_Q3TRANS;
 			if ((!i && surface_transparent) || (i && !surface_transparent))
 			{
 				pmd3surf = (md3surface_t *)((byte *)pmd3surf + pmd3surf->ofsend);
@@ -1827,6 +1828,7 @@ void R_SetupQ3Frame (entity_t *ent)
 		R_RotateForTagEntity (tagent, tag, m);
 		glMultMatrixf (m);
 
+		// apply pitch rotation from the torso model
 		if (ent->modelindex == cl_modelindex[mi_q3legs])
 			glRotatef (pitch_rot, 0, 1, 0);
 

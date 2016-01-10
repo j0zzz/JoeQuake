@@ -330,7 +330,9 @@ void CL_ParseServerInfo (void)
 	for (i=0 ; i<NUM_MODELINDEX ; i++)
 		cl_modelindex[i] = -1;
 
+#ifdef GLQUAKE
 	r_loadq3player = false;
+#endif
 	r_loadviewweapons = false;
 
 	memset (cl.model_precache, 0, sizeof(cl.model_precache));

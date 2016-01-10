@@ -305,7 +305,7 @@ int CL_NextDemo (void);
 extern	int		cl_numvisedicts;
 extern	entity_t *cl_visedicts[MAX_VISEDICTS];
 
-extern	tagentity_t	q3player_body, q3player_head, q3player_weapon;
+extern	tagentity_t	q3player_body, q3player_head, q3player_weapon, q3player_weapon_flash;
 
 char *CL_MapName (void);
 

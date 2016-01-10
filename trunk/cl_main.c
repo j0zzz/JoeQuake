@@ -151,7 +151,9 @@ void Neh_ResetSFX (void)
 }
 #endif
 
+#ifdef GLQUAKE
 extern qboolean q3legs_anim_inprogress;
+#endif
 
 /*
 =====================
@@ -199,9 +201,9 @@ void CL_Disconnect (void)
 #ifdef GLQUAKE
 	if (nehahra)
 	        Neh_ResetSFX ();
-#endif
 
 	q3legs_anim_inprogress = false;
+#endif
 }
 
 void CL_Disconnect_f (void)
@@ -628,13 +630,16 @@ CL_RelinkEntities
 */
 void CL_RelinkEntities (void)
 {
-	int			i, j, vwep_modelindex, gwep_modelindex, num_vweps;
+	int			i, j, num_vweps;
 	float		frac, f, d, bobjrotate;
 	vec3_t		delta, oldorg;
 	entity_t	*ent;
 	dlight_t	*dl;
 	model_t		*model;
+#ifdef GLQUAKE
+	int			vwep_modelindex, gwep_modelindex;
 	extern void CL_CopyEntity(entity_t *, entity_t *, int);
+#endif
 
 	// determine partial update time	
 	frac = CL_LerpPoint ();
@@ -1027,6 +1032,25 @@ void CL_RelinkEntities (void)
 
 		ent->forcelink = false;
 
+#ifdef GLQUAKE
+		// q3 multimodel support
+		if (gl_loadq3models.value)
+		{
+			if (r_loadq3player && ent->modelindex == cl_modelindex[mi_q3legs])
+			{
+				CL_CopyEntity(&q3player_body.ent, ent, mi_q3torso);
+				CL_CopyEntity(&q3player_head.ent, ent, mi_q3head);
+				CL_CopyEntity(&q3player_weapon.ent, ent, -1); //FIXME
+				CL_CopyEntity(&q3player_weapon_flash.ent, ent, -1); //FIXME
+			}
+			else if (ent == &cl.viewent)
+			{
+				CL_CopyEntity(&q3player_weapon.ent, ent, -1); //FIXME
+				CL_CopyEntity(&q3player_weapon_flash.ent, ent, -1); //FIXME
+			}
+		}
+#endif
+
 		if (i == cl.viewentity && !cl_thirdperson.value)
 			continue;
 
@@ -1039,15 +1063,7 @@ void CL_RelinkEntities (void)
 		if (cl_numvisedicts < MAX_VISEDICTS)
 			cl_visedicts[cl_numvisedicts++] = ent;
 
-		// q3 multimodel support
-		if (gl_loadq3models.value && ent->modelindex == cl_modelindex[mi_player] && r_loadq3player)
-		{
-			CL_CopyEntity(&q3player_body.ent, ent, mi_q3torso);
-			CL_CopyEntity(&q3player_head.ent, ent, mi_q3head);
-			CL_CopyEntity(&q3player_weapon.ent, ent, -1); //FIXME
-			CL_CopyEntity(&q3player_weapon_flash.ent, ent, -1); //FIXME
-		}
-
+#ifdef GLQUAKE
 		// view weapon support
 		GetViewWeaponModel(&gwep_modelindex, &vwep_modelindex);
 		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && r_loadviewweapons && !r_loadq3player && (vwep_modelindex != -1))
@@ -1062,6 +1078,7 @@ void CL_RelinkEntities (void)
 				cl_visedicts[cl_numvisedicts++] = vwepent;
 			}
 		}
+#endif
 	}
 }
 

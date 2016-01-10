@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-extern tagentity_t q3player_body, q3player_head, q3player_weapon, q3player_weapon_flash;
 extern qboolean r_loadq3player;
 
 void R_InitOtherTextures (void)
