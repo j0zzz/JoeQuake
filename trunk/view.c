@@ -1073,7 +1073,7 @@ void V_AddViewWeapon (float bob)
 	if (!cl_oldgunposition.value)
 	{
 		fovOffset = (scr_fov.value > 90) ? -0.2 * (scr_fov.value - 90) : 0;
-		VectorMA (view->origin, fovOffset, vup, view->origin);
+		VectorMA (view->origin, fovOffset, up, view->origin);
 	}
 
 	view->model = cl.model_precache[cl.stats[STAT_WEAPON]];
