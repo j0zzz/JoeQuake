@@ -171,7 +171,7 @@ Sys_Init
 */
 void Sys_Init (void)
 {
-	OSVERSIONINFO	vinfo;
+	OSVERSIONINFOEXA vinfo;
 
 	MaskExceptions ();
 	Sys_SetFPCW ();
@@ -180,7 +180,9 @@ void Sys_Init (void)
 
 	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
 
-	if (!GetVersionEx(&vinfo))
+	DWORD dwTypeMask = 0;
+	DWORDLONG dwlConditionMask = 0;
+	if (VerifyVersionInfo(&vinfo, dwTypeMask, dwlConditionMask))
 		Sys_Error ("Couldn't get OS info");
 
 	if ((vinfo.dwMajorVersion < 4) || (vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
