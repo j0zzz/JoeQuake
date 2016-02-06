@@ -304,8 +304,8 @@ typedef struct
 } aliashdr_t;
 
 #define	MAXALIASFRAMES	256
-#define	MAXALIASVERTS	2048
-#define	MAXALIASTRIS	2048
+#define	MAXALIASVERTS	2000
+#define	MAXALIASTRIS	2500
 extern	aliashdr_t	*pheader;
 extern	stvert_t	stverts[MAXALIASVERTS];
 extern	mtriangle_t	triangles[MAXALIASTRIS];
