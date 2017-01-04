@@ -120,6 +120,8 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_fiend] = "progs/demon.mdl";
 	cl_modelnames[mi_vore] = "progs/shalrath.mdl";
 	cl_modelnames[mi_shambler] = "progs/shambler.mdl";
+	cl_modelnames[mi_zombie] = "progs/zombie.mdl";
+	cl_modelnames[mi_spawn] = "progs/tarbaby.mdl";
 	cl_modelnames[mi_h_dog] = "progs/h_dog.mdl";
 	cl_modelnames[mi_h_soldier] = "progs/h_guard.mdl";
 	cl_modelnames[mi_h_enforcer] = "progs/h_mega.mdl";
@@ -344,21 +346,23 @@ void CL_ParseServerInfo (void)
 		if (nummodels == MAX_MODELS)
 			Host_Error ("Server sent too many model precaches");
 
-		if (cl_viewweapons.value &&
-			!strncmp(str, cl_modelnames[mi_player], 12) && 
-			(COM_FindFile(cl_modelnames[mi_vwplayer]) || COM_FindFile(cl_modelnames[mi_vwplayer_md3])) && 
-			COM_FindFile(cl_modelnames[mi_w_shot]) &&
-			COM_FindFile(cl_modelnames[mi_w_shot2]) &&
-			COM_FindFile(cl_modelnames[mi_w_nail]) &&
-			COM_FindFile(cl_modelnames[mi_w_nail2]) &&
-			COM_FindFile(cl_modelnames[mi_w_rock]) &&
-			COM_FindFile(cl_modelnames[mi_w_rock2]) &&
-			COM_FindFile(cl_modelnames[mi_w_light]))
+		if (!strncmp(str, cl_modelnames[mi_player], 12))
 		{
-			Q_strncpyz (vwplayername, cl_modelnames[mi_vwplayer], MAX_QPATH);
-			str = vwplayername;
+			if (cl_viewweapons.value &&
+				(COM_FindFile(cl_modelnames[mi_vwplayer]) || COM_FindFile(cl_modelnames[mi_vwplayer_md3])) &&
+				COM_FindFile(cl_modelnames[mi_w_shot]) &&
+				COM_FindFile(cl_modelnames[mi_w_shot2]) &&
+				COM_FindFile(cl_modelnames[mi_w_nail]) &&
+				COM_FindFile(cl_modelnames[mi_w_nail2]) &&
+				COM_FindFile(cl_modelnames[mi_w_rock]) &&
+				COM_FindFile(cl_modelnames[mi_w_rock2]) &&
+				COM_FindFile(cl_modelnames[mi_w_light]))
+			{
+				Q_strncpyz(vwplayername, cl_modelnames[mi_vwplayer], MAX_QPATH);
+				str = vwplayername;
+				r_loadviewweapons = true;
+			}
 			cl_modelindex[mi_player] = nummodels;
-			r_loadviewweapons = true;
 		}
 
 #ifdef GLQUAKE

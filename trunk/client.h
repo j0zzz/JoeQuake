@@ -314,7 +314,7 @@ typedef	enum modelindex_s {
 	mi_player, mi_q3head, mi_q3torso, mi_q3legs, mi_eyes, mi_rocket, mi_grenade,
 	mi_flame0, mi_flame0_md3, mi_flame1, mi_flame2, mi_explo1, mi_explo2, mi_bubble,
 	mi_fish, mi_dog, mi_soldier, mi_enforcer, mi_knight, mi_hknight,
-	mi_scrag, mi_ogre, mi_fiend, mi_vore, mi_shambler,
+	mi_scrag, mi_ogre, mi_fiend, mi_vore, mi_shambler, mi_zombie, mi_spawn,
 	mi_h_dog, mi_h_soldier, mi_h_enforcer, mi_h_knight, mi_h_hknight, mi_h_scrag,
 	mi_h_ogre, mi_h_fiend, mi_h_vore, mi_h_shambler, mi_h_zombie, mi_h_player,
 	mi_gib1, mi_gib2, mi_gib3, mi_vwplayer, mi_vwplayer_md3,

@@ -765,7 +765,9 @@ void R_SetupLighting (entity_t *ent)
 		ent->modelindex == cl_modelindex[mi_ogre] ||
 		ent->modelindex == cl_modelindex[mi_fiend] ||
 		ent->modelindex == cl_modelindex[mi_vore] ||
-		ent->modelindex == cl_modelindex[mi_shambler]))
+		ent->modelindex == cl_modelindex[mi_shambler] ||
+		ent->modelindex == cl_modelindex[mi_zombie] ||
+		ent->modelindex == cl_modelindex[mi_spawn]))
 	{
 		ambientlight = shadelight = 128;
 		full_light = true;

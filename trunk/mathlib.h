@@ -34,6 +34,7 @@ typedef	int	fixed16_t;
 struct mplane_s;
 
 #define DEG2RAD(a) (((a) * M_PI) / 180.0F)
+#define RAD2DEG(a) (((a) * 180.0F) / M_PI)
 
 #define NANMASK (255 << 23)
 #define	IS_NAN(x) (((*(int *) & x) & NANMASK) == NANMASK)

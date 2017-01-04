@@ -80,7 +80,7 @@ int		scr_copyeverything;
 float		scr_con_current;
 float		scr_conlines;		// lines of console to display
 
-float		oldscreensize, oldfov, oldsbar;
+float		oldscreensize, oldfov, oldsbar, oldwidescreenfov;
 cvar_t		scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
 cvar_t		scr_fov = {"fov", "100"};	// 10 - 170
 cvar_t		scr_consize = {"scr_consize", "0.5"};
@@ -92,7 +92,8 @@ cvar_t		scr_showpause = {"showpause", "1"};
 cvar_t		scr_printspeed = {"scr_printspeed", "8"};
 cvar_t		gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 cvar_t		scr_sshot_format = {"scr_sshot_format", "jpg"};
-cvar_t		scr_autoid = {"scr_autoid", "0"};
+cvar_t		scr_autoid = { "scr_autoid", "0" };
+cvar_t		scr_widescreen_fov = {"scr_widescreen_fov", "1", CVAR_ARCHIVE};
 
 extern	cvar_t	crosshair;
 extern	cvar_t	cl_crossx;
@@ -224,6 +225,8 @@ void SCR_CheckDrawCenterString (void)
 
 //=============================================================================
 
+#define STANDARD_ASPECT_RATIO ((float)4.0/(float)3.0)	// for widescreen fov
+
 /*
 ====================
 CalcFov
@@ -349,6 +352,11 @@ static void SCR_CalcRefdef (void)
 		r_refdef.vrect.y = (h - r_refdef.vrect.height) / 2;
 
 	r_refdef.fov_x = scr_fov.value;
+	if (scr_widescreen_fov.value)
+	{
+		float aspectRatio = (float)r_refdef.vrect.width / (float)r_refdef.vrect.height;
+		r_refdef.fov_x = RAD2DEG(2 * atan((aspectRatio / STANDARD_ASPECT_RATIO) * tan(DEG2RAD(r_refdef.fov_x) * 0.5)));
+	}
 	r_refdef.fov_y = CalcFov (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
 //	r_refdef.fov_x = InvCalcFov (r_refdef.fov_y, 640, 400);	//oldman
 
@@ -402,6 +410,7 @@ void SCR_Init (void)
 	Cvar_Register (&gl_triplebuffer);
 	Cvar_Register (&scr_sshot_format);
 	Cvar_Register (&scr_autoid);
+	Cvar_Register (&scr_widescreen_fov);
 
 // register our commands
 	Cmd_AddCommand ("screenshot", SCR_ScreenShot_f);
@@ -640,6 +649,11 @@ void SCR_SetupAutoID (void)
 	for (i = 0 ; i < cl.maxclients ; i++)
 	{
 		state = &cl_entities[1+i];
+
+		if (state == &cl_entities[cl.viewentity])
+		{
+			continue;
+		}
 
 		if ((state->modelindex == cl_modelindex[mi_player] && ISDEAD(state->frame)) || 
 		     state->modelindex == cl_modelindex[mi_h_player])
@@ -917,6 +931,12 @@ void SCR_UpdateScreen (void)
 	if (oldfov != scr_fov.value)
 	{
 		oldfov = scr_fov.value;
+		vid.recalc_refdef = true;
+	}
+
+	if (oldwidescreenfov != scr_widescreen_fov.value)
+	{
+		oldwidescreenfov = scr_widescreen_fov.value;
 		vid.recalc_refdef = true;
 	}
 

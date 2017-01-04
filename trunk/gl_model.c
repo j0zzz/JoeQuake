@@ -2034,8 +2034,10 @@ qboolean Mod_IsTransparentSurface (md3surface_t *surf)
 		strstr(surf->name, "f_") ||
 		strstr(surf->name, "flare") ||
 		strstr(surf->name, "flash") ||
-		strstr(surf->name, "Sphere") ||
-		strstr(surf->name, "telep") ||
+		strstr(surf->name, "Sphere02") ||		// Quake3 gunshot
+		strstr(surf->name, "GeoSphere01") ||	//
+		strstr(surf->name, "Box01") ||			// Quakelive teleport
+		strstr(surf->name, "telep") ||			// Quake3 teleport
 	   !strcmp(surf->name, "bolt"))
 	{
 		return true;
