@@ -57,7 +57,7 @@ mpic_t		*rsb_teambord;		// PGM 01/19/97 - team color border
 //MED 01/04/97 added two more weapons + 3 alternates for grenade launcher
 mpic_t		*hsb_weapons[7][5];   // 0 is active, 1 is owned, 2-5 are flashes
 //MED 01/04/97 added array to simplify weapon parsing
-int		hipweapons[4] = {HIT_LASER_CANNON_BIT, HIT_MJOLNIR_BIT, 4, HIT_PROXIMITY_GUN_BIT};
+int			hipweapons[4] = {HIT_LASER_CANNON_BIT, HIT_MJOLNIR_BIT, 4, HIT_PROXIMITY_GUN_BIT};
 //MED 01/04/97 added hipnotic items array
 mpic_t		*hsb_items[2];
 
@@ -67,6 +67,7 @@ void Sbar_DeathmatchOverlay (void);
 
 int	sbar_xofs;
 cvar_t	scr_centersbar = {"scr_centersbar", "1"};
+cvar_t	scr_sbarscale_amount = { "scr_sbarscale_amount", "1" };
 
 /*
 ===============
@@ -254,6 +255,7 @@ void Sbar_Init (void)
 	sb_face_invuln_quad = Draw_PicFromWad ("face_invul1");
 
 	Cvar_Register (&scr_centersbar);
+	Cvar_Register (&scr_sbarscale_amount);
 
 	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
 	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);

@@ -137,7 +137,6 @@ char		m_return_reason[32];
 void M_ConfigureNetSubsystem(void);
 
 #ifdef GLQUAKE
-cvar_t	scr_scalemenu = {"scr_scalemenu", "1"};
 int	menuwidth = 320;
 int	menuheight = 240;
 #else
@@ -4566,9 +4565,7 @@ void M_Help_Key (int key)
 void M_Init (void)
 {
 	Cvar_Register (&scr_centermenu);
-#ifdef GLQUAKE
-	Cvar_Register (&scr_scalemenu);
-#endif
+
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 
 	Cmd_AddCommand ("menu_main", M_Menu_Main_f);
@@ -4601,7 +4598,7 @@ void M_Draw (void)
 	{
 		scr_copyeverything = 1;
 
-		if (scr_con_current == vid.height)
+		if (scr_con_current == vid.conheight)
 		{
 			Draw_ConsoleBackground (scr_con_current); // joe: was vid.height
 			VID_UnlockBuffer ();
@@ -4621,19 +4618,11 @@ void M_Draw (void)
 	}
 
 #ifdef GLQUAKE
-	if (scr_scalemenu.value)
-	{
-		menuwidth = 320;
-		menuheight = min(vid.height, 240);
-		glMatrixMode (GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho (0, menuwidth, menuheight, 0, -99999, 99999);
-	}
-	else
-	{
-		menuwidth = vid.width;
-		menuheight = vid.height;
-	}
+	menuwidth = 480;
+	menuheight = 305;	// this is the correct value for the 480px width, taking the actual ratio of the mainmenu pic
+	glMatrixMode (GL_PROJECTION);
+	glLoadIdentity ();
+	glOrtho (0, menuwidth, menuheight, 0, -99999, 99999);
 #endif
 
 	m_yofs = scr_centermenu.value ? (menuheight - 200) / 2 : 0;
@@ -4751,12 +4740,9 @@ void M_Draw (void)
 	}
 
 #ifdef GLQUAKE
-	if (scr_scalemenu.value)
-	{
-		glMatrixMode (GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho (0, vid.width, vid.height, 0, -99999, 99999);
-	}
+	glMatrixMode (GL_PROJECTION);
+	glLoadIdentity ();
+	glOrtho (0, vid.width, vid.height, 0, -99999, 99999);
 #endif
 
 	if (m_entersound)

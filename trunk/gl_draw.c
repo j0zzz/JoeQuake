@@ -366,8 +366,8 @@ void Draw_InitConback (void)
 		conback->height = cb->height;
 		GL_LoadPicTexture ("conback", conback, cb->data);
 	}
-	conback->width = vid.conwidth;
-	conback->height = vid.conheight;
+	conback->width = vid.width;
+	conback->height = vid.height;
 
 	// free loaded console
 	Hunk_FreeToLowMark (start);
@@ -1040,8 +1040,8 @@ Draw_TransPic
 */
 void Draw_TransPic (int x, int y, mpic_t *pic)
 {
-	if (x < 0 || (unsigned)(x + pic->width) > vid.width || y < 0 || (unsigned)(y + pic->height) > vid.height)
-		Sys_Error ("Draw_TransPic: bad coordinates");
+	//if (x < 0 || (unsigned)(x + pic->width) > vid.width || y < 0 || (unsigned)(y + pic->height) > vid.height)
+	//	Sys_Error ("Draw_TransPic: bad coordinates");
 		
 	Draw_Pic (x, y, pic);
 }
@@ -1110,7 +1110,7 @@ void Draw_ConsoleBackground (int lines)
 
 end:
 	sprintf (ver, "JoeQuake %s", JOEQUAKE_VERSION);
-	Draw_Alt_String (vid.conwidth - strlen(ver) * 8 - 8, lines - 10, ver);
+	Draw_Alt_String (vid.width - strlen(ver) * 8 - 8, lines - 10, ver);
 }
 
 /*

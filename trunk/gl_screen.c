@@ -80,7 +80,7 @@ int		scr_copyeverything;
 float		scr_con_current;
 float		scr_conlines;		// lines of console to display
 
-float		oldscreensize, oldfov, oldsbar, oldwidescreenfov;
+float		oldscreensize, oldfov, oldsbar, oldwidescreenfov, oldsbarscale;
 cvar_t		scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
 cvar_t		scr_fov = {"fov", "100"};	// 10 - 170
 cvar_t		scr_consize = {"scr_consize", "0.5"};
@@ -893,6 +893,9 @@ needs almost the entire 256k of stack space!
 */
 void SCR_UpdateScreen (void)
 {
+	float sbar_scale_amount;
+	extern cvar_t scr_sbarscale_amount;
+
 	if (block_drawing)
 		return;
 
@@ -925,6 +928,19 @@ void SCR_UpdateScreen (void)
 	{
 		oldsbar = cl_sbar.value;
 		vid.recalc_refdef = true;
+	}
+
+	sbar_scale_amount = bound(1.0, scr_sbarscale_amount.value, 4.0);
+	if (oldsbarscale != sbar_scale_amount)
+	{
+		extern void Draw_InitConback(void);
+
+		oldsbarscale = sbar_scale_amount;
+		vid.width = vid.conwidth / sbar_scale_amount;
+		vid.height = vid.conheight / sbar_scale_amount;
+		vid.recalc_refdef = true;
+
+		Draw_InitConback();	// reload conback with the new size
 	}
 
 	// determine size of refresh window

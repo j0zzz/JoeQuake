@@ -1426,29 +1426,26 @@ void VID_Init (unsigned char *palette)
 
 	vid_initialized = true;
 
+	vid.conwidth = modelist[vid_default].width;
+
 	if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
 		vid.conwidth = Q_atoi(com_argv[i+1]);
-	else
-		vid.conwidth = 640;
 
 	vid.conwidth &= 0xfff8;	// make it a multiple of eight
 
 	if (vid.conwidth < 320)
 		vid.conwidth = 320;
 
-	// pick a conheight that matches with default aspect (4:3)
-	vid.conheight = vid.conwidth * 0.75;
+	// set console aspect using video frame's aspect
+	aspect = (float)modelist[vid_default].height / (float)modelist[vid_default].width;
+	if (vid.conheight != (int)(vid.conwidth * aspect))
+		vid.conheight = vid.conwidth * aspect;
 
 	if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
 		vid.conheight = Q_atoi(com_argv[i+1]);
 
 	if (vid.conheight < 200)
 		vid.conheight = 200;
-
-	// correct console aspect using video frame's aspect
-	aspect = (float)modelist[vid_default].height / (float)modelist[vid_default].width;
-	if (vid.conheight != (int)(vid.conwidth * aspect))
-		vid.conheight = vid.conwidth * aspect;
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;

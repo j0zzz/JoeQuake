@@ -31,12 +31,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#define MINIMUM_WIN_MEMORY	0x0c00000	// 12Mb
-#define MAXIMUM_WIN_MEMORY	0x2000000	// 32Mb
+#define MINIMUM_WIN_MEMORY	0x02000000	// 32Mb
+#define MAXIMUM_WIN_MEMORY	0x08000000	// 128Mb
 
 #define CONSOLE_ERROR_TIMEOUT	60.0	// # of seconds to wait on Sys_Error running
 					// dedicated before exiting
-#define PAUSE_SLEEP		50	// sleep time on pause or minimization
+#define PAUSE_SLEEP			50	// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP		20	// sleep time when not focus
 
 int		starttime;
