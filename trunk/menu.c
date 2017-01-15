@@ -27,11 +27,11 @@ void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 
 enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
-	m_setup, m_namemaker, m_net, m_options, m_videomodes,
+	m_setup, m_namemaker, m_net, m_options, m_keys, m_mouse, m_gameplay, m_hud, m_sound, 
 #ifdef GLQUAKE
 	m_videooptions, m_particles,
 #endif
-	m_keys, m_nehdemos, m_maps, m_demos, m_help, m_quit, m_serialconfig, m_modemconfig,
+	m_videomodes, m_nehdemos, m_maps, m_demos, m_help, m_quit, m_serialconfig, m_modemconfig,
 	m_lanconfig, m_gameoptions, m_search, m_servers, m_slist, m_sedit} m_state;
 
 void M_Menu_Main_f (void);
@@ -46,11 +46,15 @@ void M_Menu_Main_f (void);
 		void M_Menu_Net_f (void);
 	void M_Menu_Options_f (void);
 		void M_Menu_Keys_f (void);
-		void M_Menu_VideoModes_f (void);
+		void M_Menu_Mouse_f(void);
+		void M_Menu_Gameplay_f(void);
+		void M_Menu_Hud_f(void);
+		void M_Menu_Sound_f(void);
 #ifdef GLQUAKE
-		void M_Menu_VideoOptions_f (void);
-			void M_Menu_Particles_f (void);
+		void M_Menu_VideoOptions_f(void);
+			void M_Menu_Particles_f(void);
 #endif
+		void M_Menu_VideoModes_f (void);
 	void M_Menu_NehDemos_f (void);
 	void M_Menu_Maps_f (void);
 	void M_Menu_Demos_f (void);
@@ -75,11 +79,15 @@ void M_Main_Draw (void);
 		void M_Net_Draw (void);
 	void M_Options_Draw (void);
 		void M_Keys_Draw (void);
-		void M_VideoModes_Draw (void);
+		void M_Mouse_Draw(void);
+		void M_Gameplay_Draw(void);
+		void M_Hud_Draw(void);
+		void M_Sound_Draw(void);
 #ifdef GLQUAKE
-		void M_VideoOptions_Draw (void);
-			void M_Particles_Draw (void);
+		void M_VideoOptions_Draw(void);
+			void M_Particles_Draw(void);
 #endif
+		void M_VideoModes_Draw (void);
 	void M_NehDemos_Draw (void);
 	void M_Maps_Draw (void);
 	void M_Demos_Draw (void);
@@ -103,11 +111,15 @@ void M_Main_Key (int key);
 		void M_Net_Key (int key);
 	void M_Options_Key (int key);
 		void M_Keys_Key (int key);
-		void M_VideoModes_Key (int key);
+		void M_Mouse_Key(int key);
+		void M_Gameplay_Key(int key);
+		void M_Hud_Key(int key);
+		void M_Sound_Key(int key);
 #ifdef GLQUAKE
-		void M_VideoOptions_Key (int key);
-			void M_Particles_Key (int key);
+		void M_VideoOptions_Key(int key);
+			void M_Particles_Key(int key);
 #endif
+		void M_VideoModes_Key (int key);
 	void M_NehDemos_Key (int key);
 	void M_Maps_Key (int key);
 	void M_Demos_Key (int key);
@@ -1600,9 +1612,9 @@ again:
 /* OPTIONS MENU */
 
 #ifdef GLQUAKE
-#define	OPTIONS_ITEMS	17
+#define	OPTIONS_ITEMS	10
 #else
-#define	OPTIONS_ITEMS	16
+#define	OPTIONS_ITEMS	9
 #endif
 
 #define	SLIDER_RANGE	10
@@ -1662,54 +1674,36 @@ void M_Menu_Options_f (void)
 	CheckMPOptimized ();
 }
 
-void M_AdjustSliders (int dir)
-{
-	S_LocalSound ("misc/menu3.wav");
-
-	switch (options_cursor)
-	{
-	case 0:	// screen size
-		scr_viewsize.value += dir * 10;
-		scr_viewsize.value = bound(30, scr_viewsize.value, 120);
-		Cvar_SetValue (&scr_viewsize, scr_viewsize.value);
-		break;
-
-	case 1:	// gamma
-		v_gamma.value -= dir * 0.05;
-		v_gamma.value = bound(0.5, v_gamma.value, 1);
-		Cvar_SetValue (&v_gamma, v_gamma.value);
-		break;
-
-	case 2:	// contrast
-		v_contrast.value += dir * 0.1;
-		v_contrast.value = bound(1, v_contrast.value, 2);
-		Cvar_SetValue (&v_contrast, v_contrast.value);
-		break;
-
-	case 3:	// mouse speed
-		sensitivity.value += dir * 0.5;
-		sensitivity.value = bound(1, sensitivity.value, 11);
-		Cvar_SetValue (&sensitivity, sensitivity.value);
-		break;
-
-	case 4:	// sfx volume
-		s_volume.value += dir * 0.1;
-		s_volume.value = bound(0, s_volume.value, 1);
-		Cvar_SetValue (&s_volume, s_volume.value);
-		break;
-	}
-}
-
-void M_DrawSlider (int x, int y, float range)
+void M_DrawSlider(int x, int y, float range)
 {
 	int	i;
 
 	range = bound(0, range, 1);
-	M_DrawCharacter (x-8, y, 128);
-	for (i=0 ; i<SLIDER_RANGE ; i++)
-		M_DrawCharacter (x + i*8, y, 129);
-	M_DrawCharacter (x+i*8, y, 130);
-	M_DrawCharacter (x + (SLIDER_RANGE-1)*8 * range, y, 131);
+	M_DrawCharacter(x - 8, y, 128);
+	for (i = 0; i<SLIDER_RANGE; i++)
+		M_DrawCharacter(x + i * 8, y, 129);
+	M_DrawCharacter(x + i * 8, y, 130);
+	M_DrawCharacter(x + (SLIDER_RANGE - 1) * 8 * range, y, 131);
+}
+
+void M_DrawSliderInt(int x, int y, float range, int value)
+{
+	char val_as_str[10];
+
+	M_DrawSlider(x, y, range);
+
+	sprintf(val_as_str, "%i", value);
+	M_Print(x + SLIDER_RANGE * 8 + 16, y, val_as_str);
+}
+
+void M_DrawSliderFloat (int x, int y, float range, float value)
+{
+	char val_as_str[10];
+
+	M_DrawSlider(x, y, range);
+
+	sprintf(val_as_str, "%.1f", value);
+	M_Print(x + SLIDER_RANGE * 8 + 16, y, val_as_str);
 }
 
 void M_DrawCheckbox (int x, int y, int on)
@@ -1722,76 +1716,44 @@ void M_DrawCheckbox (int x, int y, int on)
 
 void M_Options_Draw (void)
 {
-	float	r;
 	mpic_t	*p;
 
-	M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	//M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic ("gfx/p_option.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
 
-	M_Print (16, 32, "           Screen size");
-	r = (scr_viewsize.value - 30) / (120 - 30);
-	M_DrawSlider (220, 32, r);
+	M_Print(16, 32, "    Customize controls");
+	M_Print(16, 40, "         Mouse options");
 
-	M_Print (16, 40, "                 Gamma");
-	r = (1.0 - v_gamma.value) / 0.5;
-	M_DrawSlider (220, 40, r);
+	//M_Print (16, 120, "          MP Optimized");
+	//M_DrawCheckbox (220, 120, mp_optimized);
 
-	M_Print (16, 48, "              Contrast");
-	r = v_contrast.value - 1.0;
-	M_DrawSlider (220, 48, r);
-
-	M_Print (16, 56, "           Mouse Speed");
-	r = (sensitivity.value - 1)/10;
-	M_DrawSlider (220, 56, r);
-
-	M_Print (16, 64, "          Sound Volume");
-	r = s_volume.value;
-	M_DrawSlider (220, 64, r);
-
-	M_Print (16, 80, "            Always Run");
-	M_DrawCheckbox (220, 80, cl_forwardspeed.value > 200);
-
-	M_Print (16, 88, "            Mouse Look");
-	M_DrawCheckbox (220, 88, freelook.value);
-
-	M_Print (16, 96, "          Invert Mouse");
-	M_DrawCheckbox (220, 96, m_pitch.value < 0);
-
-	M_Print (16, 104, "            Lookstrafe");
-	M_DrawCheckbox (220, 104, lookstrafe.value);
-
-	M_Print (16, 112, "             Crosshair");
-	M_DrawCheckbox (220, 112, crosshair.value);
-
-	M_Print (16, 120, "          MP Optimized");
-	M_DrawCheckbox (220, 120, mp_optimized);
-
-	M_Print (16, 136, "    Customize controls");
+	M_Print(16, 56, "      Gameplay options");
+	M_Print(16, 64, "           Hud options");
+	M_Print(16, 72, "         Sound options");
 
 #ifdef GLQUAKE
-	M_Print (16, 144, "         Video Options");
+	M_Print (16, 80, "       Display Options");
 #endif
 
 	if (vid_menudrawfn)
-#ifndef GLQUAKE
-		M_Print (16, 144, "           Video Modes");
-#else
-		M_Print (16, 152, "           Video Modes");
-#endif
-
-#ifdef _WIN32
-	if (modestate == MS_WINDOWED)
-#else
-	if (vid_windowedmouse)
-#endif
 	{
 #ifndef GLQUAKE
-		M_Print (16, 152, "             Use Mouse");
-		M_DrawCheckbox (220, 152, _windowed_mouse.value);
+		M_Print(16, 80, "           Video modes");
+
+		M_Print(16, 96, "         Go to console");
 #else
-		M_Print (16, 160, "             Use Mouse");
-		M_DrawCheckbox (220, 160, _windowed_mouse.value);
+		M_Print(16, 88, "           Video modes");
+
+		M_Print(16, 104, "         Go to console");
+#endif
+	}
+	else
+	{
+#ifndef GLQUAKE
+		M_Print(16, 88, "         Go to console");
+#else
+		M_Print(16, 96, "         Go to console");
 #endif
 	}
 
@@ -1811,66 +1773,52 @@ void M_Options_Key (int k)
 		m_entersound = true;
 		switch (options_cursor)
 		{
-		case 6:	// always run
-			if (cl_forwardspeed.value > 200)
-			{
-				Cvar_SetValue (&cl_forwardspeed, 200);
-				Cvar_SetValue (&cl_backspeed, 200);
-			}
-			else
-			{
-				Cvar_SetValue (&cl_forwardspeed, 400);
-				Cvar_SetValue (&cl_backspeed, 400);
-			}
+		case 0:
+			M_Menu_Keys_f();
 			break;
 
-		case 7:	// mouse look
-			Cvar_SetValue (&freelook, !freelook.value);
+		case 1:
+			M_Menu_Mouse_f();
 			break;
 
-		case 8:	// invert mouse
-			Cvar_SetValue (&m_pitch, -m_pitch.value);
+		case 3:
+			M_Menu_Gameplay_f();
 			break;
 
-		case 9: // lookstrafe
-			Cvar_SetValue (&lookstrafe, !lookstrafe.value);
+		case 4:
+			M_Menu_Hud_f();
 			break;
 
-		case 10: // crosshair
-			Cvar_SetValue (&crosshair, !crosshair.value);
-			break;
-
-		case 11: // multiplayer optimized
-			SetMPOptimized (!mp_optimized);
-			break;
-
-		case 13:
-			M_Menu_Keys_f ();
+		case 5:
+			M_Menu_Sound_f();
 			break;
 
 #ifndef GLQUAKE
-		case 14:
+		case 6:
 #else
-		case 14:
-			M_Menu_VideoOptions_f ();
+		case 6:
+			M_Menu_VideoOptions_f();
 			break;
 
-		case 15:
+		case 7:
 #endif
 			if (vid_menudrawfn)
-				M_Menu_VideoModes_f ();
+				M_Menu_VideoModes_f();
 			break;
 
 #ifndef GLQUAKE
-		case 15:
+		case 8:
 #else
-		case 16:
-#endif			// _windowed_mouse
-			Cvar_SetValue (&_windowed_mouse, !_windowed_mouse.value);
+		case 9:
+#endif
+			Con_ToggleConsole_f();
 			break;
 
+		//case 11: // multiplayer optimized
+		//	SetMPOptimized (!mp_optimized);
+		//	break;
+
 		default:
-			M_AdjustSliders (1);
 			break;
 		}
 		return;
@@ -1902,46 +1850,26 @@ void M_Options_Key (int k)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustSliders (-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustSliders (1);
 		break;
 	}
 
 	if (k == K_UPARROW || k == K_END || k == K_PGDN)
 	{
-		if (options_cursor == OPTIONS_ITEMS - 1
-#ifdef _WIN32
-		&& modestate != MS_WINDOWED
-#else
-		&& !vid_windowedmouse
-#endif
-		)
-			options_cursor = OPTIONS_ITEMS - 2;
+		if (options_cursor == OPTIONS_ITEMS - 3 && !vid_menudrawfn)
+			options_cursor = OPTIONS_ITEMS - 4;
 
-		if (options_cursor == OPTIONS_ITEMS - 2 && !vid_menudrawfn)
-			options_cursor = OPTIONS_ITEMS - 3;
-
-		if (k == K_UPARROW && (options_cursor == 5 || options_cursor == 12))
+		if (k == K_UPARROW && (options_cursor == 2 || options_cursor == 8))
 			options_cursor--;
 	}
 	else
 	{
-		if (options_cursor == OPTIONS_ITEMS - 2 && !vid_menudrawfn)
-			options_cursor = OPTIONS_ITEMS - 1;
+		if (options_cursor == OPTIONS_ITEMS - 3 && !vid_menudrawfn)
+			options_cursor = OPTIONS_ITEMS - 2;
 
-		if (options_cursor == OPTIONS_ITEMS - 1
-#ifdef _WIN32
-		&& modestate != MS_WINDOWED
-#else
-		&& !vid_windowedmouse
-#endif
-		)
-			options_cursor = 0;
-
-		if (k == K_DOWNARROW && (options_cursor == 5 || options_cursor == 12))
+		if (k == K_DOWNARROW && (options_cursor == 2 || options_cursor == 8))
 			options_cursor++;
 	}
 }
@@ -2119,11 +2047,483 @@ void M_Keys_Key (int k)
 }
 
 //=============================================================================
+/* MOUSE OPTIONS MENU */
+
+#define	MOUSE_ITEMS	5
+
+int	mouse_cursor = 0;
+
+void M_AdjustMouseSliders(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (mouse_cursor)
+	{
+	case 0:	// mouse speed
+		sensitivity.value += dir * 0.5;
+		sensitivity.value = bound(1, sensitivity.value, 11);
+		Cvar_SetValue(&sensitivity, sensitivity.value);
+		break;
+	}
+}
+
+void M_Menu_Mouse_f(void)
+{
+	key_dest = key_menu;
+	m_state = m_mouse;
+	m_entersound = true;
+}
+
+void M_Mouse_Draw(void)
+{
+	float	r;
+	mpic_t	*p;
+
+	//M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	p = Draw_CachePic("gfx/ttl_cstm.lmp");
+	M_DrawPic((320 - p->width) >> 1, 4, p);
+
+	M_Print(16, 32, "           Mouse speed");
+	r = (sensitivity.value - 1) / 10;
+	M_DrawSliderFloat(220, 32, r, sensitivity.value);
+
+	M_Print(16, 40, "            Mouse look");
+	M_DrawCheckbox(220, 40, freelook.value);
+
+	M_Print(16, 48, "          Invert mouse");
+	M_DrawCheckbox(220, 48, m_pitch.value < 0);
+
+	M_Print(16, 56, "            Lookstrafe");
+	M_DrawCheckbox(220, 56, lookstrafe.value);
+
+#ifdef _WIN32
+	if (modestate == MS_WINDOWED)
+#else
+	if (vid_windowedmouse)
+#endif
+	{
+		M_Print(-16, 64, "Use mouse in windowed mode");
+		M_DrawCheckbox(220, 64, _windowed_mouse.value);
+	}
+
+	// cursor
+	M_DrawCharacter(200, 32 + mouse_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+}
+
+void M_Mouse_Key(int k)
+{
+	switch (k)
+	{
+	case K_ESCAPE:
+		M_Menu_Options_f();
+		break;
+
+	case K_ENTER:
+		S_LocalSound("misc/menu2.wav");
+		switch (mouse_cursor)
+		{
+		case 0:
+			M_AdjustMouseSliders(1);
+			break;
+
+		case 1:	// mouse look
+			Cvar_SetValue(&freelook, !freelook.value);
+			break;
+
+		case 2:	// invert mouse
+			Cvar_SetValue(&m_pitch, -m_pitch.value);
+			break;
+
+		case 3:	// lookstrafe
+			Cvar_SetValue(&lookstrafe, !lookstrafe.value);
+			break;
+
+		case 4:	// _windowed_mouse
+			Cvar_SetValue(&_windowed_mouse, !_windowed_mouse.value);
+			break;
+
+		default:
+			break;
+		}
+		return;
+
+	case K_UPARROW:
+		S_LocalSound("misc/menu1.wav");
+		mouse_cursor--;
+		if (mouse_cursor < 0)
+			mouse_cursor = MOUSE_ITEMS - 1;
+		break;
+
+	case K_DOWNARROW:
+		S_LocalSound("misc/menu1.wav");
+		mouse_cursor++;
+		if (mouse_cursor >= MOUSE_ITEMS)
+			mouse_cursor = 0;
+		break;
+
+	case K_HOME:
+	case K_PGUP:
+		S_LocalSound("misc/menu1.wav");
+		mouse_cursor = 0;
+		break;
+
+	case K_END:
+	case K_PGDN:
+		S_LocalSound("misc/menu1.wav");
+		mouse_cursor = MOUSE_ITEMS - 1;
+		break;
+
+	case K_LEFTARROW:
+		M_AdjustMouseSliders(-1);
+		break;
+
+	case K_RIGHTARROW:
+		M_AdjustMouseSliders(1);
+		break;
+	}
+
+	if (k == K_UPARROW || k == K_END || k == K_PGDN)
+	{
+		if (mouse_cursor == MOUSE_ITEMS - 1
+#ifdef _WIN32
+			&& modestate != MS_WINDOWED
+#else
+			&& !vid_windowedmouse
+#endif
+			)
+		{
+			mouse_cursor = MOUSE_ITEMS - 2;
+		}
+	}
+	else
+	{
+		if (mouse_cursor == MOUSE_ITEMS - 1
+#ifdef _WIN32
+			&& modestate != MS_WINDOWED
+#else
+			&& !vid_windowedmouse
+#endif
+			)
+		{
+			mouse_cursor = 0;
+		}
+	}
+}
+
+//=============================================================================
+/* GAMEPLAY OPTIONS MENU */
+
+#define	GAMEPLAY_ITEMS	2
+
+int	gameplay_cursor = 0;
+
+void M_AdjustGameplaySliders(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (gameplay_cursor)
+	{
+	default:
+		break;
+	}
+}
+
+void M_Menu_Gameplay_f(void)
+{
+	key_dest = key_menu;
+	m_state = m_gameplay;
+	m_entersound = true;
+}
+
+void M_Gameplay_Draw(void)
+{
+	mpic_t	*p;
+
+	//M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	p = Draw_CachePic("gfx/ttl_cstm.lmp");
+	M_DrawPic((320 - p->width) >> 1, 4, p);
+
+	M_Print (16, 32, "            Always Run");
+	M_DrawCheckbox (220, 32, cl_forwardspeed.value > 200);
+
+	// cursor
+	M_DrawCharacter(200, 32 + gameplay_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+}
+
+void M_Gameplay_Key(int k)
+{
+	switch (k)
+	{
+	case K_ESCAPE:
+		M_Menu_Options_f();
+		break;
+
+	case K_ENTER:
+		S_LocalSound("misc/menu2.wav");
+		switch (gameplay_cursor)
+		{
+		case 0:	// always run
+			if (cl_forwardspeed.value > 200)
+			{
+				Cvar_SetValue (&cl_forwardspeed, 200);
+				Cvar_SetValue (&cl_backspeed, 200);
+			}
+			else
+			{
+				Cvar_SetValue (&cl_forwardspeed, 400);
+				Cvar_SetValue (&cl_backspeed, 400);
+			}
+			break;
+
+		default:
+			break;
+		}
+		return;
+
+	case K_UPARROW:
+		S_LocalSound("misc/menu1.wav");
+		gameplay_cursor--;
+		if (gameplay_cursor < 0)
+			gameplay_cursor = GAMEPLAY_ITEMS - 1;
+		break;
+
+	case K_DOWNARROW:
+		S_LocalSound("misc/menu1.wav");
+		gameplay_cursor++;
+		if (gameplay_cursor >= GAMEPLAY_ITEMS)
+			gameplay_cursor = 0;
+		break;
+
+	case K_HOME:
+	case K_PGUP:
+		S_LocalSound("misc/menu1.wav");
+		gameplay_cursor = 0;
+		break;
+
+	case K_END:
+	case K_PGDN:
+		S_LocalSound("misc/menu1.wav");
+		gameplay_cursor = GAMEPLAY_ITEMS - 1;
+		break;
+
+	case K_LEFTARROW:
+		M_AdjustGameplaySliders(-1);
+		break;
+
+	case K_RIGHTARROW:
+		M_AdjustGameplaySliders(1);
+		break;
+	}
+}
+
+//=============================================================================
+/* HUD OPTIONS MENU */
+
+#define	HUD_ITEMS	2
+
+int	hud_cursor = 0;
+
+void M_AdjustHudSliders(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (hud_cursor)
+	{
+	default:
+		break;
+	}
+}
+
+void M_Menu_Hud_f(void)
+{
+	key_dest = key_menu;
+	m_state = m_hud;
+	m_entersound = true;
+}
+
+void M_Hud_Draw(void)
+{
+	mpic_t	*p;
+
+	//M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	p = Draw_CachePic("gfx/ttl_cstm.lmp");
+	M_DrawPic((320 - p->width) >> 1, 4, p);
+
+	M_Print (16, 32, "             Crosshair");
+	M_DrawCheckbox (220, 32, crosshair.value);
+
+	// cursor
+	M_DrawCharacter(200, 32 + hud_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+}
+
+void M_Hud_Key(int k)
+{
+	switch (k)
+	{
+	case K_ESCAPE:
+		M_Menu_Options_f();
+		break;
+
+	case K_ENTER:
+		S_LocalSound("misc/menu2.wav");
+		switch (hud_cursor)
+		{
+		case 0: // crosshair
+			Cvar_SetValue (&crosshair, !crosshair.value);
+			break;
+
+		default:
+			break;
+		}
+		return;
+
+	case K_UPARROW:
+		S_LocalSound("misc/menu1.wav");
+		hud_cursor--;
+		if (hud_cursor < 0)
+			hud_cursor = HUD_ITEMS - 1;
+		break;
+
+	case K_DOWNARROW:
+		S_LocalSound("misc/menu1.wav");
+		hud_cursor++;
+		if (hud_cursor >= HUD_ITEMS)
+			hud_cursor = 0;
+		break;
+
+	case K_HOME:
+	case K_PGUP:
+		S_LocalSound("misc/menu1.wav");
+		hud_cursor = 0;
+		break;
+
+	case K_END:
+	case K_PGDN:
+		S_LocalSound("misc/menu1.wav");
+		hud_cursor = HUD_ITEMS - 1;
+		break;
+
+	case K_LEFTARROW:
+		M_AdjustHudSliders(-1);
+		break;
+
+	case K_RIGHTARROW:
+		M_AdjustHudSliders(1);
+		break;
+	}
+}
+
+//=============================================================================
+/* SOUND OPTIONS MENU */
+
+#define	SOUND_ITEMS	2
+
+int	sound_cursor = 0;
+
+void M_AdjustSoundSliders(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (sound_cursor)
+	{
+	case 0:	// sfx volume
+		s_volume.value += dir * 0.1;
+		s_volume.value = bound(0, s_volume.value, 1);
+		Cvar_SetValue(&s_volume, s_volume.value);
+		break;
+
+	case 1:	// bgm volume
+		bgmvolume.value += dir * 0.1;
+		bgmvolume.value = bound(0, bgmvolume.value, 1);
+		Cvar_SetValue(&bgmvolume, bgmvolume.value);
+		break;
+	}
+}
+
+void M_Menu_Sound_f(void)
+{
+	key_dest = key_menu;
+	m_state = m_sound;
+	m_entersound = true;
+}
+
+void M_Sound_Draw(void)
+{
+	mpic_t	*p;
+
+	//M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	p = Draw_CachePic("gfx/ttl_cstm.lmp");
+	M_DrawPic((320 - p->width) >> 1, 4, p);
+
+	M_Print(16, 32, "          Sound volume");
+	M_DrawSliderFloat(220, 32, s_volume.value, s_volume.value);
+
+	M_Print(16, 40, "          Music volume");
+	M_DrawSliderFloat(220, 40, bgmvolume.value, bgmvolume.value);
+
+	// cursor
+	M_DrawCharacter(200, 32 + sound_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+}
+
+void M_Sound_Key(int k)
+{
+	switch (k)
+	{
+	case K_ESCAPE:
+		M_Menu_Options_f();
+		break;
+
+	case K_ENTER:
+		S_LocalSound("misc/menu2.wav");
+		switch (sound_cursor)
+		{
+		default:
+			break;
+		}
+		return;
+
+	case K_UPARROW:
+		S_LocalSound("misc/menu1.wav");
+		sound_cursor--;
+		if (sound_cursor < 0)
+			sound_cursor = SOUND_ITEMS - 1;
+		break;
+
+	case K_DOWNARROW:
+		S_LocalSound("misc/menu1.wav");
+		sound_cursor++;
+		if (sound_cursor >= SOUND_ITEMS)
+			sound_cursor = 0;
+		break;
+
+	case K_HOME:
+	case K_PGUP:
+		S_LocalSound("misc/menu1.wav");
+		sound_cursor = 0;
+		break;
+
+	case K_END:
+	case K_PGDN:
+		S_LocalSound("misc/menu1.wav");
+		sound_cursor = SOUND_ITEMS - 1;
+		break;
+
+	case K_LEFTARROW:
+		M_AdjustSoundSliders(-1);
+		break;
+
+	case K_RIGHTARROW:
+		M_AdjustSoundSliders(1);
+		break;
+	}
+}
+
+//=============================================================================
 /* VIDEO OPTIONS MENU */
 
 #ifdef GLQUAKE
 
-#define	VOM_ITEMS	16
+#define	VOM_ITEMS	19
 
 int	vom_cursor = 0;
 
@@ -2148,19 +2548,37 @@ void M_AdjustVOMSliders (int dir)
 
 	switch (vom_cursor)
 	{
-	case 7:
+	case 0:	// screen size
+		scr_viewsize.value += dir * 10;
+		scr_viewsize.value = bound(30, scr_viewsize.value, 120);
+		Cvar_SetValue(&scr_viewsize, scr_viewsize.value);
+		break;
+
+	case 1:	// gamma
+		v_gamma.value -= dir * 0.05;
+		v_gamma.value = bound(0.5, v_gamma.value, 1);
+		Cvar_SetValue(&v_gamma, v_gamma.value);
+		break;
+
+	case 2:	// contrast
+		v_contrast.value += dir * 0.1;
+		v_contrast.value = bound(1, v_contrast.value, 2);
+		Cvar_SetValue(&v_contrast, v_contrast.value);
+		break;
+
+	case 10:
 		gl_picmip.value -= dir;
 		gl_picmip.value = bound(0, gl_picmip.value, 4);
 		Cvar_SetValue (&gl_picmip, gl_picmip.value);
 		break;
 
-	case 11:
+	case 14:
 		gl_waterfog_density.value += dir * 0.1;
 		gl_waterfog_density.value = bound(0, gl_waterfog_density.value, 1);
 		Cvar_SetValue (&gl_waterfog_density, gl_waterfog_density.value);
 		break;
 
-	case 12:
+	case 15:
 		r_wateralpha.value += dir * 0.1;
 		r_wateralpha.value = bound(0, r_wateralpha.value, 1);
 		Cvar_SetValue (&r_wateralpha, r_wateralpha.value);
@@ -2173,59 +2591,69 @@ void M_VideoOptions_Draw (void)
 	float	r;
 	mpic_t	*p;
 	
-	M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	//M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic ("gfx/ttl_cstm.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
 	
-	M_Print (16, 32, "       Coloured lights");
-	M_DrawCheckbox (220, 32, gl_loadlitfiles.value);
+	M_Print (16, 32, "           Screen size");
+	r = (scr_viewsize.value - 30) / (120 - 30);
+	M_DrawSliderInt(220, 32, r, (int)scr_viewsize.value);
 
-	M_Print (16, 40, "        Dynamic lights");
-	M_DrawCheckbox (220, 40, r_dynamic.value);
+	M_Print (16, 40, "                 Gamma");
+	r = (1.0 - v_gamma.value) / 0.5;
+	M_DrawSliderFloat(220, 40, r, v_gamma.value);
 
-	M_Print (16, 48, "       Vertex lighting");
-	M_DrawCheckbox (220, 48, gl_vertexlights.value);
+	M_Print (16, 48, "              Contrast");
+	r = v_contrast.value - 1.0;
+	M_DrawSliderFloat(220, 48, r, v_contrast.value);
 
-	M_Print (16, 56, "         Quake3 models");
-	M_DrawCheckbox (220, 56, gl_loadq3models.value);
+	M_Print (16, 56, "       Coloured lights");
+	M_DrawCheckbox (220, 56, gl_loadlitfiles.value);
 
-	M_Print (16, 64, "               Shadows");
-	M_DrawCheckbox (220, 64, r_shadows.value);
+	M_Print (16, 64, "        Dynamic lights");
+	M_DrawCheckbox (220, 64, r_dynamic.value);
 
-	M_Print (16, 72, "        Particle style");
-	M_Print (220, 72, R_NameForParticleMode());
+	M_Print (16, 72, "       Vertex lighting");
+	M_DrawCheckbox (220, 72, gl_vertexlights.value);
 
-	M_Print (16, 80, "        Texture filter");
-	M_Print (220, 80, !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST") ? "bilinear" :
+	M_Print (16, 80, "         Quake3 models");
+	M_DrawCheckbox (220, 80, gl_loadq3models.value);
+
+	M_Print (16, 88, "               Shadows");
+	M_DrawCheckbox (220, 88, r_shadows.value);
+
+	M_Print (16, 96, "        Particle style");
+	M_Print (220, 96, R_NameForParticleMode());
+
+	M_Print (16, 104, "        Texture filter");
+	M_Print (220, 104, !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST") ? "bilinear" :
 					!Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_LINEAR") ? "trilinear" :
 					!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST") ? "off" : gl_texturemode.string);
 
-	M_Print (16, 88, "       Texture quality");
+	M_Print (16, 112, "       Texture quality");
 	r = (4 - gl_picmip.value) * 0.25;
-	M_DrawSlider (220, 88, r);
+	M_DrawSlider (220, 112, r);
 
-	M_Print (16, 96, "     Detailed textures");
-	M_DrawCheckbox (220, 96, gl_detail.value);
+	M_Print (16, 120, "     Detailed textures");
+	M_DrawCheckbox (220, 120, gl_detail.value);
 
-	M_Print (16, 104, "        Water caustics");
-	M_DrawCheckbox (220, 104, gl_caustics.value);
+	M_Print (16, 128, "        Water caustics");
+	M_DrawCheckbox (220, 128, gl_caustics.value);
 
-	M_Print (16, 112, "        Underwater fog");
-	M_Print (220, 112, !gl_waterfog.value ? "off" : gl_waterfog.value == 2 ? "extra" : "normal");
+	M_Print (16, 136, "        Underwater fog");
+	M_Print (220, 136, !gl_waterfog.value ? "off" : gl_waterfog.value == 2 ? "extra" : "normal");
 
-	M_Print (16, 120, "      Waterfog density");
-	r = gl_waterfog_density.value;
-	M_DrawSlider (220, 120, r);
+	M_Print (16, 144, "      Waterfog density");
+	M_DrawSliderFloat(220, 144, gl_waterfog_density.value, gl_waterfog_density.value);
 
-	M_Print (16, 128, "           Water alpha");
-	r = r_wateralpha.value;
-	M_DrawSlider (220, 128, r);
+	M_Print (16, 152, "           Water alpha");
+	M_DrawSliderFloat(220, 152, r_wateralpha.value, r_wateralpha.value);
 
-	M_Print (16, 136, "             Particles");
+	M_Print (16, 160, "             Particles");
 
-	M_PrintWhite (16, 144, "             Fast mode");
+	M_PrintWhite (16, 168, "             Fast mode");
 
-	M_PrintWhite (16, 152, "          High quality");
+	M_PrintWhite (16, 176, "          High quality");
 
 	// cursor
 	M_DrawCharacter (200, 32 + vom_cursor*8, 12+((int)(realtime*4)&1));
@@ -2280,31 +2708,31 @@ void M_VideoOptions_Key (int k)
 		S_LocalSound ("misc/menu2.wav");
 		switch (vom_cursor)
 		{
-		case 0:
+		case 3:
 			Cvar_SetValue (&gl_loadlitfiles, !gl_loadlitfiles.value);
 			break;
 
-		case 1:
+		case 4:
 			Cvar_SetValue (&r_dynamic, !r_dynamic.value);
 			break;
 
-		case 2:
+		case 5:
 			Cvar_SetValue (&gl_vertexlights, !gl_vertexlights.value);
 			break;
 
-		case 3:
+		case 6:
 			Cvar_SetValue (&gl_loadq3models, !gl_loadq3models.value);
 			break;
 
-		case 4:
+		case 7:
 			Cvar_SetValue (&r_shadows, !r_shadows.value);
 			break;
 
-		case 5:
+		case 8:
 			R_ToggleParticles_f ();
 			break;
 
-		case 6:
+		case 9:
 			for (i = 0 ; i < 3 ; i++)
 				if (!Q_strcasecmp(popular_filters[i], gl_texturemode.string))
 					break;
@@ -2313,23 +2741,23 @@ void M_VideoOptions_Key (int k)
 			Cvar_Set (&gl_texturemode, popular_filters[i+1]);
 			break;
 
-		case 8:
+		case 11:
 			Cvar_SetValue (&gl_detail, !gl_detail.value);
 			break;
 
-		case 9:
+		case 12:
 			Cvar_SetValue (&gl_caustics, !gl_caustics.value);
 			break;
 
-		case 10:
+		case 13:
 			Cvar_SetValue (&gl_waterfog, !gl_waterfog.value ? 1 : gl_waterfog.value == 1 ? 2 : 0);
 			break;
 
-		case 13:
+		case 16:
 			M_Menu_Particles_f ();
 			break;
 
-		case 14:
+		case 17:
 			Cvar_SetValue (&gl_loadlitfiles, 0);
 			Cvar_SetValue (&r_dynamic, 0);
 			Cvar_SetValue (&gl_vertexlights, 0);
@@ -2343,7 +2771,7 @@ void M_VideoOptions_Key (int k)
 			Cvar_SetValue (&r_wateralpha, 1.0);
 			break;
 
-		case 15:
+		case 18:
 			Cvar_SetValue (&gl_loadlitfiles, 1);
 			Cvar_SetValue (&r_dynamic, 1);
 			Cvar_SetValue (&gl_vertexlights, 1);
@@ -4672,6 +5100,22 @@ void M_Draw (void)
 		M_Keys_Draw ();
 		break;
 
+	case m_mouse:
+		M_Mouse_Draw();
+		break;
+
+	case m_gameplay:
+		M_Gameplay_Draw();
+		break;
+
+	case m_hud:
+		M_Hud_Draw();
+		break;
+
+	case m_sound:
+		M_Sound_Draw();
+		break;
+
 #ifdef GLQUAKE
 	case m_videooptions:
 		M_VideoOptions_Draw ();
@@ -4802,6 +5246,22 @@ void M_Keydown (int key)
 	case m_keys:
 		M_Keys_Key (key);
 		return;
+
+	case m_mouse:
+		M_Mouse_Key(key);
+		return;
+
+	case m_gameplay:
+		M_Gameplay_Key(key);
+		break;
+
+	case m_hud:
+		M_Hud_Key(key);
+		break;
+
+	case m_sound:
+		M_Sound_Key(key);
+		break;
 
 #ifdef GLQUAKE
 	case m_videooptions:
