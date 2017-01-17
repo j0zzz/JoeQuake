@@ -1241,7 +1241,7 @@ void R_ReplaceQ3Frame (int frame)
 	animdata_t		*currbodyanim, *currlegsanim;
 	static animtype_t oldbodyanim, oldlegsanim;
 	static float	bodyanimtime, legsanimtime;
-	static qboolean	deathanim = false;
+	static qboolean	deathanim = false, oldplayerjumped = false;
 	static vec3_t	oldviewangles;
 	extern kbutton_t in_jump, in_back, in_left, in_right;
 
@@ -1333,10 +1333,8 @@ void R_ReplaceQ3Frame (int frame)
 		//	}
 		//}
 
-		if (player_jumped && (cl.onground || cl.inwater))
+		if (oldplayerjumped && !player_jumped)
 		{
-			player_jumped = false;
-
 			if (cl.onground)
 			{
 				legsanim = legs_land;
@@ -1355,6 +1353,8 @@ void R_ReplaceQ3Frame (int frame)
 		{
 			legsanim = legs_back;
 		}
+
+		oldplayerjumped = player_jumped;
 	}
 
 	currlegsanim = &anims[legsanim];

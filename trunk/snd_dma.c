@@ -430,17 +430,9 @@ void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float 
 	channel_t	*target_chan, *check;
 	sfxcache_t	*sc;
 	int		vol, ch_idx, skip;
-#ifdef GLQUAKE
-	extern qboolean player_jumped;
-#endif
 
 	if (!sound_started || !sfx || s_nosound.value)
 		return;
-
-#ifdef GLQUAKE
-	if (!strcmp(sfx->name, "player/plyrjmp8.wav"))
-		player_jumped = true;
-#endif
 
 	vol = fvol * 255;
 
