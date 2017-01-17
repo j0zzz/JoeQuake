@@ -864,7 +864,8 @@ void CalcGunAngle (void)
 	cl.viewent.angles[YAW] -= v_idlescale.value * sin(cl.time * v_iyaw_cycle.value) * v_iyaw_level.value;
 	cl.viewent.angles[ROLL] -= v_idlescale.value * sin(cl.time * v_iroll_cycle.value) * v_iroll_level.value;
 
-	if (in_jump.state & 1)
+	//if (in_jump.state & 1)	// not working when demoplayback
+	if (!cl.onground)
 	{
 		player_jumped = true;
 	}
