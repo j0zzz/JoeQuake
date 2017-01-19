@@ -429,13 +429,35 @@ static void KillSearchBox (void)
 	num_searchs = 0;
 }
 
+void GotoStartOfList()
+{
+	list_cursor = 0;
+	list_base = 0;
+}
+
+void GotoEndOfList(int num_elements, int num_lines)
+{
+	if (num_elements > num_lines)
+	{
+		list_cursor = num_lines - 1;
+		list_base = num_elements - list_cursor - 1;
+	}
+	else
+	{
+		list_base = 0;
+		list_cursor = num_elements - 1;
+	}
+}
+
 void M_List_Key (int k, int num_elements, int num_lines)
 {
 	switch (k)
 	{
 	case K_UPARROW:
-		S_LocalSound ("misc/menu1.wav");
-		if (list_cursor > 0)
+		S_LocalSound("misc/menu1.wav");
+		if (list_cursor == 0)
+			GotoEndOfList(num_elements, num_lines);
+		else if (list_cursor > 0)
 			list_cursor--;
 		else if (list_base > 0)
 			list_base--;
@@ -443,7 +465,9 @@ void M_List_Key (int k, int num_elements, int num_lines)
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (list_cursor + list_base < num_elements - 1)
+		if (list_cursor + list_base == num_elements - 1)
+			GotoStartOfList();
+		else if (list_cursor + list_base < num_elements - 1)
 		{
 			if (list_cursor < num_lines - 1)
 				list_cursor++;
@@ -454,22 +478,12 @@ void M_List_Key (int k, int num_elements, int num_lines)
 
 	case K_HOME:
 		S_LocalSound ("misc/menu1.wav");
-		list_cursor = 0;
-		list_base = 0;
+		GotoStartOfList();
 		break;
 
 	case K_END:
 		S_LocalSound ("misc/menu1.wav");
-		if (num_elements > num_lines)
-		{
-			list_cursor = num_lines - 1;
-			list_base = num_elements - list_cursor - 1;
-		}
-		else
-		{
-			list_base = 0;
-			list_cursor = num_elements - 1;
-		}
+		GotoEndOfList(num_elements, num_lines);
 		break;
 
 	case K_PGUP:
@@ -2049,12 +2063,21 @@ void M_Keys_Key (int k)
 //=============================================================================
 /* MOUSE OPTIONS MENU */
 
-#define	MOUSE_ITEMS	5
+#define	MOUSE_ITEMS	10
 
 int	mouse_cursor = 0;
 
+extern qboolean use_m_smooth;
+extern cvar_t m_filter;
+extern cvar_t m_rate;
+
+#define MOUSE_RATE_ITEMS 8
+int mouse_rate_values[8] = { 60, 125, 250, 500, 800, 1000, 1500, 2000 };
+
 void M_AdjustMouseSliders(int dir)
 {
+	int i, current_rate_index;
+
 	S_LocalSound("misc/menu3.wav");
 
 	switch (mouse_cursor)
@@ -2063,6 +2086,26 @@ void M_AdjustMouseSliders(int dir)
 		sensitivity.value += dir * 0.5;
 		sensitivity.value = bound(1, sensitivity.value, 11);
 		Cvar_SetValue(&sensitivity, sensitivity.value);
+		break;
+
+	case 7:	// mouse rate
+		if (m_rate.value < mouse_rate_values[0])
+			current_rate_index = 0;
+		else if (m_rate.value >= mouse_rate_values[MOUSE_RATE_ITEMS - 1])
+			current_rate_index = MOUSE_RATE_ITEMS - 1;
+		else
+			for (i = 0; i < MOUSE_RATE_ITEMS - 1; i++)
+			{
+				if (m_rate.value >= mouse_rate_values[i] && m_rate.value < mouse_rate_values[i + 1])
+				{
+					current_rate_index = i;
+					break;
+				}
+			}
+		if (dir < 0 && current_rate_index > 0)
+			Cvar_SetValue(&m_rate, mouse_rate_values[current_rate_index-1]);
+		else if (dir > 0 && current_rate_index < (MOUSE_RATE_ITEMS - 1))
+			Cvar_SetValue(&m_rate, mouse_rate_values[current_rate_index+1]);
 		break;
 	}
 }
@@ -2087,14 +2130,31 @@ void M_Mouse_Draw(void)
 	r = (sensitivity.value - 1) / 10;
 	M_DrawSliderFloat(220, 32, r, sensitivity.value);
 
-	M_Print(16, 40, "            Mouse look");
-	M_DrawCheckbox(220, 40, freelook.value);
+	M_Print(16, 40, "          Mouse filter");
+	M_DrawCheckbox(220, 40, m_filter.value);
 
-	M_Print(16, 48, "          Invert mouse");
-	M_DrawCheckbox(220, 48, m_pitch.value < 0);
+	M_Print(16, 48, "            Mouse look");
+	M_DrawCheckbox(220, 48, freelook.value);
 
-	M_Print(16, 56, "            Lookstrafe");
-	M_DrawCheckbox(220, 56, lookstrafe.value);
+	M_Print(16, 56, "          Invert mouse");
+	M_DrawCheckbox(220, 56, m_pitch.value < 0);
+
+	M_Print(16, 64, "            Lookstrafe");
+	M_DrawCheckbox(220, 64, lookstrafe.value);
+
+	M_Print(16, 80, "   Use mouse smoothing");
+	M_DrawCheckbox(220, 80, use_m_smooth);
+
+	M_Print(16, 88, "            Mouse rate");
+	if (use_m_smooth)
+	{
+		r = (m_rate.value - 60) / (2000 - 60);
+		M_DrawSliderInt(220, 88, r, m_rate.value);
+	}
+	else
+	{
+		M_Print(220, 88, "-");
+	}
 
 #ifdef _WIN32
 	if (modestate == MS_WINDOWED)
@@ -2102,12 +2162,18 @@ void M_Mouse_Draw(void)
 	if (vid_windowedmouse)
 #endif
 	{
-		M_Print(-16, 64, "Use mouse in windowed mode");
-		M_DrawCheckbox(220, 64, _windowed_mouse.value);
+		M_Print(-16, 104, "Use mouse in windowed mode");
+		M_DrawCheckbox(220, 104, _windowed_mouse.value);
 	}
 
 	// cursor
 	M_DrawCharacter(200, 32 + mouse_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+
+	if (!use_m_smooth && (mouse_cursor == 6 || mouse_cursor == 7))
+	{
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Mouse smoothing must be set from the");
+		M_Print(1 * 8, 36 + 11 * 8 + 8 * 3, "command line with -dinput and -m_smooth");
+	}
 }
 
 void M_Mouse_Key(int k)
@@ -2126,19 +2192,31 @@ void M_Mouse_Key(int k)
 			M_AdjustMouseSliders(1);
 			break;
 
-		case 1:	// mouse look
+		case 1:	// mouse filter
+			Cvar_SetValue(&m_filter, !m_filter.value);
+			break;
+
+		case 2:	// mouse look
 			Cvar_SetValue(&freelook, !freelook.value);
 			break;
 
-		case 2:	// invert mouse
+		case 3:	// invert mouse
 			Cvar_SetValue(&m_pitch, -m_pitch.value);
 			break;
 
-		case 3:	// lookstrafe
+		case 4:	// lookstrafe
 			Cvar_SetValue(&lookstrafe, !lookstrafe.value);
 			break;
 
-		case 4:	// _windowed_mouse
+		case 6:	// mouse smoothing
+			break;
+
+		case 7:
+			if (use_m_smooth)
+				M_AdjustMouseSliders(1);
+			break;
+
+		case 9:	// _windowed_mouse
 			Cvar_SetValue(&_windowed_mouse, !_windowed_mouse.value);
 			break;
 
@@ -2192,11 +2270,17 @@ void M_Mouse_Key(int k)
 #endif
 			)
 		{
-			mouse_cursor = MOUSE_ITEMS - 2;
+			mouse_cursor = MOUSE_ITEMS - 3;
 		}
+
+		if (k == K_UPARROW && (mouse_cursor == 5 || mouse_cursor == 8))
+			mouse_cursor--;
 	}
 	else
 	{
+		if (k == K_DOWNARROW && (mouse_cursor == 5 || mouse_cursor == 8))
+			mouse_cursor++;
+
 		if (mouse_cursor == MOUSE_ITEMS - 1
 #ifdef _WIN32
 			&& modestate != MS_WINDOWED
