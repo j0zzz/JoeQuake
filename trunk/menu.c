@@ -2169,7 +2169,7 @@ void M_Mouse_Draw(void)
 	// cursor
 	M_DrawCharacter(200, 32 + mouse_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	if (!use_m_smooth && (mouse_cursor == 6 || mouse_cursor == 7))
+	//if (!use_m_smooth && (mouse_cursor == 6 || mouse_cursor == 7))
 	{
 		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Mouse smoothing must be set from the");
 		M_Print(1 * 8, 36 + 11 * 8 + 8 * 3, "command line with -dinput and -m_smooth");
@@ -2403,7 +2403,7 @@ void M_Gameplay_Key(int k)
 //=============================================================================
 /* HUD OPTIONS MENU */
 
-#define	HUD_ITEMS	2
+#define	HUD_ITEMS	15
 
 int	hud_cursor = 0;
 
@@ -2413,9 +2413,97 @@ void M_AdjustHudSliders(int dir)
 
 	switch (hud_cursor)
 	{
+	case 0:	// sbar scale
+		scr_sbarscale_amount.value += dir * 0.5;
+		scr_sbarscale_amount.value = bound(1, scr_sbarscale_amount.value, 4);
+		Cvar_SetValue(&scr_sbarscale_amount, scr_sbarscale_amount.value);
+		break;
+
+	case 5:	// crosshair scale
+		crosshairsize.value += dir * 0.5;
+		crosshairsize.value = bound(0, crosshairsize.value, 4);
+		Cvar_SetValue(&crosshairsize, crosshairsize.value);
+		break;
+
+	case 6:	// crosshair alpha
+		gl_crosshairalpha.value += dir * 0.1;
+		gl_crosshairalpha.value = bound(0, gl_crosshairalpha.value, 1);
+		Cvar_SetValue(&gl_crosshairalpha, gl_crosshairalpha.value);
+		break;
+
 	default:
 		break;
 	}
+}
+
+void DrawCrosshairType(int x, int y)
+{
+	char *str;
+
+	switch ((int)(crosshair.value))
+	{
+	case 0:
+		str = "off";
+		break;
+
+	case 2:
+		str = "type 1";
+		break;
+
+	case 3:
+		str = "type 2";
+		break;
+
+	case 4:
+		str = "type 3";
+		break;
+
+	case 5:
+		str = "type 4";
+		break;
+
+	case 6:
+		str = "type 5";
+		break;
+
+	default:
+		break;
+	}
+
+	M_Print(x, y, str);
+}
+
+void DrawClockType(int x, int y)
+{
+	char *str;
+
+	switch ((int)(scr_clock.value))
+	{
+	case 0:
+		str = "off";
+		break;
+
+	case 1:
+		str = "type 1";
+		break;
+
+	case 2:
+		str = "type 2";
+		break;
+
+	case 3:
+		str = "type 3";
+		break;
+
+	case 4:
+		str = "type 4";
+		break;
+
+	default:
+		break;
+	}
+
+	M_Print(x, y, str);
 }
 
 void M_Menu_Hud_f(void)
@@ -2427,14 +2515,43 @@ void M_Menu_Hud_f(void)
 
 void M_Hud_Draw(void)
 {
+	float r;
 	mpic_t	*p;
 
 	//M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic("gfx/ttl_cstm.lmp");
 	M_DrawPic((320 - p->width) >> 1, 4, p);
 
-	M_Print (16, 32, "             Crosshair");
-	M_DrawCheckbox (220, 32, crosshair.value);
+	M_Print(16, 32, "     Hud/Console scale");
+	r = (scr_sbarscale_amount.value - 1) / 3;
+	M_DrawSliderFloat(220, 32, r, scr_sbarscale_amount.value);
+
+	M_Print(16, 40, "     Use old style hud");
+	M_DrawCheckbox(220, 40, cl_sbar.value);
+
+	M_Print(16, 56, "        Crosshair type");
+	DrawCrosshairType(220, 56);
+
+	M_Print(16, 64, "       Crosshair color");
+
+	M_Print(16, 72, "       Crosshair scale");
+	r = crosshairsize.value / 4;
+	M_DrawSliderFloat(220, 72, r, crosshairsize.value);
+
+	M_Print(16, 80, "Crosshair transparency");
+	M_DrawSliderFloat(220, 80, gl_crosshairalpha.value, gl_crosshairalpha.value);
+
+	M_DrawTextBox(180, 88, 3, 3);
+	Draw_Crosshair(true);
+
+	M_Print(16, 128, "              Show FPS");
+	M_DrawCheckbox(220, 128, show_fps.value);
+
+	M_Print(16, 136, "            Show clock");
+	DrawClockType(220, 136);
+
+	M_Print(16, 144, "            Show speed");
+	M_DrawCheckbox(220, 144, show_speed.value);
 
 	// cursor
 	M_DrawCharacter(200, 32 + hud_cursor * 8, 12 + ((int)(realtime * 4) & 1));
@@ -2442,6 +2559,8 @@ void M_Hud_Draw(void)
 
 void M_Hud_Key(int k)
 {
+	float newcrosshairvalue, newclockvalue;
+
 	switch (k)
 	{
 	case K_ESCAPE:
@@ -2452,8 +2571,32 @@ void M_Hud_Key(int k)
 		S_LocalSound("misc/menu2.wav");
 		switch (hud_cursor)
 		{
-		case 0: // crosshair
-			Cvar_SetValue (&crosshair, !crosshair.value);
+		case 1:	// cl_sbar
+			Cvar_SetValue(&cl_sbar, !cl_sbar.value);
+			break;
+
+		case 3: // crosshair
+			newcrosshairvalue = crosshair.value + 1;
+			if (newcrosshairvalue == 1)	// skip the good old '+' character crosshair
+				newcrosshairvalue++;
+			if (newcrosshairvalue > 6)
+				newcrosshairvalue = 0;
+			Cvar_SetValue (&crosshair, newcrosshairvalue);
+			break;
+
+		case 12: // fps
+			Cvar_SetValue(&show_fps, !show_fps.value);
+			break;
+
+		case 13: // clock
+			newclockvalue = scr_clock.value + 1;
+			if (newclockvalue > 4)
+				newclockvalue = 0;
+			Cvar_SetValue(&scr_clock, newclockvalue);
+			break;
+
+		case 14: // speed
+			Cvar_SetValue(&show_speed, !show_speed.value);
 			break;
 
 		default:
@@ -2495,12 +2638,27 @@ void M_Hud_Key(int k)
 		M_AdjustHudSliders(1);
 		break;
 	}
+
+	if (k == K_UPARROW)
+	{
+		if (hud_cursor == 2)
+			hud_cursor--;
+		else if (hud_cursor == 7 || hud_cursor == 8 || hud_cursor == 9 || hud_cursor == 10 || hud_cursor == 11)
+			hud_cursor -= 5;
+	}
+	else if (k == K_DOWNARROW)
+	{
+		if (hud_cursor == 2)
+			hud_cursor++;
+		else if (hud_cursor == 7 || hud_cursor == 8 || hud_cursor == 9 || hud_cursor == 10 || hud_cursor == 11)
+			hud_cursor += 5;
+	}
 }
 
 //=============================================================================
 /* SOUND OPTIONS MENU */
 
-#define	SOUND_ITEMS	2
+#define	SOUND_ITEMS	3
 
 int	sound_cursor = 0;
 
@@ -2534,6 +2692,7 @@ void M_Menu_Sound_f(void)
 void M_Sound_Draw(void)
 {
 	mpic_t	*p;
+	char sound_quality[10];
 
 	//M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic("gfx/ttl_cstm.lmp");
@@ -2545,8 +2704,18 @@ void M_Sound_Draw(void)
 	M_Print(16, 40, "          Music volume");
 	M_DrawSliderFloat(220, 40, bgmvolume.value, bgmvolume.value);
 
+	M_Print(16, 48, "         Sound quality");
+	sprintf(sound_quality, "%s KHz", s_khz.string);
+	M_Print(220, 48, sound_quality);
+
 	// cursor
 	M_DrawCharacter(200, 32 + sound_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+
+	//if (sound_cursor == 2)
+	{
+		M_Print(3 * 8, 36 + 11 * 8 + 8 * 2, "Sound quality must be set from the");
+		M_Print(1 * 8, 36 + 11 * 8 + 8 * 3, "command line with +set s_khz <22 or 44>");
+	}
 }
 
 void M_Sound_Key(int k)
@@ -2561,6 +2730,9 @@ void M_Sound_Key(int k)
 		S_LocalSound("misc/menu2.wav");
 		switch (sound_cursor)
 		{
+		case 2:
+			break;
+
 		default:
 			break;
 		}
@@ -2903,7 +3075,7 @@ void M_Particles_Draw (void)
 {
 	mpic_t	*p;
 	
-	M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	//M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic ("gfx/ttl_cstm.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
 	

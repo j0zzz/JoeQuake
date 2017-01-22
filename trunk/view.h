@@ -22,8 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern	cvar_t	v_gamma;
 extern	cvar_t	v_contrast;
 extern	cvar_t	crosshair;
+extern	cvar_t	crosshairsize;
+extern	cvar_t	crosshaircolor;
+extern	cvar_t	scr_clock;
+extern	cvar_t	show_speed;
+extern	cvar_t	show_fps;
 
 #ifdef GLQUAKE
+extern	cvar_t	gl_crosshairalpha;
 extern	cvar_t	gl_hwblend;
 extern	float	v_blend[4];
 void V_AddLightBlend (float r, float g, float b, float a2);

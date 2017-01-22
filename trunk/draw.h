@@ -58,5 +58,5 @@ void Draw_String (int x, int y, char *str);
 void Draw_Alt_String (int x, int y, char *str);
 mpic_t *Draw_PicFromWad (char *name);
 mpic_t *Draw_CachePic (char *path);
-void Draw_Crosshair (void);
+void Draw_Crosshair (qboolean draw_menu);
 void Draw_TextBox (int x, int y, int width, int lines);

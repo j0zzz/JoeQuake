@@ -930,7 +930,7 @@ void SCR_UpdateScreen (void)
 		vid.recalc_refdef = true;
 	}
 
-	sbar_scale_amount = bound(1.0, scr_sbarscale_amount.value, 4.0);
+	sbar_scale_amount = bound(1, scr_sbarscale_amount.value, 4);
 	if (oldsbarscale != sbar_scale_amount)
 	{
 		extern void Draw_InitConback(void);
@@ -1013,7 +1013,7 @@ void SCR_UpdateScreen (void)
 	}
 	else
 	{
-		Draw_Crosshair ();
+		Draw_Crosshair (false);
 		SCR_DrawRam ();
 		SCR_DrawNet ();
 		SCR_DrawTurtle ();
