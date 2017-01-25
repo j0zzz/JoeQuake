@@ -1485,12 +1485,12 @@ void V_DropPunchAngle (void)
 {
 	if (cl_ideal_punchangle < cl_punchangle)
 	{
-		if (cl_ideal_punchangle >= -2)		// small kick
+		if (cl_ideal_punchangle == -2)		// small kick
 			cl_punchangle -= 20 * host_frametime;
 		else					// big kick
 			cl_punchangle -= 40 * host_frametime;
 
-		if (cl_punchangle < cl_ideal_punchangle)
+		if (cl_punchangle <= cl_ideal_punchangle)
 		{
 			cl_punchangle = cl_ideal_punchangle;
 			cl_ideal_punchangle = 0;

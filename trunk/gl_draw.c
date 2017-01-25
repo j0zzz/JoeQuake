@@ -864,13 +864,13 @@ void Draw_Crosshair (qboolean draw_menu)
 
 		if (draw_menu)
 		{
-			frac =  ((float)(menuheight * 2) / (float)vid.conheight) * bound(0, crosshairsize.value, 20);
+			frac =  ((float)(menuheight * 4) / (float)vid.conheight) * bound(0, crosshairsize.value, 20);
 			ofs1 *= frac;
 			ofs2 *= frac;
 		}
 		else
 		{
-			frac = 2 * (1 / scr_sbarscale_amount.value) * bound(0, crosshairsize.value, 20);
+			frac = 4 * (1 / scr_sbarscale_amount.value) * bound(0, crosshairsize.value, 20);
 			ofs1 *= frac;
 			ofs2 *= frac;
 		}
