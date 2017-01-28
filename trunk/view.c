@@ -1064,7 +1064,6 @@ void V_CalcViewRoll (void)
 void V_AddViewWeapon (float bob)
 {
 	int			i;
-	float		fovOffset;
 	vec3_t		forward, right, up;
 	entity_t	*view;
 	extern cvar_t scr_fov;
