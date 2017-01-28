@@ -61,7 +61,6 @@ cvar_t	cl_bob = {"cl_bob", "0.02"};
 cvar_t	cl_bobcycle = {"cl_bobcycle", "0.6"};
 cvar_t	cl_bobup = {"cl_bobup", "0.5"};
 cvar_t	cl_oldbob = {"cl_oldbob", "0"};
-cvar_t	cl_oldgunposition = {"cl_oldgunposition", "0"};
 cvar_t	cl_hand = {"cl_hand", "0"};
 
 cvar_t	v_kicktime = {"v_kicktime", "0.5"};
@@ -1088,13 +1087,6 @@ void V_AddViewWeapon (float bob)
 	// angles
 	CalcGunAngle ();
 
-	// drop gun lower at higher fov
-	if (!cl_oldgunposition.value)
-	{
-		fovOffset = (scr_fov.value > 90) ? -0.2 * (scr_fov.value - 90) : 0;
-		VectorMA (view->origin, fovOffset, up, view->origin);
-	}
-
 	view->model = cl.model_precache[cl.stats[STAT_WEAPON]];
 	view->frame = cl.stats[STAT_WEAPONFRAME];
 	view->colormap = vid.colormap;
@@ -1640,7 +1632,6 @@ void V_Init (void)
 	Cvar_Register (&cl_bobcycle);
 	Cvar_Register (&cl_bobup);
 	Cvar_Register (&cl_oldbob);
-	Cvar_Register (&cl_oldgunposition);
 	Cvar_Register (&cl_hand);
 
 	Cvar_Register (&v_kicktime);

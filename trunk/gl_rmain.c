@@ -845,7 +845,6 @@ void R_DrawAliasModel (entity_t *ent)
 	aliashdr_t	*paliashdr;
 	model_t		*clmodel = ent->model;
 	qboolean	islumaskin;
-	extern cvar_t cl_oldgunposition, cl_hand;
 
 	VectorAdd (ent->origin, clmodel->mins, mins);
 	VectorAdd (ent->origin, clmodel->maxs, maxs);
@@ -895,14 +894,11 @@ void R_DrawAliasModel (entity_t *ent)
 	{
 		float scale = 1;
 		int hand_offset = cl_hand.value == 1 ? -3 : cl_hand.value == 2 ? 3 : 0;
+		extern cvar_t scr_fov;
 
 		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1] + hand_offset, paliashdr->scale_origin[2]);
 
-		if (cl_oldgunposition.value)
-		{
-			extern cvar_t scr_fov;
-			scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
-		}
+		scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
 		glScalef (paliashdr->scale[0] * scale, paliashdr->scale[1], paliashdr->scale[2]);
 	}
 	else
@@ -1849,7 +1845,6 @@ void R_DrawQ3Model (entity_t *ent)
 {
 	vec3_t		mins, maxs, md3_scale_origin = {0, 0, 0};
 	model_t		*clmodel = ent->model;
-	extern cvar_t cl_oldgunposition, cl_hand;
 
 	if (clmodel->modhint == MOD_Q3TELEPORT)
 		ent->origin[2] -= 30;
@@ -1889,16 +1884,14 @@ void R_DrawQ3Model (entity_t *ent)
 
 	if (ent == &cl.viewent)
 	{
+		float scale = 1;
 		int hand_offset = cl_hand.value == 1 ? -3 : cl_hand.value == 2 ? 3 : 0;
+		extern cvar_t scr_fov;
+
 		glTranslatef (md3_scale_origin[0], md3_scale_origin[1] + hand_offset, md3_scale_origin[2]);
 
-		if (cl_oldgunposition.value)
-		{
-			extern cvar_t scr_fov;
-			float	scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
-
-			glScalef (scale, 1, 1);
-		}
+		scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
+		glScalef (scale, 1, 1);
 	}
 	else
 	{

@@ -27,6 +27,7 @@ extern	cvar_t	crosshaircolor;
 extern	cvar_t	scr_clock;
 extern	cvar_t	show_speed;
 extern	cvar_t	show_fps;
+extern	cvar_t	cl_hand;
 
 #ifdef GLQUAKE
 extern	cvar_t	gl_crosshairalpha;

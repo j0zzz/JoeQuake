@@ -29,7 +29,7 @@ void (*vid_menukeyfn)(int key);
 enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
 	m_setup, m_namemaker, m_net, m_options, m_keys, m_mouse, m_gameplay, m_hud, m_sound, 
 #ifdef GLQUAKE
-	m_videooptions, m_particles,
+	m_videooptions, m_opengl, m_particles, m_decals,
 #endif
 	m_videomodes, m_nehdemos, m_maps, m_demos, m_help, m_quit, m_serialconfig, m_modemconfig,
 	m_lanconfig, m_gameoptions, m_search, m_servers, m_slist, m_sedit} m_state;
@@ -52,7 +52,9 @@ void M_Menu_Main_f (void);
 		void M_Menu_Sound_f(void);
 #ifdef GLQUAKE
 		void M_Menu_VideoOptions_f(void);
-			void M_Menu_Particles_f(void);
+			void M_Menu_OpenGL_f(void);
+				void M_Menu_Particles_f(void);
+				void M_Menu_Decals_f(void);
 #endif
 		void M_Menu_VideoModes_f (void);
 	void M_Menu_NehDemos_f (void);
@@ -85,7 +87,9 @@ void M_Main_Draw (void);
 		void M_Sound_Draw(void);
 #ifdef GLQUAKE
 		void M_VideoOptions_Draw(void);
-			void M_Particles_Draw(void);
+			void M_OpenGL_Draw(void);
+				void M_Particles_Draw(void);
+				void M_Decals_Draw(void);
 #endif
 		void M_VideoModes_Draw (void);
 	void M_NehDemos_Draw (void);
@@ -117,7 +121,9 @@ void M_Main_Key (int key);
 		void M_Sound_Key(int key);
 #ifdef GLQUAKE
 		void M_VideoOptions_Key(int key);
-			void M_Particles_Key(int key);
+			void M_OpenGL_Key(int key);
+				void M_Particles_Key(int key);
+				void M_Decals_Key(int key);
 #endif
 		void M_VideoModes_Key (int key);
 	void M_NehDemos_Key (int key);
@@ -1736,38 +1742,38 @@ void M_Options_Draw (void)
 	p = Draw_CachePic ("gfx/p_option.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
 
-	M_Print(16, 32, "    Customize controls");
-	M_Print(16, 40, "         Mouse options");
+	M_PrintWhite(16, 32, "    Customize controls");
+	M_PrintWhite(16, 40, "         Mouse options");
 
 	//M_Print (16, 120, "          MP Optimized");
 	//M_DrawCheckbox (220, 120, mp_optimized);
 
-	M_Print(16, 56, "      Gameplay options");
-	M_Print(16, 64, "           Hud options");
-	M_Print(16, 72, "         Sound options");
+	M_PrintWhite(16, 56, "      Gameplay options");
+	M_PrintWhite(16, 64, "           Hud options");
+	M_PrintWhite(16, 72, "         Sound options");
 
 #ifdef GLQUAKE
-	M_Print (16, 80, "       Display Options");
+	M_PrintWhite(16, 80, "       Display Options");
 #endif
 
 	if (vid_menudrawfn)
 	{
 #ifndef GLQUAKE
-		M_Print(16, 80, "           Video modes");
+		M_PrintWhite(16, 80, "           Video modes");
 
-		M_Print(16, 96, "         Go to console");
+		M_PrintWhite(16, 96, "         Go to console");
 #else
-		M_Print(16, 88, "           Video modes");
+		M_PrintWhite(16, 88, "           Video modes");
 
-		M_Print(16, 104, "         Go to console");
+		M_PrintWhite(16, 104, "         Go to console");
 #endif
 	}
 	else
 	{
 #ifndef GLQUAKE
-		M_Print(16, 88, "         Go to console");
+		M_PrintWhite(16, 88, "         Go to console");
 #else
-		M_Print(16, 96, "         Go to console");
+		M_PrintWhite(16, 96, "         Go to console");
 #endif
 	}
 
@@ -2421,7 +2427,7 @@ void M_AdjustHudSliders(int dir)
 
 	case 5:	// crosshair scale
 		crosshairsize.value += dir * 0.5;
-		crosshairsize.value = bound(0, crosshairsize.value, 4);
+		crosshairsize.value = bound(0, crosshairsize.value, 3);
 		Cvar_SetValue(&crosshairsize, crosshairsize.value);
 		break;
 
@@ -2526,7 +2532,7 @@ void M_Hud_Draw(void)
 	r = (scr_sbarscale_amount.value - 1) / 3;
 	M_DrawSliderFloat(220, 32, r, scr_sbarscale_amount.value);
 
-	M_Print(16, 40, "     Use old style hud");
+	M_Print(16, 40, "     Use old style hud");	//TODO: extend this with other styles, at least one with health+armor on the left, ammo on the right
 	M_DrawCheckbox(220, 40, cl_sbar.value);
 
 	M_Print(16, 56, "        Crosshair type");
@@ -2535,7 +2541,7 @@ void M_Hud_Draw(void)
 	M_Print(16, 64, "       Crosshair color");
 
 	M_Print(16, 72, "       Crosshair scale");
-	r = crosshairsize.value / 4;
+	r = crosshairsize.value / 3;
 	M_DrawSliderFloat(220, 72, r, crosshairsize.value);
 
 	M_Print(16, 80, "Crosshair transparency");
@@ -2582,6 +2588,10 @@ void M_Hud_Key(int k)
 			if (newcrosshairvalue > 6)
 				newcrosshairvalue = 0;
 			Cvar_SetValue (&crosshair, newcrosshairvalue);
+			break;
+		
+		case 4:
+			//TODO: set crosshaircolor
 			break;
 
 		case 12: // fps
@@ -2779,15 +2789,9 @@ void M_Sound_Key(int k)
 
 #ifdef GLQUAKE
 
-#define	VOM_ITEMS	19
+#define	VOM_ITEMS	15
 
 int	vom_cursor = 0;
-
-char *popular_filters[] = {
-	"GL_NEAREST",
-	"GL_LINEAR_MIPMAP_NEAREST",
-	"GL_LINEAR_MIPMAP_LINEAR"
-};
 
 void M_Menu_VideoOptions_f (void)
 {
@@ -2804,42 +2808,86 @@ void M_AdjustVOMSliders (int dir)
 
 	switch (vom_cursor)
 	{
-	case 0:	// screen size
+	case 2:	// screen size
 		scr_viewsize.value += dir * 10;
 		scr_viewsize.value = bound(30, scr_viewsize.value, 120);
 		Cvar_SetValue(&scr_viewsize, scr_viewsize.value);
 		break;
 
-	case 1:	// gamma
+	case 3:	// gamma
 		v_gamma.value -= dir * 0.05;
 		v_gamma.value = bound(0.5, v_gamma.value, 1);
 		Cvar_SetValue(&v_gamma, v_gamma.value);
 		break;
 
-	case 2:	// contrast
+	case 4:	// contrast
 		v_contrast.value += dir * 0.1;
 		v_contrast.value = bound(1, v_contrast.value, 2);
 		Cvar_SetValue(&v_contrast, v_contrast.value);
 		break;
 
-	case 10:
-		gl_picmip.value -= dir;
-		gl_picmip.value = bound(0, gl_picmip.value, 4);
-		Cvar_SetValue (&gl_picmip, gl_picmip.value);
+	case 10:// fov
+		scr_fov.value += dir * 10;
+		scr_fov.value = bound(90, scr_fov.value, 130);
+		Cvar_SetValue(&scr_fov, scr_fov.value);
 		break;
 
-	case 14:
-		gl_waterfog_density.value += dir * 0.1;
-		gl_waterfog_density.value = bound(0, gl_waterfog_density.value, 1);
-		Cvar_SetValue (&gl_waterfog_density, gl_waterfog_density.value);
-		break;
-
-	case 15:
-		r_wateralpha.value += dir * 0.1;
-		r_wateralpha.value = bound(0, r_wateralpha.value, 1);
-		Cvar_SetValue (&r_wateralpha, r_wateralpha.value);
+	case 12:// view distance
+		r_farclip.value += dir * 2048;
+		r_farclip.value = bound(2048, r_farclip.value, 12288);
+		Cvar_SetValue(&r_farclip, r_farclip.value);
 		break;
 	}
+}
+
+void DrawViewmodelType(int x, int y)
+{
+	char *str;
+
+	switch ((int)(r_drawviewmodel.value))
+	{
+	case 0:
+		str = "off";
+		break;
+
+	case 1:
+		str = "bobbing";
+		break;
+
+	case 2:
+		str = "fixed";
+		break;
+
+	default:
+		break;
+	}
+
+	M_Print(x, y, str);
+}
+
+void DrawHandType(int x, int y)
+{
+	char *str;
+
+	switch ((int)(cl_hand.value))
+	{
+	case 0:
+		str = "center";
+		break;
+
+	case 1:
+		str = "right";
+		break;
+
+	case 2:
+		str = "left";
+		break;
+
+	default:
+		break;
+	}
+
+	M_Print(x, y, str);
 }
 
 void M_VideoOptions_Draw (void)
@@ -2851,65 +2899,44 @@ void M_VideoOptions_Draw (void)
 	p = Draw_CachePic ("gfx/ttl_cstm.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
 	
-	M_Print (16, 32, "           Screen size");
+	M_PrintWhite(16, 32, "        OpenGL options");
+
+	M_Print (16, 48, "           Screen size");
 	r = (scr_viewsize.value - 30) / (120 - 30);
-	M_DrawSliderInt(220, 32, r, (int)scr_viewsize.value);
+	M_DrawSliderInt(220, 48, r, (int)scr_viewsize.value);
 
-	M_Print (16, 40, "                 Gamma");
+	M_Print (16, 56, "                 Gamma");
 	r = (1.0 - v_gamma.value) / 0.5;
-	M_DrawSliderFloat(220, 40, r, v_gamma.value);
+	M_DrawSliderFloat(220, 56, r, v_gamma.value);
 
-	M_Print (16, 48, "              Contrast");
+	M_Print (16, 64, "              Contrast");
 	r = v_contrast.value - 1.0;
-	M_DrawSliderFloat(220, 48, r, v_contrast.value);
+	M_DrawSliderFloat(220, 64, r, v_contrast.value);
 
-	M_Print (16, 56, "       Coloured lights");
-	M_DrawCheckbox (220, 56, gl_loadlitfiles.value);
+	M_Print(16, 72, "         Vertical sync");
+	M_DrawCheckbox(220, 72, vid_vsync.value);
 
-	M_Print (16, 64, "        Dynamic lights");
-	M_DrawCheckbox (220, 64, r_dynamic.value);
+	M_Print(16, 88, "           Show weapon");
+	DrawViewmodelType(220, 88);
 
-	M_Print (16, 72, "       Vertex lighting");
-	M_DrawCheckbox (220, 72, gl_vertexlights.value);
+	M_Print(16, 96, "     Weapon handedness");
+	DrawHandType(220, 96);
 
-	M_Print (16, 80, "         Quake3 models");
-	M_DrawCheckbox (220, 80, gl_loadq3models.value);
+	M_Print(16, 112, "         Field of view");
+	r = (scr_fov.value - 90) / (130 - 90);
+	M_DrawSliderInt(220, 112, r, (int)scr_fov.value);
 
-	M_Print (16, 88, "               Shadows");
-	M_DrawCheckbox (220, 88, r_shadows.value);
+	M_Print(16, 120, "        Widescreen fov");
+	M_DrawCheckbox(220, 120, scr_widescreen_fov.value);
 
-	M_Print (16, 96, "        Particle style");
-	M_Print (220, 96, R_NameForParticleMode());
+	M_Print(16, 128, "         View distance");
+	r = (r_farclip.value - 2048) / (12288 - 2048);
+	M_DrawSliderInt(220, 128, r, (int)r_farclip.value);
 
-	M_Print (16, 104, "        Texture filter");
-	M_Print (220, 104, !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST") ? "bilinear" :
-					!Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_LINEAR") ? "trilinear" :
-					!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST") ? "off" : gl_texturemode.string);
+	M_Print(16, 136, "             Solid sky");
+	M_DrawCheckbox(220, 136, r_fastsky.value);
 
-	M_Print (16, 112, "       Texture quality");
-	r = (4 - gl_picmip.value) * 0.25;
-	M_DrawSlider (220, 112, r);
-
-	M_Print (16, 120, "     Detailed textures");
-	M_DrawCheckbox (220, 120, gl_detail.value);
-
-	M_Print (16, 128, "        Water caustics");
-	M_DrawCheckbox (220, 128, gl_caustics.value);
-
-	M_Print (16, 136, "        Underwater fog");
-	M_Print (220, 136, !gl_waterfog.value ? "off" : gl_waterfog.value == 2 ? "extra" : "normal");
-
-	M_Print (16, 144, "      Waterfog density");
-	M_DrawSliderFloat(220, 144, gl_waterfog_density.value, gl_waterfog_density.value);
-
-	M_Print (16, 152, "           Water alpha");
-	M_DrawSliderFloat(220, 152, r_wateralpha.value, r_wateralpha.value);
-
-	M_Print (16, 160, "             Particles");
-
-	M_PrintWhite (16, 168, "             Fast mode");
-
-	M_PrintWhite (16, 176, "          High quality");
+	M_Print(16, 144, "       Solid sky color");
 
 	// cursor
 	M_DrawCharacter (200, 32 + vom_cursor*8, 12+((int)(realtime*4)&1));
@@ -2917,8 +2944,7 @@ void M_VideoOptions_Draw (void)
 
 void M_VideoOptions_Key (int k)
 {
-	int	i;
-	extern	void R_ToggleParticles (void);
+	float newviewmodel, newhand;
 
 	switch (k)
 	{
@@ -2964,88 +2990,301 @@ void M_VideoOptions_Key (int k)
 		S_LocalSound ("misc/menu2.wav");
 		switch (vom_cursor)
 		{
-		case 3:
-			Cvar_SetValue (&gl_loadlitfiles, !gl_loadlitfiles.value);
-			break;
-
-		case 4:
-			Cvar_SetValue (&r_dynamic, !r_dynamic.value);
+		case 0:
+			M_Menu_OpenGL_f();
 			break;
 
 		case 5:
-			Cvar_SetValue (&gl_vertexlights, !gl_vertexlights.value);
-			break;
-
-		case 6:
-			Cvar_SetValue (&gl_loadq3models, !gl_loadq3models.value);
+			Cvar_SetValue(&vid_vsync, !vid_vsync.value);
 			break;
 
 		case 7:
-			Cvar_SetValue (&r_shadows, !r_shadows.value);
+			newviewmodel = r_drawviewmodel.value + 1;
+			if (newviewmodel > 2)
+				newviewmodel = 0;
+			Cvar_SetValue(&r_drawviewmodel, newviewmodel);
 			break;
 
 		case 8:
-			R_ToggleParticles_f ();
+			newhand = cl_hand.value + 1;
+			if (newhand > 2)
+				newhand = 0;
+			Cvar_SetValue(&cl_hand, newhand);
 			break;
 
-		case 9:
-			for (i = 0 ; i < 3 ; i++)
+		case 11:
+			Cvar_SetValue(&scr_widescreen_fov, !scr_widescreen_fov.value);
+			break;
+
+		case 13:
+			Cvar_SetValue(&r_fastsky, !r_fastsky.value);
+			break;
+
+		case 14:
+			//TODO: choose r_skycolor
+			break;
+
+		default:
+			M_AdjustVOMSliders(1);
+			break;
+		}
+	}
+
+	if (k == K_UPARROW && (vom_cursor == 1 || vom_cursor == 6 || vom_cursor == 9))
+		vom_cursor--;
+	else if (k == K_DOWNARROW && (vom_cursor == 1 || vom_cursor == 6 || vom_cursor == 9))
+		vom_cursor++;
+}
+
+//=============================================================================
+/* OPENGL OPTIONS MENU */
+
+#define	OPENGL_ITEMS	21
+
+int opengl_cursor = 0;
+
+char *popular_filters[] = {
+	"GL_NEAREST",
+	"GL_LINEAR_MIPMAP_NEAREST",
+	"GL_LINEAR_MIPMAP_LINEAR"
+};
+
+void M_Menu_OpenGL_f(void)
+{
+	key_dest = key_menu;
+	m_state = m_opengl;
+	m_entersound = true;
+}
+
+void M_AdjustOpenGLSliders(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (opengl_cursor)
+	{
+	case 10:
+		gl_picmip.value -= dir;
+		gl_picmip.value = bound(0, gl_picmip.value, 4);
+		Cvar_SetValue(&gl_picmip, gl_picmip.value);
+		break;
+
+	case 13:
+		r_wateralpha.value += dir * 0.1;
+		r_wateralpha.value = bound(0, r_wateralpha.value, 1);
+		Cvar_SetValue(&r_wateralpha, r_wateralpha.value);
+		break;
+
+	case 16:
+		gl_waterfog_density.value += dir * 0.1;
+		gl_waterfog_density.value = bound(0, gl_waterfog_density.value, 1);
+		Cvar_SetValue(&gl_waterfog_density, gl_waterfog_density.value);
+		break;
+	}
+}
+
+void M_OpenGL_Draw(void)
+{
+	float	r;
+	mpic_t	*p;
+
+	//M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	p = Draw_CachePic("gfx/ttl_cstm.lmp");
+	M_DrawPic((320 - p->width) >> 1, 4, p);
+
+	M_PrintWhite(16, 32, "             Particles");
+
+	M_PrintWhite(16, 40, "                Decals");
+
+	M_Print(16, 56, "Static coloured lights");
+	M_DrawCheckbox(220, 56, gl_loadlitfiles.value);
+
+	M_Print(16, 64, "        Dynamic lights");
+	M_DrawCheckbox(220, 64, r_dynamic.value);
+
+	M_Print(16, 72, "       Vertex lighting");
+	M_DrawCheckbox(220, 72, gl_vertexlights.value);
+
+	M_Print(16, 80, "               Shadows");
+	M_DrawCheckbox(220, 80, r_shadows.value);
+
+	M_Print(16, 96, "       Load md3 models");
+	M_DrawCheckbox(220, 96, gl_loadq3models.value);
+
+	//M_Print(16, 72, "        Particle style");
+	//M_Print(220, 72, R_NameForParticleMode());
+
+	M_Print(16, 112, "        Texture filter");
+	M_Print(220, 112, !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST") ? "bilinear" :
+		!Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_LINEAR") ? "trilinear" :
+		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST") ? "off" : gl_texturemode.string);
+
+	M_Print(16, 120, "       Texture quality");
+	r = (4 - gl_picmip.value) * 0.25;
+	M_DrawSlider(220, 120, r);
+
+	M_Print(16, 128, "     Detailed textures");
+	M_DrawCheckbox(220, 128, gl_detail.value);
+
+	M_Print(16, 144, "           Water alpha");
+	M_DrawSliderFloat(220, 144, r_wateralpha.value, r_wateralpha.value);
+
+	M_Print(16, 152, "        Water caustics");
+	M_DrawCheckbox(220, 152, gl_caustics.value);
+
+	M_Print(16, 160, "        Underwater fog");
+	M_Print(220, 160, !gl_waterfog.value ? "off" : gl_waterfog.value == 2 ? "extra" : "normal");
+
+	M_Print(16, 168, "      Waterfog density");
+	M_DrawSliderFloat(220, 168, gl_waterfog_density.value, gl_waterfog_density.value);
+
+	M_PrintWhite(16, 184, "         Set fast mode");
+
+	M_PrintWhite(16, 192, "      Set high quality");
+
+	// cursor
+	M_DrawCharacter(200, 32 + opengl_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+}
+
+void M_OpenGL_Key(int k)
+{
+	int	i;
+	extern void R_ToggleParticles(void);
+	
+	switch (k)
+	{
+	case K_ESCAPE:
+		M_Menu_VideoOptions_f();
+		break;
+
+	case K_UPARROW:
+		S_LocalSound("misc/menu1.wav");
+		opengl_cursor--;
+		if (opengl_cursor < 0)
+			opengl_cursor = OPENGL_ITEMS - 1;
+		break;
+
+	case K_DOWNARROW:
+		S_LocalSound("misc/menu1.wav");
+		opengl_cursor++;
+		if (opengl_cursor >= OPENGL_ITEMS)
+			opengl_cursor = 0;
+		break;
+
+	case K_HOME:
+	case K_PGUP:
+		S_LocalSound("misc/menu1.wav");
+		opengl_cursor = 0;
+		break;
+
+	case K_END:
+	case K_PGDN:
+		S_LocalSound("misc/menu1.wav");
+		opengl_cursor = OPENGL_ITEMS - 1;
+		break;
+
+	case K_LEFTARROW:
+		M_AdjustOpenGLSliders(-1);
+		break;
+
+	case K_RIGHTARROW:
+		M_AdjustOpenGLSliders(1);
+		break;
+
+	case K_ENTER:
+		S_LocalSound("misc/menu2.wav");
+		switch (opengl_cursor)
+		{
+		case 0:
+			M_Menu_Particles_f();
+			break;
+
+		case 1:
+			//M_Menu_Decals_f();
+			break;
+
+		case 3:
+			Cvar_SetValue(&gl_loadlitfiles, !gl_loadlitfiles.value);
+			break;
+
+		case 4:
+			Cvar_SetValue(&r_dynamic, !r_dynamic.value);
+			break;
+
+		case 5:
+			Cvar_SetValue(&gl_vertexlights, !gl_vertexlights.value);
+			break;
+
+		case 6:
+			Cvar_SetValue(&r_shadows, !r_shadows.value);
+			break;
+
+		case 8:
+			Cvar_SetValue(&gl_loadq3models, !gl_loadq3models.value);
+			break;
+
+		//case 8:
+		//	R_ToggleParticles_f();
+		//	break;
+
+		case 10:
+			for (i = 0; i < 3; i++)
 				if (!Q_strcasecmp(popular_filters[i], gl_texturemode.string))
 					break;
 			if (i >= 2)
 				i = -1;
-			Cvar_Set (&gl_texturemode, popular_filters[i+1]);
-			break;
-
-		case 11:
-			Cvar_SetValue (&gl_detail, !gl_detail.value);
+			Cvar_Set(&gl_texturemode, popular_filters[i + 1]);
 			break;
 
 		case 12:
-			Cvar_SetValue (&gl_caustics, !gl_caustics.value);
+			Cvar_SetValue(&gl_detail, !gl_detail.value);
 			break;
 
-		case 13:
-			Cvar_SetValue (&gl_waterfog, !gl_waterfog.value ? 1 : gl_waterfog.value == 1 ? 2 : 0);
+		case 15:
+			Cvar_SetValue(&gl_caustics, !gl_caustics.value);
 			break;
 
 		case 16:
-			M_Menu_Particles_f ();
+			Cvar_SetValue(&gl_waterfog, !gl_waterfog.value ? 1 : gl_waterfog.value == 1 ? 2 : 0);
 			break;
 
-		case 17:
-			Cvar_SetValue (&gl_loadlitfiles, 0);
-			Cvar_SetValue (&r_dynamic, 0);
-			Cvar_SetValue (&gl_vertexlights, 0);
-			Cvar_SetValue (&r_shadows, 0);
-			R_SetParticleMode (pm_classic);
-			Cvar_Set (&gl_texturemode, "GL_LINEAR_MIPMAP_NEAREST");
-			Cvar_SetValue (&gl_picmip, 3);
-			Cvar_SetValue (&gl_detail, 0);
-			Cvar_SetValue (&gl_caustics, 0);
-			Cvar_SetValue (&gl_waterfog, 0);
-			Cvar_SetValue (&r_wateralpha, 1.0);
+		case 19:
+			Cvar_SetValue(&gl_loadlitfiles, 0);
+			Cvar_SetValue(&r_dynamic, 0);
+			Cvar_SetValue(&gl_vertexlights, 0);
+			Cvar_SetValue(&r_shadows, 0);
+			R_SetParticleMode(pm_classic);
+			Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_NEAREST");
+			Cvar_SetValue(&gl_picmip, 3);
+			Cvar_SetValue(&gl_detail, 0);
+			Cvar_SetValue(&gl_caustics, 0);
+			Cvar_SetValue(&gl_waterfog, 0);
+			Cvar_SetValue(&r_wateralpha, 1.0);
 			break;
 
-		case 18:
-			Cvar_SetValue (&gl_loadlitfiles, 1);
-			Cvar_SetValue (&r_dynamic, 1);
-			Cvar_SetValue (&gl_vertexlights, 1);
-			Cvar_SetValue (&r_shadows, 1);
-			R_SetParticleMode (pm_qmb);
-			Cvar_Set (&gl_texturemode, "GL_LINEAR_MIPMAP_LINEAR");
-			Cvar_SetValue (&gl_picmip, 0);
-			Cvar_SetValue (&gl_detail, 1);
-			Cvar_SetValue (&gl_caustics, 1);
-			Cvar_SetValue (&gl_waterfog, 1);
-			Cvar_SetValue (&r_wateralpha, 0.4);
+		case 20:
+			Cvar_SetValue(&gl_loadlitfiles, 1);
+			Cvar_SetValue(&r_dynamic, 1);
+			Cvar_SetValue(&gl_vertexlights, 1);
+			Cvar_SetValue(&r_shadows, 1);
+			R_SetParticleMode(pm_qmb);
+			Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_LINEAR");
+			Cvar_SetValue(&gl_picmip, 0);
+			Cvar_SetValue(&gl_detail, 1);
+			Cvar_SetValue(&gl_caustics, 1);
+			Cvar_SetValue(&gl_waterfog, 1);
+			Cvar_SetValue(&r_wateralpha, 0.4);
 			break;
 
 		default:
-			M_AdjustVOMSliders (1);
+			M_AdjustOpenGLSliders(1);
 			break;
 		}
 	}
+
+	if (k == K_UPARROW && (opengl_cursor == 2 || opengl_cursor == 7 || opengl_cursor == 9 || opengl_cursor == 13 || opengl_cursor == 18))
+		opengl_cursor--;
+	else if (k == K_DOWNARROW && (opengl_cursor == 2 || opengl_cursor == 7 || opengl_cursor == 9 || opengl_cursor == 13 || opengl_cursor == 18))
+		opengl_cursor++;
 }
 
 //=============================================================================
@@ -3121,7 +3360,7 @@ void M_Particles_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
-		M_Menu_VideoOptions_f ();
+		M_Menu_OpenGL_f();
 		break;
 
 	case K_UPARROW:
@@ -5377,6 +5616,10 @@ void M_Draw (void)
 		M_VideoOptions_Draw ();
 		break;
 
+	case m_opengl:
+		M_OpenGL_Draw();
+		break;
+
 	case m_particles:
 		M_Particles_Draw ();
 		break;
@@ -5522,6 +5765,10 @@ void M_Keydown (int key)
 #ifdef GLQUAKE
 	case m_videooptions:
 		M_VideoOptions_Key (key);
+		return;
+
+	case m_opengl:
+		M_OpenGL_Key(key);
 		return;
 
 	case m_particles:

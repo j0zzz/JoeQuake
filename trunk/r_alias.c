@@ -312,7 +312,6 @@ void R_AliasSetUpTransform (int trivial_accept)
 	static float	tmatrix[3][4];
 	static float	viewmatrix[3][4];
 	vec3_t		angles;
-	extern cvar_t cl_oldgunposition;
 
 // TODO: should really be stored with the entity instead of being reconstructed
 // TODO: should use a look-up table
@@ -327,7 +326,7 @@ void R_AliasSetUpTransform (int trivial_accept)
 	tmatrix[1][1] = pmdl->scale[1];
 	tmatrix[2][2] = pmdl->scale[2];
 
-	if (currententity == &cl.viewent && cl_oldgunposition.value)
+	if (currententity == &cl.viewent)
 	{
 		extern cvar_t scr_fov;
 		float	scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
