@@ -198,6 +198,10 @@ extern  cvar_t  gl_solidparticles;
 extern  cvar_t  gl_vertexlights;
 extern  cvar_t  gl_loadq3models;
 extern  cvar_t  gl_lerptextures;
+extern	cvar_t	gl_conalpha;
+extern	cvar_t	gl_ringalpha;
+extern	cvar_t	gl_consolefont;
+extern	cvar_t	gl_smoothfont;
 
 extern  cvar_t	gl_part_explosions;
 extern  cvar_t	gl_part_trails;
@@ -214,6 +218,8 @@ extern	cvar_t	gl_part_muzzleflash;
 
 extern	cvar_t	gl_bounceparticles;
 
+extern	cvar_t	gl_decaltime;
+extern	cvar_t	gl_decal_viewdistance;
 extern	cvar_t	gl_decal_blood;
 extern	cvar_t	gl_decal_bullets;
 extern	cvar_t	gl_decal_sparks;

@@ -45,6 +45,8 @@ extern	qboolean	scr_skipupdate;
 extern	cvar_t		scr_viewsize;
 extern	cvar_t		scr_fov;
 extern	cvar_t		scr_widescreen_fov;
+extern	cvar_t		scr_consize;
+extern	cvar_t		scr_autoid;
 
 // only the refresh window will be updated unless these variables are flagged 
 extern	int		scr_copytop;

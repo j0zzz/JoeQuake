@@ -248,6 +248,7 @@ extern	cvar_t	cl_shownet;
 extern	cvar_t	cl_nolerp;
 
 extern	cvar_t	cl_truelightning;
+extern	cvar_t	cl_muzzleflash;
 extern	cvar_t	cl_sbar;
 extern	cvar_t	cl_rocket2grenade;
 extern	cvar_t	vid_mode;
@@ -264,12 +265,15 @@ extern	cvar_t	r_rocketlightcolor;
 #endif
 extern	cvar_t	r_rockettrail;
 extern	cvar_t	r_grenadetrail;
+extern	cvar_t	r_powerupglow;
 
 extern	cvar_t	cl_bobbing;
 extern	cvar_t	cl_demospeed;
 extern	cvar_t	cl_maxfps;
 extern	cvar_t	cl_advancedcompletion;
 extern	cvar_t	cl_viewweapons;
+extern	cvar_t	cl_deadbodyfilter;
+extern	cvar_t	cl_gibfilter;
 
 #define	MAX_TEMP_ENTITIES	64		// lightning bolts, etc
 #define	MAX_STATIC_ENTITIES	128		// torches, etc

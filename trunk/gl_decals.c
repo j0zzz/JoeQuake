@@ -59,8 +59,8 @@ static	plane_t	leftPlane, rightPlane, bottomPlane, topPlane, backPlane, frontPla
 
 qboolean use_decals;
 
-cvar_t	gl_decaltime = {"gl_decaltime", "12"};
-cvar_t	gl_decal_viewdistance = {"gl_decal_viewdistance", "1024"};
+cvar_t	gl_decaltime = {"gl_decaltime", "30"};
+cvar_t	gl_decal_viewdistance = {"gl_decal_viewdistance", "2048"};
 
 void DecalClipLeaf (decal_t *dec, mleaf_t *leaf);
 void DecalWalkBsp_R (decal_t *dec, mnode_t *node);

@@ -28,6 +28,17 @@ extern	cvar_t	scr_clock;
 extern	cvar_t	show_speed;
 extern	cvar_t	show_fps;
 extern	cvar_t	cl_hand;
+extern	cvar_t	v_gunkick;
+extern	cvar_t	show_stats;
+extern	cvar_t	show_stats_small;
+
+extern	cvar_t  v_contentblend;
+extern	cvar_t	v_damagecshift;
+extern	cvar_t	v_quadcshift;
+extern	cvar_t	v_suitcshift;
+extern	cvar_t	v_ringcshift;
+extern	cvar_t	v_pentcshift;
+extern	cvar_t	v_bonusflash;
 
 #ifdef GLQUAKE
 extern	cvar_t	gl_crosshairalpha;
