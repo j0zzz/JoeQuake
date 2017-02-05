@@ -852,7 +852,6 @@ void CalcGunAngle (void)
 	static qboolean oldonground = false;
 #ifdef GLQUAKE
 	extern qboolean player_jumped;
-	extern kbutton_t in_jump;
 #endif
 
 	cl.viewent.angles[PITCH] = -r_refdef.viewangles[PITCH];
@@ -863,16 +862,7 @@ void CalcGunAngle (void)
 	cl.viewent.angles[YAW] -= v_idlescale.value * sin(cl.time * v_iyaw_cycle.value) * v_iyaw_level.value;
 	cl.viewent.angles[ROLL] -= v_idlescale.value * sin(cl.time * v_iroll_cycle.value) * v_iroll_level.value;
 
-	//if (in_jump.state & 1)	// not working when demoplayback
-	if (!cl.onground)
-	{
-		player_jumped = true;
-	}
-
-	if (player_jumped && cl.onground)
-	{
-		player_jumped = false;
-	}
+	player_jumped = !cl.onground;
 
 	if (cl_oldbob.value)
 	{
@@ -925,43 +915,40 @@ void CalcGunAngle (void)
 			return;
 		}
 
-		if (!player_jumped && key_dest != key_console)
+		if (key_dest != key_console && key_dest != key_menu)
 		{
-			if (oldonground == player_jumped)
+			// on odd legs, invert some angles
+			bobtime += 0.01388888888888888888888888888889;
+			//Con_Printf("%f\n", bobtime);
+			bobfracsin = fabs(sin((((int)(bobtime * 300)) & 127) / 127.0 * M_PI));
+			if (prevbobfracsin2 >= prevbobfracsin1 && prevbobfracsin1 < bobfracsin)
 			{
-				// on odd legs, invert some angles
-				bobtime += 0.01388888888888888888888888888889;
-				//Con_Printf("%f\n", bobtime);
-				bobfracsin = fabs(sin((((int)(bobtime * 300)) & 127) / 127.0 * M_PI));
-				if (prevbobfracsin2 >= prevbobfracsin1 && prevbobfracsin1 < bobfracsin)
-				{
-					turnaround = -turnaround;
-				}
-				scale = xyspeed * turnaround;
-
-				// gun angles from bobbing
-				cl.viewent.angles[PITCH] -= xyspeed * bobfracsin * 0.005;
-				cl.viewent.angles[YAW] += scale * bobfracsin * 0.01;
-				cl.viewent.angles[ROLL] += scale * bobfracsin * 0.005;
-
-				if (bobfracsin != prevbobfracsin1)
-				{
-					prevbobfracsin2 = prevbobfracsin1;
-					prevbobfracsin1 = bobfracsin;
-				}
-
-				// add angles based on bob
-				r_refdef.viewangles[PITCH] += xyspeed * bobfracsin * 0.002;
-				r_refdef.viewangles[ROLL] += xyspeed * bobfracsin * 0.002 * turnaround;
+				turnaround = -turnaround;
 			}
+			scale = xyspeed * turnaround;
+
+			// gun angles from bobbing
+			cl.viewent.angles[PITCH] -= xyspeed * bobfracsin * 0.005;
+			cl.viewent.angles[YAW] += scale * bobfracsin * 0.01;
+			cl.viewent.angles[ROLL] += scale * bobfracsin * 0.005;
+
+			if (bobfracsin != prevbobfracsin1)
+			{
+				prevbobfracsin2 = prevbobfracsin1;
+				prevbobfracsin1 = bobfracsin;
+			}
+
+			// add angles based on bob
+			r_refdef.viewangles[PITCH] += xyspeed * bobfracsin * 0.002;
+			r_refdef.viewangles[ROLL] += xyspeed * bobfracsin * 0.002 * turnaround;
 		}
 
 		// drop the weapon when landing
 
 		// we just reached ground
-		if (player_jumped != oldonground)
+		if (cl.onground != oldonground)
 		{
-			if (!player_jumped)
+			if (cl.onground)
 			{
 				landtime = cl.time;
 				prevtopheight = topheight;
@@ -973,7 +960,7 @@ void CalcGunAngle (void)
 		}
 	
 		// search for the top height value if not on ground
-		if (player_jumped && cl.viewent.origin[2] > topheight)
+		if (!cl.onground && cl.viewent.origin[2] > topheight)
 		{
 			topheight = cl.viewent.origin[2];
 		}
@@ -993,7 +980,7 @@ void CalcGunAngle (void)
 		{
 			cl.viewent.origin[2] += landchange * 0.25 * (LAND_DEFLECT_TIME + LAND_RETURN_TIME - delta) / LAND_RETURN_TIME;
 		}
-		oldonground = player_jumped;
+		oldonground = cl.onground;
 
 		// idle drift
 		//scale = xyspeed + 40;
