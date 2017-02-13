@@ -517,7 +517,7 @@ void Sbar_DrawInventory (void)
 	float		time;
 	qboolean	headsup;
 
-	headsup = !(cl_sbar.value || scr_viewsize.value < 100);
+	headsup = !(cl_sbar.value == 1 || scr_viewsize.value < 100);
 
 	if (!headsup)
 	{
@@ -843,7 +843,7 @@ void Sbar_DrawFrags (void)
 Sbar_DrawFace
 ===============
 */
-void Sbar_DrawFace (void)
+void Sbar_DrawFace (int xpos, int ypos)
 {
 	int	f, anim;
 
@@ -864,7 +864,7 @@ void Sbar_DrawFace (void)
 
 		xofs = (cl.gametype == GAME_DEATHMATCH) ? 113 : ((vid.width - 320) >> 1) + 113;
 
-		Sbar_DrawPic (112, 0, rsb_teambord);
+		Sbar_DrawPic (xpos, ypos, rsb_teambord);
 		Draw_Fill (xofs, vid.height-SBAR_HEIGHT+3, 22, 9, top);
 		Draw_Fill (xofs, vid.height-SBAR_HEIGHT+12, 22, 9, bottom);
 
@@ -894,27 +894,27 @@ void Sbar_DrawFace (void)
 
 	if ((cl.items & (IT_INVISIBILITY | IT_INVULNERABILITY)) == (IT_INVISIBILITY | IT_INVULNERABILITY))
 	{
-		Sbar_DrawPic (112, 0, sb_face_invis_invuln);
+		Sbar_DrawPic (xpos, ypos, sb_face_invis_invuln);
 		return;
 	}
 	if ((cl.items & (IT_QUAD | IT_INVULNERABILITY)) == (IT_QUAD | IT_INVULNERABILITY))
 	{
-		Sbar_DrawPic (112, 0, sb_face_invuln_quad);
+		Sbar_DrawPic (xpos, ypos, sb_face_invuln_quad);
 		return;
 	}
 	if (cl.items & IT_QUAD)
 	{
-		Sbar_DrawPic (112, 0, sb_face_quad);
+		Sbar_DrawPic (xpos, ypos, sb_face_quad);
 		return;
 	}
 	if (cl.items & IT_INVISIBILITY)
 	{
-		Sbar_DrawPic (112, 0, sb_face_invis);
+		Sbar_DrawPic (xpos, ypos, sb_face_invis);
 		return;
 	}
 	if (cl.items & IT_INVULNERABILITY)
 	{
-		Sbar_DrawPic (112, 0, sb_face_invuln);
+		Sbar_DrawPic (xpos, ypos, sb_face_invuln);
 		return;
 	}
 
@@ -931,7 +931,7 @@ void Sbar_DrawFace (void)
 		anim = 0;
 	}
 
-	Sbar_DrawPic (112, 0, sb_faces[f][anim]);
+	Sbar_DrawPic (xpos, ypos, sb_faces[f][anim]);
 }
 
 /*
@@ -941,7 +941,9 @@ Sbar_DrawNormal
 */
 void Sbar_DrawNormal (void)
 {
-	if (cl_sbar.value || scr_viewsize.value < 100)
+	int iconxpos, iconypos, numxpos, numypos;
+
+	if (cl_sbar.value == 1 || scr_viewsize.value < 100)
 		Sbar_DrawPic (0, 0, sb_sbar);
 
 // keys (hipnotic only)
@@ -955,72 +957,117 @@ void Sbar_DrawNormal (void)
 	}
 
 // armor
-	if (cl.items & IT_INVULNERABILITY)
+	if (cl_sbar.value == 2 && scr_viewsize.value >= 100)
 	{
-		Sbar_DrawNum (24, 0, 666, 3, 1);
-		Sbar_DrawPic (0, 0, draw_disc);
+		iconxpos = -sbar_xofs + 24;
+		iconypos = -SBAR_HEIGHT;
+		numxpos = -sbar_xofs + 48;
+		numypos = -SBAR_HEIGHT;
 	}
 	else
 	{
-		Sbar_DrawNum (24, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
+		iconxpos = 0;
+		iconypos = 0;
+		numxpos = 24;
+		numypos = 0;
+	}
+
+	if (cl.items & IT_INVULNERABILITY)
+	{
+		Sbar_DrawNum (numxpos, numypos, 666, 3, 1);
+		Sbar_DrawPic (iconxpos, iconypos, draw_disc);
+	}
+	else
+	{
+		Sbar_DrawNum(numxpos, numypos, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
 
 		if (rogue)
 		{
 			if (cl.items & RIT_ARMOR3)
-				Sbar_DrawPic (0, 0, sb_armor[2]);
+				Sbar_DrawPic (iconxpos, iconypos, sb_armor[2]);
 			else if (cl.items & RIT_ARMOR2)
-				Sbar_DrawPic (0, 0, sb_armor[1]);
+				Sbar_DrawPic (iconxpos, iconypos, sb_armor[1]);
 			else if (cl.items & RIT_ARMOR1)
-				Sbar_DrawPic (0, 0, sb_armor[0]);
+				Sbar_DrawPic (iconxpos, iconypos, sb_armor[0]);
 		}
 		else
 		{
 			if (cl.items & IT_ARMOR3)
-				Sbar_DrawPic (0, 0, sb_armor[2]);
+				Sbar_DrawPic (iconxpos, iconypos, sb_armor[2]);
 			else if (cl.items & IT_ARMOR2)
-				Sbar_DrawPic (0, 0, sb_armor[1]);
+				Sbar_DrawPic (iconxpos, iconypos, sb_armor[1]);
 			else if (cl.items & IT_ARMOR1)
-				Sbar_DrawPic (0, 0, sb_armor[0]);
+				Sbar_DrawPic (iconxpos, iconypos, sb_armor[0]);
 		}
 	}
 
+	if (cl_sbar.value == 2 && scr_viewsize.value >= 100)
+	{
+		iconxpos = -sbar_xofs + 24;
+		iconypos = 0;
+		numxpos = -sbar_xofs + 48;
+		numypos = 0;
+	}
+	else
+	{
+		iconxpos = 112;
+		iconypos = 0;
+		numxpos = 136;
+		numypos = 0;
+	}
+
 // face
-	Sbar_DrawFace ();
+	Sbar_DrawFace (iconxpos, iconypos);
 
 // health
-	Sbar_DrawNum (136, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
+	Sbar_DrawNum(numxpos, numypos, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
+
+	if (cl_sbar.value == 2 && scr_viewsize.value >= 100)
+	{
+		iconxpos = -sbar_xofs + vid.width - 120;
+		iconypos = 0;
+		numxpos = -sbar_xofs + vid.width - 96;
+		numypos = 0;
+	}
+	else
+	{
+		iconxpos = 224;
+		iconypos = 0;
+		numxpos = 248;
+		numypos = 0;
+	}
 
 // ammo icon
 	if (rogue)
 	{
 		if (cl.items & RIT_SHELLS)
-			Sbar_DrawPic (224, 0, sb_ammo[0]);
+			Sbar_DrawPic (iconxpos, iconypos, sb_ammo[0]);
 		else if (cl.items & RIT_NAILS)
-			Sbar_DrawPic (224, 0, sb_ammo[1]);
+			Sbar_DrawPic (iconxpos, iconypos, sb_ammo[1]);
 		else if (cl.items & RIT_ROCKETS)
-			Sbar_DrawPic (224, 0, sb_ammo[2]);
+			Sbar_DrawPic (iconxpos, iconypos, sb_ammo[2]);
 		else if (cl.items & RIT_CELLS)
-			Sbar_DrawPic (224, 0, sb_ammo[3]);
+			Sbar_DrawPic (iconxpos, iconypos, sb_ammo[3]);
 		else if (cl.items & RIT_LAVA_NAILS)
-			Sbar_DrawPic (224, 0, rsb_ammo[0]);
+			Sbar_DrawPic (iconxpos, iconypos, rsb_ammo[0]);
 		else if (cl.items & RIT_PLASMA_AMMO)
-			Sbar_DrawPic (224, 0, rsb_ammo[1]);
+			Sbar_DrawPic (iconxpos, iconypos, rsb_ammo[1]);
 		else if (cl.items & RIT_MULTI_ROCKETS)
-			Sbar_DrawPic (224, 0, rsb_ammo[2]);
+			Sbar_DrawPic (iconxpos, iconypos, rsb_ammo[2]);
 	}
 	else
 	{
 		if (cl.items & IT_SHELLS)
-			Sbar_DrawPic (224, 0, sb_ammo[0]);
+			Sbar_DrawPic (iconxpos, iconypos, sb_ammo[0]);
 		else if (cl.items & IT_NAILS)
-			Sbar_DrawPic (224, 0, sb_ammo[1]);
+			Sbar_DrawPic (iconxpos, iconypos, sb_ammo[1]);
 		else if (cl.items & IT_ROCKETS)
-			Sbar_DrawPic (224, 0, sb_ammo[2]);
+			Sbar_DrawPic (iconxpos, iconypos, sb_ammo[2]);
 		else if (cl.items & IT_CELLS)
-			Sbar_DrawPic (224, 0, sb_ammo[3]);
+			Sbar_DrawPic (iconxpos, iconypos, sb_ammo[3]);
 	}
 
-	Sbar_DrawNum (248, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
+	Sbar_DrawNum (numxpos, numypos, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
 }
 
 /*
@@ -1032,7 +1079,7 @@ void Sbar_Draw (void)
 {
 	qboolean	headsup;
 
-	headsup = !(cl_sbar.value || scr_viewsize.value < 100);
+	headsup = !(cl_sbar.value == 1 || scr_viewsize.value < 100);
 	if (sb_updates >= vid.numpages && !headsup)
 		return;
 

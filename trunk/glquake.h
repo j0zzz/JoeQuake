@@ -229,6 +229,8 @@ extern	cvar_t	gl_externaltextures_world;
 extern	cvar_t	gl_externaltextures_bmodels;
 extern	cvar_t	gl_externaltextures_models;
 
+extern qboolean draw_no24bit;
+
 extern	int	lightmode;
 
 extern	int	gl_lightmap_format;

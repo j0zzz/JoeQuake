@@ -42,6 +42,7 @@ extern	cvar_t	v_bonusflash;
 
 #ifdef GLQUAKE
 extern	cvar_t	gl_crosshairalpha;
+extern	cvar_t	gl_crosshairimage;
 extern	cvar_t	gl_hwblend;
 extern	float	v_blend[4];
 void V_AddLightBlend (float r, float g, float b, float a2);

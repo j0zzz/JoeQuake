@@ -2096,7 +2096,7 @@ extern qboolean use_m_smooth;
 extern cvar_t m_filter;
 extern cvar_t m_rate;
 
-void AdjustSliderBasedOnArrayOfValues(int dir, float *values, int max_items_count, cvar_t *cvar)
+int FindSliderItemIndex(float *values, int max_items_count, cvar_t *cvar)
 {
 	int i, current_index;
 	
@@ -2113,6 +2113,16 @@ void AdjustSliderBasedOnArrayOfValues(int dir, float *values, int max_items_coun
 				break;
 			}
 		}
+
+	return current_index;
+}
+
+void AdjustSliderBasedOnArrayOfValues(int dir, float *values, int max_items_count, cvar_t *cvar)
+{
+	int current_index;
+	
+	current_index = FindSliderItemIndex(values, max_items_count, cvar);
+
 	if (dir < 0 && current_index > 0)
 		Cvar_SetValue(cvar, values[current_index - 1]);
 	else if (dir > 0 && current_index < (max_items_count - 1))
@@ -2172,7 +2182,8 @@ void M_Mouse_Draw(void)
 	M_Print(16, 72, "            Mouse rate");
 	if (use_m_smooth)
 	{
-		r = (m_rate.value - mouse_rate_values[0]) / (mouse_rate_values[MOUSE_RATE_ITEMS-1] - mouse_rate_values[0]);
+		//r = (m_rate.value - mouse_rate_values[0]) / (mouse_rate_values[MOUSE_RATE_ITEMS-1] - mouse_rate_values[0]);
+		r = (float)FindSliderItemIndex(mouse_rate_values, MOUSE_RATE_ITEMS, &m_rate) / (MOUSE_RATE_ITEMS - 1);
 		M_DrawSliderInt(220, 72, r, m_rate.value);
 	}
 	else
@@ -2193,7 +2204,7 @@ void M_Mouse_Draw(void)
 	// cursor
 	M_DrawCharacter(200, 32 + mouse_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	//if (!use_m_smooth && (mouse_cursor == 6 || mouse_cursor == 7))
+	if (mouse_cursor == 4)
 	{
 		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Mouse smoothing must be set from the");
 		M_Print(1 * 8, 36 + 11 * 8 + 8 * 3, "command line with -dinput and -m_smooth");
@@ -2364,7 +2375,8 @@ void M_Gameplay_Draw(void)
 	M_DrawCheckbox(220, 64, cl_advancedcompletion.value);
 
 	M_Print(16, 72, "   Demo playback speed");
-	r = (cl_demospeed.value - demo_speed_values[0]) / (demo_speed_values[DEMO_SPEED_ITEMS-1] - demo_speed_values[0]);
+	//r = (cl_demospeed.value - demo_speed_values[0]) / (demo_speed_values[DEMO_SPEED_ITEMS-1] - demo_speed_values[0]);
+	r = (float)FindSliderItemIndex(demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed) / (DEMO_SPEED_ITEMS - 1);
 	M_DrawSliderFloat2(220, 72, r, cl_demospeed.value);
 
 	M_Print(16, 80, "Rotating items bobbing");
@@ -2492,6 +2504,9 @@ void M_Gameplay_Key(int k)
 
 int	hud_cursor = 0;
 
+#define CONSOLE_SPEED_ITEMS 5
+float console_speed_values[CONSOLE_SPEED_ITEMS] = { 200, 500, 1000, 5000, 99999 };
+
 void M_AdjustHudSliders(int dir)
 {
 	S_LocalSound("misc/menu3.wav");
@@ -2522,7 +2537,8 @@ void M_AdjustHudSliders(int dir)
 		Cvar_SetValue(&scr_consize, scr_consize.value);
 		break;
 
-	case 19:// console speed
+	case 19: // console speed
+		AdjustSliderBasedOnArrayOfValues(dir, console_speed_values, CONSOLE_SPEED_ITEMS, &scr_conspeed);
 		break;
 
 	case 20:// console alpha
@@ -2534,6 +2550,31 @@ void M_AdjustHudSliders(int dir)
 	default:
 		break;
 	}
+}
+
+void DrawHudType(int x, int y)
+{
+	char *str;
+
+	switch ((int)(cl_sbar.value))
+	{
+	case 0:
+		str = "transparent";
+		break;
+
+	case 1:
+		str = "original";
+		break;
+
+	case 2:
+		str = "alternative";
+		break;
+
+	default:
+		break;
+	}
+
+	M_Print(x, y, str);
 }
 
 void DrawCrosshairType(int x, int y)
@@ -2631,11 +2672,34 @@ void DrawStatsType(int x, int y)
 	M_Print(x, y, str);
 }
 
+void SearchForCrosshairs(void)
+{
+	searchpath_t	*search;
+
+	EraseDirEntries();
+	pak_files = 0;
+
+	for (search = com_searchpaths; search; search = search->next)
+	{
+		if (!search->pack)
+		{
+			RDFlags |= (RD_STRIPEXT | RD_NOERASE);
+			ReadDir(va("%s/crosshairs", search->filename), "*.tga");
+			RDFlags |= (RD_STRIPEXT | RD_NOERASE);
+			ReadDir(va("%s/crosshairs", search->filename), "*.png");
+		}
+	}
+	FindFilesInPak("crosshairs/*.tga");
+	FindFilesInPak("crosshairs/*.png");
+}
+
 void M_Menu_Hud_f(void)
 {
 	key_dest = key_menu;
 	m_state = m_hud;
 	m_entersound = true;
+
+	SearchForCrosshairs();
 }
 
 void M_Hud_Draw(void)
@@ -2651,11 +2715,14 @@ void M_Hud_Draw(void)
 	r = (scr_sbarscale_amount.value - 1) / 3;
 	M_DrawSliderFloat(220, 32, r, scr_sbarscale_amount.value);
 
-	M_Print(16, 40, "     Use old style hud");	//TODO: extend this with other styles, at least one with health+armor on the left, ammo on the right
-	M_DrawCheckbox(220, 40, cl_sbar.value);
+	M_Print(16, 40, "             Hud style");
+	DrawHudType(220, 40);
 
 	M_Print(16, 56, "        Crosshair type");
-	DrawCrosshairType(220, 56);
+	if (draw_no24bit)
+		DrawCrosshairType(220, 56);
+	else
+		M_Print(220, 56, !strcmp(gl_crosshairimage.string, "") ? "off" : gl_crosshairimage.string);
 
 	M_Print(16, 64, "       Crosshair color");
 
@@ -2688,8 +2755,8 @@ void M_Hud_Draw(void)
 	M_DrawSliderFloat(220, 176, scr_consize.value, scr_consize.value);
 
 	M_Print(16, 184, "         Console speed");
-	//r = FIXME;
-	M_DrawSliderFloat(220, 184, r, scr_conspeed.value);
+	r = (float)FindSliderItemIndex(console_speed_values, CONSOLE_SPEED_ITEMS, &scr_conspeed) / (CONSOLE_SPEED_ITEMS - 1);
+	M_DrawSliderInt(220, 184, r, scr_conspeed.value);
 
 	M_Print(16, 192, "  Console transparency");
 	M_DrawSliderFloat(220, 192, gl_conalpha.value, gl_conalpha.value);
@@ -2700,7 +2767,9 @@ void M_Hud_Draw(void)
 
 void M_Hud_Key(int k)
 {
-	float newcrosshairvalue, newclockvalue, newstatsvalue;
+	int i;
+	float newvalue;
+	direntry_t *crosshairfile;
 
 	switch (k)
 	{
@@ -2713,16 +2782,49 @@ void M_Hud_Key(int k)
 		switch (hud_cursor)
 		{
 		case 1:	// cl_sbar
-			Cvar_SetValue(&cl_sbar, !cl_sbar.value);
+			newvalue = cl_sbar.value + 1;
+			if (newvalue > 2)
+				newvalue = 0;
+			Cvar_SetValue(&cl_sbar, newvalue);
 			break;
 
 		case 3: // crosshair
-			newcrosshairvalue = crosshair.value + 1;
-			if (newcrosshairvalue == 1)	// skip the good old '+' character crosshair
-				newcrosshairvalue++;
-			if (newcrosshairvalue > 6)
-				newcrosshairvalue = 0;
-			Cvar_SetValue (&crosshair, newcrosshairvalue);
+			if (draw_no24bit)
+			{
+				newvalue = crosshair.value + 1;
+				if (newvalue == 1)	// skip the good old '+' character crosshair
+					newvalue++;
+				if (newvalue > 6)
+					newvalue = 0;
+				Cvar_SetValue (&crosshair, newvalue);
+			}
+			else
+			{
+				if (num_files > 0)
+				{
+					char *crosshairimage;
+
+					for (i = 0, crosshairfile = filelist; i < num_files; i++, crosshairfile++)
+					{
+						if (!strcmp(crosshairfile->name, gl_crosshairimage.string))
+						{
+							if (i == num_files - 1)
+								crosshairimage = "";
+							else
+							{
+								crosshairfile++;
+								crosshairimage = crosshairfile->name;
+							}
+							break;
+						}
+					}
+					if (i == num_files)
+						crosshairimage = filelist->name;
+					Cvar_Set(&gl_crosshairimage, crosshairimage);
+					if (!strcmp(crosshairimage, ""))
+						Cvar_SetValue(&crosshair, 0);
+				}
+			}
 			break;
 		
 		case 4:
@@ -2734,10 +2836,10 @@ void M_Hud_Key(int k)
 			break;
 
 		case 13: // clock
-			newclockvalue = scr_clock.value + 1;
-			if (newclockvalue > 4)
-				newclockvalue = 0;
-			Cvar_SetValue(&scr_clock, newclockvalue);
+			newvalue = scr_clock.value + 1;
+			if (newvalue > 4)
+				newvalue = 0;
+			Cvar_SetValue(&scr_clock, newvalue);
 			break;
 
 		case 14: // speed
@@ -2745,10 +2847,10 @@ void M_Hud_Key(int k)
 			break;
 
 		case 15: // time, kills, secrets
-			newstatsvalue = show_stats.value + 1;
-			if (newstatsvalue > 2)
-				newstatsvalue = 0;
-			Cvar_SetValue(&show_stats, newstatsvalue);
+			newvalue = show_stats.value + 1;
+			if (newvalue > 2)
+				newvalue = 0;
+			Cvar_SetValue(&show_stats, newvalue);
 			break;
 
 		case 16: // time, kills, secrets in small
@@ -2867,7 +2969,7 @@ void M_Sound_Draw(void)
 	// cursor
 	M_DrawCharacter(200, 32 + sound_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	//if (sound_cursor == 2)
+	if (sound_cursor == 2)
 	{
 		M_Print(3 * 8, 36 + 11 * 8 + 8 * 2, "Sound quality must be set from the");
 		M_Print(1 * 8, 36 + 11 * 8 + 8 * 3, "command line with +set s_khz <22 or 44>");
@@ -2935,7 +3037,7 @@ void M_Sound_Key(int k)
 
 #ifdef GLQUAKE
 
-#define	DISPLAY_ITEMS	19
+#define	DISPLAY_ITEMS	18
 
 int	display_cursor = 0;
 
@@ -2946,7 +3048,7 @@ void M_Menu_Display_f (void)
 	m_entersound = true;
 }
 
-#define	FARCLIP_ITEMS	19
+#define	FARCLIP_ITEMS	6
 float farclip_values[] = { 1024, 2048, 4096, 8192, 16384, 32768 };
 
 void M_AdjustDisplaySliders (int dir)
@@ -2973,13 +3075,13 @@ void M_AdjustDisplaySliders (int dir)
 		Cvar_SetValue(&v_contrast, v_contrast.value);
 		break;
 
-	case 9:// fov
+	case 10:// fov
 		scr_fov.value += dir * 10;
 		scr_fov.value = bound(90, scr_fov.value, 130);
 		Cvar_SetValue(&scr_fov, scr_fov.value);
 		break;
 
-	case 11:// view distance
+	case 12:// view distance
 		AdjustSliderBasedOnArrayOfValues(dir, farclip_values, FARCLIP_ITEMS, &r_farclip);
 		break;
 	}
@@ -2987,8 +3089,9 @@ void M_AdjustDisplaySliders (int dir)
 
 void M_Display_Draw (void)
 {
-	float	r;
-	mpic_t	*p;
+	float r;
+	mpic_t *p;
+	char display_frequency[10];
 	
 	//M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic ("gfx/ttl_cstm.lmp");
@@ -3015,35 +3118,45 @@ void M_Display_Draw (void)
 	M_Print(16, 88, "         Vertical sync");
 	M_DrawCheckbox(220, 88, vid_vsync.value);
 
-	M_Print(16, 104, "         Field of view");
+	M_Print(16, 96, "     Display frequency");
+	sprintf(display_frequency, "%s Hz", vid_displayfrequency.string);
+	M_Print(220, 96, vid_displayfrequency.value == 0 ? "-" : display_frequency);
+
+	M_Print(16, 112, "         Field of view");
 	r = (scr_fov.value - 90) / (130 - 90);
-	M_DrawSliderInt(220, 104, r, scr_fov.value);
+	M_DrawSliderInt(220, 112, r, scr_fov.value);
 
-	M_Print(16, 112, "        Widescreen fov");
-	M_DrawCheckbox(220, 112, scr_widescreen_fov.value);
+	M_Print(16, 120, "        Widescreen fov");
+	M_DrawCheckbox(220, 120, scr_widescreen_fov.value);
 
-	M_Print(16, 120, "         View distance");
-	r = (r_farclip.value - farclip_values[0]) / (farclip_values[FARCLIP_ITEMS-1] - farclip_values[0]);
-	M_DrawSliderInt(220, 120, r, r_farclip.value);
+	M_Print(16, 128, "         View distance");
+	//r = (r_farclip.value - farclip_values[0]) / (farclip_values[FARCLIP_ITEMS-1] - farclip_values[0]);
+	r = (float)FindSliderItemIndex(farclip_values, FARCLIP_ITEMS, &r_farclip) / (FARCLIP_ITEMS - 1);
+	M_DrawSliderInt(220, 128, r, r_farclip.value);
 
-	M_Print(16, 128, "             Solid sky");
-	M_DrawCheckbox(220, 128, r_fastsky.value);
+	M_Print(16, 136, "             Solid sky");
+	M_DrawCheckbox(220, 136, r_fastsky.value);
 
-	M_Print(16, 136, "       Solid sky color");
+	M_Print(16, 144, "       Solid sky color");
 
-	M_Print(16, 152, "          Powerup glow");
-	M_DrawCheckbox(220, 152, r_powerupglow.value);
+	M_Print(16, 160, "          Powerup glow");
+	M_DrawCheckbox(220, 160, r_powerupglow.value);
 
-	M_Print(16, 160, "        Show player id");
-	M_DrawCheckbox(220, 160, scr_autoid.value);
+	M_Print(16, 168, "        Show player id");
+	M_DrawCheckbox(220, 168, scr_autoid.value);
 
-	M_Print(16, 168, "      Fullbright skins");
-	M_DrawCheckbox(220, 168, r_fullbrightskins.value);
-
-	M_Print(16, 176, " Fullbright skin color");
+	M_Print(16, 176, "      Fullbright skins");
+	M_DrawCheckbox(220, 176, r_fullbrightskins.value);
 
 	// cursor
 	M_DrawCharacter (200, 32 + display_cursor *8, 12+((int)(realtime*4)&1));
+
+	if (display_cursor == 8)
+	{
+		M_Print(7 * 8, 184 + 8 * 2, "Display frequency must be set");
+		M_Print(8 * 8, 184 + 8 * 3, "from the command line with");
+		M_Print(5 * 8, 184 + 8 * 4, "+set vid_displayfrequency <value>");
+	}
 }
 
 void M_Display_Key (int k)
@@ -3108,6 +3221,9 @@ void M_Display_Key (int k)
 			Cvar_SetValue(&vid_vsync, !vid_vsync.value);
 			break;
 
+		case 8:
+			break;
+
 		case 10:
 			Cvar_SetValue(&scr_widescreen_fov, !scr_widescreen_fov.value);
 			break;
@@ -3117,7 +3233,7 @@ void M_Display_Key (int k)
 			break;
 
 		case 13:
-			//TODO: choose r_skycolor
+			//TODO: set r_skycolor
 			break;
 
 		case 15:
@@ -3132,19 +3248,15 @@ void M_Display_Key (int k)
 			Cvar_SetValue(&r_fullbrightskins, !r_fullbrightskins.value);
 			break;
 
-		case 18:
-			//TODO: choose r_fullbrightskincolor
-			break;
-
 		default:
 			M_AdjustDisplaySliders(1);
 			break;
 		}
 	}
 
-	if (k == K_UPARROW && (display_cursor == 3 || display_cursor == 8 || display_cursor == 14))
+	if (k == K_UPARROW && (display_cursor == 3 || display_cursor == 9 || display_cursor == 15))
 		display_cursor--;
-	else if (k == K_DOWNARROW && (display_cursor == 3 || display_cursor == 8 || display_cursor == 14))
+	else if (k == K_DOWNARROW && (display_cursor == 3 || display_cursor == 9 || display_cursor == 15))
 		display_cursor++;
 }
 
@@ -3155,11 +3267,34 @@ void M_Display_Key (int k)
 
 int opengl_cursor = 0;
 
+void SearchForCharsets(void)
+{
+	searchpath_t	*search;
+
+	EraseDirEntries();
+	pak_files = 0;
+
+	for (search = com_searchpaths; search; search = search->next)
+	{
+		if (!search->pack)
+		{
+			RDFlags |= (RD_STRIPEXT | RD_NOERASE);
+			ReadDir(va("%s/textures/charsets", search->filename), "*.tga");
+			RDFlags |= (RD_STRIPEXT | RD_NOERASE);
+			ReadDir(va("%s/textures/charsets", search->filename), "*.png");
+		}
+	}
+	FindFilesInPak("textures/charsets/*.tga");
+	FindFilesInPak("textures/charsets/*.png");
+}
+
 void M_Menu_OpenGL_f(void)
 {
 	key_dest = key_menu;
 	m_state = m_opengl;
 	m_entersound = true;
+
+	SearchForCharsets();
 }
 
 void M_AdjustOpenGLSliders(int dir)
@@ -3236,6 +3371,7 @@ void M_OpenGL_Draw(void)
 	M_DrawSliderFloat(220, 168, gl_ringalpha.value, gl_ringalpha.value);
 
 	M_Print(16, 176, "     Console font type");
+	M_Print(220, 176, gl_consolefont.string);
 
 	M_Print(16, 184, "   Smooth console font");
 	M_DrawCheckbox(220, 184, gl_smoothfont.value);
@@ -3250,7 +3386,9 @@ void M_OpenGL_Draw(void)
 
 void M_OpenGL_Key(int k)
 {
+	int i;
 	float newwaterfog;
+	direntry_t *charsetfile;
 	
 	switch (k)
 	{
@@ -3344,7 +3482,28 @@ void M_OpenGL_Key(int k)
 			break;
 
 		case 18:
-			//TODO: choose console font
+			if (num_files > 0)
+			{
+				char *charset;
+
+				for (i = 0, charsetfile = filelist; i < num_files; i++, charsetfile++)
+				{
+					if (!strcmp(charsetfile->name, gl_consolefont.string))
+					{
+						if (i == num_files - 1)
+							charset = "original";
+						else
+						{
+							charsetfile++;
+							charset = charsetfile->name;
+						}
+						break;
+					}
+				}
+				if (i == num_files)
+					charset = filelist->name;
+				Cvar_Set(&gl_consolefont, charset);
+			}
 			break;
 
 		case 19:
@@ -3454,7 +3613,8 @@ void M_Textures_Draw(void)
 	M_DrawCheckbox(220, 48, gl_detail.value);
 
 	M_Print(16, 56, "      Max texture size");
-	r = (gl_max_size.value - max_size_values[0]) / (max_size_values[MAX_SIZE_ITEMS-1] - max_size_values[0]);
+	//r = (gl_max_size.value - max_size_values[0]) / (max_size_values[MAX_SIZE_ITEMS-1] - max_size_values[0]);
+	r = (float)FindSliderItemIndex(max_size_values, MAX_SIZE_ITEMS, &gl_max_size) / (MAX_SIZE_ITEMS - 1);
 	M_DrawSliderInt(220, 56, r, gl_max_size.value);
 
 	M_Print(-40, 72, "Enable external textures for:");
@@ -3757,11 +3917,13 @@ void M_Decals_Draw(void)
 	M_DrawPic((320 - p->width) >> 1, 4, p);
 
 	M_Print(-32, 32, "Lifetime of decals (seconds)");
-	r = (gl_decaltime.value - decal_time_values[0]) / (decal_time_values[DECAL_TIME_ITEMS-1] - decal_time_values[0]);
+	//r = (gl_decaltime.value - decal_time_values[0]) / (decal_time_values[DECAL_TIME_ITEMS-1] - decal_time_values[0]);
+	r = (float)FindSliderItemIndex(decal_time_values, DECAL_TIME_ITEMS, &gl_decaltime) / (DECAL_TIME_ITEMS - 1);
 	M_DrawSliderInt(220, 32, r, gl_decaltime.value);
 
 	M_Print(8, 40, "View distance of decals");
-	r = (gl_decal_viewdistance.value - decal_viewdistance_values[0]) / (decal_viewdistance_values[DECAL_VIEWDISTANCE_ITEMS-1] - decal_viewdistance_values[0]);
+	//r = (gl_decal_viewdistance.value - decal_viewdistance_values[0]) / (decal_viewdistance_values[DECAL_VIEWDISTANCE_ITEMS-1] - decal_viewdistance_values[0]);
+	r = (float)FindSliderItemIndex(decal_viewdistance_values, DECAL_VIEWDISTANCE_ITEMS, &gl_decal_viewdistance) / (DECAL_VIEWDISTANCE_ITEMS - 1);
 	M_DrawSliderInt(220, 40, r, gl_decal_viewdistance.value);
 
 	M_Print(16, 56, "       Blood splatters");
