@@ -320,6 +320,7 @@
       <ProgramDatabaseFile>.\release_d3d/joequake-d3d.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <SetChecksum>true</SetChecksum>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">

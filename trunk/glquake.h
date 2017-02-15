@@ -292,8 +292,9 @@ extern qboolean	r_skyboxloaded;
 int R_SetSky (char *skyname);
 
 // gl_draw.c
-void GL_Set2D (void);
 extern	cvar_t	gl_texturemode;
+void GL_Set2D (void);
+byte *StringToRGB(char *s);
 
 // gl_rmain.c
 qboolean R_CullBox (vec3_t mins, vec3_t maxs);

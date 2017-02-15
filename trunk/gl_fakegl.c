@@ -1184,6 +1184,12 @@ void glColor3fv (const GLfloat *v)
 }
 
 
+void glColor3ub(GLubyte red, GLubyte green, GLubyte blue)
+{
+	GL_SetColor(red, green, blue, 255);
+}
+
+
 void glColor3ubv (const GLubyte *v)
 {
 	GL_SetColor (v[0], v[1], v[2], 255);

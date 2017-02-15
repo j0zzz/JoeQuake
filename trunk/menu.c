@@ -26,10 +26,10 @@ qboolean vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 
-enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
-	m_setup, m_namemaker, m_net, m_options, m_keys, m_mouse, m_gameplay, m_hud, m_sound, 
+enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_namemaker, 
+	m_net, m_options, m_keys, m_mouse, m_gameplay, m_hud, m_crosshair_colorchooser, m_sound, 
 #ifdef GLQUAKE
-	m_display, m_opengl, m_textures, m_particles, m_decals, m_weapons, m_screenflashes,
+	m_display, m_opengl, m_textures, m_particles, m_decals, m_weapons, m_screenflashes, m_sky_colorchooser,
 #endif
 	m_videomodes, m_nehdemos, m_maps, m_demos, m_help, m_quit, m_serialconfig, m_modemconfig,
 	m_lanconfig, m_gameoptions, m_search, m_servers, m_slist, m_sedit} m_state;
@@ -49,6 +49,7 @@ void M_Menu_Main_f (void);
 		void M_Menu_Mouse_f(void);
 		void M_Menu_Gameplay_f(void);
 		void M_Menu_Hud_f(void);
+			void M_Menu_Crosshair_ColorChooser_f(void);
 		void M_Menu_Sound_f(void);
 #ifdef GLQUAKE
 		void M_Menu_Display_f(void);
@@ -58,6 +59,7 @@ void M_Menu_Main_f (void);
 				void M_Menu_Decals_f(void);
 			void M_Menu_Weapons_f(void);
 			void M_Menu_ScreenFlashes_f(void);
+			void M_Menu_Sky_ColorChooser_f(void);
 #endif
 		void M_Menu_VideoModes_f (void);
 	void M_Menu_NehDemos_f (void);
@@ -2207,7 +2209,7 @@ void M_Mouse_Draw(void)
 	if (mouse_cursor == 4)
 	{
 		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Mouse smoothing must be set from the");
-		M_Print(1 * 8, 36 + 11 * 8 + 8 * 3, "command line with -dinput and -m_smooth");
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "command line with -dinput and -m_smooth");
 	}
 }
 
@@ -2394,7 +2396,7 @@ void M_Gameplay_Draw(void)
 	if (gameplay_cursor == 4)
 	{
 		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Shows a list of relevant commands when");
-		M_Print(3 * 8, 36 + 11 * 8 + 8 * 3, "pressing the TAB key for completion");
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "pressing the TAB key for completion");
 	}
 }
 
@@ -2571,6 +2573,7 @@ void DrawHudType(int x, int y)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -2608,6 +2611,7 @@ void DrawCrosshairType(int x, int y)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -2641,6 +2645,7 @@ void DrawClockType(int x, int y)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -2666,6 +2671,7 @@ void DrawStatsType(int x, int y)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -2704,8 +2710,10 @@ void M_Menu_Hud_f(void)
 
 void M_Hud_Draw(void)
 {
+	int x, y;
 	float r;
-	mpic_t	*p;
+	mpic_t *p;
+	byte *col;
 
 	//M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic("gfx/ttl_cstm.lmp");
@@ -2725,6 +2733,18 @@ void M_Hud_Draw(void)
 		M_Print(220, 56, !strcmp(gl_crosshairimage.string, "") ? "off" : gl_crosshairimage.string);
 
 	M_Print(16, 64, "       Crosshair color");
+	x = 220 + ((menuwidth - 320) >> 1);
+	y = 64 + m_yofs;
+	col = StringToRGB(crosshaircolor.string);
+	glDisable(GL_TEXTURE_2D);
+	glColor3ubv(col);
+	glBegin(GL_QUADS);
+	glVertex2f(x, y);
+	glVertex2f(x + 32, y);
+	glVertex2f(x + 32, y + 8);
+	glVertex2f(x, y + 8);
+	glEnd();
+	glEnable(GL_TEXTURE_2D);
 
 	M_Print(16, 72, "       Crosshair scale");
 	r = crosshairsize.value / 3;
@@ -2828,7 +2848,7 @@ void M_Hud_Key(int k)
 			break;
 		
 		case 4:
-			//TODO: set crosshaircolor
+			M_Menu_Crosshair_ColorChooser_f();
 			break;
 
 		case 12: // fps
@@ -2914,6 +2934,238 @@ void M_Hud_Key(int k)
 }
 
 //=============================================================================
+/* COLOR CHOOSER MENU */
+
+typedef enum 
+{ 
+	cs_crosshair, cs_sky 
+} colorchooser_t;
+
+#define	COLORCHOOSER_ITEMS	5
+
+int red, green, blue;
+int	colorchooser_cursor = 0;
+
+void M_AdjustColorChooserSliders(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (colorchooser_cursor)
+	{
+	case 0:
+		red += dir * 15;
+		red = bound(0, red, 255);
+		break;
+
+	case 1:
+		green += dir * 15;
+		green = bound(0, green, 255);
+		break;
+
+	case 2:
+		blue += dir * 15;
+		blue = bound(0, blue, 255);
+		break;
+
+	default:
+		break;
+	}
+}
+
+void M_Menu_Crosshair_ColorChooser_f(void)
+{
+	byte *col;
+
+	key_dest = key_menu;
+	m_state = m_crosshair_colorchooser;
+	m_entersound = true;
+	colorchooser_cursor = 0;
+
+	col = StringToRGB(crosshaircolor.string);
+	red = col[0];
+	green = col[1];
+	blue = col[2];
+}
+
+void M_Menu_Sky_ColorChooser_f(void)
+{
+	byte *col;
+
+	key_dest = key_menu;
+	m_state = m_sky_colorchooser;
+	m_entersound = true;
+	colorchooser_cursor = 0;
+
+	col = StringToRGB(r_skycolor.string);
+	red = col[0];
+	green = col[1];
+	blue = col[2];
+}
+
+void M_ColorChooser_Draw(colorchooser_t cstype)
+{
+	mpic_t *p;
+	float r;
+	char title[MAX_QPATH];
+	int x, y, square_size = 96;
+	byte *col;
+
+	switch (cstype)
+	{
+	case cs_crosshair:
+		sprintf(title, "Choose crosshair color");
+		col = StringToRGB(crosshaircolor.string);
+		break;
+
+	case cs_sky:
+		sprintf(title, "Choose sky color");
+		col = StringToRGB(r_skycolor.string);
+		break;
+
+	default:
+		break;
+	}
+
+	//M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	p = Draw_CachePic("gfx/ttl_cstm.lmp");
+	M_DrawPic((320 - p->width) >> 1, 4, p);
+
+	M_Print(16, 32, title);
+
+	M_Print(16, 48, "           Red");
+	r = red / 255.0F;
+	M_DrawSliderInt(156, 48, r, red);
+
+	M_Print(16, 56, "         Green");
+	r = green / 255.0F;
+	M_DrawSliderInt(156, 56, r, green);
+
+	M_Print(16, 64, "          Blue");
+	r = blue / 255.0F;
+	M_DrawSliderInt(156, 64, r, blue);
+
+	M_PrintWhite(16, 80, "Accept changes");
+
+	// cursor
+	M_DrawCharacter(136, 48 + colorchooser_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+
+	M_Print(16, 96, "Original");
+	x = 16 + ((menuwidth - 320) >> 1);
+	y = 108 + m_yofs;
+	glDisable(GL_TEXTURE_2D);
+	glColor3ubv(col);
+	glBegin(GL_QUADS);
+	glVertex2f(x, y);
+	glVertex2f(x + square_size, y);
+	glVertex2f(x + square_size, y + square_size);
+	glVertex2f(x, y + square_size);
+	glEnd();
+	glEnable(GL_TEXTURE_2D);
+
+	M_Print(16 + square_size + 8, 96, "Current");
+	x = 16 + square_size + 8 + ((menuwidth - 320) >> 1);
+	y = 108 + m_yofs;
+	glDisable(GL_TEXTURE_2D);
+	glColor3ub(red, green, blue);
+	glBegin(GL_QUADS);
+	glVertex2f(x, y);
+	glVertex2f(x + square_size, y);
+	glVertex2f(x + square_size, y + square_size);
+	glVertex2f(x, y + square_size);
+	glEnd();
+	glEnable(GL_TEXTURE_2D);
+}
+
+void M_ColorChooser_Key(int k, colorchooser_t cstype)
+{
+	char color[MAX_QPATH];
+
+	switch (k)
+	{
+	case K_ESCAPE:
+		switch (cstype)
+		{
+		case cs_crosshair:
+			M_Menu_Hud_f();
+			break;
+
+		case cs_sky:
+			M_Menu_Display_f();
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case K_ENTER:
+		S_LocalSound("misc/menu2.wav");
+		switch (colorchooser_cursor)
+		{
+		case 4:
+			sprintf(color, "%i %i %i", red, green, blue);
+			switch (cstype)
+			{
+			case cs_crosshair:
+				Cvar_Set(&crosshaircolor, color);
+				break;
+
+			case cs_sky:
+				Cvar_Set(&r_skycolor, color);
+				break;
+
+			default:
+				break;
+			}
+			break;
+
+		default:
+			break;
+		}
+		return;
+
+	case K_UPARROW:
+		S_LocalSound("misc/menu1.wav");
+		colorchooser_cursor--;
+		if (colorchooser_cursor < 0)
+			colorchooser_cursor = COLORCHOOSER_ITEMS - 1;
+		break;
+
+	case K_DOWNARROW:
+		S_LocalSound("misc/menu1.wav");
+		colorchooser_cursor++;
+		if (colorchooser_cursor >= COLORCHOOSER_ITEMS)
+			colorchooser_cursor = 0;
+		break;
+
+	case K_HOME:
+	case K_PGUP:
+		S_LocalSound("misc/menu1.wav");
+		colorchooser_cursor = 0;
+		break;
+
+	case K_END:
+	case K_PGDN:
+		S_LocalSound("misc/menu1.wav");
+		colorchooser_cursor = COLORCHOOSER_ITEMS - 1;
+		break;
+
+	case K_LEFTARROW:
+		M_AdjustColorChooserSliders(-1);
+		break;
+
+	case K_RIGHTARROW:
+		M_AdjustColorChooserSliders(1);
+		break;
+	}
+
+	if (k == K_UPARROW && colorchooser_cursor == 3)
+		colorchooser_cursor--;
+	else if (k == K_DOWNARROW && colorchooser_cursor == 3)
+		colorchooser_cursor++;
+}
+
+//=============================================================================
 /* SOUND OPTIONS MENU */
 
 #define	SOUND_ITEMS	3
@@ -2971,8 +3223,8 @@ void M_Sound_Draw(void)
 
 	if (sound_cursor == 2)
 	{
-		M_Print(3 * 8, 36 + 11 * 8 + 8 * 2, "Sound quality must be set from the");
-		M_Print(1 * 8, 36 + 11 * 8 + 8 * 3, "command line with +set s_khz <22 or 44>");
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Sound quality must be set from the");
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "command line with +set s_khz <22 or 44>");
 	}
 }
 
@@ -3037,7 +3289,7 @@ void M_Sound_Key(int k)
 
 #ifdef GLQUAKE
 
-#define	DISPLAY_ITEMS	18
+#define	DISPLAY_ITEMS	19
 
 int	display_cursor = 0;
 
@@ -3089,9 +3341,11 @@ void M_AdjustDisplaySliders (int dir)
 
 void M_Display_Draw (void)
 {
+	int x, y;
 	float r;
 	mpic_t *p;
 	char display_frequency[10];
+	byte *col;
 	
 	//M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic ("gfx/ttl_cstm.lmp");
@@ -3138,6 +3392,18 @@ void M_Display_Draw (void)
 	M_DrawCheckbox(220, 136, r_fastsky.value);
 
 	M_Print(16, 144, "       Solid sky color");
+	x = 220 + ((menuwidth - 320) >> 1);
+	y = 144 + m_yofs;
+	col = StringToRGB(r_skycolor.string);
+	glDisable(GL_TEXTURE_2D);
+	glColor3ubv(col);
+	glBegin(GL_QUADS);
+	glVertex2f(x, y);
+	glVertex2f(x + 32, y);
+	glVertex2f(x + 32, y + 8);
+	glVertex2f(x, y + 8);
+	glEnd();
+	glEnable(GL_TEXTURE_2D);
 
 	M_Print(16, 160, "          Powerup glow");
 	M_DrawCheckbox(220, 160, r_powerupglow.value);
@@ -3153,9 +3419,9 @@ void M_Display_Draw (void)
 
 	if (display_cursor == 8)
 	{
-		M_Print(7 * 8, 184 + 8 * 2, "Display frequency must be set");
-		M_Print(8 * 8, 184 + 8 * 3, "from the command line with");
-		M_Print(5 * 8, 184 + 8 * 4, "+set vid_displayfrequency <value>");
+		M_Print(2 * 8, 184 + 8 * 2, "Display frequency must be set");
+		M_Print(2 * 8, 184 + 8 * 3, "from the command line with");
+		M_Print(2 * 8, 184 + 8 * 4, "+set vid_displayfrequency <value>");
 	}
 }
 
@@ -3221,30 +3487,30 @@ void M_Display_Key (int k)
 			Cvar_SetValue(&vid_vsync, !vid_vsync.value);
 			break;
 
-		case 8:
+		case 8:	// display frequency
 			break;
 
-		case 10:
+		case 11:
 			Cvar_SetValue(&scr_widescreen_fov, !scr_widescreen_fov.value);
 			break;
 
-		case 12:
+		case 13:
 			Cvar_SetValue(&r_fastsky, !r_fastsky.value);
 			break;
 
-		case 13:
-			//TODO: set r_skycolor
-			break;
-
-		case 15:
-			Cvar_SetValue(&r_powerupglow, !r_powerupglow.value);
+		case 14:
+			M_Menu_Sky_ColorChooser_f();
 			break;
 
 		case 16:
-			Cvar_SetValue(&scr_autoid, !scr_autoid.value);
+			Cvar_SetValue(&r_powerupglow, !r_powerupglow.value);
 			break;
 
 		case 17:
+			Cvar_SetValue(&scr_autoid, !scr_autoid.value);
+			break;
+
+		case 18:
 			Cvar_SetValue(&r_fullbrightskins, !r_fullbrightskins.value);
 			break;
 
@@ -3376,7 +3642,7 @@ void M_OpenGL_Draw(void)
 	M_Print(16, 184, "   Smooth console font");
 	M_DrawCheckbox(220, 184, gl_smoothfont.value);
 
-	M_PrintWhite(16, 200, "         Set fast mode");
+	M_PrintWhite(16, 200, "  Set high performance");
 
 	M_PrintWhite(16, 208, "      Set high quality");
 
@@ -3511,31 +3777,47 @@ void M_OpenGL_Key(int k)
 			break;
 
 		case 21:
-			Cvar_SetValue(&gl_loadlitfiles, 0);
-			Cvar_SetValue(&r_dynamic, 0);
-			Cvar_SetValue(&gl_vertexlights, 0);
-			Cvar_SetValue(&r_shadows, 0);
-			R_SetParticleMode(pm_classic);
 			Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_NEAREST");
 			Cvar_SetValue(&gl_picmip, 3);
 			Cvar_SetValue(&gl_detail, 0);
+			Cvar_SetValue(&gl_externaltextures_world, 0);
+			Cvar_SetValue(&gl_externaltextures_bmodels, 0);
+			Cvar_SetValue(&gl_externaltextures_models, 0);
+			R_SetParticleMode(pm_classic);
+			Cvar_SetValue(&gl_decal_explosions, 0);
+			Cvar_SetValue(&gl_decal_blood, 0);
+			Cvar_SetValue(&gl_decal_bullets, 0);
+			Cvar_SetValue(&gl_decal_sparks, 0);
+			Cvar_SetValue(&gl_loadlitfiles, 0);
+			Cvar_SetValue(&r_dynamic, 0);
+			Cvar_SetValue(&gl_flashblend, 1);
+			Cvar_SetValue(&gl_vertexlights, 0);
+			Cvar_SetValue(&r_shadows, 0);
+			Cvar_SetValue(&r_wateralpha, 1.0);
 			Cvar_SetValue(&gl_caustics, 0);
 			Cvar_SetValue(&gl_waterfog, 0);
-			Cvar_SetValue(&r_wateralpha, 1.0);
 			break;
 
 		case 22:
-			Cvar_SetValue(&gl_loadlitfiles, 1);
-			Cvar_SetValue(&r_dynamic, 1);
-			Cvar_SetValue(&gl_vertexlights, 1);
-			Cvar_SetValue(&r_shadows, 1);
-			R_SetParticleMode(pm_qmb);
 			Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_LINEAR");
 			Cvar_SetValue(&gl_picmip, 0);
 			Cvar_SetValue(&gl_detail, 1);
+			Cvar_SetValue(&gl_externaltextures_world, 1);
+			Cvar_SetValue(&gl_externaltextures_bmodels, 1);
+			Cvar_SetValue(&gl_externaltextures_models, 1);
+			R_SetParticleMode(pm_qmb);
+			Cvar_SetValue(&gl_decal_explosions, 1);
+			Cvar_SetValue(&gl_decal_blood, 1);
+			Cvar_SetValue(&gl_decal_bullets, 1);
+			Cvar_SetValue(&gl_decal_sparks, 1);
+			Cvar_SetValue(&gl_loadlitfiles, 1);
+			Cvar_SetValue(&r_dynamic, 1);
+			Cvar_SetValue(&gl_flashblend, 0);
+			Cvar_SetValue(&gl_vertexlights, 1);
+			Cvar_SetValue(&r_shadows, 2);
+			Cvar_SetValue(&r_wateralpha, 0.4);
 			Cvar_SetValue(&gl_caustics, 1);
 			Cvar_SetValue(&gl_waterfog, 1);
-			Cvar_SetValue(&r_wateralpha, 0.4);
 			break;
 
 		default:
@@ -3630,6 +3912,18 @@ void M_Textures_Draw(void)
 
 	// cursor
 	M_DrawCharacter(200, 32 + textures_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+
+	if (textures_cursor == 7)
+	{
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Static objects are health boxes,");
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "ammo boxes and explosion barrels");
+	}
+	else if (textures_cursor == 8)
+	{
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Dynamic objects are players, monsters,");
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "weapons, armors, keys, gibs, backpack,");
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 4, "rocket, grenade and torches");
+	}
 }
 
 void M_Textures_Key(int k)
@@ -4063,6 +4357,7 @@ void DrawViewmodelType(int x, int y)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -4088,6 +4383,7 @@ void DrawHandType(int x, int y)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -4113,6 +4409,7 @@ void DrawRocketTrailType(int x, int y)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -4138,6 +4435,7 @@ void DrawGrenadeTrailType(int x, int y)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -4175,6 +4473,7 @@ void DrawColorType(int x, int y, int value)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -4204,6 +4503,7 @@ void DrawExplosionType(int x, int y)
 		break;
 
 	default:
+		str = "unknown";
 		break;
 	}
 
@@ -6702,6 +7002,10 @@ void M_Draw (void)
 		M_Hud_Draw();
 		break;
 
+	case m_crosshair_colorchooser:
+		M_ColorChooser_Draw(cs_crosshair);
+		break;
+
 	case m_sound:
 		M_Sound_Draw();
 		break;
@@ -6733,6 +7037,10 @@ void M_Draw (void)
 
 	case m_screenflashes:
 		M_ScreenFlashes_Draw();
+		break;
+
+	case m_sky_colorchooser:
+		M_ColorChooser_Draw(cs_sky);
 		break;
 #endif
 
@@ -6869,6 +7177,10 @@ void M_Keydown (int key)
 		M_Hud_Key(key);
 		break;
 
+	case m_crosshair_colorchooser:
+		M_ColorChooser_Key(key, cs_crosshair);
+		break;
+
 	case m_sound:
 		M_Sound_Key(key);
 		break;
@@ -6901,6 +7213,11 @@ void M_Keydown (int key)
 	case m_screenflashes:
 		M_ScreenFlashes_Key(key);
 		return;
+
+	case m_sky_colorchooser:
+		M_ColorChooser_Key(key, cs_sky);
+		break;
+
 #endif
 
 	case m_videomodes:
