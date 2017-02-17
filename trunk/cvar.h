@@ -113,3 +113,5 @@ cvar_t *Cvar_FindVar (char *var_name);
 void Cvar_Init (void);
 
 extern cvar_t	*cvar_vars;
+
+extern cvar_t	cvar_savevars;

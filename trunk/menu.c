@@ -2147,7 +2147,8 @@ void M_AdjustMouseSliders(int dir)
 		break;
 
 	case 5:	// mouse rate
-		AdjustSliderBasedOnArrayOfValues(dir, mouse_rate_values, MOUSE_RATE_ITEMS, &m_rate);
+		if (use_m_smooth)
+			AdjustSliderBasedOnArrayOfValues(dir, mouse_rate_values, MOUSE_RATE_ITEMS, &m_rate);
 		break;
 	}
 }
@@ -2225,10 +2226,6 @@ void M_Mouse_Key(int k)
 		S_LocalSound("misc/menu2.wav");
 		switch (mouse_cursor)
 		{
-		case 0:
-			M_AdjustMouseSliders(1);
-			break;
-
 		case 1:	// mouse filter
 			Cvar_SetValue(&m_filter, !m_filter.value);
 			break;
@@ -2238,11 +2235,6 @@ void M_Mouse_Key(int k)
 			break;
 
 		case 4:	// mouse smoothing
-			break;
-
-		case 5:
-			if (use_m_smooth)
-				M_AdjustMouseSliders(1);
 			break;
 
 		case 7:	// _windowed_mouse
@@ -2326,7 +2318,7 @@ void M_Mouse_Key(int k)
 //=============================================================================
 /* GAMEPLAY OPTIONS MENU */
 
-#define	GAMEPLAY_ITEMS	9
+#define	GAMEPLAY_ITEMS	10
 
 int	gameplay_cursor = 0;
 
@@ -2339,7 +2331,7 @@ void M_AdjustGameplaySliders(int dir)
 
 	switch (gameplay_cursor)
 	{
-	case 5:	// demo speed
+	case 6:	// demo speed
 		AdjustSliderBasedOnArrayOfValues(dir, demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed);
 		break;
 
@@ -2376,19 +2368,22 @@ void M_Gameplay_Draw(void)
 	M_Print(-24, 64, "Advanced command completion");
 	M_DrawCheckbox(220, 64, cl_advancedcompletion.value);
 
-	M_Print(16, 72, "   Demo playback speed");
+	M_Print(16, 72, "      Cvar saving mode");
+	M_Print(220, 72, !cvar_savevars.value ? "default" : cvar_savevars.value == 2 ? "save all" : "save modified");
+
+	M_Print(16, 80, "   Demo playback speed");
 	//r = (cl_demospeed.value - demo_speed_values[0]) / (demo_speed_values[DEMO_SPEED_ITEMS-1] - demo_speed_values[0]);
 	r = (float)FindSliderItemIndex(demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed) / (DEMO_SPEED_ITEMS - 1);
-	M_DrawSliderFloat2(220, 72, r, cl_demospeed.value);
+	M_DrawSliderFloat2(220, 80, r, cl_demospeed.value);
 
-	M_Print(16, 80, "Rotating items bobbing");
-	M_DrawCheckbox(220, 80, cl_bobbing.value);
+	M_Print(16, 88, "Rotating items bobbing");
+	M_DrawCheckbox(220, 88, cl_bobbing.value);
 
-	M_Print(16, 88, "      Hide dead bodies");
-	M_DrawCheckbox(220, 88, cl_deadbodyfilter.value);
+	M_Print(16, 96, "      Hide dead bodies");
+	M_DrawCheckbox(220, 96, cl_deadbodyfilter.value);
 
-	M_Print(16, 96, "             Hide gibs");
-	M_DrawCheckbox(220, 96, cl_gibfilter.value);
+	M_Print(16, 104, "             Hide gibs");
+	M_DrawCheckbox(220, 104, cl_gibfilter.value);
 
 	// cursor
 	M_DrawCharacter(200, 32 + gameplay_cursor * 8, 12 + ((int)(realtime * 4) & 1));
@@ -2398,10 +2393,17 @@ void M_Gameplay_Draw(void)
 		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Shows a list of relevant commands when");
 		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "pressing the TAB key for completion");
 	}
+	else if (gameplay_cursor == 5)
+	{
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Defines which console variables");
+		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "are saved when exiting the game");
+	}
 }
 
 void M_Gameplay_Key(int k)
 {
+	float newvalue;
+
 	switch (k)
 	{
 	case K_ESCAPE:
@@ -2438,18 +2440,21 @@ void M_Gameplay_Key(int k)
 			break;
 
 		case 5:
-			M_AdjustGameplaySliders(1);
-			break;
-
-		case 6:
-			Cvar_SetValue(&cl_bobbing, !cl_bobbing.value);
+			newvalue = cvar_savevars.value + 1;
+			if (newvalue > 2)
+				newvalue = 0;
+			Cvar_SetValue(&cvar_savevars, newvalue);
 			break;
 
 		case 7:
-			Cvar_SetValue(&cl_deadbodyfilter, !cl_deadbodyfilter.value);
+			Cvar_SetValue(&cl_bobbing, !cl_bobbing.value);
 			break;
 
 		case 8:
+			Cvar_SetValue(&cl_deadbodyfilter, !cl_deadbodyfilter.value);
+			break;
+
+		case 9:
 			Cvar_SetValue(&cl_gibfilter, !cl_gibfilter.value);
 			break;
 
@@ -2745,6 +2750,7 @@ void M_Hud_Draw(void)
 	glVertex2f(x, y + 8);
 	glEnd();
 	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
 
 	M_Print(16, 72, "       Crosshair scale");
 	r = crosshairsize.value / 3;
@@ -3061,6 +3067,7 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	glVertex2f(x, y + square_size);
 	glEnd();
 	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
 
 	M_Print(16 + square_size + 8, 96, "Current");
 	x = 16 + square_size + 8 + ((menuwidth - 320) >> 1);
@@ -3074,6 +3081,7 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	glVertex2f(x, y + square_size);
 	glEnd();
 	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
 }
 
 void M_ColorChooser_Key(int k, colorchooser_t cstype)
@@ -3363,7 +3371,7 @@ void M_Display_Draw (void)
 
 	M_Print (16, 72, "                 Gamma");
 	r = (1.0 - v_gamma.value) / 0.5;
-	M_DrawSliderFloat(220, 72, r, v_gamma.value);
+	M_DrawSliderFloat2(220, 72, r, v_gamma.value);
 
 	M_Print (16, 80, "              Contrast");
 	r = v_contrast.value - 1.0;
@@ -3404,6 +3412,7 @@ void M_Display_Draw (void)
 	glVertex2f(x, y + 8);
 	glEnd();
 	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
 
 	M_Print(16, 160, "          Powerup glow");
 	M_DrawCheckbox(220, 160, r_powerupglow.value);
@@ -3779,7 +3788,7 @@ void M_OpenGL_Key(int k)
 		case 21:
 			Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_NEAREST");
 			Cvar_SetValue(&gl_picmip, 3);
-			Cvar_SetValue(&gl_detail, 0);
+			//Cvar_SetValue(&gl_detail, 0);
 			Cvar_SetValue(&gl_externaltextures_world, 0);
 			Cvar_SetValue(&gl_externaltextures_bmodels, 0);
 			Cvar_SetValue(&gl_externaltextures_models, 0);
@@ -3801,7 +3810,7 @@ void M_OpenGL_Key(int k)
 		case 22:
 			Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_LINEAR");
 			Cvar_SetValue(&gl_picmip, 0);
-			Cvar_SetValue(&gl_detail, 1);
+			//Cvar_SetValue(&gl_detail, 1);
 			Cvar_SetValue(&gl_externaltextures_world, 1);
 			Cvar_SetValue(&gl_externaltextures_bmodels, 1);
 			Cvar_SetValue(&gl_externaltextures_models, 1);

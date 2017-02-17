@@ -70,7 +70,7 @@ int 	desired_bits = 16;
 int		sound_started = 0;
 
 cvar_t	bgmvolume = {"bgmvolume", "1", CVAR_ARCHIVE};
-cvar_t	s_volume = {"volume", "0.7", CVAR_ARCHIVE};
+cvar_t	s_volume = {"volume", "0.5", CVAR_ARCHIVE};
 cvar_t	s_nosound = {"nosound", "0"};
 cvar_t	s_precache = {"precache", "1"};
 cvar_t	s_loadas8bit = {"loadas8bit", "0"};

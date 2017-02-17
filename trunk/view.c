@@ -66,7 +66,7 @@ cvar_t	cl_hand = {"cl_hand", "0"};
 cvar_t	v_kicktime = {"v_kicktime", "0.5"};
 cvar_t	v_kickroll = {"v_kickroll", "0.6"};
 cvar_t	v_kickpitch = {"v_kickpitch", "0.6"};
-cvar_t	v_gunkick = {"v_gunkick", "0"};
+cvar_t	v_gunkick = {"v_gunkick", "2"};
 
 cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2"};
 cvar_t	v_iroll_cycle = {"v_iroll_cycle", "0.5"};
@@ -78,7 +78,7 @@ cvar_t	v_ipitch_level = {"v_ipitch_level", "0.3"};
 cvar_t	v_idlescale = {"v_idlescale", "0"};
 
 cvar_t	crosshair = {"crosshair", "0", CVAR_ARCHIVE};
-cvar_t	crosshaircolor = {"crosshaircolor", "79", CVAR_ARCHIVE};
+cvar_t	crosshaircolor = {"crosshaircolor", "255 255 255", CVAR_ARCHIVE};
 cvar_t	crosshairsize = {"crosshairsize", "1"};
 cvar_t	cl_crossx = {"cl_crossx", "0"};
 cvar_t	cl_crossy = {"cl_crossy", "0"};
@@ -264,16 +264,16 @@ cshift_t	cshift_lava = {{255, 80, 0}, 150};
 cvar_t		gl_cshiftpercent = {"gl_cshiftpercent", "100"};
 cvar_t		gl_hwblend = {"gl_hwblend", "0"};
 float		v_blend[4];		// rgba 0.0 - 1.0
-cvar_t		v_gamma = {"gl_gamma", "0.7", CVAR_ARCHIVE};
-cvar_t		v_contrast = {"gl_contrast", "1.7", CVAR_ARCHIVE};
+cvar_t		v_gamma = {"gl_gamma", "0.8", CVAR_ARCHIVE};
+cvar_t		v_contrast = {"gl_contrast", "1.6", CVAR_ARCHIVE};
 unsigned short	ramps[3][256];
 
 #else
 
 byte		gammatable[256];	// palette is sent through this
 byte		current_pal[768];	// Tonik: used for screenshots
-cvar_t		v_gamma = {"gamma", "0.7", CVAR_ARCHIVE};
-cvar_t		v_contrast = {"contrast", "1.7", CVAR_ARCHIVE};
+cvar_t		v_gamma = {"gamma", "0.8", CVAR_ARCHIVE};
+cvar_t		v_contrast = {"contrast", "1.6", CVAR_ARCHIVE};
 
 #endif
 

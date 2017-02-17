@@ -67,7 +67,7 @@ void Sbar_DeathmatchOverlay (void);
 
 int	sbar_xofs;
 cvar_t	scr_centersbar = {"scr_centersbar", "1"};
-cvar_t	scr_sbarscale_amount = { "scr_sbarscale_amount", "1" };
+cvar_t	scr_sbarscale_amount = { "scr_sbarscale_amount", "2" };
 
 /*
 ===============
