@@ -2209,8 +2209,9 @@ void M_Mouse_Draw(void)
 
 	if (mouse_cursor == 4)
 	{
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Mouse smoothing must be set from the");
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "command line with -dinput and -m_smooth");
+		M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 184 + 8 * 3, "Mouse smoothing must be set from the");
+		M_Print(2 * 8, 184 + 8 * 4, "command line with -dinput and -m_smooth");
 	}
 }
 
@@ -2318,7 +2319,7 @@ void M_Mouse_Key(int k)
 //=============================================================================
 /* GAMEPLAY OPTIONS MENU */
 
-#define	GAMEPLAY_ITEMS	10
+#define	GAMEPLAY_ITEMS	12
 
 int	gameplay_cursor = 0;
 
@@ -2331,7 +2332,7 @@ void M_AdjustGameplaySliders(int dir)
 
 	switch (gameplay_cursor)
 	{
-	case 6:	// demo speed
+	case 8:	// demo speed
 		AdjustSliderBasedOnArrayOfValues(dir, demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed);
 		break;
 
@@ -2371,32 +2372,43 @@ void M_Gameplay_Draw(void)
 	M_Print(16, 72, "      Cvar saving mode");
 	M_Print(220, 72, !cvar_savevars.value ? "default" : cvar_savevars.value == 2 ? "save all" : "save modified");
 
-	M_Print(16, 80, "   Demo playback speed");
+	M_Print(16, 80, "     Confirm when quit");
+	M_DrawCheckbox(220, 80, cl_confirmquit.value);
+
+	M_Print(16, 96, "   Demo playback speed");
 	//r = (cl_demospeed.value - demo_speed_values[0]) / (demo_speed_values[DEMO_SPEED_ITEMS-1] - demo_speed_values[0]);
 	r = (float)FindSliderItemIndex(demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed) / (DEMO_SPEED_ITEMS - 1);
-	M_DrawSliderFloat2(220, 80, r, cl_demospeed.value);
+	M_DrawSliderFloat2(220, 96, r, cl_demospeed.value);
 
-	M_Print(16, 88, "Rotating items bobbing");
-	M_DrawCheckbox(220, 88, cl_bobbing.value);
+	M_Print(16, 104, "Rotating items bobbing");
+	M_DrawCheckbox(220, 104, cl_bobbing.value);
 
-	M_Print(16, 96, "      Hide dead bodies");
-	M_DrawCheckbox(220, 96, cl_deadbodyfilter.value);
+	M_Print(16, 112, "      Hide dead bodies");
+	M_DrawCheckbox(220, 112, cl_deadbodyfilter.value);
 
-	M_Print(16, 104, "             Hide gibs");
-	M_DrawCheckbox(220, 104, cl_gibfilter.value);
+	M_Print(16, 120, "             Hide gibs");
+	M_DrawCheckbox(220, 120, cl_gibfilter.value);
 
 	// cursor
 	M_DrawCharacter(200, 32 + gameplay_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
 	if (gameplay_cursor == 4)
 	{
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Shows a list of relevant commands when");
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "pressing the TAB key for completion");
+		M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 184 + 8 * 3, "Shows a list of relevant commands when");
+		M_Print(2 * 8, 184 + 8 * 4, "pressing the TAB key for completion");
 	}
 	else if (gameplay_cursor == 5)
 	{
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Defines which console variables");
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "are saved when exiting the game");
+		M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 184 + 8 * 3, "Defines which console variables");
+		M_Print(2 * 8, 184 + 8 * 4, "are saved when exiting the game");
+	}
+	else if (gameplay_cursor == 6)
+	{
+		M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 184 + 8 * 3, "Shows a confirmation screen");
+		M_Print(2 * 8, 184 + 8 * 4, "when exiting the game");
 	}
 }
 
@@ -2446,15 +2458,19 @@ void M_Gameplay_Key(int k)
 			Cvar_SetValue(&cvar_savevars, newvalue);
 			break;
 
-		case 7:
-			Cvar_SetValue(&cl_bobbing, !cl_bobbing.value);
-			break;
-
-		case 8:
-			Cvar_SetValue(&cl_deadbodyfilter, !cl_deadbodyfilter.value);
+		case 6:
+			Cvar_SetValue(&cl_confirmquit, !cl_confirmquit.value);
 			break;
 
 		case 9:
+			Cvar_SetValue(&cl_bobbing, !cl_bobbing.value);
+			break;
+
+		case 10:
+			Cvar_SetValue(&cl_deadbodyfilter, !cl_deadbodyfilter.value);
+			break;
+
+		case 11:
 			Cvar_SetValue(&cl_gibfilter, !cl_gibfilter.value);
 			break;
 
@@ -2498,9 +2514,9 @@ void M_Gameplay_Key(int k)
 		break;
 	}
 
-	if (k == K_UPARROW && gameplay_cursor == 3)
+	if (k == K_UPARROW && (gameplay_cursor == 3 || gameplay_cursor == 7))
 		gameplay_cursor--;
-	else if (k == K_DOWNARROW && gameplay_cursor == 3)
+	else if (k == K_DOWNARROW && (gameplay_cursor == 3 || gameplay_cursor == 7))
 		gameplay_cursor++;
 }
 
@@ -3231,8 +3247,9 @@ void M_Sound_Draw(void)
 
 	if (sound_cursor == 2)
 	{
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Sound quality must be set from the");
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "command line with +set s_khz <22 or 44>");
+		M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 184 + 8 * 3, "Sound quality must be set from the");
+		M_Print(2 * 8, 184 + 8 * 4, "command line with +set s_khz <22 or 44>");
 	}
 }
 
@@ -3421,21 +3438,30 @@ void M_Display_Draw (void)
 	M_DrawCheckbox(220, 168, scr_autoid.value);
 
 	M_Print(16, 176, "      Fullbright skins");
-	M_DrawCheckbox(220, 176, r_fullbrightskins.value);
+	M_Print(220, 176, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
 
 	// cursor
 	M_DrawCharacter (200, 32 + display_cursor *8, 12+((int)(realtime*4)&1));
 
 	if (display_cursor == 8)
 	{
-		M_Print(2 * 8, 184 + 8 * 2, "Display frequency must be set");
-		M_Print(2 * 8, 184 + 8 * 3, "from the command line with");
-		M_Print(2 * 8, 184 + 8 * 4, "+set vid_displayfrequency <value>");
+		M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 184 + 8 * 3, "Display frequency must be set");
+		M_Print(2 * 8, 184 + 8 * 4, "from the command line with");
+		M_Print(2 * 8, 184 + 8 * 5, "+set vid_displayfrequency <value>");
+	}
+	else if (display_cursor == 17)
+	{
+		M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 184 + 8 * 3, "Shows the player's name on top");
+		M_Print(2 * 8, 184 + 8 * 4, "of him when watching from outside");
 	}
 }
 
 void M_Display_Key (int k)
 {
+	float newvalue;
+
 	switch (k)
 	{
 	case K_ESCAPE:
@@ -3520,7 +3546,10 @@ void M_Display_Key (int k)
 			break;
 
 		case 18:
-			Cvar_SetValue(&r_fullbrightskins, !r_fullbrightskins.value);
+			newvalue = r_fullbrightskins.value + 1;
+			if (newvalue > 2)
+				newvalue = 0;
+			Cvar_SetValue(&r_fullbrightskins, newvalue);
 			break;
 
 		default:
@@ -3924,14 +3953,16 @@ void M_Textures_Draw(void)
 
 	if (textures_cursor == 7)
 	{
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Static objects are health boxes,");
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "ammo boxes and explosion barrels");
+		M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 184 + 8 * 3, "Static objects are health boxes,");
+		M_Print(2 * 8, 184 + 8 * 4, "ammo boxes and explosion barrels");
 	}
 	else if (textures_cursor == 8)
 	{
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Dynamic objects are players, monsters,");
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "weapons, armors, keys, gibs, backpack,");
-		M_Print(2 * 8, 36 + 11 * 8 + 8 * 4, "rocket, grenade and torches");
+		M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 184 + 8 * 3, "Dynamic objects are players, monsters,");
+		M_Print(2 * 8, 184 + 8 * 4, "weapons, armors, keys, gibs, backpack,");
+		M_Print(2 * 8, 184 + 8 * 5, "rocket, grenade and torches");
 	}
 }
 
@@ -4244,8 +4275,9 @@ void M_Decals_Draw(void)
 	// cursor
 	M_DrawCharacter(200, 32 + decals_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	M_Print(2 * 8, 36 + 11 * 8 + 8 * 2, "Decals are displayed only when using");
-	M_Print(2 * 8, 36 + 11 * 8 + 8 * 3, "QMB or Quake 3 style particle effects");
+	M_PrintWhite(2 * 8, 184 + 8 * 2, "Hint:");
+	M_Print(2 * 8, 184 + 8 * 3, "Decals are displayed only when using");
+	M_Print(2 * 8, 184 + 8 * 4, "QMB or Quake3 style particle effects");
 }
 
 void M_Decals_Key(int k)
@@ -4391,6 +4423,10 @@ void DrawHandType(int x, int y)
 		str = "left";
 		break;
 
+	case 3:
+		str = "dp smoke (QMB only)";
+		break;
+
 	default:
 		str = "unknown";
 		break;
@@ -4415,6 +4451,10 @@ void DrawRocketTrailType(int x, int y)
 
 	case 2:
 		str = "grenade smoke";
+		break;
+
+	case 3:
+		str = "dp smoke (QMB only)";
 		break;
 
 	default:
@@ -4656,14 +4696,14 @@ void M_Weapons_Key(int k)
 
 		case 7:
 			newvalue = r_rockettrail.value + 1;
-			if (newvalue > 2)
+			if (newvalue > 3)
 				newvalue = 0;
 			Cvar_SetValue(&r_rockettrail, newvalue);
 			break;
 
 		case 8:
 			newvalue = r_grenadetrail.value + 1;
-			if (newvalue > 2)
+			if (newvalue > 3)
 				newvalue = 0;
 			Cvar_SetValue(&r_grenadetrail, newvalue);
 			break;
@@ -4756,7 +4796,7 @@ void M_ScreenFlashes_Draw(void)
 	M_Print(-8, 80, "When invisibility is used");
 	M_DrawCheckbox(220, 80, v_ringcshift.value);
 
-	M_Print(16, 88, "   When pentagram is used");
+	M_Print(16, 88, "When pentagram is used");
 	M_DrawCheckbox(220, 88, v_pentcshift.value);
 
 	// cursor
@@ -6906,9 +6946,20 @@ void M_Init (void)
 	Cmd_AddCommand ("menu_options", M_Menu_Options_f);
 	Cmd_AddCommand ("menu_keys", M_Menu_Keys_f);
 	Cmd_AddCommand ("menu_videomodes", M_Menu_VideoModes_f);
+	Cmd_AddCommand("menu_mouse", M_Menu_Mouse_f);
+	Cmd_AddCommand("menu_gameplay", M_Menu_Gameplay_f);
+	Cmd_AddCommand("menu_hud", M_Menu_Hud_f);
+	Cmd_AddCommand("menu_crosshair_colorchooser", M_Menu_Crosshair_ColorChooser_f);
+	Cmd_AddCommand("menu_sound", M_Menu_Sound_f);
 #ifdef GLQUAKE
 	Cmd_AddCommand ("menu_display", M_Menu_Display_f);
 	Cmd_AddCommand ("menu_particles", M_Menu_Particles_f);
+	Cmd_AddCommand("menu_opengl", M_Menu_OpenGL_f);
+	Cmd_AddCommand("menu_textures", M_Menu_Textures_f);
+	Cmd_AddCommand("menu_decals", M_Menu_Decals_f);
+	Cmd_AddCommand("menu_weapons", M_Menu_Weapons_f);
+	Cmd_AddCommand("menu_screenflashes", M_Menu_ScreenFlashes_f);
+	Cmd_AddCommand("menu_sky_colorchooser", M_Menu_Sky_ColorChooser_f);
 #endif
 	Cmd_AddCommand ("help", M_Menu_Help_f);
 	Cmd_AddCommand ("menu_maps", M_Menu_Maps_f);

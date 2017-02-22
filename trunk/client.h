@@ -274,6 +274,7 @@ extern	cvar_t	cl_advancedcompletion;
 extern	cvar_t	cl_viewweapons;
 extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
+extern	cvar_t	cl_confirmquit;
 
 #define	MAX_TEMP_ENTITIES	64		// lightning bolts, etc
 #define	MAX_STATIC_ENTITIES	128		// torches, etc
