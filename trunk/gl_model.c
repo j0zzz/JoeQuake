@@ -1089,6 +1089,9 @@ void Mod_LoadLeafs (lump_t *l)
 		out->firstmarksurface = loadmodel->marksurfaces + LittleShort (in->firstmarksurface);
 		out->nummarksurfaces = LittleShort(in->nummarksurfaces);
 		
+		if (!*(out->firstmarksurface))
+			Sys_Error("MOD_LoadBrushModel: error when loading %s (NULL surface pointer)", loadmodel->name);
+
 		p = LittleLong(in->visofs);
 		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;

@@ -1321,11 +1321,16 @@ void FindFilesInPak (char *the_arg)
 				extlen = strlen(ext2);
 				if (!Q_strcasecmp(ext, ext2))
 				{
+					int compare_length = strlen(the_arg) - 2 - extlen;
+					int compare_length2 = compare_length - compl_len;
+					if (compare_length2 < 0)
+						compare_length2 = compare_length;
+
 					SLASHJMP(p, s);
 					if (!Q_strcasecmp(ext, "bsp") && !CheckRealBSP(p))
 						continue;
-					if (!Q_strncasecmp(s, the_arg, strlen(the_arg) - 2 - extlen) || 
-					    (*myarg == '*' && !Q_strncasecmp(s, the_arg, strlen(the_arg) - 2 - extlen - compl_len)))
+					if (!Q_strncasecmp(s, the_arg, compare_length) ||
+					    (*myarg == '*' && !Q_strncasecmp(s, the_arg, compare_length2)))
 					{
 						if (Q_strcasecmp(ext, "dz") && Q_strcasecmp(ext, "skin"))
 							COM_StripExtension (p, filename);
