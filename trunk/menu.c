@@ -3861,7 +3861,7 @@ void M_OpenGL_Key(int k)
 //=============================================================================
 /* TEXTURES MENU */
 
-#define	TEXTURES_ITEMS	9
+#define	TEXTURES_ITEMS	10
 
 int textures_cursor = 0;
 
@@ -3936,6 +3936,9 @@ void M_Textures_Draw(void)
 	M_Print(16, 96, "       Dynamic objects");
 	M_DrawCheckbox(220, 96, gl_externaltextures_models.value);
 
+	M_Print(16, 104, "          Menu and HUD");
+	M_DrawCheckbox(220, 104, gl_externaltextures_gfx.value);
+
 	// cursor
 	M_DrawCharacter(200, 32 + textures_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
@@ -3951,6 +3954,13 @@ void M_Textures_Draw(void)
 		M_Print(2 * 8, 192 + 8 * 3, "Dynamic objects are players, monsters,");
 		M_Print(2 * 8, 192 + 8 * 4, "weapons, armors, keys, gibs, backpack,");
 		M_Print(2 * 8, 192 + 8 * 5, "rocket, grenade and torches");
+	}
+	else if (textures_cursor == 9)
+	{
+		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 192 + 8 * 3, "This option must be set from the");
+		M_Print(2 * 8, 192 + 8 * 4, "command line with");
+		M_Print(2 * 8, 192 + 8 * 5, "+set gl_externaltextures_gfx <0 or 1>");
 	}
 }
 
@@ -4025,6 +4035,9 @@ void M_Textures_Key(int k)
 
 		case 8:
 			Cvar_SetValue(&gl_externaltextures_models, !gl_externaltextures_models.value);
+			break;
+
+		case 9:
 			break;
 
 		default:

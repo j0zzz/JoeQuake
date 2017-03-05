@@ -39,6 +39,7 @@ cvar_t	gl_texturemode = {"gl_texturemode", "GL_LINEAR_MIPMAP_NEAREST", 0, OnChan
 cvar_t	gl_externaltextures_world = {"gl_externaltextures_world", "1"};
 cvar_t	gl_externaltextures_bmodels = {"gl_externaltextures_bmodels", "1"};
 cvar_t	gl_externaltextures_models = {"gl_externaltextures_models", "1"};
+cvar_t	gl_externaltextures_gfx = { "gl_externaltextures_gfx", "1", CVAR_INIT };
 
 qboolean OnChange_gl_crosshairimage (cvar_t *var, char *string);
 cvar_t	gl_crosshairimage = {"crosshairimage", "", 0, OnChange_gl_crosshairimage};
@@ -258,8 +259,9 @@ mpic_t *Draw_PicFromWad (char *name)
 	p = W_GetLumpName (name);
 	pic = (mpic_t *)p;
 
-	if ((pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) || 
-	    (pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA)))
+	if (gl_externaltextures_gfx.value &&
+		((pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) || 
+	     (pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA))))
 	{
 		memcpy (&pic->texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 		return pic;
@@ -333,7 +335,7 @@ mpic_t *Draw_CachePic (char *path)
 	pic->pic.width = dat->width;
 	pic->pic.height = dat->height;
 
-	if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
+	if (gl_externaltextures_gfx.value && (pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
 		memcpy (&pic->pic.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 	else
 		GL_LoadPicTexture (path, &pic->pic, dat->data);
@@ -617,6 +619,7 @@ void Draw_Init (void)
 	Cvar_Register (&gl_externaltextures_world);
 	Cvar_Register (&gl_externaltextures_bmodels);
 	Cvar_Register (&gl_externaltextures_models);
+	Cvar_Register(&gl_externaltextures_gfx);
 
 	glGetIntegerv (GL_MAX_TEXTURE_SIZE, &gl_max_size_default);
 	Cvar_SetDefault (&gl_max_size, gl_max_size_default);
