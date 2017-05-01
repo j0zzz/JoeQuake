@@ -1302,7 +1302,7 @@ void R_ReplaceQ3Frame (int frame)
 		if ((frame >= 0 && frame <= 5) ||	// axrun
 			(frame >= 6 && frame <= 11))	// rockrun
 		{
-			legsanim = legs_run;
+			legsanim = isGoingBack ? legs_back : legs_run;
 		}
 		else if ((frame >= 12 && frame <= 16) ||	// stand
 				 (frame >= 35 && frame <= 40) ||	// pain
@@ -1333,21 +1333,17 @@ void R_ReplaceQ3Frame (int frame)
 		{
 			if (cl.onground)
 			{
-				legsanim = legs_land;
+				legsanim = isGoingBack ? legs_landb : legs_land;
 			}
 		}
 
 		if (player_jumped)
 		{
-			legsanim = legs_jump;
+			legsanim = isGoingBack ? legs_jumpb : legs_jump;
 		}
 		else if (cl.inwater && !cl.onground)
 		{
 			legsanim = legs_swim;
-		}
-		else if (isGoingBack) //FIXME
-		{
-			legsanim = legs_back;
 		}
 
 		oldplayerjumped = player_jumped;
@@ -1483,22 +1479,29 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 
 		lerpfrac = VectorL2Compare(v1->vec, v2->vec, distance) ? ent->framelerp : 1;
 
-		if (gl_vertexlights.value && !full_light)
+		if (clmodel->modhint == MOD_Q3ROCKET)
 		{
-			l = R_LerpVertexLight (v1->anorm_pitch, v1->anorm_yaw, v2->anorm_pitch, v2->anorm_yaw, lerpfrac, apitch, ayaw);
-			l = min(l, 1);
-
-			for (j = 0 ; j < 3 ; j++)
-				lightvec[j] = lightcolor[j] / 256 + l;
-			glColor4f (lightvec[0], lightvec[1], lightvec[2], ent->transparency);
+			glColor4f(0.75, 0.75, 0.75, ent->transparency);
 		}
 		else
 		{
-			l = FloatInterpolate (shadedots[v1->oldnormal>>8], lerpfrac, shadedots[v2->oldnormal>>8]);
-			l = (l * shadelight + ambientlight) / 256;
-			l = min(l, 1);
+			if (gl_vertexlights.value && !full_light)
+			{
+				l = R_LerpVertexLight(v1->anorm_pitch, v1->anorm_yaw, v2->anorm_pitch, v2->anorm_yaw, lerpfrac, apitch, ayaw);
+				l = min(l, 1);
 
-			glColor4f (l, l, l, ent->transparency);
+				for (j = 0; j < 3; j++)
+					lightvec[j] = lightcolor[j] / 256 + l;
+				glColor4f(lightvec[0], lightvec[1], lightvec[2], ent->transparency);
+			}
+			else
+			{
+				l = FloatInterpolate(shadedots[v1->oldnormal >> 8], lerpfrac, shadedots[v2->oldnormal >> 8]);
+				l = (l * shadelight + ambientlight) / 256;
+				l = min(l, 1);
+
+				glColor4f(l, l, l, ent->transparency);
+			}
 		}
 
 		VectorInterpolate (v1->vec, lerpfrac, v2->vec, interpolated_verts);
@@ -1769,13 +1772,13 @@ void R_SetupQ3Frame (entity_t *ent)
 		else if ((ent->modelindex == cl_modelindex[mi_q3torso] || ent->model->modhint == MOD_WEAPON) &&	// MOD_WEAPON check is needed for hand model tag
 				 !strcmp(tag->name, "tag_weapon"))
 		{
-			int gwep_modelindex, vwep_modelindex;
-			extern void GetViewWeaponModel(int *, int *);
+			int gwep_modelindex;
+			extern void GetQuake3ViewWeaponModel(int *);
 
 			tagent = &q3player_weapon;
 			newent = &q3player_weapon.ent;
 			
-			GetViewWeaponModel(&gwep_modelindex, &vwep_modelindex);
+			GetQuake3ViewWeaponModel(&gwep_modelindex);
 			if (gwep_modelindex != -1)
 			{
 				if (cl_modelindex[gwep_modelindex] != -1)
@@ -1794,7 +1797,7 @@ void R_SetupQ3Frame (entity_t *ent)
 				continue;
 			}
 		}
-		else if ((ent->modelindex == cl_modelindex[mi_g_shot0] || ent->modelindex == cl_modelindex[mi_g_shot] ||
+		else if ((ent->modelindex == cl_modelindex[mi_g_shot] || ent->modelindex == cl_modelindex[mi_g_shot2] ||
 				  ent->modelindex == cl_modelindex[mi_g_nail] || ent->modelindex == cl_modelindex[mi_g_nail2] || 
 				  ent->modelindex == cl_modelindex[mi_g_rock] || ent->modelindex == cl_modelindex[mi_g_rock2] || 
 				  ent->modelindex == cl_modelindex[mi_g_light]) && 
@@ -1900,6 +1903,13 @@ void R_DrawQ3Model (entity_t *ent)
 		if (clmodel->modhint == MOD_QLTELEPORT)
 		{
 			glRotatef((cl.time - floor(cl.time)) * 360.0, 0, 1, 0);
+		}
+		else if (clmodel->modhint == MOD_Q3ROCKET)
+		{
+			if (((int)cl.time) & 2)
+				glRotatef((cl.time - floor(cl.time)) * 180.0, 1, 0, 0);
+			else
+				glRotatef(180.0 + (cl.time - floor(cl.time)) * 180.0, 1, 0, 0);
 		}
 	}
 

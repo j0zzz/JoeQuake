@@ -2074,10 +2074,6 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		mod->flags |= EF_ROCKET;
 	else if (!strcmp(mod->name, "progs/grenade.md3"))
 		mod->flags |= EF_GRENADE;
-	else if (!strcmp(mod->name, "progs/bolt.md3") ||
-		 !strcmp(mod->name, "progs/bolt2.md3") ||
-		 !strcmp(mod->name, "progs/bolt3.md3"))
-		mod->modhint = MOD_THUNDERBOLT;
 	else if (!strcmp(mod->name, "progs/invulner.md3") ||
 		 !strcmp(mod->name, "progs/suit.md3") ||
 		 !strcmp(mod->name, "progs/invisibl.md3") ||
@@ -2138,6 +2134,10 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		 !strcmp(mod->name, "progs/v_plasma.md3") ||	// ?
 		 !strcmp(mod->name, "progs/v_star.md3"))		// ?
 		mod->modhint = MOD_WEAPON;
+	else if (!strcmp(mod->name, "progs/bolt.md3") ||
+		!strcmp(mod->name, "progs/bolt2.md3") ||
+		!strcmp(mod->name, "progs/bolt3.md3"))
+		mod->modhint = MOD_THUNDERBOLT;
 	else if (!strcmp(mod->name, "progs/quaddama.md3"))
 		mod->modhint = MOD_QUAD;
 	else if (!strcmp(mod->name, "progs/invulner.md3"))
@@ -2153,6 +2153,8 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 		mod->modhint = MOD_Q3TELEPORT;
 	else if (!strcmp(mod->name, "progs/pop.md3"))
 		mod->modhint = MOD_QLTELEPORT;
+	else if (!strcmp(mod->name, "progs/missile.md3"))
+		mod->modhint = MOD_Q3ROCKET;	// this could be optimized: check surface names to identify if it is _really_ the Q3 missile
 	else
 		mod->modhint = MOD_NORMAL;
 

@@ -574,47 +574,77 @@ qboolean Model_isHead (int modelindex)
 	return false;
 }
 
-void GetViewWeaponModel(int *gwep_modelindex, int *vwep_modelindex)
+void GetViewWeaponModel(int *vwep_modelindex)
 {
 	switch (cl.stats[STAT_ACTIVEWEAPON])
 	{
 	case IT_SHOTGUN:
 		*vwep_modelindex = mi_w_shot;
-		*gwep_modelindex = mi_g_shot0;
 		break;
 
 	case IT_SUPER_SHOTGUN:
 		*vwep_modelindex = mi_w_shot2;
-		*gwep_modelindex = mi_g_shot;
 		break;
 
 	case IT_NAILGUN:
 		*vwep_modelindex = mi_w_nail;
-		*gwep_modelindex = mi_g_nail;
 		break;
 
 	case IT_SUPER_NAILGUN:
 		*vwep_modelindex = mi_w_nail2;
-		*gwep_modelindex = mi_g_nail2;
 		break;
 
 	case IT_GRENADE_LAUNCHER:
 		*vwep_modelindex = mi_w_rock;
-		*gwep_modelindex = mi_g_rock;
 		break;
 
 	case IT_ROCKET_LAUNCHER:
 		*vwep_modelindex = mi_w_rock2;
-		*gwep_modelindex = mi_g_rock2;
 		break;
 
 	case IT_LIGHTNING:
 		*vwep_modelindex = mi_w_light;
-		*gwep_modelindex = mi_g_light;
 		break;
 
 	default:
 		*vwep_modelindex = -1;
+		break;
+	}
+}
+
+void GetQuake3ViewWeaponModel(int *gwep_modelindex)
+{
+	switch (cl.stats[STAT_ACTIVEWEAPON])
+	{
+	case IT_SHOTGUN:
+		*gwep_modelindex = mi_g_shot;
+		break;
+
+	case IT_SUPER_SHOTGUN:
+		*gwep_modelindex = mi_g_shot2;
+		break;
+
+	case IT_NAILGUN:
+		*gwep_modelindex = mi_g_nail;
+		break;
+
+	case IT_SUPER_NAILGUN:
+		*gwep_modelindex = mi_g_nail2;
+		break;
+
+	case IT_GRENADE_LAUNCHER:
+		*gwep_modelindex = mi_g_rock;
+		break;
+
+	case IT_ROCKET_LAUNCHER:
+		*gwep_modelindex = mi_g_rock2;
+		break;
+
+	case IT_LIGHTNING:
+		*gwep_modelindex = mi_g_light;
+		break;
+
+	default:
 		*gwep_modelindex = -1;
 		break;
 	}
@@ -637,7 +667,7 @@ void CL_RelinkEntities (void)
 	dlight_t	*dl;
 	model_t		*model;
 #ifdef GLQUAKE
-	int			vwep_modelindex, gwep_modelindex;
+	int			vwep_modelindex;
 	extern void CL_CopyEntity(entity_t *, entity_t *, int);
 #endif
 
@@ -1065,7 +1095,7 @@ void CL_RelinkEntities (void)
 
 #ifdef GLQUAKE
 		// view weapon support
-		GetViewWeaponModel(&gwep_modelindex, &vwep_modelindex);
+		GetViewWeaponModel(&vwep_modelindex);
 		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && r_loadviewweapons && !r_loadq3player && (vwep_modelindex != -1))
 		{
 			entity_t *vwepent = &view_weapons[num_vweps];
