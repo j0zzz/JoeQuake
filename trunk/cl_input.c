@@ -257,6 +257,7 @@ cvar_t	m_pitch = {"m_pitch", "0.022", CVAR_ARCHIVE};
 cvar_t	m_yaw = {"m_yaw", "0.022", CVAR_ARCHIVE};
 cvar_t	m_forward = {"m_forward", "1", CVAR_ARCHIVE};
 cvar_t	m_side = {"m_side", "0.8", CVAR_ARCHIVE};
+cvar_t	m_accel = { "m_accel", "0", CVAR_ARCHIVE };
 
 qboolean OnChange_freelook (cvar_t *var, char *string)
 {   
@@ -512,6 +513,7 @@ void CL_InitInput (void)
 	Cvar_Register (&m_yaw);
 	Cvar_Register (&m_forward);
 	Cvar_Register (&m_side);
+	Cvar_Register (&m_accel);
 
 	Cvar_Register (&cl_smartjump);
 	Cvar_Register (&cl_lag);

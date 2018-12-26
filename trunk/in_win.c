@@ -981,8 +981,17 @@ void IN_MouseMove (usercmd_t *cmd)
 	old_mouse_x = mx;
 	old_mouse_y = my;
 
-	mouse_x *= sensitivity.value;
-	mouse_y *= sensitivity.value;
+	if (m_accel.value)
+	{
+		float mousespeed = sqrt(mx * mx + my * my);
+		mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
+		mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
+	}
+	else
+	{
+		mouse_x *= sensitivity.value;
+		mouse_y *= sensitivity.value;
+	}
 
 // add mouse X/Y movement to cmd
 	if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
