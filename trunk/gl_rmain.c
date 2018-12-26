@@ -1797,10 +1797,10 @@ void R_SetupQ3Frame (entity_t *ent)
 				continue;
 			}
 		}
-		else if ((ent->modelindex == cl_modelindex[mi_g_shot] || ent->modelindex == cl_modelindex[mi_g_shot2] ||
-				  ent->modelindex == cl_modelindex[mi_g_nail] || ent->modelindex == cl_modelindex[mi_g_nail2] || 
-				  ent->modelindex == cl_modelindex[mi_g_rock] || ent->modelindex == cl_modelindex[mi_g_rock2] || 
-				  ent->modelindex == cl_modelindex[mi_g_light]) && 
+		else if ((ent->modelindex == cl_modelindex[mi_q3w_shot] || ent->modelindex == cl_modelindex[mi_q3w_shot2] ||
+				  ent->modelindex == cl_modelindex[mi_q3w_nail] || ent->modelindex == cl_modelindex[mi_q3w_nail2] || 
+				  ent->modelindex == cl_modelindex[mi_q3w_rock] || ent->modelindex == cl_modelindex[mi_q3w_rock2] || 
+				  ent->modelindex == cl_modelindex[mi_q3w_light]) && 
 				  !strncmp(tag->name, "tag_flash", 9) && (ent->effects & EF_MUZZLEFLASH))
 		{
 			model_t *flashmodel;

@@ -142,13 +142,13 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_w_rock] = "progs/w_rock.mdl";
 	cl_modelnames[mi_w_rock2] = "progs/w_rock2.mdl";
 	cl_modelnames[mi_w_light] = "progs/w_light.mdl";
-	cl_modelnames[mi_g_shot] = "progs/g_shot.md3";
-	cl_modelnames[mi_g_shot2] = "progs/g_shot2.md3";
-	cl_modelnames[mi_g_nail] = "progs/g_nail.md3";
-	cl_modelnames[mi_g_nail2] = "progs/g_nail2.md3";
-	cl_modelnames[mi_g_rock] = "progs/g_rock.md3";
-	cl_modelnames[mi_g_rock2] = "progs/g_rock2.md3";
-	cl_modelnames[mi_g_light] = "progs/g_light.md3";
+	cl_modelnames[mi_q3w_shot] = "progs/w_shot.md3";
+	cl_modelnames[mi_q3w_shot2] = "progs/w_shot2.md3";
+	cl_modelnames[mi_q3w_nail] = "progs/w_nail.md3";
+	cl_modelnames[mi_q3w_nail2] = "progs/w_nail2.md3";
+	cl_modelnames[mi_q3w_rock] = "progs/w_rock.md3";
+	cl_modelnames[mi_q3w_rock2] = "progs/w_rock2.md3";
+	cl_modelnames[mi_q3w_light] = "progs/w_light.md3";
 
 	for (i = 0 ; i < NUM_MODELINDEX ; i++)
 	{
@@ -455,10 +455,10 @@ void CL_ParseServerInfo (void)
 			cl_modelindex[mi_q3head] = nummodels++;
 
 			// load the md3 shotgun too, if available
-			if (COM_FindFile(cl_modelnames[mi_g_shot]))
+			if (COM_FindFile(cl_modelnames[mi_q3w_shot]))
 			{
-				Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_g_shot], sizeof(model_precache[nummodels]));
-				cl_modelindex[mi_g_shot] = nummodels++;
+				Q_strncpyz (model_precache[nummodels], cl_modelnames[mi_q3w_shot], sizeof(model_precache[nummodels]));
+				cl_modelindex[mi_q3w_shot] = nummodels++;
 			}
 		}
 	}

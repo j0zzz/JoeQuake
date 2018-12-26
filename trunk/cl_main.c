@@ -612,40 +612,40 @@ void GetViewWeaponModel(int *vwep_modelindex)
 	}
 }
 
-void GetQuake3ViewWeaponModel(int *gwep_modelindex)
+void GetQuake3ViewWeaponModel(int *vwep_modelindex)
 {
 	switch (cl.stats[STAT_ACTIVEWEAPON])
 	{
 	case IT_SHOTGUN:
-		*gwep_modelindex = mi_g_shot;
+		*vwep_modelindex = mi_q3w_shot;
 		break;
 
 	case IT_SUPER_SHOTGUN:
-		*gwep_modelindex = mi_g_shot2;
+		*vwep_modelindex = mi_q3w_shot2;
 		break;
 
 	case IT_NAILGUN:
-		*gwep_modelindex = mi_g_nail;
+		*vwep_modelindex = mi_q3w_nail;
 		break;
 
 	case IT_SUPER_NAILGUN:
-		*gwep_modelindex = mi_g_nail2;
+		*vwep_modelindex = mi_q3w_nail2;
 		break;
 
 	case IT_GRENADE_LAUNCHER:
-		*gwep_modelindex = mi_g_rock;
+		*vwep_modelindex = mi_q3w_rock;
 		break;
 
 	case IT_ROCKET_LAUNCHER:
-		*gwep_modelindex = mi_g_rock2;
+		*vwep_modelindex = mi_q3w_rock2;
 		break;
 
 	case IT_LIGHTNING:
-		*gwep_modelindex = mi_g_light;
+		*vwep_modelindex = mi_q3w_light;
 		break;
 
 	default:
-		*gwep_modelindex = -1;
+		*vwep_modelindex = -1;
 		break;
 	}
 }
