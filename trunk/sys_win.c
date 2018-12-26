@@ -178,17 +178,28 @@ void Sys_Init (void)
 
 	Sys_InitDoubleTime ();
 
-	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
+	// check for proper windows version
+	ZeroMemory(&vinfo, sizeof(OSVERSIONINFOEXA));
+	vinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
+	vinfo.dwMajorVersion = 4;
+	vinfo.dwPlatformId = VER_PLATFORM_WIN32s;
 
-	DWORD dwTypeMask = 0;
 	DWORDLONG dwlConditionMask = 0;
-	if (VerifyVersionInfo(&vinfo, dwTypeMask, dwlConditionMask))
-		Sys_Error ("Couldn't get OS info");
+	VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
+	VER_SET_CONDITION(dwlConditionMask, VER_PLATFORMID, VER_GREATER_EQUAL);
 
-	if ((vinfo.dwMajorVersion < 4) || (vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
-		Sys_Error ("Quake requires at least Win95 or NT 4.0");
+	if (!VerifyVersionInfo(&vinfo, VER_MAJORVERSION | VER_PLATFORMID, dwlConditionMask))
+		Sys_Error("Quake requires at least Win95 or NT 4.0");
 
-	WinNT = (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) ? true : false;
+	// check if NT
+	ZeroMemory(&vinfo, sizeof(OSVERSIONINFOEXA));
+	vinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
+	vinfo.dwPlatformId = VER_PLATFORM_WIN32_NT;
+
+	dwlConditionMask = 0;
+	VER_SET_CONDITION(dwlConditionMask, VER_PLATFORMID, VER_EQUAL);
+
+	WinNT = VerifyVersionInfo(&vinfo, VER_PLATFORMID, dwlConditionMask);
 }
 
 void Sys_Error (char *error, ...)
