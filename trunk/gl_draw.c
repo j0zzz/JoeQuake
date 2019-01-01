@@ -343,6 +343,13 @@ mpic_t *Draw_CachePic (char *path)
 	return &pic->pic;
 }
 
+// If conwidth or conheight changes, adjust conback sizes too.
+void Draw_AdjustConback(void)
+{
+	conback->width = vid.width;
+	conback->height = vid.height;
+}
+
 void Draw_InitConback (void)
 {
 	int		start;
@@ -368,8 +375,8 @@ void Draw_InitConback (void)
 		conback->height = cb->height;
 		GL_LoadPicTexture ("conback", conback, cb->data);
 	}
-	conback->width = vid.width;
-	conback->height = vid.height;
+
+	Draw_AdjustConback();
 
 	// free loaded console
 	Hunk_FreeToLowMark (start);
@@ -629,6 +636,14 @@ void Draw_Init (void)
 	// 3dfx can only handle 256 wide textures
 	if (!Q_strncasecmp((char *)gl_renderer, "3dfx", 4) || strstr((char *)gl_renderer, "Glide"))
 		Cvar_SetValue (&gl_max_size, 256);
+
+	W_LoadWadFile("gfx.wad");
+	//CachePics_DeInit();	//j0zzz: FIXME?!?
+
+	// Clear the scrap.
+	memset(scrap_allocated, 0, sizeof(scrap_allocated));
+	memset(scrap_texels, 0, sizeof(scrap_texels));
+	scrap_dirty = 0;	// Bit mask.
 
 	Draw_InitCharset ();
 	Draw_InitConback ();

@@ -56,9 +56,9 @@ interface from being ambiguous.
 */
 
 #define CVAR_ARCHIVE		1	// set to true to cause it to be saved to config.cfg
-#define CVAR_SERVER		2	// notifies players when changed
-#define CVAR_ROM		4	// read only
-#define CVAR_INIT		8	// can only be set during initialization
+#define CVAR_SERVER			2	// notifies players when changed
+#define CVAR_ROM			4	// read only
+#define CVAR_INIT			8	// can only be set during initialization
 #define	CVAR_USER_CREATED	16	// created by a set command
 
 typedef struct cvar_s

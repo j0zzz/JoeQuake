@@ -74,6 +74,7 @@ typedef struct texture_s
 	struct texture_s *anim_next;		// in the animation sequence
 	struct texture_s *alternate_anims;	// bmodels in frame 1 use these
 	unsigned	offsets[MIPLEVELS];		// four mip maps stored
+	qboolean	loaded;					// help speed up vid_restart, actual only for brush models 
 	int			isLumaTexture;
 } texture_t;
 
@@ -534,10 +535,12 @@ void Mod_ClearAll (void);
 model_t *Mod_ForName (char *name, qboolean crash);
 void *Mod_Extradata (model_t *mod);	// handles caching
 void Mod_TouchModel (char *name);
+void Mod_TouchModels(void); // for vid_restart
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 
+void Mod_ReloadModelsTextures(void); // for vid_restart
 qboolean Mod_IsAnyKindOfPlayerModel(model_t *mod);
 
 #endif	// __MODEL__

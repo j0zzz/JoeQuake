@@ -60,3 +60,4 @@ mpic_t *Draw_PicFromWad (char *name);
 mpic_t *Draw_CachePic (char *path);
 void Draw_Crosshair (qboolean draw_menu);
 void Draw_TextBox (int x, int y, int width, int lines);
+void Draw_AdjustConback(void);

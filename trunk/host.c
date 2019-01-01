@@ -957,6 +957,14 @@ void Host_InitVCR (quakeparms_t *parms)
 	}	
 }
 
+void GFX_Init(void)
+{
+	Draw_Init();
+	SCR_Init();
+	R_Init();
+	Sbar_Init();
+}
+
 /*
 ====================
 Host_Init
@@ -986,7 +994,6 @@ void Host_Init (quakeparms_t *parms)
 	Host_InitVCR (parms);
 	COM_Init (parms->basedir);
 	Host_InitLocal ();
-	W_LoadWadFile ("gfx.wad");
 	Key_Init ();
 
 	Cbuf_AddEarlyCommands ();
@@ -1021,12 +1028,9 @@ void Host_Init (quakeparms_t *parms)
 #endif
 
 		Image_Init ();
-		Draw_Init ();
-		SCR_Init ();
-		R_Init ();
+		GFX_Init();
 		S_Init ();
 		CDAudio_Init ();
-		Sbar_Init ();
 		CL_Init ();
 	}
 

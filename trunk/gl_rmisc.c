@@ -222,46 +222,56 @@ void R_PreMapLoad (char *mapname)
 R_NewMap
 ===============
 */
-void R_NewMap (void)
+void R_NewMap (qboolean vid_restart)
 {
 	int	i, waterline;
 
-	for (i = 0 ; i < 256 ; i++)
-		d_lightstylevalue[i] = 264;		// normal light value
+	if (!vid_restart)
+	{
+		for (i = 0; i < 256; i++)
+			d_lightstylevalue[i] = 264;		// normal light value
 
-	memset (&r_worldentity, 0, sizeof(r_worldentity));
-	r_worldentity.model = cl.worldmodel;
+		memset(&r_worldentity, 0, sizeof(r_worldentity));
+		r_worldentity.model = cl.worldmodel;
 
-	// clear out efrags in case the level hasn't been reloaded
-	// FIXME: is this one short?
-	for (i = 0 ; i < cl.worldmodel->numleafs ; i++)
-		cl.worldmodel->leafs[i].efrags = NULL;
+		// clear out efrags in case the level hasn't been reloaded
+		// FIXME: is this one short?
+		for (i = 0; i < cl.worldmodel->numleafs; i++)
+			cl.worldmodel->leafs[i].efrags = NULL;
 
-	r_viewleaf = NULL;
-	R_ClearParticles ();
-	R_ClearDecals ();
+		r_viewleaf = NULL;
+		R_ClearParticles();
+		R_ClearDecals();
+	}
+	else
+	{
+		Mod_ReloadModelsTextures(); // reload textures for brush models
+	}
 
 	GL_BuildLightmaps ();
 
-	// identify sky texture
-	for (i = 0 ; i < cl.worldmodel->numtextures ; i++)
+	if (!vid_restart) 
 	{
-		if (!cl.worldmodel->textures[i])
-			continue;
-
-		for (waterline = 0 ; waterline < 2 ; waterline++)
+		// identify sky texture
+		for (i = 0; i < cl.worldmodel->numtextures; i++)
 		{
- 			cl.worldmodel->textures[i]->texturechain[waterline] = NULL;
-			cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
-		}
-	}
+			if (!cl.worldmodel->textures[i])
+				continue;
 
-	if (r_loadq3player)
-	{
-		memset(&q3player_body, 0, sizeof(tagentity_t));
-		memset(&q3player_head, 0, sizeof(tagentity_t));
-		memset(&q3player_weapon, 0, sizeof(tagentity_t));
-		memset(&q3player_weapon_flash, 0, sizeof(tagentity_t));
+			for (waterline = 0; waterline < 2; waterline++)
+			{
+				cl.worldmodel->textures[i]->texturechain[waterline] = NULL;
+				cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
+			}
+		}
+
+		if (r_loadq3player)
+		{
+			memset(&q3player_body, 0, sizeof(tagentity_t));
+			memset(&q3player_head, 0, sizeof(tagentity_t));
+			memset(&q3player_weapon, 0, sizeof(tagentity_t));
+			memset(&q3player_weapon_flash, 0, sizeof(tagentity_t));
+		}
 	}
 }
 

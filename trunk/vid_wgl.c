@@ -73,17 +73,15 @@ static	int	nummodes;
 static	vmode_t	*pcurrentmode;
 static	vmode_t	badmode;
 
-static	DEVMODE	gdevmode;
+static DEVMODE	gdevmode;
 static qboolean	vid_initialized = false;
 static qboolean	windowed, leavecurrentmode;
 static qboolean vid_canalttab = false;
 static qboolean vid_wassuspended = false;
 static qboolean windowed_mouse = true;
 extern qboolean	mouseactive;	// from in_win.c
-static	HICON	hIcon;
+static HICON	hIcon;
 
-int		DIBWidth, DIBHeight;
-RECT	WindowRect;
 DWORD	WindowStyle, ExWindowStyle;
 
 HWND	mainwindow, dibwindow;
@@ -122,14 +120,26 @@ void ClearAllStates (void);
 void VID_UpdateWindowStatus (void);
 void GL_Init (void);
 
-cvar_t		vid_mode = {"vid_mode", "0"};
-cvar_t		_vid_default_mode = {"_vid_default_mode", "0", CVAR_ARCHIVE};
-cvar_t		_vid_default_mode_win = {"_vid_default_mode_win", "3", CVAR_ARCHIVE};
-cvar_t		vid_config_x = {"vid_config_x", "800", CVAR_ARCHIVE};
-cvar_t		vid_config_y = {"vid_config_y", "600", CVAR_ARCHIVE};
+qboolean OnChange_vid_mode(cvar_t *var, char *string);
+cvar_t		vid_mode = {"vid_mode", "-1", 0, OnChange_vid_mode };
+
+//cvar_t		_vid_default_mode = {"_vid_default_mode", "0", CVAR_ARCHIVE};
+//cvar_t		_vid_default_mode_win = {"_vid_default_mode_win", "3", CVAR_ARCHIVE};
+//cvar_t		vid_config_x = {"vid_config_x", "800", CVAR_ARCHIVE};
+//cvar_t		vid_config_y = {"vid_config_y", "600", CVAR_ARCHIVE};
 cvar_t		_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE};
 cvar_t		vid_displayfrequency = {"vid_displayfrequency", "0", CVAR_INIT};
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
+
+qboolean OnChange_vid_con_xxx(cvar_t *var, char *string);
+cvar_t      vid_conwidth = { "vid_conwidth", "640", 0, OnChange_vid_con_xxx };
+cvar_t      vid_conheight = { "vid_conheight", "0", 0, OnChange_vid_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something 
+
+// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
+// HACK!!! FIXME { 
+cvar_t		vid_forcerestoregamma = { "vid_forcerestoregamma", "0" };
+int restore_gamma = 0;
+// }
 
 typedef BOOL (APIENTRY *SWAPINTERVALFUNCPTR)(int);
 SWAPINTERVALFUNCPTR wglSwapIntervalEXT = NULL;
@@ -138,9 +148,9 @@ qboolean OnChange_vid_vsync (cvar_t *var, char *string);
 cvar_t		vid_vsync = {"vid_vsync", "0", 0, OnChange_vid_vsync};
 
 int		window_center_x, window_center_y, window_x, window_y, window_width, window_height;
-RECT		window_rect;
+RECT	window_rect;
 
-void CheckVsyncControlExtensions (void)
+void GL_WGL_CheckExtensions(void)
 {
 	if (!COM_CheckParm("-noswapctrl") && CheckExtension("WGL_EXT_swap_control"))
 	{
@@ -157,6 +167,11 @@ qboolean OnChange_vid_vsync (cvar_t *var, char *string)
 {
 	update_vsync = true;
 	return false;
+}
+
+void GL_Init_Win(void) 
+{
+	GL_WGL_CheckExtensions();
 }
 
 // direct draw software compatability stuff
@@ -190,6 +205,51 @@ void CenterWindow (HWND hWndCenter, int width, int height, BOOL lefttopjustify)
 	SetWindowPos (hWndCenter, NULL, CenterX, CenterY, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW | SWP_DRAWFRAME);
 }
 
+qboolean OnChange_vid_con_xxx(cvar_t *var, char *string) 
+{
+	// this is safe but do not allow set this variables from cmd line
+	//	if (!vid_initialized || !host_initialized || vid_modenum < 0 || vid_modenum >= nummodes)
+	//		return true;
+
+	if (var == &vid_conwidth) 
+	{
+		int width = Q_atoi(string);
+
+		width = max(320, width);
+		width &= 0xfff8; // make it a multiple of eight
+
+		vid.width = vid.conwidth = width;
+
+		Cvar_SetValue(var, (float)width);
+
+		Draw_AdjustConback();
+
+		vid.recalc_refdef = 1;
+
+		return true;
+	}
+
+	if (var == &vid_conheight) 
+	{
+		int height = Q_atoi(string);
+
+		height = max(200, height);
+//		height &= 0xfff8; // make it a multiple of eight
+
+		vid.height = vid.conheight = height;
+
+		Cvar_SetValue(var, (float)height);
+
+		Draw_AdjustConback();
+
+		vid.recalc_refdef = 1;
+
+		return true;
+	}
+
+	return true;
+}
+
 qboolean VID_SetWindowedMode (int modenum)
 {
 	HDC	hdc;
@@ -198,42 +258,43 @@ qboolean VID_SetWindowedMode (int modenum)
 
 	lastmodestate = modestate;
 
-	WindowRect.top = WindowRect.left = 0;
+	rect.top = rect.left = 0;
+	rect.right = modelist[modenum].width;
+	rect.bottom = modelist[modenum].height;
 
-	WindowRect.right = modelist[modenum].width;
-	WindowRect.bottom = modelist[modenum].height;
-
-	DIBWidth = modelist[modenum].width;
-	DIBHeight = modelist[modenum].height;
+	window_width = modelist[modenum].width;
+	window_height = modelist[modenum].height;
 
 	WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 	ExWindowStyle = 0;
 
-	rect = WindowRect;
 	AdjustWindowRectEx (&rect, WindowStyle, FALSE, 0);
 
 	width = rect.right - rect.left;
 	height = rect.bottom - rect.top;
 
 	// Create the DIB window
-	dibwindow = CreateWindowEx (
-		 ExWindowStyle,
-		 "JoeQuake",
-		 "JoeQuake",
-		 WindowStyle,
-		 rect.left, rect.top,
-		 width,
-		 height,
-		 NULL,
-		 NULL,
-		 global_hInstance,
-		 NULL);
+	if (!dibwindow) // create window, if not exist yet 
+		dibwindow = CreateWindowEx (
+			 ExWindowStyle,
+			 "JoeQuake",
+			 "JoeQuake",
+			 WindowStyle,
+			 rect.left, rect.top,
+			 width,
+			 height,
+			 NULL,
+			 NULL,
+			 global_hInstance,
+			 NULL);
+	else // just update size
+		SetWindowPos(dibwindow, NULL, 0, 0, width, height, 0);
 
 	if (!dibwindow)
 		Sys_Error ("Couldn't create DIB window");
 
 	// Center and show the DIB window
-	CenterWindow (dibwindow, WindowRect.right - WindowRect.left, WindowRect.bottom - WindowRect.top, false);
+	CenterWindow (dibwindow, modelist[modenum].width, modelist[modenum].height, false);
 
 	ShowWindow (dibwindow, SW_SHOWDEFAULT);
 	UpdateWindow (dibwindow);
@@ -245,7 +306,7 @@ qboolean VID_SetWindowedMode (int modenum)
 // we clear the window to black when created, otherwise it will be
 // empty while Quake starts up.
 	hdc = GetDC (dibwindow);
-	PatBlt (hdc, 0, 0, WindowRect.right, WindowRect.bottom, BLACKNESS);
+	PatBlt (hdc, 0, 0, modelist[modenum].width, modelist[modenum].height, BLACKNESS);
 	ReleaseDC (dibwindow, hdc);
 
 	if (vid.conheight > modelist[modenum].height)
@@ -293,36 +354,37 @@ qboolean VID_SetFullDIBMode (int modenum)
 	lastmodestate = modestate;
 	modestate = MS_FULLDIB;
 
-	WindowRect.top = WindowRect.left = 0;
+	rect.top = rect.left = 0;
+	rect.right = modelist[modenum].width;
+	rect.bottom = modelist[modenum].height;
 
-	WindowRect.right = modelist[modenum].width;
-	WindowRect.bottom = modelist[modenum].height;
-
-	DIBWidth = modelist[modenum].width;
-	DIBHeight = modelist[modenum].height;
+	window_width = modelist[modenum].width;
+	window_height = modelist[modenum].height;
 
 	WindowStyle = WS_POPUP;
 	ExWindowStyle = 0;
 
-	rect = WindowRect;
 	AdjustWindowRectEx (&rect, WindowStyle, FALSE, 0);
 
 	width = rect.right - rect.left;
 	height = rect.bottom - rect.top;
 
 	// Create the DIB window
-	dibwindow = CreateWindowEx (
-		 ExWindowStyle,
-		 "JoeQuake",
-		 "JoeQuake",
-		 WindowStyle,
-		 rect.left, rect.top,
-		 width,
-		 height,
-		 NULL,
-		 NULL,
-		 global_hInstance,
-		 NULL);
+	if (!dibwindow) // create window, if not exist yet 
+		dibwindow = CreateWindowEx (
+			 ExWindowStyle,
+			 "JoeQuake",
+			 "JoeQuake",
+			 WindowStyle,
+			 rect.left, rect.top,
+			 width,
+			 height,
+			 NULL,
+			 NULL,
+			 global_hInstance,
+			 NULL);
+	else // just update size
+		SetWindowPos(dibwindow, NULL, 0, 0, width, height, 0);
 
 	if (!dibwindow)
 		Sys_Error ("Couldn't create DIB window");
@@ -335,7 +397,7 @@ qboolean VID_SetFullDIBMode (int modenum)
 	// we clear the window to black when created, otherwise it will be
 	// empty while Quake starts up.
 	hdc = GetDC (dibwindow);
-	PatBlt (hdc, 0, 0, WindowRect.right, WindowRect.bottom, BLACKNESS);
+	PatBlt (hdc, 0, 0, modelist[modenum].width, modelist[modenum].height, BLACKNESS);
 	ReleaseDC (dibwindow, hdc);
 
 	if (vid.conheight > modelist[modenum].height)
@@ -361,11 +423,11 @@ qboolean VID_SetFullDIBMode (int modenum)
 
 int VID_SetMode (int modenum, unsigned char *palette)
 {
-	int		original_mode, temp;
+	int			temp;
 	qboolean	stat;
-	MSG		msg;
 
-	if ((windowed && modenum) || (!windowed && (modenum < 1)) || (!windowed && (modenum >= nummodes)))
+	//if ((windowed && modenum) || (!windowed && (modenum < 1)) || (!windowed && (modenum >= nummodes)))
+	if (modenum < 0 || modenum >= nummodes)
 		Sys_Error ("Bad video mode");
 
 	// so Con_Printfs don't mess us up by forcing vid and snd updates
@@ -373,11 +435,6 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	scr_disabled_for_loading = true;
 
 	CDAudio_Pause ();
-
-	if (vid_modenum == NO_MODE)
-		original_mode = windowed_default;
-	else
-		original_mode = vid_modenum;
 
 	// Set either the fullscreen or windowed mode
 	if (modelist[modenum].type == MS_WINDOWED)
@@ -406,8 +463,6 @@ int VID_SetMode (int modenum, unsigned char *palette)
 		Sys_Error ("VID_SetMode: Bad mode type in modelist");
 	}
 
-	window_width = DIBWidth;
-	window_height = DIBHeight;
 	VID_UpdateWindowStatus ();
 
 	CDAudio_Resume ();
@@ -423,17 +478,23 @@ int VID_SetMode (int modenum, unsigned char *palette)
 // ourselves at the top of the z order, then grab the foreground again,
 // Who knows if it helps, but it probably doesn't hurt
 	SetForegroundWindow (mainwindow);
-//	VID_SetPalette (palette);
+	//VID_SetPalette (palette);
 	vid_modenum = modenum;
 	Cvar_SetValue (&vid_mode, (float)vid_modenum);
 
-	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-	{
-		TranslateMessage (&msg);
-		DispatchMessage (&msg);
-	}
+// { after vid_modenum set we can safe do this
+	Cvar_SetValue(&vid_conwidth, (float)modelist[vid_modenum].width);
+	Cvar_SetValue(&vid_conheight, (float)modelist[vid_modenum].height);
+	Draw_AdjustConback(); // need this even vid_conwidth have callback which leads to call this
+// }
 
-	Sleep (100);
+	//while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	//{
+	//	TranslateMessage (&msg);
+	//	DispatchMessage (&msg);
+	//}
+
+	//Sleep (100);
 
 	SetWindowPos (mainwindow, HWND_TOP, 0, 0, 0, 0, SWP_DRAWFRAME | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
 	SetForegroundWindow (mainwindow);
@@ -444,7 +505,7 @@ int VID_SetMode (int modenum, unsigned char *palette)
 //joe	if (!msg_suppress_1)
 	Con_Printf ("Video mode %s initialized\n", VID_GetModeDescription(vid_modenum));
 
-//	VID_SetPalette (palette);
+	//VID_SetPalette (palette);
 
 	vid.recalc_refdef = 1;
 
@@ -478,8 +539,8 @@ GL_BeginRendering
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
 	*x = *y = 0;
-	*width = WindowRect.right - WindowRect.left;
-	*height = WindowRect.bottom - WindowRect.top;
+	*width = window_width;
+	*height = window_height;
 }
 
 /*
@@ -582,6 +643,13 @@ void InitHWGamma (void)
 		return;
 
 	vid_gammaworks = GetDeviceGammaRamp (maindc, systemgammaramp);
+	if (vid_gammaworks && !COM_CheckParm("-nogammareset"))
+	{
+		int i, j;
+		for (i = 0; i < 3; i++)
+			for (j = 0; j < 256; j++)
+				systemgammaramp[i][j] = (j << 8);
+	}
 }
 
 void RestoreHWGamma (void)
@@ -598,7 +666,7 @@ void RestoreHWGamma (void)
 void VID_Shutdown (void)
 {
    	HGLRC	hRC;
-   	HDC	hDC;
+   	HDC		hDC;
 
 	if (vid_initialized)
 	{
@@ -643,6 +711,50 @@ int bChosePixelFormat(HDC hDC, PIXELFORMATDESCRIPTOR *pfd, PIXELFORMATDESCRIPTOR
 	}
 
 	return pixelformat;
+}
+
+qboolean OnChange_vid_mode(cvar_t *var, char *string)
+{
+	int modenum;
+
+	if (!vid_initialized || !host_initialized)
+		return false; // set from cmd line or from VID_Init(), allow change but do not issue callback
+
+	if (leavecurrentmode) 
+	{
+		Con_Printf("Can't switch vid mode when using -current cmd line parammeter\n");
+		return true;
+	}
+
+	if (!ActiveApp || Minimized || !vid_canalttab || vid_wassuspended) 
+	{
+		Con_Printf("Can't switch vid mode while minimized\n");
+		return true;
+	}
+
+	modenum = Q_atoi(string);
+
+	if (host_initialized) // exec or cfg_load or may be from console, prevent set same mode again, no hurt but less annoying
+	{ 
+		if (modenum == vid_mode.value) 
+		{
+			Con_Printf("Vid mode %d alredy set\n", modenum);
+			return true;
+		}
+	}
+
+	if (modenum < 0 || modenum >= nummodes
+		|| (windowed && modelist[modenum].type != MS_WINDOWED)
+		|| (!windowed && modelist[modenum].type != MS_FULLDIB))
+	{
+		Con_Printf("Invalid vid mode %d\n", modenum);
+		return true;
+	}
+
+	// we call a few Cvar_SetValues in VID_SetMode and in deeper functions but their callbacks will not be triggered
+	VID_SetMode(modenum, host_basepal);
+
+	return true;
 }
 
 BOOL bSetupPixelFormat (HDC hDC)
@@ -756,9 +868,6 @@ void AppActivate (BOOL fActive, BOOL minimize)
 			IN_ActivateMouse ();
 			IN_HideMouse ();
 
-			if (vid_canalttab && !Minimized && currentgammaramp)
-				VID_SetDeviceGammaRamp (currentgammaramp);
-
 			if (vid_canalttab && vid_wassuspended)
 			{
 				vid_wassuspended = false;
@@ -780,15 +889,24 @@ void AppActivate (BOOL fActive, BOOL minimize)
 			IN_ActivateMouse ();
 			IN_HideMouse ();
 		}
-	}
 
-	if (!fActive)
+		if ((vid_canalttab && !Minimized) && currentgammaramp) 
+		{
+			VID_SetDeviceGammaRamp(currentgammaramp);
+			// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
+			// HACK!!! FIXME {
+			if (restore_gamma == 0 && (int)vid_forcerestoregamma.value)
+				restore_gamma = 1;
+			// }
+		}
+	}
+	else
 	{
+		RestoreHWGamma();
 		if (modestate == MS_FULLDIB)
 		{
 			IN_DeactivateMouse ();
 			IN_ShowMouse ();
-			RestoreHWGamma ();
 			if (vid_canalttab) { 
 				ChangeDisplaySettings (NULL, 0);
 				vid_wassuspended = true;
@@ -819,6 +937,19 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	LONG	lRet = 1;
 	extern	unsigned int	uiWheelMessage;
 	extern	cvar_t		cl_confirmquit;
+
+	// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
+	// HACK!!! FIXME {
+	static time_t time_old;
+	if (restore_gamma == 2 && currentgammaramp) 
+	{
+		if (time(NULL) - time_old > 0) 
+		{
+			VID_SetDeviceGammaRamp(currentgammaramp);
+			restore_gamma = 0;
+		}
+	}
+	// }
 
 	if (uMsg == uiWheelMessage)
 	{
@@ -914,7 +1045,16 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		fMinimized = (BOOL)HIWORD(wParam);
 		AppActivate (!(fActive == WA_INACTIVE), fMinimized);
 
-	// fix the leftover Alt from any Alt-Tab or the like that switched us away
+		// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
+		// HACK!!! FIXME {
+		if (restore_gamma == 1) 
+		{
+			time_old = time(NULL);
+			restore_gamma = 2;
+		}
+		// }
+
+		// fix the leftover Alt from any Alt-Tab or the like that switched us away
 		ClearAllStates ();
 
 		break;
@@ -971,7 +1111,7 @@ char *VID_GetModeDescription (int mode)
 {
 	char		*pinfo;
 	vmode_t		*pv;
-	static	char	temp[100];
+	static char temp[100];
 
 	if ((mode < 0) || (mode >= nummodes))
 		return NULL;
@@ -994,7 +1134,7 @@ char *VID_GetModeDescription (int mode)
 
 char *VID_GetExtModeDescription (int mode)
 {
-	static	char	pinfo[40];
+	static char pinfo[40];
 	vmode_t		*pv;
 
 	if ((mode < 0) || (mode >= nummodes))
@@ -1004,19 +1144,63 @@ char *VID_GetExtModeDescription (int mode)
 	if (modelist[mode].type == MS_FULLDIB)
 	{
 		if (!leavecurrentmode)
-			sprintf (pinfo, "%s fullscreen", pv->modedesc);
+			sprintf(pinfo, "%12s fullscreen", pv->modedesc); // "%dx%dx%d" worse is WWWWxHHHHxBB
 		else
 			sprintf (pinfo, "Desktop resolution (%dx%d)", modelist[MODE_FULLSCREEN_DEFAULT].width, modelist[MODE_FULLSCREEN_DEFAULT].height);
 	}
 	else
 	{
 		if (modestate == MS_WINDOWED)
-			sprintf (pinfo, "%s windowed", pv->modedesc);
+			sprintf(pinfo, "%12s windowed", pv->modedesc); //  "%dx%d" worse is WWWWxHHHH 
 		else
 			sprintf (pinfo, "windowed");
 	}
 
 	return pinfo;
+}
+
+void VID_ModeList_f(void) 
+{
+	int i, lnummodes, t, width = -1, height = -1, bpp = -1;
+	char *pinfo;
+	vmode_t *pv;
+
+	if ((i = Cmd_CheckParm("-w")) && i + 1 < Cmd_Argc())
+		width = Q_atoi(Cmd_Argv(i + 1));
+
+	if ((i = Cmd_CheckParm("-h")) && i + 1 < Cmd_Argc())
+		height = Q_atoi(Cmd_Argv(i + 1));
+
+	if ((i = Cmd_CheckParm("-b")) && i + 1 < Cmd_Argc())
+		bpp = Q_atoi(Cmd_Argv(i + 1));
+
+	if ((i = Cmd_CheckParm("b32")))
+		bpp = 32;
+
+	if ((i = Cmd_CheckParm("b16")))
+		bpp = 16;
+
+	lnummodes = VID_NumModes();
+
+	t = leavecurrentmode;
+	leavecurrentmode = 0;
+
+	for (i = 1; i < lnummodes; i++) {
+		if (width != -1 && modelist[i].width != width)
+			continue;
+
+		if (height != -1 && modelist[i].height != height)
+			continue;
+
+		if (bpp != -1 && modelist[i].bpp != bpp)
+			continue;
+
+		pv = VID_GetModePtr(i);
+		pinfo = VID_GetExtModeDescription(i);
+		Con_Printf("%3d: %s\n", i, pinfo);
+	}
+
+	leavecurrentmode = t;
 }
 
 /*
@@ -1112,9 +1296,6 @@ void VID_InitDIB (HINSTANCE hInstance)
 	if (modelist[0].width < 320)
 		modelist[0].width = 320;
 
-	// pick a conheight that matches with default aspect (4:3)
-	modelist[0].height = modelist[0].width * 0.75;
-
 	if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
 		modelist[0].height= Q_atoi(com_argv[i+1]);
 
@@ -1157,17 +1338,21 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 		{
 			devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
-			if (ChangeDisplaySettings(&devmode, CDS_TEST | CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
+			if (ChangeDisplaySettings(&devmode, CDS_TEST | (windowed ? 0 : CDS_FULLSCREEN)) == DISP_CHANGE_SUCCESSFUL)
 			{
-				modelist[nummodes].type = MS_FULLDIB;
+				modelist[nummodes].type = (windowed ? MS_WINDOWED : MS_FULLDIB);
 				modelist[nummodes].width = devmode.dmPelsWidth;
 				modelist[nummodes].height = devmode.dmPelsHeight;
 				modelist[nummodes].modenum = 0;
 				modelist[nummodes].halfscreen = 0;
 				modelist[nummodes].dib = 1;
-				modelist[nummodes].fullscreen = 1;
-				modelist[nummodes].bpp = devmode.dmBitsPerPel;
-				sprintf (modelist[nummodes].modedesc, "%dx%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight, devmode.dmBitsPerPel);
+				modelist[nummodes].fullscreen = (windowed ? 0 : 1);
+				modelist[nummodes].bpp = (windowed ? 0 : devmode.dmBitsPerPel);
+
+				if (windowed)
+					sprintf(modelist[nummodes].modedesc, "%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight);
+				else
+					sprintf(modelist[nummodes].modedesc, "%dx%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight, devmode.dmBitsPerPel);
 
 			// if the width is more than twice the height, reduce it by half because this
 			// is probably a dual-screen monitor
@@ -1213,17 +1398,21 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 			devmode.dmPelsHeight = lowresmodes[j].height;
 			devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
-			if (ChangeDisplaySettings(&devmode, CDS_TEST | CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
+			if (ChangeDisplaySettings(&devmode, CDS_TEST | (windowed ? 0 : CDS_FULLSCREEN)) == DISP_CHANGE_SUCCESSFUL)
 			{
-				modelist[nummodes].type = MS_FULLDIB;
+				modelist[nummodes].type = (windowed ? MS_WINDOWED : MS_FULLDIB);
 				modelist[nummodes].width = devmode.dmPelsWidth;
 				modelist[nummodes].height = devmode.dmPelsHeight;
 				modelist[nummodes].modenum = 0;
 				modelist[nummodes].halfscreen = 0;
 				modelist[nummodes].dib = 1;
-				modelist[nummodes].fullscreen = 1;
-				modelist[nummodes].bpp = devmode.dmBitsPerPel;
-				sprintf (modelist[nummodes].modedesc, "%dx%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight, devmode.dmBitsPerPel);
+				modelist[nummodes].fullscreen = (windowed ? 0 : 1);
+				modelist[nummodes].bpp = (windowed ? 0 : devmode.dmBitsPerPel);
+
+				if (windowed)
+					sprintf(modelist[nummodes].modedesc, "%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight);
+				else
+					sprintf(modelist[nummodes].modedesc, "%dx%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight, devmode.dmBitsPerPel);
 
 				for (i=originalnummodes, existingmode = 0 ; i<nummodes ; i++)
 				{
@@ -1261,6 +1450,8 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 		Con_Printf ("No fullscreen DIB modes found\n");
 }
 
+void VID_Restart_f(void);
+
 /*
 ===================
 VID_Init
@@ -1268,26 +1459,36 @@ VID_Init
 */
 void VID_Init (unsigned char *palette)
 {
-	int		i, basenummodes, width, height, bpp, findbpp, done;
+	int		i, temp, basenummodes, width, height, bpp, findbpp, done;
 	HDC		hdc;
-	DEVMODE		devmode;
+	DEVMODE	devmode;
 	float	aspect;
+
+	if (COM_CheckParm("-window"))
+		windowed = true;
 
 	memset (&devmode, 0, sizeof(devmode));
 
 	Cvar_Register (&vid_mode);
-	Cvar_Register (&_vid_default_mode);
-	Cvar_Register (&_vid_default_mode_win);
-	Cvar_Register (&vid_config_x);
-	Cvar_Register (&vid_config_y);
-	Cvar_Register (&_windowed_mouse);
-	Cvar_Register (&vid_displayfrequency);
-	Cvar_Register (&vid_hwgammacontrol);
+	//Cvar_Register (&_vid_default_mode);
+	//Cvar_Register (&_vid_default_mode_win);
+	//Cvar_Register (&vid_config_x);
+	//Cvar_Register (&vid_config_y);
+	Cvar_Register(&vid_conwidth);
+	Cvar_Register(&vid_conheight);
+	Cvar_Register(&vid_displayfrequency);
+	Cvar_Register(&vid_hwgammacontrol);
+	Cvar_Register(&vid_forcerestoregamma);
+
+	Cvar_Register(&_windowed_mouse);
 
 	Cmd_AddCommand ("vid_nummodes", VID_NumModes_f);
 	Cmd_AddCommand ("vid_describecurrentmode", VID_DescribeCurrentMode_f);
 	Cmd_AddCommand ("vid_describemode", VID_DescribeMode_f);
 	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
+
+	Cmd_AddCommand("vid_modelist", VID_ModeList_f); 
+	Cmd_AddCommand ("vid_restart", VID_Restart_f);
 
 	hIcon = LoadIcon (global_hInstance, MAKEINTRESOURCE (IDI_ICON2));
 
@@ -1296,7 +1497,7 @@ void VID_Init (unsigned char *palette)
 
 	VID_InitFullDIB (global_hInstance);
 
-	if (COM_CheckParm("-window"))
+	if (windowed)
 	{
 		hdc = GetDC (NULL);
 
@@ -1305,9 +1506,28 @@ void VID_Init (unsigned char *palette)
 
 		ReleaseDC (NULL, hdc);
 
-		windowed = true;
+		if ((temp = COM_CheckParm("-mode")) && temp + 1 < com_argc)
+			vid_default = Q_atoi(com_argv[temp+1]);
+		else if (vid_mode.value != NO_MODE) // serve +set vid_mode
+			vid_default = vid_mode.value;
+		else 
+		{
+			vid_default = NO_MODE;
 
-		vid_default = MODE_WINDOWED;
+			width = modelist[0].width;
+			height = modelist[0].height;
+
+			for (i = 1; i < nummodes; i++)
+			{
+				if (modelist[i].width == width && (!height || modelist[i].height == height))
+				{
+					vid_default = i;
+					break;
+				}
+			}
+
+			vid_default = (vid_default == NO_MODE ? MODE_WINDOWED : vid_default);
+		}
 	}
 	else
 	{
@@ -1319,6 +1539,10 @@ void VID_Init (unsigned char *palette)
 		if ((i = COM_CheckParm("-mode")) && i + 1 < com_argc)
 		{
 			vid_default = Q_atoi(com_argv[i+1]);
+		}
+		else if (vid_mode.value != NO_MODE) // serve +set vid_mode
+		{ 
+			vid_default = vid_mode.value;
 		}
 		else if (COM_CheckParm("-current"))
 		{
@@ -1348,7 +1572,7 @@ void VID_Init (unsigned char *palette)
 			if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
 				height = Q_atoi(com_argv[i+1]);
 
-		// if they want to force it, add the specified mode to the list
+			// if they want to force it, add the specified mode to the list
 			if (COM_CheckParm("-force") && nummodes < MAX_MODE_LIST)
 			{
 				modelist[nummodes].type = MS_FULLDIB;
@@ -1426,26 +1650,19 @@ void VID_Init (unsigned char *palette)
 
 	vid_initialized = true;
 
-	vid.conwidth = modelist[vid_default].width;
-
 	if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
-		vid.conwidth = Q_atoi(com_argv[i+1]);
-
-	vid.conwidth &= 0xfff8;	// make it a multiple of eight
-
-	if (vid.conwidth < 320)
-		vid.conwidth = 320;
+		Cvar_SetValue(&vid_conwidth, (float)Q_atoi(com_argv[i+1]));
+	else // this is ether +set vid_con... or just default value which we select in cvar initialization
+		Cvar_SetValue(&vid_conwidth, vid_conwidth.value); // must trigger callback which validate value 
 
 	// set console aspect using video frame's aspect
 	aspect = (float)modelist[vid_default].height / (float)modelist[vid_default].width;
-	if (vid.conheight != (int)(vid.conwidth * aspect))
-		vid.conheight = vid.conwidth * aspect;
 
 	if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
-		vid.conheight = Q_atoi(com_argv[i+1]);
-
-	if (vid.conheight < 200)
-		vid.conheight = 200;
+		Cvar_SetValue(&vid_conheight, (float)Q_atoi(com_argv[i+1]));
+	else // this is ether +set vid_con... or just default value which we select in cvar initialization
+		 // also select vid_conheight with proper aspect ratio if user omit it
+		Cvar_SetValue(&vid_conheight, vid_conheight.value ? vid_conheight.value : vid_conwidth.value * aspect); // must trigger callback which validate value 
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
@@ -1465,11 +1682,12 @@ void VID_Init (unsigned char *palette)
 
 	if (!(baseRC = wglCreateContext(maindc)))
 		Sys_Error ("Could not initialize GL (wglCreateContext failed).\n\nMake sure you in are 65535 color mode, and try running -window.");
+
 	if (!wglMakeCurrent(maindc, baseRC))
 		Sys_Error ("wglMakeCurrent failed");
 
 	GL_Init ();
-	CheckVsyncControlExtensions ();
+	GL_Init_Win();
 
 	vid_menudrawfn = VID_MenuDraw;
 	vid_menukeyfn = VID_MenuKey;
@@ -1481,6 +1699,56 @@ void VID_Init (unsigned char *palette)
 		fullsbardraw = true;
 }
 
+void VID_Restart()
+{
+	// TODO: de-init more things, and re-init it
+
+	if (baseRC)
+		wglDeleteContext(baseRC);
+
+	baseRC = NULL;
+
+	VID_SetMode(vid_mode.value, host_basepal);
+
+	baseRC = wglCreateContext(maindc);
+	if (!baseRC)
+		Sys_Error("Could not initialize GL (wglCreateContext failed).\n\nMake sure you in are 65535 color mode, and try running -window.");
+
+	if (!wglMakeCurrent(maindc, baseRC))
+		Sys_Error("wglMakeCurrent failed");
+}
+
+void VID_Restart_f(void)
+{
+	extern void GFX_Init(void);
+
+	if (!host_initialized) // sanity
+	{
+		Con_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	VID_Restart();
+
+	GL_Init();
+#ifdef WIN32
+	GL_Init_Win();
+#else
+	// TODO: some *nix related here
+#endif
+
+	// force models to reload (just flush, no actual loading code here)
+	Cache_Flush();
+
+	// reload 2D textures, particles textures, some other textures and gfx.wad
+	GFX_Init();
+
+	// we need done something like for map reloading, for example reload textures for brush models
+	R_NewMap(true);
+
+	// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
+	Mod_TouchModels();
+}
 
 //========================================================
 // Video menu stuff

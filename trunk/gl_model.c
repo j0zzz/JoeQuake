@@ -259,6 +259,27 @@ void Mod_TouchModel (char *name)
 		Cache_Check (&mod->cache);
 }
 
+// this is callback from VID after a vid_restart
+void Mod_TouchModels(void)
+{
+	int i;
+	model_t *mod;
+
+	if (cls.state != ca_connected)
+		return; // seems we are not loaded models yet, so no need to do anything
+
+	for (i = 1; i < MAX_MODELS; i++)
+	{
+		if (!cl.model_precache[i])
+			break;
+
+		mod = cl.model_precache[i];
+
+		if (mod->type == mod_alias || mod->type == mod_md3 || mod->type == mod_sprite)
+			Mod_Extradata(mod);
+	}
+}
+
 /*
 ==================
 Mod_LoadModel
@@ -421,6 +442,85 @@ int Mod_LoadBrushModelTexture (texture_t *tx, int flags)
 	return tx->gl_texturenum;
 }
 
+void R_LoadBrushModelTextures(model_t *m)
+{
+	char		*texname;
+	texture_t	*tx;
+	int			i, texmode, noscale_flag, brighten_flag, mipTexLevel;
+	byte		*data;
+	int			width, height;
+
+	loadmodel = m;
+
+	// try load simple textures
+	//memset(loadmodel->simpletexture, 0, sizeof(loadmodel->simpletexture));
+	//loadmodel->simpletexture[0] = Mod_LoadSimpleTexture(loadmodel, 0);
+
+	if (!loadmodel->textures)
+		return;
+
+	//	Com_Printf("lm %d %s\n", lightmode, loadmodel->name);
+
+	for (i = 0; i < loadmodel->numtextures; i++)
+	{
+		tx = loadmodel->textures[i];
+		if (!tx)
+			continue;
+
+		if (tx->loaded)
+			continue; // seems alredy loaded
+
+		tx->gl_texturenum = tx->fb_texturenum = 0;
+
+		//		Com_Printf("tx %s\n", tx->name);
+
+		if (loadmodel->isworldmodel && ISSKYTEX(tx->name))
+		{
+			byte *src = (byte *)tx + tx->offsets[0];
+			R_InitSky(src);
+			tx->loaded = true;
+			continue; // mark as loaded
+		}
+
+		noscale_flag = 0;
+		//noscale_flag = (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) ? TEX_NOSCALE : noscale_flag;
+		//noscale_flag = (!gl_scaleTurbTextures.value  && ISTURBTEX(tx->name)) ? TEX_NOSCALE : noscale_flag;
+
+		//mipTexLevel = noscale_flag ? 0 : gl_miptexLevel.value;
+		mipTexLevel = 0;
+
+		texmode = TEX_MIPMAP | noscale_flag;
+		brighten_flag = (!ISTURBTEX(tx->name) && (lightmode == 2)) ? TEX_BRIGHTEN : 0;
+
+		if (Mod_LoadBrushModelTexture(tx, brighten_flag)) {
+			tx->loaded = true; // mark as loaded
+			continue;
+		}
+
+		if (tx->offsets[0]) 
+		{
+			texname = tx->name;
+			width = tx->width >> mipTexLevel;
+			height = tx->height >> mipTexLevel;
+			data = (byte *)tx + tx->offsets[mipTexLevel];
+		}
+		else 
+		{
+			texname = r_notexture_mip->name;
+			width = r_notexture_mip->width >> mipTexLevel;
+			height = r_notexture_mip->height >> mipTexLevel;
+			data = (byte *)r_notexture_mip + r_notexture_mip->offsets[mipTexLevel];
+		}
+
+		tx->gl_texturenum = GL_LoadTexture(texname, width, height, data, texmode | brighten_flag, 1);
+
+		if (!ISTURBTEX(tx->name) && Img_HasFullbrights(data, width * height))
+			tx->fb_texturenum = GL_LoadTexture(va("@fb_%s", texname), width, height, data, texmode | TEX_FULLBRIGHT, 1);
+
+		tx->loaded = true; // mark as loaded
+	}
+}
+
 /*
 =================
 Mod_LoadTextures
@@ -471,6 +571,8 @@ void Mod_LoadTextures (lump_t *l)
 		if ((mt->width & 15) || (mt->height & 15))
 			Sys_Error ("Mod_LoadTextures: Texture %s is not 16 aligned", mt->name);
 
+		tx->loaded = false; // so texture will be reloaded
+
 		for (j = 0 ; j < MIPLEVELS ; j++)
 			mt->offsets[j] = LittleLong (mt->offsets[j]);
 
@@ -485,7 +587,8 @@ void Mod_LoadTextures (lump_t *l)
 
 		if (loadmodel->isworldmodel && ISSKYTEX(tx->name))
 		{
-			R_InitSky (mt);
+			byte *src = (byte *)mt + mt->offsets[0];
+			R_InitSky (src);
 			continue;
 		}
 
@@ -601,6 +704,54 @@ void Mod_LoadTextures (lump_t *l)
 			if (max)
 				tx2->alternate_anims = anims[0];
 		}
+	}
+}
+
+// this is callback from VID after a vid_restart
+void Mod_ReloadModelsTextures(void)
+{
+	int i, j;
+	model_t *m;
+	texture_t *tx;
+
+	if (cls.state != ca_connected)
+		return; // seems we are not loaded models yet, so no need to reload textures
+
+	// mark all textures as not loaded, for brush models only, this speed up loading.
+	// seems textures shared between models, so we mark textures from ALL models than actually load textures, that why we use two for()
+	for (i = 1; i < MAX_MODELS; i++)
+	{
+		if (!cl.model_precache[i])
+			break;
+
+		m = cl.model_precache[i];
+		if (m->type != mod_brush)
+			continue; // actual only for brush models
+
+		if (!m->textures)
+			continue; // hmm
+
+		for (j = 0; j < m->numtextures; j++)
+		{
+			tx = m->textures[j];
+			if (!tx)
+				continue;
+
+			tx->loaded = false; // so texture will be reloaded
+		}
+	}
+
+	// now actually load textures for brush models
+	for (i = 1; i < MAX_MODELS; i++)
+	{
+		if (!cl.model_precache[i])
+			break;
+
+		m = cl.model_precache[i];
+		if (m->type != mod_brush)
+			continue; // actual only for brush models
+
+		R_LoadBrushModelTextures(m);
 	}
 }
 
