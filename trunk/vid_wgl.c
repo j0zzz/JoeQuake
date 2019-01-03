@@ -275,7 +275,6 @@ int GetCurrentFreq(void)
 qboolean ChangeFreq(int freq) 
 {
 	DWORD oldFields = gdevmode.dmFields, oldFreq = gdevmode.dmDisplayFrequency; // so we can return old values if we failed
-	DEVMODE tempDM;
 
 	if (!vid_initialized || !host_initialized)
 		return true; // hm, -freq xxx or +set vid_displayfrequency xxx cmdline params? allow then
