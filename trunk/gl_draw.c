@@ -888,7 +888,7 @@ void Draw_Crosshair (qboolean draw_menu)
 		}
 		else
 		{
-			frac = 4 * (1 / scr_sbarscale_amount.value) * bound(0, crosshairsize.value, 20);
+			frac = 4 * (1 / scr_sbarscale_amount.value) * bound(0, crosshairsize.value, 20);	//j0zzz: need to be fixed
 			ofs1 *= frac;
 			ofs2 *= frac;
 		}

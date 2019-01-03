@@ -933,14 +933,14 @@ void SCR_UpdateScreen (void)
 	sbar_scale_amount = bound(1, scr_sbarscale_amount.value, 4);
 	if (oldsbarscale != sbar_scale_amount)
 	{
-		extern void Draw_InitConback(void);
+		extern void Draw_AdjustConback(void);
 
 		oldsbarscale = sbar_scale_amount;
 		vid.width = vid.conwidth / sbar_scale_amount;
 		vid.height = vid.conheight / sbar_scale_amount;
 		vid.recalc_refdef = true;
 
-		Draw_InitConback();	// reload conback with the new size
+		Draw_AdjustConback();
 	}
 
 	// determine size of refresh window
