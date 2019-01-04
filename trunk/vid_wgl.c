@@ -300,8 +300,7 @@ qboolean ChangeFreq(int freq)
 	gdevmode.dmDisplayFrequency = freq;
 	gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
 
-	if (ChangeDisplaySettings(&gdevmode, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL
-		|| ChangeDisplaySettings(&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) 
+	if (ChangeDisplaySettings(&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) 
 	{
 		Con_Printf("Can't switch display frequency to %d\n", freq);
 		gdevmode.dmDisplayFrequency = oldFreq;
