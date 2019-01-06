@@ -1849,9 +1849,6 @@ void VID_Init (unsigned char *palette)
 
 	if (COM_CheckParm("-fullsbar"))
 		fullsbardraw = true;
-
-	menu_display_freq = (int)vid_displayfrequency.value;
-	VID_ShowFreq_f(); // query possible display frequencies for the menu
 }
 
 void VID_Restart()

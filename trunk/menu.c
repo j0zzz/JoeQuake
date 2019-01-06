@@ -1806,6 +1806,9 @@ void M_Options_Draw (void)
 
 void M_Options_Key (int k)
 {
+	extern int menu_display_freq;
+	extern void VID_ShowFreq_f(void);
+
 	switch (k)
 	{
 	case K_ESCAPE:
@@ -1846,7 +1849,15 @@ void M_Options_Key (int k)
 
 		case 7:
 			if (vid_menudrawfn)
+			{
+				//FIXME - find a better place for this during startup
+				if (menu_display_freq == 0)
+				{
+					menu_display_freq = (int)vid_displayfrequency.value;
+					VID_ShowFreq_f(); // query possible display frequencies for the menu
+				}
 				M_Menu_VideoModes_f();
+			}
 			break;
 
 #ifndef GLQUAKE
@@ -3281,7 +3292,7 @@ void M_Sound_Key(int k)
 
 #ifdef GLQUAKE
 
-#define	DISPLAY_ITEMS	21
+#define	DISPLAY_ITEMS	19
 
 int	display_cursor = 0;
 
@@ -3319,13 +3330,13 @@ void M_AdjustDisplaySliders (int dir)
 		Cvar_SetValue(&v_contrast, v_contrast.value);
 		break;
 
-	case 10:// fov
-		scr_fov.value += dir * 10;
+	case 8:// fov
+		scr_fov.value += dir * 5;
 		scr_fov.value = bound(90, scr_fov.value, 130);
 		Cvar_SetValue(&scr_fov, scr_fov.value);
 		break;
 
-	case 12:// view distance
+	case 10:// view distance
 		AdjustSliderBasedOnArrayOfValues(dir, farclip_values, FARCLIP_ITEMS, &r_farclip);
 		break;
 	}
@@ -3336,7 +3347,6 @@ void M_Display_Draw (void)
 	int x, y;
 	float r;
 	mpic_t *p;
-	char display_frequency[10];
 	byte *col;
 	
 	//M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
@@ -3349,43 +3359,36 @@ void M_Display_Draw (void)
 
 	M_PrintWhite(16, 48, "        Screen flashes");
 
-	M_Print (16, 64, "           Screen size");
+	M_Print(16, 64, "           Screen size");
 	r = (scr_viewsize.value - 30) / (120 - 30);
 	M_DrawSliderInt(220, 64, r, (int)(scr_viewsize.value / 10));
 
-	M_Print (16, 72, "                 Gamma");
+	M_Print(16, 72, "                 Gamma");
 	r = (1.0 - v_gamma.value) / 0.5;
 	M_DrawSliderFloat2(220, 72, r, v_gamma.value);
 
-	M_Print (16, 80, "              Contrast");
+	M_Print(16, 80, "              Contrast");
 	r = v_contrast.value - 1.0;
 	M_DrawSliderFloat(220, 80, r, v_contrast.value);
 
-	M_Print(16, 88, "         Vertical sync");
-	M_DrawCheckbox(220, 88, vid_vsync.value);
-
-	M_Print(16, 96, "     Display frequency");
-	sprintf(display_frequency, "%s Hz", vid_displayfrequency.string);
-	M_Print(220, 96, vid_displayfrequency.value == 0 ? "-" : display_frequency);
-
-	M_Print(16, 112, "         Field of view");
+	M_Print(16, 96, "         Field of view");
 	r = (scr_fov.value - 90) / (130 - 90);
-	M_DrawSliderInt(220, 112, r, scr_fov.value);
+	M_DrawSliderInt(220, 96, r, scr_fov.value);
 
-	M_Print(16, 120, "        Widescreen fov");
-	M_DrawCheckbox(220, 120, scr_widescreen_fov.value);
+	M_Print(16, 104, "        Widescreen fov");
+	M_DrawCheckbox(220, 104, scr_widescreen_fov.value);
 
-	M_Print(16, 128, "         View distance");
+	M_Print(16, 112, "         View distance");
 	//r = (r_farclip.value - farclip_values[0]) / (farclip_values[FARCLIP_ITEMS-1] - farclip_values[0]);
 	r = (float)FindSliderItemIndex(farclip_values, FARCLIP_ITEMS, &r_farclip) / (FARCLIP_ITEMS - 1);
-	M_DrawSliderInt(220, 128, r, r_farclip.value);
+	M_DrawSliderInt(220, 112, r, r_farclip.value);
 
-	M_Print(16, 136, "             Solid sky");
-	M_DrawCheckbox(220, 136, r_fastsky.value);
+	M_Print(16, 120, "             Solid sky");
+	M_DrawCheckbox(220, 120, r_fastsky.value);
 
-	M_Print(16, 144, "       Solid sky color");
+	M_Print(16, 128, "       Solid sky color");
 	x = 220 + ((menuwidth - 320) >> 1);
-	y = 144 + m_yofs;
+	y = 128 + m_yofs;
 	col = StringToRGB(r_skycolor.string);
 	glDisable(GL_TEXTURE_2D);
 	glColor3ubv(col);
@@ -3398,35 +3401,28 @@ void M_Display_Draw (void)
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
 
-	M_Print(16, 152, "          Powerup glow");
-	M_DrawCheckbox(220, 152, r_powerupglow.value);
+	M_Print(16, 136, "          Powerup glow");
+	M_DrawCheckbox(220, 136, r_powerupglow.value);
 
-	M_Print(16, 160, "        Show player id");
-	M_DrawCheckbox(220, 160, scr_autoid.value);
+	M_Print(16, 144, "        Show player id");
+	M_DrawCheckbox(220, 144, scr_autoid.value);
 
-	M_Print(16, 168, "      Fullbright skins");
-	M_Print(220, 168, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
+	M_Print(16, 152, "      Fullbright skins");
+	M_Print(220, 152, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
 
-	M_Print(16, 176, "Rotating items bobbing");
-	M_DrawCheckbox(220, 176, cl_bobbing.value);
+	M_Print(16, 160, "Rotating items bobbing");
+	M_DrawCheckbox(220, 160, cl_bobbing.value);
 
-	M_Print(16, 184, "      Hide dead bodies");
-	M_DrawCheckbox(220, 184, cl_deadbodyfilter.value);
+	M_Print(16, 168, "      Hide dead bodies");
+	M_DrawCheckbox(220, 168, cl_deadbodyfilter.value);
 
-	M_Print(16, 192, "             Hide gibs");
-	M_DrawCheckbox(220, 192, cl_gibfilter.value);
+	M_Print(16, 176, "             Hide gibs");
+	M_DrawCheckbox(220, 176, cl_gibfilter.value);
 
 	// cursor
-	M_DrawCharacter (200, 32 + display_cursor *8, 12+((int)(realtime*4)&1));
+	M_DrawCharacter (200, 32 + display_cursor * 8, 12+((int)(realtime*4)&1));
 
-	if (display_cursor == 8)
-	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "Display frequency must be set");
-		M_Print(2 * 8, 192 + 8 * 4, "from the command line with");
-		M_Print(2 * 8, 192 + 8 * 5, "+set vid_displayfrequency <value>");
-	}
-	else if (display_cursor == 16)
+	if (display_cursor == 14)
 	{
 		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 192 + 8 * 3, "Shows the player's name on top");
@@ -3494,49 +3490,42 @@ void M_Display_Key (int k)
 			M_Menu_ScreenFlashes_f();
 			break;
 
-		case 7:
-			Cvar_SetValue(&vid_vsync, !vid_vsync.value);
-			break;
-
-		case 8:	// display frequency
-			break;
-
-		case 11:
+		case 9:
 			Cvar_SetValue(&scr_widescreen_fov, !scr_widescreen_fov.value);
 			break;
 
-		case 13:
+		case 11:
 			Cvar_SetValue(&r_fastsky, !r_fastsky.value);
 			break;
 
-		case 14:
+		case 12:
 			M_Menu_Sky_ColorChooser_f();
 			break;
 
-		case 15:
+		case 13:
 			Cvar_SetValue(&r_powerupglow, !r_powerupglow.value);
 			break;
 
-		case 16:
+		case 14:
 			Cvar_SetValue(&scr_autoid, !scr_autoid.value);
 			break;
 
-		case 17:
+		case 15:
 			newvalue = r_fullbrightskins.value + 1;
 			if (newvalue > 2)
 				newvalue = 0;
 			Cvar_SetValue(&r_fullbrightskins, newvalue);
 			break;
 
-		case 18:
+		case 16:
 			Cvar_SetValue(&cl_bobbing, !cl_bobbing.value);
 			break;
 
-		case 19:
+		case 17:
 			Cvar_SetValue(&cl_deadbodyfilter, !cl_deadbodyfilter.value);
 			break;
 
-		case 20:
+		case 18:
 			Cvar_SetValue(&cl_gibfilter, !cl_gibfilter.value);
 			break;
 
@@ -3546,9 +3535,9 @@ void M_Display_Key (int k)
 		}
 	}
 
-	if (k == K_UPARROW && (display_cursor == 3 || display_cursor == 9))
+	if (k == K_UPARROW && (display_cursor == 3 || display_cursor == 7))
 		display_cursor--;
-	else if (k == K_DOWNARROW && (display_cursor == 3 || display_cursor == 9))
+	else if (k == K_DOWNARROW && (display_cursor == 3 || display_cursor == 7))
 		display_cursor++;
 }
 
@@ -3866,7 +3855,7 @@ void M_OpenGL_Key(int k)
 int textures_cursor = 0;
 
 char *popular_filters[] = {
-	"GL_NEAREST_MIPMAP_NEAREST",
+	"GL_NEAREST",
 	"GL_NEAREST_MIPMAP_LINEAR",
 	"GL_LINEAR_MIPMAP_NEAREST",
 	"GL_LINEAR_MIPMAP_LINEAR"
@@ -3912,7 +3901,7 @@ void M_Textures_Draw(void)
 	M_Print(16, 32, "        Texture filter");
 	M_Print(220, 32, !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST") ? "bilinear" :
 		!Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_LINEAR") ? "trilinear" :
-		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_NEAREST") ? "off w/o mipmap" : 
+		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST") ? "off w/o mipmap" : 
 		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_LINEAR") ? "off with mipmap" : gl_texturemode.string);
 
 	M_Print(16, 40, "       Texture quality");
