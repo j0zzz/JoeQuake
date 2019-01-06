@@ -110,6 +110,7 @@ HWND WINAPI InitializeWindow (HINSTANCE hInstance, int nCmdShow);
 
 modestate_t	modestate = MS_UNINIT;
 
+int menu_display_freq;
 void VID_MenuDraw (void);
 void VID_MenuKey (int key);
 
@@ -232,9 +233,12 @@ int GetBestFreq(int w, int h, int bpp)
 	return max(0, freq);
 }
 
+int display_freq_modes[20];
+int display_freq_modes_num;
+
 void VID_ShowFreq_f(void) 
 {
-	int freq, cnt = 0;
+	int freq;
 	DEVMODE	testMode;
 
 	if (!vid_initialized || vid_modenum < 0 || vid_modenum >= MAX_MODE_LIST)
@@ -250,6 +254,9 @@ void VID_ShowFreq_f(void)
 	testMode.dmPelsHeight = modelist[vid_modenum].height;
 	testMode.dmBitsPerPel = modelist[vid_modenum].bpp;
 
+	memset(display_freq_modes, 0, sizeof(display_freq_modes));
+	display_freq_modes_num = 0;
+
 	for (freq = 1; freq < 301; freq++)
 	{
 		testMode.dmDisplayFrequency = freq;
@@ -257,10 +264,12 @@ void VID_ShowFreq_f(void)
 			continue; // mode can't be set
 
 		Con_Printf(" %d", freq);
-		cnt++;
+		
+		display_freq_modes[display_freq_modes_num] = freq;
+		display_freq_modes_num++;
 	}
 
-	Con_Printf("%s\n", cnt ? "" : " none");
+	Con_Printf("%s\n", display_freq_modes_num ? "" : " none");
 }
 
 int GetCurrentFreq(void) 
@@ -1840,6 +1849,9 @@ void VID_Init (unsigned char *palette)
 
 	if (COM_CheckParm("-fullsbar"))
 		fullsbardraw = true;
+
+	menu_display_freq = (int)vid_displayfrequency.value;
+	VID_ShowFreq_f(); // query possible display frequencies for the menu
 }
 
 void VID_Restart()
@@ -1897,7 +1909,11 @@ void VID_Restart_f(void)
 // Video menu stuff
 //========================================================
 
-#define VID_ROW_SIZE		3
+#define	VIDEO_ITEMS	6
+
+int	video_cursor_row = 0;
+int	video_cursor_column = 0;
+int video_mode_rows = 0;
 
 extern	void M_Menu_Options_f (void);
 extern	void M_Print (int cx, int cy, char *str);
@@ -1905,6 +1921,7 @@ extern	void M_PrintWhite (int cx, int cy, char *str);
 extern	void M_DrawCharacter (int cx, int line, int num);
 extern	void M_DrawTransPic (int x, int y, mpic_t *pic);
 extern	void M_DrawPic (int x, int y, mpic_t *pic);
+extern	void M_DrawCheckbox(int x, int y, int on);
 
 static	int	vid_line, vid_wmodes;
 
@@ -1915,9 +1932,9 @@ typedef struct
 	int	iscur;
 } modedesc_t;
 
-#define MAX_COLUMN_SIZE		9
-#define MODE_AREA_HEIGHT	(MAX_COLUMN_SIZE + 2)
-#define MAX_MODEDESCS		(MAX_COLUMN_SIZE * 3)
+#define VID_ROW_SIZE		3
+#define MAX_COLUMN_SIZE		13
+#define MAX_MODEDESCS		(MAX_COLUMN_SIZE * VID_ROW_SIZE)
 
 static	modedesc_t	modedescs[MAX_MODEDESCS];
 
@@ -1929,7 +1946,7 @@ VID_MenuDraw
 void VID_MenuDraw (void)
 {
 	mpic_t	*p;
-	char	*ptr;
+	char	*ptr, display_freq[10];
 	int	lnummodes, i, k, column, row;
 	vmode_t	*pv;
 
@@ -1939,7 +1956,7 @@ void VID_MenuDraw (void)
 	vid_wmodes = 0;
 	lnummodes = VID_NumModes ();
 	
-	for (i = 1 ; i < lnummodes && vid_wmodes < MAX_MODEDESCS ; i++)
+	for (i = 1; i < lnummodes && vid_wmodes < MAX_MODEDESCS; i++)
 	{
 		ptr = VID_GetModeDescription (i);
 		pv = VID_GetModePtr (i);
@@ -1956,34 +1973,47 @@ void VID_MenuDraw (void)
 		vid_wmodes++;
 	}
 
-	if (vid_wmodes > 0)
+	M_Print(16, 32, "        Fullscreen");
+	M_DrawCheckbox(188, 32, !windowed);
+
+	M_Print(16, 40, "      Refresh rate");
+	sprintf(display_freq, "%i Hz", menu_display_freq);
+	M_Print(188, 40, display_freq);
+
+	M_Print(16, 48, "     Vertical sync");
+	M_DrawCheckbox(188, 48, vid_vsync.value);
+
+	M_PrintWhite(16, 64, "     Apply changes");
+
+	column = 0;
+	row = 32 + VIDEO_ITEMS * 8;
+
+	video_mode_rows = 1;
+	for (i = 0 ; i < vid_wmodes ; i++)
 	{
-		M_Print (2*8, 36+0*8, "Fullscreen Modes (WIDTHxHEIGHTxBPP)");
+		if (modedescs[i].iscur)
+			M_PrintWhite (column, row, modedescs[i].desc);
+		else
+			M_Print (column, row, modedescs[i].desc);
 
-		column = 8;
-		row = 36+2*8;
+		column += 14 * 8;
 
-		for (i=0 ; i<vid_wmodes ; i++)
+		if ((i % VID_ROW_SIZE) == (VID_ROW_SIZE - 1))
 		{
-			if (modedescs[i].iscur)
-				M_PrintWhite (column, row, modedescs[i].desc);
-			else
-				M_Print (column, row, modedescs[i].desc);
-
-			column += 13*8;
-
-			if ((i % VID_ROW_SIZE) == (VID_ROW_SIZE - 1))
-			{
-				column = 8;
-				row += 8;
-			}
+			column = 0;
+			row += 8;
+			video_mode_rows++;
 		}
 	}
 
-	M_Print (3*8, 36 + MODE_AREA_HEIGHT * 8 + 8*2, "Video modes must be set from the");
-	M_Print (3*8, 36 + MODE_AREA_HEIGHT * 8 + 8*3, "command line with -width <width>");
-	M_Print (3*8, 36 + MODE_AREA_HEIGHT * 8 + 8*4, "and -bpp <bits-per-pixel>");
-	M_Print (3*8, 36 + MODE_AREA_HEIGHT * 8 + 8*6, "Select windowed mode with -window");
+	// cursor
+	if (video_cursor_row < VIDEO_ITEMS)
+		M_DrawCharacter(168, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
+	else // we are in the resolutions region
+		M_DrawCharacter(-8 + video_cursor_column * 14 * 8, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
+
+	M_Print(8 * 8, row + 8, "Press enter to set mode");
+	M_Print(6 * 8, row + 8 * 3, "T to test mode for 5 seconds");
 }
 
 /*
@@ -1993,14 +2023,107 @@ VID_MenuKey
 */
 void VID_MenuKey (int key)
 {
+	int i, selected_modenum;
+
 	switch (key)
 	{
 	case K_ESCAPE:
-		S_LocalSound ("misc/menu1.wav");
 		M_Menu_Options_f ();
 		break;
 
-	default:
+	case K_UPARROW:
+		S_LocalSound("misc/menu1.wav");
+		video_cursor_row--;
+		if (video_cursor_row < 0)
+			video_cursor_row = (VIDEO_ITEMS + video_mode_rows) - 1;
 		break;
+
+	case K_DOWNARROW:
+		S_LocalSound("misc/menu1.wav");
+		video_cursor_row++;
+		if (video_cursor_row >= (VIDEO_ITEMS + video_mode_rows))
+			video_cursor_row = 0;
+		break;
+
+	case K_HOME:
+	case K_PGUP:
+		S_LocalSound("misc/menu1.wav");
+		video_cursor_row = 0;
+		break;
+
+	case K_END:
+	case K_PGDN:
+		S_LocalSound("misc/menu1.wav");
+		video_cursor_row = (VIDEO_ITEMS  + video_mode_rows) - 1;
+		break;
+
+	case K_LEFTARROW:
+		if (video_cursor_row >= VIDEO_ITEMS)
+		{ 
+			video_cursor_column--;
+			if (video_cursor_column < 0)
+			{
+				if (video_cursor_row >= ((VIDEO_ITEMS + video_mode_rows) - 1)) // if we stand on the last row, check how many items we have
+				{
+					if (vid_wmodes % VID_ROW_SIZE == 1)
+						video_cursor_column = 0;
+					else if (vid_wmodes % VID_ROW_SIZE == 2)
+						video_cursor_column = 1;
+					else
+						video_cursor_column = 2;
+				}
+				else
+				{
+					video_cursor_column = VID_ROW_SIZE - 1;
+				}
+			}
+		}
+		break;
+
+	case K_RIGHTARROW:
+		if (video_cursor_row >= VIDEO_ITEMS)
+		{
+			video_cursor_column++;
+			if (video_cursor_column >= VID_ROW_SIZE || ((video_cursor_row - VIDEO_ITEMS) * VID_ROW_SIZE + (video_cursor_column + 1)) > vid_wmodes)
+				video_cursor_column = 0;
+		}
+		break;
+
+	case K_ENTER:
+		S_LocalSound("misc/menu2.wav");
+		switch (video_cursor_row)
+		{
+		case 0:
+			//FIXME when switching windowed/fullscreen mode is supported
+			break;
+
+		case 1:
+			for (i = 0; i < display_freq_modes_num; i++)
+				if (display_freq_modes[i] == menu_display_freq)
+					break;
+			if (i >= (display_freq_modes_num - 1))
+				i = -1;
+			menu_display_freq = display_freq_modes[i + 1];
+			break;
+
+		case 2:
+			Cvar_SetValue(&vid_vsync, !vid_vsync.value);
+			break;
+
+		case 4:
+			Cvar_SetValue(&vid_displayfrequency, menu_display_freq);
+			break;
+
+		default:
+			selected_modenum = (video_cursor_row - VIDEO_ITEMS) * VID_ROW_SIZE + (video_cursor_column + 1);
+			Cvar_SetValue(&vid_mode, (float)selected_modenum);
+			VID_ShowFreq_f(); // refresh possible display frequencies after a resolution change
+			break;
+		}
 	}
+
+	if (key == K_UPARROW && (video_cursor_row == 3 || video_cursor_row == 5))
+		video_cursor_row--;
+	else if (key == K_DOWNARROW && (video_cursor_row == 3 || video_cursor_row == 5))
+		video_cursor_row++;
 }

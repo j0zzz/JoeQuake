@@ -1786,7 +1786,7 @@ void M_Options_Draw (void)
 
 		M_PrintWhite(16, 96, "         Go to console");
 #else
-		M_PrintWhite(16, 88, "           Video modes");
+		M_PrintWhite(16, 88, "        Set video mode");
 
 		M_PrintWhite(16, 104, "         Go to console");
 #endif
@@ -3866,7 +3866,8 @@ void M_OpenGL_Key(int k)
 int textures_cursor = 0;
 
 char *popular_filters[] = {
-	"GL_NEAREST",
+	"GL_NEAREST_MIPMAP_NEAREST",
+	"GL_NEAREST_MIPMAP_LINEAR",
 	"GL_LINEAR_MIPMAP_NEAREST",
 	"GL_LINEAR_MIPMAP_LINEAR"
 };
@@ -3911,7 +3912,8 @@ void M_Textures_Draw(void)
 	M_Print(16, 32, "        Texture filter");
 	M_Print(220, 32, !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST") ? "bilinear" :
 		!Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_LINEAR") ? "trilinear" :
-		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST") ? "off" : gl_texturemode.string);
+		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_NEAREST") ? "off w/o mipmap" : 
+		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_LINEAR") ? "off with mipmap" : gl_texturemode.string);
 
 	M_Print(16, 40, "       Texture quality");
 	r = (4 - gl_picmip.value) * 0.25;
@@ -4013,10 +4015,10 @@ void M_Textures_Key(int k)
 		switch (textures_cursor)
 		{
 		case 0:
-			for (i = 0; i < 3; i++)
+			for (i = 0; i < 4; i++)
 				if (!Q_strcasecmp(popular_filters[i], gl_texturemode.string))
 					break;
-			if (i >= 2)
+			if (i >= 3)
 				i = -1;
 			Cvar_Set(&gl_texturemode, popular_filters[i + 1]);
 			break;
@@ -4902,7 +4904,6 @@ void M_VideoModes_Draw (void)
 {
 	(*vid_menudrawfn)();
 }
-
 
 void M_VideoModes_Key (int key)
 {
