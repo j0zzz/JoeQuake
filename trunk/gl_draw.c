@@ -157,6 +157,21 @@ void GL_Bind (int texnum)
 	glBindTexture (GL_TEXTURE_2D, texnum);
 }
 
+color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a)
+{
+	return ((r << 0) | (g << 8) | (b << 16) | (a << 24)) & 0xFFFFFFFF;
+}
+
+byte* COLOR_TO_RGBA(color_t i, byte rgba[4])
+{
+	rgba[0] = (i >> 0 & 0xFF);
+	rgba[1] = (i >> 8 & 0xFF);
+	rgba[2] = (i >> 16 & 0xFF);
+	rgba[3] = (i >> 24 & 0xFF);
+
+	return rgba;
+}
+
 /*
 =============================================================================
 
@@ -318,12 +333,14 @@ mpic_t *Draw_CachePic (char *path)
 
 	if (numcachepics == MAX_CACHED_PICS)
 		Sys_Error ("numcachepics == MAX_CACHED_PICS");
+
 	numcachepics++;
 	Q_strncpyz (pic->name, path, sizeof(pic->name));
 
 	// load the pic from disk
 	if (!(dat = (qpic_t *)COM_LoadTempFile(path)))
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
+
 	SwapPic (dat);
 
 	// HACK HACK HACK --- we need to keep the bytes for
@@ -1127,6 +1144,102 @@ void Draw_TransPicTranslate (int x, int y, mpic_t *pic, byte *translation)
 	glTexCoord2f (0, 1);
 	glVertex2f (x, y+pic->height);
 	glEnd ();
+}
+
+float overall_alpha = 1.0;
+
+void Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, float alpha)
+{
+	float newsl, newtl, newsh, newth;
+	float oldglwidth, oldglheight;
+
+	if (scrap_dirty)
+		Scrap_Upload();
+
+	oldglwidth = pic->sh - pic->sl;
+	oldglheight = pic->th - pic->tl;
+
+	newsl = pic->sl + (src_x * oldglwidth) / (float)pic->width;
+	newsh = newsl + (src_width * oldglwidth) / (float)pic->width;
+
+	newtl = pic->tl + (src_y * oldglheight) / (float)pic->height;
+	newth = newtl + (src_height * oldglheight) / (float)pic->height;
+
+	alpha *= overall_alpha; 
+	if (alpha < 1.0)
+	{
+		glDisable(GL_ALPHA_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glCullFace(GL_FRONT);
+		glColor4f(1, 1, 1, alpha);
+	}
+
+	GL_Bind(pic->texnum);
+
+	glBegin(GL_QUADS);
+	{
+		// Upper left corner.
+		glTexCoord2f(newsl, newtl);
+		glVertex2f(x, y);
+
+		// Upper right corner.
+		glTexCoord2f(newsh, newtl);
+		glVertex2f(x + (scale_x * src_width), y);
+
+		// Bottom right corner.
+		glTexCoord2f(newsh, newth);
+		glVertex2f(x + (scale_x * src_width), y + (scale_y * src_height));
+
+		// Bottom left corner.
+		glTexCoord2f(newsl, newth);
+		glVertex2f(x, y + (scale_y * src_height));
+	}
+	glEnd();
+
+	if (alpha < 1.0) 
+	{
+		glEnable(GL_ALPHA_TEST);
+		glDisable(GL_BLEND);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glColor4f(1, 1, 1, 1);
+	}
+}
+
+void Draw_SAlphaSubPic(int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
+{
+	Draw_SAlphaSubPic2(x, y, pic, src_x, src_y, src_width, src_height, scale, scale, alpha);
+}
+
+void Draw_SAlphaPic(int x, int y, mpic_t *gl, float alpha, float scale)
+{
+	Draw_SAlphaSubPic(x, y, gl, 0, 0, gl->width, gl->height, scale, alpha);
+}
+
+void Draw_AlphaLineRGB(int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
+{
+	byte bytecolor[4];
+	glDisable(GL_TEXTURE_2D);
+
+	glEnable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	COLOR_TO_RGBA(color, bytecolor);
+	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
+
+	if (thickness > 0.0)
+		glLineWidth(thickness);
+
+	glBegin(GL_LINES);
+	glVertex2f(x_start, y_start);
+	glVertex2f(x_end, y_end);
+	glEnd();
+
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
+
+	glColor3ubv(color_white);
 }
 
 /*

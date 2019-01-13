@@ -95,6 +95,11 @@ cvar_t		scr_sshot_format = {"scr_sshot_format", "jpg"};
 cvar_t		scr_autoid = { "scr_autoid", "0" };
 cvar_t		scr_widescreen_fov = {"scr_widescreen_fov", "1", CVAR_ARCHIVE};
 
+cvar_t		scr_cursor_scale = { "scr_cursor_scale", "0.2" };				// The mouse cursor scale
+#ifdef GLQUAKE
+cvar_t		scr_cursor_alpha = { "scr_cursor_alpha", "1" };
+#endif
+
 extern	cvar_t	crosshair;
 extern	cvar_t	cl_crossx;
 extern	cvar_t	cl_crossy;
@@ -104,6 +109,7 @@ qboolean	scr_initialized;		// ready to draw
 mpic_t          *scr_ram;
 mpic_t          *scr_net; 
 mpic_t          *scr_turtle;
+mpic_t			scr_cursor;		// Cursor image
 
 int		scr_fullupdate;
 
@@ -121,6 +127,8 @@ qboolean	scr_drawloading;
 float		scr_disabled_time;
 
 qboolean	block_drawing;
+
+double cursor_x = 0, cursor_y = 0;
 
 void SCR_ScreenShot_f (void);
 
@@ -389,6 +397,19 @@ void SCR_SizeDown_f (void)
 	vid.recalc_refdef = 1;
 }
 
+void SCR_LoadCursorImage()
+{
+	mpic_t	*pic;
+
+	if (!(pic = GL_LoadPicImage("gfx/cursor", "cursor", 0, 0, TEX_ALPHA)))
+	{
+		Con_Printf("Couldn't load cursor\n");
+		return;
+	}
+
+	scr_cursor = *pic;
+}
+
 //============================================================================
 
 /*
@@ -412,6 +433,11 @@ void SCR_Init (void)
 	Cvar_Register (&scr_autoid);
 	Cvar_Register (&scr_widescreen_fov);
 
+	Cvar_Register(&scr_cursor_scale);
+#ifdef GLQUAKE
+	Cvar_Register(&scr_cursor_alpha);
+#endif
+
 // register our commands
 	Cmd_AddCommand ("screenshot", SCR_ScreenShot_f);
 	Cmd_AddCommand ("sizeup", SCR_SizeUp_f);
@@ -420,6 +446,8 @@ void SCR_Init (void)
 	scr_ram = Draw_PicFromWad ("ram");
 	scr_net = Draw_PicFromWad ("net");
 	scr_turtle = Draw_PicFromWad ("turtle");
+	
+	SCR_LoadCursorImage();
 
 #ifdef _WIN32
 	Movie_Init ();
@@ -880,6 +908,78 @@ void SCR_TileClear (void)
 	}
 }
 
+#ifdef GLQUAKE
+//
+// Calculates the cursor scale based on the current screen/text size
+//
+static double SCR_GetCursorScale(void)
+{
+	return (double)scr_cursor_scale.value * ((double)vid.width / (double)vid.conwidth);
+}
+#endif // GLQUAKE
+
+static void SCR_DrawCursor(void)
+{
+	// from in_*.c
+	extern double mouse_x, mouse_y;
+#ifdef GLQUAKE
+	double scale = SCR_GetCursorScale();
+#endif 
+	mpic_t *cursor;
+
+	// Updating cursor location
+	scr_pointer_state.x += mouse_x;
+	scr_pointer_state.y += mouse_y;
+
+	// Bound the cursor to displayed area
+	clamp(scr_pointer_state.x, 0, vid.width);
+	clamp(scr_pointer_state.y, 0, vid.height);
+
+	// write the global variables which are used only by HUD Editor at the moment
+	cursor_x = scr_pointer_state.x;
+	cursor_y = scr_pointer_state.y;
+
+	// Disable the cursor in all but following client parts
+	if (key_dest != key_menu)
+		return;
+
+	// Always draw the cursor.
+#ifdef GLQUAKE
+	cursor = &scr_cursor;
+	if (cursor && cursor->texnum)
+	{
+		Draw_SAlphaPic(cursor_x, cursor_y, cursor, scr_cursor_alpha.value, scale);
+	}
+	else
+	{
+		color_t c = RGBA_TO_COLOR(0, 255, 0, 255);
+		Draw_AlphaLineRGB(cursor_x + (10 * scale), cursor_y + (10 * scale), cursor_x + (40 * scale), cursor_y + (40 * scale), 10 * scale, c);
+		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (20 * scale), cursor_y, 10 * scale, c);
+		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x, cursor_y + 20 * scale, 10 * scale, c);
+		Draw_AlphaLineRGB(cursor_x + (20 * scale), cursor_y, cursor_x, cursor_y + (20 * scale), 10 * scale, c);
+	}
+#else // GLQUAKE
+	/*
+	// FIXME: When the cursor is loaded in software, width and height are fine, but when reaching this point it's fucked up!!!
+	if (scr_cursor && scr_cursor->width)
+	{
+	Draw_SPic(cursor_x, cursor_y, scr_cursor, scale);
+	}
+	else
+	*/
+	{
+		Draw_Character(cursor_x - LETTERWIDTH / 2, cursor_y - LETTERHEIGHT / 2, '+');
+	}
+#endif // GLQUAKE else
+
+	if (scr_pointer_state.x != scr_pointer_state.x_old || scr_pointer_state.y != scr_pointer_state.y_old)
+		Mouse_MoveEvent();
+
+	// remember the position for future
+	scr_pointer_state.x_old = scr_pointer_state.x;
+	scr_pointer_state.y_old = scr_pointer_state.y;
+}
+
 /*
 ==================
 SCR_UpdateScreen
@@ -1031,6 +1131,7 @@ void SCR_UpdateScreen (void)
 		Sbar_Draw ();
 		SCR_DrawConsole ();
 		M_Draw ();
+		SCR_DrawCursor();
 	}
 
 	R_BrightenScreen ();

@@ -41,6 +41,13 @@ typedef struct
 
 extern	mpic_t	*draw_disc;	// also used on sbar
 
+typedef int color_t;
+
+color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a);
+byte* COLOR_TO_RGBA(color_t i, byte rgba[4]);
+void Draw_SAlphaPic(int x, int y, mpic_t *gl, float alpha, float scale);
+void Draw_AlphaLineRGB(int x_start, int y_start, int x_end, int y_end, float thickness, color_t color);
+
 void Draw_Init (void);
 void Draw_Character (int x, int y, int num);
 void Draw_DebugChar (char num);

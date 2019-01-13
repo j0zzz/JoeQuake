@@ -250,6 +250,7 @@ cvar_t	cl_pitchspeed = {"cl_pitchspeed", "150"};
 cvar_t	lookspring = {"lookspring", "0", CVAR_ARCHIVE};
 cvar_t	lookstrafe = {"lookstrafe", "0", CVAR_ARCHIVE};
 cvar_t	sensitivity = {"sensitivity", "3", CVAR_ARCHIVE};
+cvar_t	cursor_sensitivity = { "scr_cursor_sensitivity", "1", CVAR_ARCHIVE }; 
 qboolean OnChange_freelook (cvar_t *var, char *string);
 cvar_t	freelook = {"freelook", "1", CVAR_ARCHIVE, OnChange_freelook};
 
@@ -507,6 +508,7 @@ void CL_InitInput (void)
 	Cvar_Register (&lookspring);
 	Cvar_Register (&lookstrafe);
 	Cvar_Register (&sensitivity);
+	Cvar_Register(&cursor_sensitivity);	
 	Cvar_Register (&freelook);
 
 	Cvar_Register (&m_pitch);

@@ -48,6 +48,7 @@ extern	cvar_t	cl_pitchspeed;
 extern	cvar_t	lookspring;
 extern	cvar_t	lookstrafe;
 extern	cvar_t	sensitivity;
+extern	cvar_t	cursor_sensitivity; 
 extern	cvar_t	freelook;
 
 extern	cvar_t	m_pitch;

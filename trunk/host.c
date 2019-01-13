@@ -731,6 +731,14 @@ void _Host_Frame (double time)
 		// fetch results from server
 		if (cls.state == ca_connected)
 			CL_ReadFromServer ();
+
+		// We need to move the mouse also when disconnected
+		// to get the cursor working properly.
+		if (cls.state == ca_disconnected)
+		{
+			usercmd_t dummy;
+			IN_Move(&dummy);
+		}
 #ifdef INDEPENDENTPHYSICS
 	}
 	else

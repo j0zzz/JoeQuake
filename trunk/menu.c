@@ -176,6 +176,14 @@ int	menuheight = 240;
 cvar_t	scr_centermenu = {"scr_centermenu", "1"};
 int	m_yofs = 0;
 
+typedef struct menu_window_s 
+{
+	int x;
+	int y;
+	int w;
+	int h;
+} menu_window_t;
+
 /*
 ================
 M_DrawCharacter
@@ -188,9 +196,22 @@ void M_DrawCharacter (int cx, int line, int num)
 	Draw_Character (cx + ((menuwidth - 320) >> 1), line + m_yofs, num);
 }
 
+void M_Print_GetPoint(int cx, int cy, int *rx, int *ry, char *str, qboolean red) 
+{
+	cx += ((menuwidth - 320) >> 1);
+	cy += m_yofs;
+	*rx = cx;
+	*ry = cy;
+	if (red)
+		Draw_Alt_String(cx, cy, str);
+	else
+		Draw_String(cx, cy, str);
+}
+
 void M_Print (int cx, int cy, char *str)
 {
-	Draw_Alt_String (cx + ((menuwidth - 320) >> 1), cy + m_yofs, str);
+	int rx, ry;
+	M_Print_GetPoint(cx, cy, &rx, &ry, str, true);
 }
 
 void M_PrintWhite (int cx, int cy, char *str)
@@ -198,9 +219,18 @@ void M_PrintWhite (int cx, int cy, char *str)
 	Draw_String (cx + ((menuwidth - 320) >> 1), cy + m_yofs, str);
 }
 
+// replacement of M_DrawTransPic - sometimes we need the real coordinate of the pic
+static void M_DrawTransPic_GetPoint(int x, int y, int *rx, int *ry, mpic_t *pic)
+{
+	*rx = x + ((menuwidth - 320) >> 1);
+	*ry = y + m_yofs;
+	Draw_TransPic(x + ((menuwidth - 320) >> 1), y + m_yofs, pic);
+}
+
 void M_DrawTransPic (int x, int y, mpic_t *pic)
 {
-	Draw_TransPic (x + ((menuwidth - 320) >> 1), y + m_yofs, pic);
+	int tx, ty;
+	M_DrawTransPic_GetPoint(x, y, &tx, &ty, pic);
 }
 
 void M_DrawPic (int x, int y, mpic_t *pic)
@@ -243,6 +273,55 @@ void M_DrawTransPicTranslate (int x, int y, mpic_t *pic)
 void M_DrawTextBox (int x, int y, int width, int lines)
 {
 	Draw_TextBox (x + ((menuwidth - 320) >> 1), y + m_yofs, width, lines);
+}
+
+// will apply menu scaling effect for given window region
+static void M_Window_Adjust(const menu_window_t *original, menu_window_t *scaled)
+{
+#ifdef GLQUAKE
+	double sc_x, sc_y; // scale factors
+
+	sc_x = (double)vid.width / (double)menuwidth;
+	sc_y = (double)vid.height / (double)menuheight;
+	scaled->x = original->x * sc_x;
+	scaled->y = original->y * sc_y;
+	scaled->w = original->w * sc_x;
+	scaled->h = original->h * sc_y;
+#else
+	memcpy(scaled, original, sizeof(menu_window_t));
+#endif
+}
+
+// this function will look at window borders and current mouse cursor position
+// and will change which item in the window should be selected
+// we presume that all entries have same height and occupy the whole window
+// 1st par: input, window position & size
+// 2nd par: input, mouse position
+// 3rd par: input, how many entries does the window have
+// 4th par: output, newly selected entry, first entry is 0, second 1, ...
+// return value: does the cursor belong to this window? yes/no
+static qboolean M_Mouse_Select(const menu_window_t *uw, const mouse_state_t *m, int entries, int *newentry)
+{
+	double entryheight;
+	double nentry;
+	menu_window_t rw;
+	menu_window_t *w = &rw; // just a language "shortcut"
+
+	M_Window_Adjust(uw, w);
+
+	// window is invisible
+	if (!(w->h > 0) || !(w->w > 0)) return false;
+
+	// check if the pointer is inside of the window
+	if (m->x < w->x || m->y < w->y || m->x > w->x + w->w || m->y > w->y + w->h)
+		return false; // no, it's not
+
+	entryheight = w->h / entries;
+	nentry = (int)(m->y - w->y) / (int)entryheight;
+
+	*newentry = bound(0, nentry, entries - 1);
+
+	return true;
 }
 
 //=============================================================================
@@ -537,6 +616,8 @@ void M_List_Key (int k, int num_elements, int num_lines)
 int	m_main_cursor;
 int	MAIN_ITEMS = 7;
 
+menu_window_t m_main_window;
+
 void M_Menu_Main_f (void)
 {
 #ifdef GLQUAKE
@@ -582,7 +663,16 @@ void M_Main_Draw (void)
 	}
 	else
 #endif
-		M_DrawTransPic (72, 32, Draw_CachePic("gfx/mainmenu.lmp"));
+	{
+		p = Draw_CachePic("gfx/mainmenu.lmp");
+		m_main_window.w = p->width;
+		m_main_window.h = p->height;
+		M_DrawTransPic_GetPoint(72, 32, &m_main_window.x, &m_main_window.y, p);
+
+		// main menu specific correction, mainmenu.lmp|png have some useless extra space at the bottom
+		// that makes the mouse pointer position calculation imperfect
+		m_main_window.h *= 0.94;
+	}
 
 	f = (int)(host_time*10) % 6;
 
@@ -594,6 +684,7 @@ void M_Main_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 		key_dest = key_game;
 		m_state = m_none;
 		cls.demonum = m_save_demonum;
@@ -602,12 +693,14 @@ void M_Main_Key (int key)
 		break;
 
 	case K_DOWNARROW:
+	case K_MWHEELDOWN:
 		S_LocalSound ("misc/menu1.wav");
 		if (++m_main_cursor >= MAIN_ITEMS)
 			m_main_cursor = 0;
 		break;
 
 	case K_UPARROW:
+	case K_MWHEELUP:
 		S_LocalSound ("misc/menu1.wav");
 		if (--m_main_cursor < 0)
 			m_main_cursor = MAIN_ITEMS - 1;
@@ -626,6 +719,7 @@ void M_Main_Key (int key)
 		break;
 	
 	case K_ENTER:
+	case K_MOUSE1: 
 		m_entersound = true;
 #ifdef GLQUAKE
 		if (nehahra)	// nehahra menus
@@ -752,13 +846,25 @@ void M_Main_Key (int key)
 	}
 }
 
+static qboolean M_Main_Mouse_Event(const mouse_state_t* ms)
+{
+	M_Mouse_Select(&m_main_window, ms, MAIN_ITEMS, &m_main_cursor);
+
+	if (ms->button_up == 1) M_Main_Key(K_MOUSE1);
+	if (ms->button_up == 2) M_Main_Key(K_MOUSE2);
+
+	return true;
+}
+
 //=============================================================================
 /* SINGLE PLAYER MENU */
 
 #define	SINGLEPLAYER_ITEMS	3
 
 int		m_singleplayer_cursor;
-qboolean	m_singleplayer_confirm;
+qboolean m_singleplayer_confirm;
+
+menu_window_t m_singleplayer_window;
 
 void M_Menu_SinglePlayer_f (void)
 {
@@ -783,7 +889,11 @@ void M_SinglePlayer_Draw (void)
 	M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
-	M_DrawTransPic (72, 32, Draw_CachePic("gfx/sp_menu.lmp"));
+	
+	p = Draw_CachePic("gfx/sp_menu.lmp");
+	m_singleplayer_window.w = p->width;
+	m_singleplayer_window.h = p->height;
+	M_DrawTransPic_GetPoint(72, 32, &m_singleplayer_window.x, &m_singleplayer_window.y, p);
 
 	f = (int)(host_time*10) % 6;
 	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20, Draw_CachePic(va("gfx/menudot%i.lmp", f+1)));
@@ -807,12 +917,12 @@ void M_SinglePlayer_Key (int key)
 {
 	if (m_singleplayer_confirm)
 	{
-		if (key == 'n' || key == K_ESCAPE)
+		if (key == 'n' || key == K_ESCAPE || key == K_MOUSE2)
 		{
 			m_singleplayer_confirm = false;
 			m_entersound = true;
 		}
-		else if (key == 'y' || key == K_ENTER)
+		else if (key == 'y' || key == K_ENTER || key == K_MOUSE1)
 		{
 			StartNewGame ();
 		}
@@ -822,16 +932,19 @@ void M_SinglePlayer_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 		M_Menu_Main_f ();
 		break;
 
 	case K_DOWNARROW:
+	case K_MWHEELDOWN:
 		S_LocalSound ("misc/menu1.wav");
 		if (++m_singleplayer_cursor >= SINGLEPLAYER_ITEMS)
 			m_singleplayer_cursor = 0;
 		break;
 
 	case K_UPARROW:
+	case K_MWHEELUP:
 		S_LocalSound ("misc/menu1.wav");
 		if (--m_singleplayer_cursor < 0)
 			m_singleplayer_cursor = SINGLEPLAYER_ITEMS - 1;
@@ -850,6 +963,7 @@ void M_SinglePlayer_Key (int key)
 		break;
 
 	case K_ENTER:
+	case K_MOUSE1:
 		m_entersound = true;
 		switch (m_singleplayer_cursor)
 		{
@@ -871,6 +985,16 @@ void M_SinglePlayer_Key (int key)
 	}
 }
 
+qboolean M_SinglePlayer_Mouse_Event(const mouse_state_t* ms)
+{
+	M_Mouse_Select(&m_singleplayer_window, ms, SINGLEPLAYER_ITEMS, &m_singleplayer_cursor);
+
+	if (ms->button_up == 1) M_SinglePlayer_Key(K_MOUSE1);
+	if (ms->button_up == 2) M_SinglePlayer_Key(K_MOUSE2);
+
+	return true;
+}
+
 //=============================================================================
 /* LOAD/SAVE MENU */
 
@@ -879,6 +1003,7 @@ int	load_cursor;		// 0 < load_cursor < MAX_SAVEGAMES
 #define	MAX_SAVEGAMES	12
 char	m_filenames[MAX_SAVEGAMES][SAVEGAME_COMMENT_LENGTH+1];
 int	loadable[MAX_SAVEGAMES];
+menu_window_t load_window, save_window;
 
 void M_ScanSaves (void)
 {
@@ -929,14 +1054,23 @@ void M_Load_Draw (void)
 {
 	int	i;
 	mpic_t	*p;
+	int lx = 0, ly = 0;	// lower bounds of the window 
 
 	p = Draw_CachePic ("gfx/p_load.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
 
 	for (i=0 ; i<MAX_SAVEGAMES ; i++)
-		M_Print (16, 32 + 8*i, m_filenames[i]);
+	{
+		if (i == 0)
+			M_Print_GetPoint(16, 32 + 8 * i, &load_window.x, &load_window.y, m_filenames[i], load_cursor == 0);
+		else
+			M_Print_GetPoint(16, 32 + 8 * i, &lx, &ly, m_filenames[i], load_cursor == i);
+	}
 
-// line cursor
+	load_window.w = SAVEGAME_COMMENT_LENGTH * 8; // presume 8 pixels for each letter
+	load_window.h = ly - load_window.y + 8;
+
+	// line cursor
 	M_DrawCharacter (8, 32 + load_cursor*8, 12+((int)(realtime*4)&1));
 }
 
@@ -944,14 +1078,23 @@ void M_Save_Draw (void)
 {
 	int	i;
 	mpic_t	*p;
+	int lx = 0, ly = 0;	// lower bounds of the window
 
 	p = Draw_CachePic ("gfx/p_save.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
 
 	for (i=0 ; i<MAX_SAVEGAMES ; i++)
-		M_Print (16, 32 + 8*i, m_filenames[i]);
+	{
+		if (i == 0)
+			M_Print_GetPoint(16, 32 + 8 * i, &save_window.x, &save_window.y, m_filenames[i], load_cursor == 0);
+		else
+			M_Print_GetPoint(16, 32 + 8 * i, &lx, &ly, m_filenames[i], load_cursor == i);
+	}
 
-// line cursor
+	save_window.w = SAVEGAME_COMMENT_LENGTH * 8; // presume 8 pixels for each letter
+	save_window.h = ly - save_window.y + 8;
+
+	// line cursor
 	M_DrawCharacter (8, 32 + load_cursor*8, 12+((int)(realtime*4)&1));
 }
 
@@ -960,10 +1103,12 @@ void M_Load_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 		M_Menu_SinglePlayer_f ();
 		break;
 
 	case K_ENTER:
+	case K_MOUSE1:
 		S_LocalSound ("misc/menu2.wav");
 		if (!loadable[load_cursor])
 			return;
@@ -980,6 +1125,7 @@ void M_Load_Key (int k)
 
 	case K_UPARROW:
 	case K_LEFTARROW:
+	case K_MWHEELUP:
 		S_LocalSound ("misc/menu1.wav");
 		load_cursor--;
 		if (load_cursor < 0)
@@ -988,6 +1134,7 @@ void M_Load_Key (int k)
 
 	case K_DOWNARROW:
 	case K_RIGHTARROW:
+	case K_MWHEELDOWN:
 		S_LocalSound ("misc/menu1.wav");
 		load_cursor++;
 		if (load_cursor >= MAX_SAVEGAMES)
@@ -1013,10 +1160,12 @@ void M_Save_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 		M_Menu_SinglePlayer_f ();
 		break;
 
 	case K_ENTER:
+	case K_MOUSE1:
 		m_state = m_none;
 		key_dest = key_game;
 		Cbuf_AddText (va("save s%i\n", load_cursor));
@@ -1024,6 +1173,7 @@ void M_Save_Key (int k)
 
 	case K_UPARROW:
 	case K_LEFTARROW:
+	case K_MWHEELUP:
 		S_LocalSound ("misc/menu1.wav");
 		load_cursor--;
 		if (load_cursor < 0)
@@ -1032,6 +1182,7 @@ void M_Save_Key (int k)
 
 	case K_DOWNARROW:
 	case K_RIGHTARROW:
+	case K_MWHEELDOWN:
 		S_LocalSound ("misc/menu1.wav");
 		load_cursor++;
 		if (load_cursor >= MAX_SAVEGAMES)
@@ -1052,11 +1203,33 @@ void M_Save_Key (int k)
 	}
 }
 
+qboolean M_Save_Mouse_Event(const mouse_state_t *ms)
+{
+	M_Mouse_Select(&save_window, ms, MAX_SAVEGAMES, &load_cursor);
+
+	if (ms->button_up == 1) M_Save_Key(K_MOUSE1);
+	if (ms->button_up == 2) M_Save_Key(K_MOUSE2);
+
+	return true;
+}
+
+qboolean M_Load_Mouse_Event(const mouse_state_t *ms)
+{
+	M_Mouse_Select(&load_window, ms, MAX_SAVEGAMES, &load_cursor);
+
+	if (ms->button_up == 1) M_Load_Key(K_MOUSE1);
+	if (ms->button_up == 2) M_Load_Key(K_MOUSE2);
+
+	return true;
+}
+
 //=============================================================================
 /* MULTIPLAYER MENU */
 
 int	m_multiplayer_cursor;
 #define	MULTIPLAYER_ITEMS	4
+
+menu_window_t m_multiplayer_window;
 
 void M_Menu_MultiPlayer_f (void)
 {
@@ -1073,10 +1246,13 @@ void M_MultiPlayer_Draw (void)
 	M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic ("gfx/p_multi.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
-	M_DrawTransPic (72, 32, Draw_CachePic("gfx/mp_menu.lmp"));
+	
+	p = Draw_CachePic("gfx/mp_menu.lmp");
+	m_multiplayer_window.w = p->width;
+	m_multiplayer_window.h = p->height;
+	M_DrawTransPic_GetPoint(72, 32, &m_multiplayer_window.x, &m_multiplayer_window.y, p);
 
 	f = (int)(host_time * 10) % 6;
-
 	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20, Draw_CachePic(va("gfx/menudot%i.lmp", f+1)));
 
 	if (serialAvailable || ipxAvailable || tcpipAvailable)
@@ -1090,16 +1266,19 @@ void M_MultiPlayer_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 		M_Menu_Main_f ();
 		break;
 
 	case K_DOWNARROW:
+	case K_MWHEELDOWN:
 		S_LocalSound ("misc/menu1.wav");
 		if (++m_multiplayer_cursor >= MULTIPLAYER_ITEMS)
 			m_multiplayer_cursor = 0;
 		break;
 
 	case K_UPARROW:
+	case K_MWHEELUP:
 		S_LocalSound ("misc/menu1.wav");
 		if (--m_multiplayer_cursor < 0)
 			m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
@@ -1118,6 +1297,7 @@ void M_MultiPlayer_Key (int key)
 		break;
 
 	case K_ENTER:
+	case K_MOUSE1:
 		m_entersound = true;
 		switch (m_multiplayer_cursor)
 		{
@@ -1136,6 +1316,16 @@ void M_MultiPlayer_Key (int key)
 			break;
 		}
 	}
+}
+
+qboolean M_MultiPlayer_Mouse_Event(const mouse_state_t* ms)
+{
+	M_Mouse_Select(&m_multiplayer_window, ms, MULTIPLAYER_ITEMS, &m_multiplayer_cursor);
+
+	if (ms->button_up == 1) M_MultiPlayer_Key(K_MOUSE1);
+	if (ms->button_up == 2) M_MultiPlayer_Key(K_MOUSE2);
+
+	return true;
 }
 
 //=============================================================================
@@ -1653,6 +1843,8 @@ again:
 int	options_cursor;
 int	mp_optimized;
 
+menu_window_t options_window;
+
 extern	void IN_MLookDown (void);
 extern	void IN_MLookUp (void);
 
@@ -1758,23 +1950,24 @@ void M_DrawCheckbox (int x, int y, int on)
 void M_Options_Draw (void)
 {
 	mpic_t	*p;
+	int lx = 0, ly = 0;	// lower bounds of the window 
 
 	//M_DrawTransPic (16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic ("gfx/p_option.lmp");
 	M_DrawPic ((320 - p->width) >> 1, 4, p);
 
-	M_PrintWhite(16, 32, "    Customize controls");
-	M_PrintWhite(16, 40, "         Mouse options");
+	M_Print_GetPoint(16, 32, &options_window.x, &options_window.y, "    Customize controls", options_cursor == 0);
+	M_Print_GetPoint(16, 40, &lx, &ly, "         Mouse options", options_cursor == 1);
 
 	//M_Print (16, 120, "          MP Optimized");
 	//M_DrawCheckbox (220, 120, mp_optimized);
 
-	M_PrintWhite(16, 56, "           Hud options");
-	M_PrintWhite(16, 64, "         Sound options");
+	M_Print_GetPoint(16, 56, &lx, &ly, "           Hud options", options_cursor == 3);
+	M_Print_GetPoint(16, 64, &lx, &ly, "         Sound options", options_cursor == 4);
 
 #ifdef GLQUAKE
-	M_PrintWhite(16, 72, "       Display Options");
-	M_PrintWhite(16, 80, " Miscellaneous options");
+	M_Print_GetPoint(16, 72, &lx, &ly, "       Display Options", options_cursor == 5);
+	M_Print_GetPoint(16, 80, &lx, &ly, " Miscellaneous options", options_cursor == 6);
 #else
 	M_PrintWhite(16, 72, " Miscellaneous options");
 #endif
@@ -1786,9 +1979,9 @@ void M_Options_Draw (void)
 
 		M_PrintWhite(16, 96, "         Go to console");
 #else
-		M_PrintWhite(16, 88, "        Set video mode");
+		M_Print_GetPoint(16, 88, &lx, &ly, "        Set video mode", options_cursor == 7);
 
-		M_PrintWhite(16, 104, "         Go to console");
+		M_Print_GetPoint(16, 104, &lx, &ly, "         Go to console", options_cursor == 9);
 #endif
 	}
 	else
@@ -1796,11 +1989,18 @@ void M_Options_Draw (void)
 #ifndef GLQUAKE
 		M_PrintWhite(16, 88, "         Go to console");
 #else
-		M_PrintWhite(16, 96, "         Go to console");
+		M_Print_GetPoint(16, 96, &lx, &ly, "         Go to console", options_cursor == 8);
 #endif
 	}
 
-// cursor
+	options_window.w = 24 * 8; // presume 8 pixels for each letter
+	options_window.h = ly - options_window.y + 8;
+
+	// don't draw cursor if we're on a spacing line
+	if ((options_cursor == OPTIONS_ITEMS - 3 && !vid_menudrawfn) || options_cursor == 2 || options_cursor == 8)
+		return;
+
+	// cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
 }
 
@@ -1812,10 +2012,12 @@ void M_Options_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 		M_Menu_Main_f ();
 		break;
 
 	case K_ENTER:
+	case K_MOUSE1:
 		m_entersound = true;
 		switch (options_cursor)
 		{
@@ -1878,6 +2080,7 @@ void M_Options_Key (int k)
 		return;
 
 	case K_UPARROW:
+	case K_MWHEELUP:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor--;
 		if (options_cursor < 0)
@@ -1885,6 +2088,7 @@ void M_Options_Key (int k)
 		break;
 
 	case K_DOWNARROW:
+	case K_MWHEELDOWN:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor++;
 		if (options_cursor >= OPTIONS_ITEMS)
@@ -1926,6 +2130,16 @@ void M_Options_Key (int k)
 		if (k == K_DOWNARROW && (options_cursor == 2 || options_cursor == 8))
 			options_cursor++;
 	}
+}
+
+qboolean M_Options_Mouse_Event(const mouse_state_t *ms)
+{
+	M_Mouse_Select(&options_window, ms, OPTIONS_ITEMS, &options_cursor);
+
+	if (ms->button_up == 1) M_Options_Key(K_MOUSE1);
+	if (ms->button_up == 2) M_Options_Key(K_MOUSE2);
+
+	return true;
 }
 
 //=============================================================================
@@ -5203,6 +5417,7 @@ void M_Quit_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 	case 'n':
 	case 'N':
 		if (wasInMenus)
@@ -5218,6 +5433,7 @@ void M_Quit_Key (int key)
 		break;
 
 	case K_ENTER:
+	case K_MOUSE1: 
 	case 'Y':
 	case 'y':
 		key_dest = key_console;
@@ -6960,6 +7176,8 @@ void M_Init (void)
 
 void M_Draw (void)
 {
+	double aspect;
+
 	if (m_state == m_none || key_dest != key_menu)
 		return;
 
@@ -6988,7 +7206,8 @@ void M_Draw (void)
 
 #ifdef GLQUAKE
 	menuwidth = 480;
-	menuheight = 305;	// this is the correct value for the 480px width, taking the actual ratio of the mainmenu pic
+	aspect = (double)vid.height / (double)vid.width;
+	menuheight = (int)(menuwidth * aspect);
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
 	glOrtho (0, menuwidth, menuheight, 0, -99999, 99999);
@@ -7173,160 +7392,73 @@ void M_Keydown (int key)
 {
 	switch (m_state)
 	{
-	case m_none:
-		return;
-
-	case m_main:
-		M_Main_Key (key);
-		return;
-
-	case m_singleplayer:
-		M_SinglePlayer_Key (key);
-		return;
-
-	case m_load:
-		M_Load_Key (key);
-		return;
-
-	case m_save:
-		M_Save_Key (key);
-		return;
-
-	case m_multiplayer:
-		M_MultiPlayer_Key (key);
-		return;
-
-	case m_setup:
-		M_Setup_Key (key);
-		return;
-
-	case m_namemaker:
-		M_NameMaker_Key (key);
-		return;
-
-	case m_net:
-		M_Net_Key (key);
-		return;
-
-	case m_options:
-		M_Options_Key (key);
-		return;
-
-	case m_keys:
-		M_Keys_Key (key);
-		return;
-
-	case m_mouse:
-		M_Mouse_Key(key);
-		return;
-
-	case m_misc:
-		M_Misc_Key(key);
-		break;
-
-	case m_hud:
-		M_Hud_Key(key);
-		break;
-
-	case m_crosshair_colorchooser:
-		M_ColorChooser_Key(key, cs_crosshair);
-		break;
-
-	case m_sound:
-		M_Sound_Key(key);
-		break;
-
+	case m_none:			return;
+	case m_main:			M_Main_Key (key); return;
+	case m_singleplayer:	M_SinglePlayer_Key (key); return;
+	case m_load:			M_Load_Key (key); return;
+	case m_save:			M_Save_Key (key); return;
+	case m_multiplayer:		M_MultiPlayer_Key (key); return;
+	case m_setup:			M_Setup_Key (key); return;
+	case m_namemaker:		M_NameMaker_Key (key); return;
+	case m_net:				M_Net_Key (key); return;
+	case m_options:			M_Options_Key (key); return;
+	case m_keys:			M_Keys_Key (key); return;
+	case m_mouse:			M_Mouse_Key(key); return;
+	case m_misc:			M_Misc_Key(key); break;
+	case m_hud:				M_Hud_Key(key); break;
+	case m_crosshair_colorchooser: M_ColorChooser_Key(key, cs_crosshair); break;
+	case m_sound:			M_Sound_Key(key); break;
 #ifdef GLQUAKE
-	case m_display:
-		M_Display_Key (key);
-		return;
-
-	case m_opengl:
-		M_OpenGL_Key(key);
-		return;
-
-	case m_textures:
-		M_Textures_Key(key);
-		return;
-
-	case m_particles:
-		M_Particles_Key (key);
-		return;
-
-	case m_decals:
-		M_Decals_Key(key);
-		return;
-
-	case m_weapons:
-		M_Weapons_Key(key);
-		return;
-
-	case m_screenflashes:
-		M_ScreenFlashes_Key(key);
-		return;
-
-	case m_sky_colorchooser:
-		M_ColorChooser_Key(key, cs_sky);
-		break;
-
+	case m_display:			M_Display_Key (key); return;
+	case m_opengl:			M_OpenGL_Key(key); return;
+	case m_textures:		M_Textures_Key(key); return;
+	case m_particles:		M_Particles_Key (key); return;
+	case m_decals:			M_Decals_Key(key); return;
+	case m_weapons:			M_Weapons_Key(key); return;
+	case m_screenflashes:	M_ScreenFlashes_Key(key); return;
+	case m_sky_colorchooser: M_ColorChooser_Key(key, cs_sky); break;
 #endif
-
-	case m_videomodes:
-		M_VideoModes_Key (key);
-		return;
-
-	case m_nehdemos:
-		M_NehDemos_Key (key);
-		return;
-
-	case m_maps:
-		M_Maps_Key (key);
-		return;
-
-	case m_demos:
-		M_Demos_Key (key);
-		return;
-
-	case m_help:
-		M_Help_Key (key);
-		return;
-
-	case m_quit:
-		M_Quit_Key (key);
-		return;
-
-	case m_serialconfig:
-		M_SerialConfig_Key (key);
-		return;
-
-	case m_modemconfig:
-		M_ModemConfig_Key (key);
-		return;
-
-	case m_lanconfig:
-		M_LanConfig_Key (key);
-		return;
-
-	case m_gameoptions:
-		M_GameOptions_Key (key);
-		return;
-
-	case m_search:
-		M_Search_Key (key);
-		break;
-
-	case m_servers:
-		M_FoundServers_Key (key);
-		break;
-
-	case m_slist:
-		M_ServerList_Key (key);
-		return;
-
-	case m_sedit:
-		M_SEdit_Key (key);
-		break;
+	case m_videomodes:		M_VideoModes_Key (key); return;
+	case m_nehdemos:		M_NehDemos_Key (key); return;
+	case m_maps:			M_Maps_Key (key); return;
+	case m_demos:			M_Demos_Key (key); return;
+	case m_help:			M_Help_Key (key); return;
+	case m_quit:			M_Quit_Key (key); return;
+	case m_serialconfig:	M_SerialConfig_Key (key); return;
+	case m_modemconfig:		M_ModemConfig_Key (key); return;
+	case m_lanconfig:		M_LanConfig_Key (key); return;
+	case m_gameoptions:		M_GameOptions_Key (key); return;
+	case m_search:			M_Search_Key (key); break;
+	case m_servers:			M_FoundServers_Key (key); break;
+	case m_slist:			M_ServerList_Key (key); return;
+	case m_sedit:			M_SEdit_Key (key); break;
 	}
+}
+
+qboolean Menu_Mouse_Event(const mouse_state_t* ms)
+{
+	if (ms->button_down == K_MWHEELDOWN || ms->button_up == K_MWHEELDOWN ||
+		ms->button_down == K_MWHEELUP || ms->button_up == K_MWHEELUP)
+	{
+		// menus do not handle this type of mouse wheel event, they accept it as a key event	
+		return false;
+	}
+
+	// send the mouse state to appropriate modules here
+	// functions should report if they handled the event or not
+	switch (m_state) 
+	{
+	case m_none: default:	return false;
+	case m_main:			return M_Main_Mouse_Event(ms);
+	case m_singleplayer:	return M_SinglePlayer_Mouse_Event(ms);
+	case m_multiplayer:		return M_MultiPlayer_Mouse_Event(ms);
+	case m_load:			return M_Load_Mouse_Event(ms);
+	case m_save:			return M_Save_Mouse_Event(ms);
+	case m_options:			return M_Options_Mouse_Event(ms);
+	//case m_demos:			return Menu_Demo_Mouse_Event(ms);
+	//case m_help:			return Menu_Help_Mouse_Event(ms);
+	}
+	return false;
 }
 
 void M_ConfigureNetSubsystem (void)

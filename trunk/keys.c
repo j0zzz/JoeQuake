@@ -201,6 +201,8 @@ keyname_t keynames[] =
 	{NULL, 0}
 };
 
+mouse_state_t scr_pointer_state;
+
 /*
 ==============================================================================
 
@@ -911,6 +913,66 @@ void Key_Init (void)
 	Cvar_Register (&cl_chatmode);
 }
 
+// sends new mouse state message to active module and it's windows
+// returns:
+//   true: message was received and handled
+//   false: message wasn't handled by any window
+static qboolean Mouse_EventDispatch(void)
+{
+	qboolean mouse_handled = false;
+
+	// Send mouse cursor status to appropriate windows
+	switch (key_dest)
+	{
+	case key_menu:
+		mouse_handled = Menu_Mouse_Event(&scr_pointer_state);
+		break;
+	default:
+		break;
+		// unhandled
+	case key_game:
+	case key_console:
+	case key_message:
+		break;
+	}
+
+	return mouse_handled;
+}
+
+// called by Key_Event, updates button states
+qboolean Mouse_ButtonEvent(int key, qboolean down)
+{
+	if (key >= K_MOUSE1 && key <= K_MOUSE8)
+	{	// in this case we convert the button number to the range 1..8
+		key = key - K_MOUSE1 + 1;   // get the button number, starting from 1
+		key = bound(1, key, 8);
+		scr_pointer_state.buttons[key] = down;
+	}
+	else if (key != K_MWHEELDOWN && key != K_MWHEELUP)
+	{
+		// not a mouse button received
+		return false;
+	}
+
+	scr_pointer_state.button_down = down ? key : 0;
+	scr_pointer_state.button_up = down ? 0 : key;
+
+	// report if the button event has been handled or not
+	return Mouse_EventDispatch();
+}
+
+// called by gl_screen.c each time it figures out that the mouse has moved
+void Mouse_MoveEvent(void)
+{
+	// no button has been pressed
+	scr_pointer_state.button_down = 0;
+	scr_pointer_state.button_up = 0;
+
+	// the rest of scr_pointer_state has already been updated by gl_screen module
+
+	Mouse_EventDispatch();  // so just dispatch the message with new state
+}
+
 qboolean Key_isSpecial (int key)
 {
 	if (key == K_INS || key == K_DEL || key == K_HOME || 
@@ -960,6 +1022,22 @@ Should NOT be called during an interrupt!
 void Key_Event (int key, qboolean down)
 {
 	char	*kb, cmd[1024];
+
+	if (key >= K_MOUSE1 && key <= K_MOUSE8)
+	{
+		// if the Mouse_ButtonEvent return true means that the window which received
+		// a mouse click handled it and we do not have to send old
+		// K_MOUSE* key event
+		if (Mouse_ButtonEvent(key, down))
+			return;
+	}
+
+	if (key == K_MWHEELDOWN || key == K_MWHEELUP) 
+	{
+		// same logic applies here as for handling K_MOUSE1..8 buttons
+		if (Mouse_ButtonEvent(key, down))
+			return;
+	}
 
 	if (key == K_LALT || key == K_RALT)
 		Key_Event (K_ALT, down);

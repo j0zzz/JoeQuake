@@ -180,6 +180,25 @@ extern	qboolean	keydown[256];
 extern	int		key_count;			// incremented every key event
 extern	int		key_lastpress;
 
+// this is message type sent across windows that accept mouse pointer
+typedef struct mouse_state_s 
+{
+	double x;           // current mouse pointer horisontal position
+	double y;           // current mouse pointer vertical position
+	double x_old;	    // previous mouse pointer positions
+	double y_old;
+	qboolean buttons[9]; // button states .. omit button 0
+	int button_down;    // number of the button that just has been pressed down
+	int button_up;      // number of the button that just has been released
+} mouse_state_t;
+
+// exported only to be changed in the cl_screen.c module where mouse position gets updated
+// do not access this variable anywhere else, prefer "window-messages" system
+extern mouse_state_t scr_pointer_state;
+
+// used in cl_screen module which is responsible for updating the mouse pointer position
+void Mouse_MoveEvent(void);
+
 void Key_Event (int key, qboolean down);
 void Key_Init (void);
 void Key_WriteBindings (FILE *f);

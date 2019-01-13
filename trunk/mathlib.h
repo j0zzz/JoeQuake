@@ -157,3 +157,5 @@ extern	vec3_t	vec3_origin;
 extern	int	_mathlib_temp_int1, _mathlib_temp_int2;
 extern	float	_mathlib_temp_float1, _mathlib_temp_float2;
 extern	vec3_t	_mathlib_temp_vec1;
+
+#define clamp(a,b,c) (a = min(max(a, b), c))
