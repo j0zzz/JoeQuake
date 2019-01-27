@@ -274,6 +274,21 @@ void Sbar_Init (void)
 
 //=============================================================================
 
+float Sbar_GetScaleAmount(void)
+{
+	return bound(1, scr_sbarscale_amount.value, 4);
+}
+
+int Sbar_GetScaledCharacterSize(void)
+{
+	return (int)(8 * Sbar_GetScaleAmount());
+}
+
+int Sbar_GetScaledSbarHeight(void)
+{
+	return (int)(SBAR_HEIGHT * Sbar_GetScaleAmount());
+}
+
 // drawing routines are relative to the status bar location
 
 /*
@@ -283,7 +298,10 @@ Sbar_DrawPic
 */
 void Sbar_DrawPic (int x, int y, mpic_t *pic)
 {
-	Draw_Pic (x + sbar_xofs, y + (vid.height-SBAR_HEIGHT), pic);
+	float scale;
+
+	scale = Sbar_GetScaleAmount();
+	Draw_Pic ((int)(x * scale) + sbar_xofs, (int)(y * scale) + (vid.height - Sbar_GetScaledSbarHeight()), pic, true);
 }
 
 /*
@@ -294,7 +312,7 @@ JACK: Draws a portion of the picture in the status bar.
 */
 void Sbar_DrawSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height)
 {
-	Draw_SubPic (x, y + (vid.height-SBAR_HEIGHT), pic, srcx, srcy, width, height);
+	Draw_SubPic (x, y + (vid.height - Sbar_GetScaledSbarHeight()), pic, srcx, srcy, width, height);
 }
 
 /*
@@ -304,7 +322,10 @@ Sbar_DrawTransPic
 */
 void Sbar_DrawTransPic (int x, int y, mpic_t *pic)
 {
-	Draw_TransPic (x + sbar_xofs, y + (vid.height-SBAR_HEIGHT), pic);
+	float scale;
+
+	scale = Sbar_GetScaleAmount();
+	Draw_TransPic ((int)(x * scale) + sbar_xofs, (int)(y * scale) + (vid.height - Sbar_GetScaledSbarHeight()), pic, true);
 }
 
 /*
@@ -316,7 +337,10 @@ Draws one solid graphics character
 */
 void Sbar_DrawCharacter (int x, int y, int num)
 {
-	Draw_Character (x + 4 + sbar_xofs, y + vid.height-SBAR_HEIGHT, num);
+	float scale;
+
+	scale = Sbar_GetScaleAmount();
+	Draw_Character ((int)((x + 4) * scale) + sbar_xofs, (int)(y * scale) + (vid.height - Sbar_GetScaledSbarHeight()), num, true);
 }
 
 /*
@@ -326,7 +350,10 @@ Sbar_DrawString
 */
 void Sbar_DrawString (int x, int y, char *str)
 {
-	Draw_String (x + sbar_xofs, y + (vid.height-SBAR_HEIGHT), str);
+	float scale;
+	
+	scale = Sbar_GetScaleAmount();
+	Draw_String ((int)(x * scale) + sbar_xofs, (int)(y * scale) + (vid.height - Sbar_GetScaledSbarHeight()), str, true);
 }
 
 /*
@@ -514,10 +541,12 @@ void Sbar_DrawInventory (void)
 {
 	int		i, flashon, ystart;
 	char		num[6];
-	float		time;
+	float		time, scale;
 	qboolean	headsup;
 
 	headsup = !(cl_sbar.value == 1 || scr_viewsize.value < 100);
+
+	scale = Sbar_GetScaleAmount();
 
 	if (!headsup)
 	{
@@ -552,7 +581,7 @@ void Sbar_DrawInventory (void)
 			if (headsup)
 			{
 				if (i || vid.height > 200)
-					Sbar_DrawSubPic ((vid.width-24), ystart - (7-i)*16, sb_weapons[flashon][i], 0, 0, 24, 16);
+					Sbar_DrawSubPic ((vid.width - (int)(24 * scale)), (int)((ystart - (7-i)*16) * scale), sb_weapons[flashon][i], 0, 0, 24, 16);
 			}
 			else
 			{
@@ -682,13 +711,17 @@ void Sbar_DrawInventory (void)
 		Q_snprintfz (num, sizeof(num), "%3i", cl.stats[STAT_SHELLS+i]);
 		if (headsup)
 		{
-			Sbar_DrawSubPic ((vid.width-42), -24 - (4-i)*11, sb_ibar, 3+(i*48), 0, 42, 11);
+			int sbar_height;
+
+			sbar_height = Sbar_GetScaledSbarHeight();
+
+			Sbar_DrawSubPic ((vid.width - (int)(42 * scale)), (int)((-24 - (4-i)*11) * scale), sb_ibar, 3+(i*48), 0, 42, 11);
 			if (num[0] != ' ')
-				Draw_Character ((vid.width - 35), vid.height-SBAR_HEIGHT-24 - (4-i)*11, 18 + num[0] - '0');
+				Draw_Character ((vid.width - (int)(35 * scale)), vid.height - sbar_height - (int)(24 * scale) - (int)((4-i)*11 * scale), 18 + num[0] - '0', true);
 			if (num[1] != ' ')
-				Draw_Character ((vid.width - 27), vid.height-SBAR_HEIGHT-24 - (4-i)*11, 18 + num[1] - '0');
+				Draw_Character ((vid.width - (int)(27 * scale)), vid.height - sbar_height - (int)(24 * scale) - (int)((4-i)*11 * scale), 18 + num[1] - '0', true);
 			if (num[2] != ' ')
-				Draw_Character ((vid.width - 19), vid.height-SBAR_HEIGHT-24 - (4-i)*11, 18 + num[2] - '0');
+				Draw_Character ((vid.width - (int)(19 * scale)), vid.height - sbar_height - (int)(24 * scale) - (int)((4-i)*11 * scale), 18 + num[2] - '0', true);
 		}
 		else
 		{
@@ -789,6 +822,7 @@ Sbar_DrawFrags
 void Sbar_DrawFrags (void)
 {
 	int		i, k, l, top, bottom, x, y, f;
+	float	scale;
 	char		num[12];
 	scoreboard_t	*s;
 
@@ -800,8 +834,10 @@ void Sbar_DrawFrags (void)
 // draw the text
 	l = (scoreboardlines <= 4) ? scoreboardlines : 4;
 
+	scale = Sbar_GetScaleAmount();
+
 	x = 23;
-	y = vid.height - SBAR_HEIGHT - 23;
+	y = vid.height - Sbar_GetScaledSbarHeight() - (int)(23 * scale);
 
 	for (i=0 ; i<l ; i++)
 	{
@@ -816,8 +852,8 @@ void Sbar_DrawFrags (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
-		Draw_Fill (sbar_xofs + x*8 + 10, y, 28, 4, top);
-		Draw_Fill (sbar_xofs + x*8 + 10, y+4, 28, 3, bottom);
+		Draw_Fill (sbar_xofs + (int)((x*8 + 10) * scale), y, 28, 4, top);
+		Draw_Fill (sbar_xofs + (int)((x*8 + 10) * scale), y + (int)(4 * scale), 28, 3, bottom);
 
 	// draw number
 		f = s->frags;
@@ -851,7 +887,8 @@ void Sbar_DrawFace (int xpos, int ypos)
 // PGM 03/02/97 - fixed so color swatch only appears in CTF modes
 	if (rogue && (cl.maxclients != 1) && (teamplay.value > 3) && (teamplay.value < 7))
 	{
-		int		top, bottom, xofs;
+		int		top, bottom, xofs, sbar_height;
+		float	scale;
 		char		num[12];
 		scoreboard_t	*s;
 
@@ -862,11 +899,13 @@ void Sbar_DrawFace (int xpos, int ypos)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
-		xofs = (cl.gametype == GAME_DEATHMATCH) ? 113 : ((vid.width - 320) >> 1) + 113;
+		scale = Sbar_GetScaleAmount();
+		xofs = (cl.gametype == GAME_DEATHMATCH) ? (int)(113 * scale) : ((vid.width - (int)(320 * scale)) >> 1) + (int)(113 * scale);
 
 		Sbar_DrawPic (xpos, ypos, rsb_teambord);
-		Draw_Fill (xofs, vid.height-SBAR_HEIGHT+3, 22, 9, top);
-		Draw_Fill (xofs, vid.height-SBAR_HEIGHT+12, 22, 9, bottom);
+		sbar_height = Sbar_GetScaledSbarHeight();
+		Draw_Fill (xofs, vid.height - sbar_height + (int)(3 * scale), 22, 9, top);
+		Draw_Fill (xofs, vid.height - sbar_height + (int)(12 * scale), 22, 9, bottom);
 
 		// draw number
 		f = s->frags;
@@ -942,6 +981,7 @@ Sbar_DrawNormal
 void Sbar_DrawNormal (void)
 {
 	int iconxpos, iconypos, numxpos, numypos;
+	float scale;
 
 	if (cl_sbar.value == 1 || scr_viewsize.value < 100)
 		Sbar_DrawPic (0, 0, sb_sbar);
@@ -956,19 +996,21 @@ void Sbar_DrawNormal (void)
 			Sbar_DrawPic (209, 12, sb_items[1]);
 	}
 
+	scale = Sbar_GetScaleAmount();
+
 // armor
 	if (cl_sbar.value == 2 && scr_viewsize.value >= 100)
 	{
-		iconxpos = -sbar_xofs + 24;
+		iconxpos = (int)((-sbar_xofs + (int)(24 * scale)) / scale);
 		iconypos = -SBAR_HEIGHT;
-		numxpos = -sbar_xofs + 48;
+		numxpos = (int)((-sbar_xofs + (int)(48 * scale)) / scale);
 		numypos = -SBAR_HEIGHT;
 	}
 	else
 	{
 		iconxpos = 0;
 		iconypos = 0;
-		numxpos = 24;
+		numxpos = SBAR_HEIGHT;
 		numypos = 0;
 	}
 
@@ -1003,9 +1045,9 @@ void Sbar_DrawNormal (void)
 
 	if (cl_sbar.value == 2 && scr_viewsize.value >= 100)
 	{
-		iconxpos = -sbar_xofs + 24;
+		iconxpos = (int)((-sbar_xofs + (int)(24 * scale)) / scale);
 		iconypos = 0;
-		numxpos = -sbar_xofs + 48;
+		numxpos = (int)((-sbar_xofs + (int)(48 * scale)) / scale);
 		numypos = 0;
 	}
 	else
@@ -1024,9 +1066,9 @@ void Sbar_DrawNormal (void)
 
 	if (cl_sbar.value == 2 && scr_viewsize.value >= 100)
 	{
-		iconxpos = -sbar_xofs + vid.width - 120;
+		iconxpos = (int)((-sbar_xofs + vid.width - (120 * scale)) / scale);
 		iconypos = 0;
-		numxpos = -sbar_xofs + vid.width - 96;
+		numxpos = (int)((-sbar_xofs + vid.width - (96 * scale)) / scale);
 		numypos = 0;
 	}
 	else
@@ -1078,6 +1120,7 @@ Sbar_Draw
 void Sbar_Draw (void)
 {
 	qboolean	headsup;
+	float		scale;
 
 	headsup = !(cl_sbar.value == 1 || scr_viewsize.value < 100);
 	if (sb_updates >= vid.numpages && !headsup)
@@ -1090,7 +1133,8 @@ void Sbar_Draw (void)
 
 	sb_updates++;
 
-	sbar_xofs = scr_centersbar.value ? (vid.width - 320) >> 1 : 0;
+	scale = Sbar_GetScaleAmount();
+	sbar_xofs = scr_centersbar.value ? (vid.width - (int)(320 * scale)) >> 1 : 0;
 
 // top line
 	if (sb_lines > 24)
@@ -1122,10 +1166,10 @@ void Sbar_Draw (void)
 	if (vid.width > 320 && !headsup)
 	{	// left
 		if (scr_centersbar.value)
-			Draw_TileClear (0, vid.height - sb_lines, sbar_xofs, sb_lines);
+			Draw_TileClear (0, vid.height - (int)(sb_lines * scale), sbar_xofs, (int)(sb_lines * scale));
 
 		// right
-		Draw_TileClear (320 + sbar_xofs, vid.height - sb_lines, vid.width - (320 + sbar_xofs), sb_lines);
+		Draw_TileClear ((int)(320 * scale) + sbar_xofs, vid.height - (int)(sb_lines * scale), vid.width - (320 + sbar_xofs), (int)(sb_lines * scale));
 	}
 #endif
 
@@ -1143,21 +1187,23 @@ Sbar_IntermissionNumber
 void Sbar_IntermissionNumber (int x, int y, int num, int digits, int color)
 {
 	char	str[12], *ptr;
-	int	l, frame;
+	int		l, frame, scaled_number_size;
+
+	scaled_number_size = (int)(24 * Sbar_GetScaleAmount());
 
 	l = Sbar_itoa (num, str);
 	ptr = str;
 	if (l > digits)
 		ptr += (l-digits);
 	if (l < digits)
-		x += (digits-l) * 24;
+		x += (digits-l) * scaled_number_size;
 
 	while (*ptr)
 	{
 		frame = (*ptr == '-') ? STAT_MINUS : *ptr -'0';
 
-		Draw_TransPic (x, y, sb_nums[color][frame]);
-		x += 24;
+		Draw_TransPic (x, y, sb_nums[color][frame], true);
+		x += scaled_number_size;
 		ptr++;
 	}
 }
@@ -1169,7 +1215,8 @@ Sbar_DeathmatchOverlay
 */
 void Sbar_DeathmatchOverlay (void)
 {
-	int		i, j, k, l, top, bottom, x, y, xofs;
+	int		i, j, k, l, top, bottom, x, y, xofs, size;
+	float	scale;
 	char		num[12];
 	mpic_t		*pic;
 	scoreboard_t	*s;
@@ -1191,10 +1238,12 @@ void Sbar_DeathmatchOverlay (void)
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;
 
-	xofs = (vid.width - 320) >> 1;
+	scale = Sbar_GetScaleAmount();
+	xofs = (vid.width - (int)(320 * scale)) >> 1;
+	size = Sbar_GetScaledCharacterSize();
 
 	pic = Draw_CachePic ("gfx/ranking.lmp");
-	Draw_Pic (xofs + 160 - pic->width/2, 0, pic);
+	Draw_Pic (xofs + (int)((160 - pic->width/2) * scale), 0, pic, true);
 
 // scores
 	Sbar_SortFrags ();
@@ -1202,9 +1251,9 @@ void Sbar_DeathmatchOverlay (void)
 // draw the stats
 	l = scoreboardlines;
 
-	x = 80 + ((vid.width - 320) >> 1);
-	y = 40;
-	Draw_String (x, 24, "ping frags name");
+	x = (int)(80 * scale) + xofs;
+	y = (int)(40 * scale);
+	Draw_String (x, (int)(24 * scale), "ping frags name", true);
 	for (i=0 ; i<l ; i++)
 	{
 		k = fragsort[i];
@@ -1218,29 +1267,29 @@ void Sbar_DeathmatchOverlay (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
-		Draw_Fill (x + 40, y, 40, 4, top);
-		Draw_Fill (x + 40, y + 4, 40, 4, bottom);
+		Draw_Fill (x + (int)(40 * scale), y, 40, 4, top);
+		Draw_Fill (x + (int)(40 * scale), y + (int)(4 * scale), 40, 4, bottom);
 
 	// draw ping
 		Q_snprintfz (num, sizeof(num), "%4i", s->ping);
 		for (j=0 ; j<4 ; j++)
-			Draw_Character (x + 8*j, y, num[j]);
+			Draw_Character (x + (size * j), y, num[j], true);
 
 	// draw frags
 		Q_snprintfz (num, sizeof(num), "%3i", s->frags);
 		for (j=0 ; j<3 ; j++)
-			Draw_Character (x + 48 + 8*j, y, num[j]);
+			Draw_Character (x + (size * 6) + (size * j), y, num[j], true);
 
 		if (k == cl.viewentity - 1)
 		{
-			Draw_Character (x + 40, y, 16);
-			Draw_Character (x + 72, y, 17);
+			Draw_Character (x + (size * 5), y, 16, true);
+			Draw_Character (x + (size * 9), y, 17, true);
 		}
 
 	// draw name
-		Draw_String (x + 88, y, s->name);
+		Draw_String (x + (int)(88 * scale), y, s->name, true);
 
-		y += 10;
+		y += (int)(10 * scale);
 	}
 }
 
@@ -1251,7 +1300,8 @@ Sbar_MiniDeathmatchOverlay
 */
 void Sbar_MiniDeathmatchOverlay (void)
 {
-	int		i, k, l, top, bottom, x, y, f, numlines;
+	int		i, k, l, top, bottom, x, y, f, numlines, size;
+	float	scale;
 	char		num[12];
 	scoreboard_t	*s;
 
@@ -1261,13 +1311,16 @@ void Sbar_MiniDeathmatchOverlay (void)
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;
 
+	scale = Sbar_GetScaleAmount();
+	size = Sbar_GetScaledCharacterSize();
+
 // scores
 	Sbar_SortFrags ();
 
 // draw the text
 	l = scoreboardlines;
-	y = vid.height - sb_lines;
-	numlines = sb_lines/8;
+	y = vid.height - (int)(sb_lines * scale);
+	numlines = (int)((sb_lines / 8) * scale);
 	if (numlines < 3)
 		return;
 
@@ -1279,7 +1332,7 @@ void Sbar_MiniDeathmatchOverlay (void)
 	i = (i == scoreboardlines) ? 0 : i - numlines / 2;
 	i = bound(0, i, scoreboardlines - numlines);
 
-	x = 324;
+	x = (int)(324 * scale);
 	for ( ; i < scoreboardlines && y < vid.height - 8 ; i++)
 	{
 		k = fragsort[i];
@@ -1293,27 +1346,27 @@ void Sbar_MiniDeathmatchOverlay (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 
-		Draw_Fill (x, y+1, 40, 3, top);
-		Draw_Fill (x, y+4, 40, 4, bottom);
+		Draw_Fill (x, y + (int)(1 * scale), 40, 3, top);
+		Draw_Fill (x, y + (int)(4 * scale), 40, 4, bottom);
 
 	// draw number
 		f = s->frags;
 		Q_snprintfz (num, sizeof(num), "%3i", f);
 
-		Draw_Character (x + 8, y, num[0]);
-		Draw_Character (x + 16, y, num[1]);
-		Draw_Character (x + 24, y, num[2]);
+		Draw_Character (x + size, y, num[0], true);
+		Draw_Character (x + (size * 2), y, num[1], true);
+		Draw_Character (x + (size * 3), y, num[2], true);
 
 		if (k == cl.viewentity - 1)
 		{
-			Draw_Character (x, y, 16);
-			Draw_Character (x + 32, y, 17);
+			Draw_Character (x, y, 16, true);
+			Draw_Character (x + (size * 4), y, 17, true);
 		}
 
 	// draw name
-		Draw_String (x+48, y, s->name);
+		Draw_String (x + (int)(48 * scale), y, s->name, true);
 
-		y += 8;
+		y += size;
 	}
 }
 
@@ -1325,7 +1378,8 @@ Sbar_IntermissionOverlay
 void Sbar_IntermissionOverlay (void)
 {
 	mpic_t	*pic;
-	int	dig, num, xofs;
+	int		dig, num, xofs;
+	float	scale;
 
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;
@@ -1336,31 +1390,32 @@ void Sbar_IntermissionOverlay (void)
 		return;
 	}
 
-	xofs = (vid.width - 320) >> 1;
+	scale = Sbar_GetScaleAmount();
+	xofs = (vid.width - (int)(320 * scale)) >> 1;
 
 	pic = Draw_CachePic ("gfx/complete.lmp");
-	Draw_Pic (xofs + 64, 24, pic);
+	Draw_Pic (xofs + (int)(64 * scale), (int)(24 * scale), pic, true);
 
 	pic = Draw_CachePic ("gfx/inter.lmp");
-	Draw_TransPic (xofs, 56, pic);
+	Draw_TransPic (xofs, (int)(56 * scale), pic, true);
 
 	// time
 	dig = cl.completed_time / 60;
-	Sbar_IntermissionNumber (xofs + 160, 64, dig, 3, 0);
+	Sbar_IntermissionNumber (xofs + (int)(160 * scale), (int)(64 * scale), dig, 3, 0);
 	num = cl.completed_time - dig * 60;
-	Draw_TransPic (xofs + 234, 64, sb_colon);
-	Draw_TransPic (xofs + 246, 64, sb_nums[0][num/10]);
-	Draw_TransPic (xofs + 266, 64, sb_nums[0][num%10]);
+	Draw_TransPic (xofs + (int)(234 * scale), (int)(64 * scale), sb_colon, true);
+	Draw_TransPic (xofs + (int)(246 * scale), (int)(64 * scale), sb_nums[0][num/10], true);
+	Draw_TransPic (xofs + (int)(266 * scale), (int)(64 * scale), sb_nums[0][num%10], true);
 
 	// secrets
-	Sbar_IntermissionNumber (xofs + 160, 104, cl.stats[STAT_SECRETS], 3, 0);
-	Draw_TransPic (xofs + 232, 104, sb_slash);
-	Sbar_IntermissionNumber (xofs + 240, 104, cl.stats[STAT_TOTALSECRETS], 3, 0);
+	Sbar_IntermissionNumber (xofs + (int)(160 * scale), (int)(104 * scale), cl.stats[STAT_SECRETS], 3, 0);
+	Draw_TransPic (xofs + (int)(232 * scale), (int)(104 * scale), sb_slash, true);
+	Sbar_IntermissionNumber (xofs + (int)(240 * scale), (int)(104 * scale), cl.stats[STAT_TOTALSECRETS], 3, 0);
 
 	// monsters
-	Sbar_IntermissionNumber (xofs + 160, 144, cl.stats[STAT_MONSTERS], 3, 0);
-	Draw_TransPic (xofs + 232, 144, sb_slash);
-	Sbar_IntermissionNumber (xofs + 240, 144, cl.stats[STAT_TOTALMONSTERS], 3, 0);
+	Sbar_IntermissionNumber (xofs + (int)(160 * scale), (int)(144 * scale), cl.stats[STAT_MONSTERS], 3, 0);
+	Draw_TransPic (xofs + (int)(232 * scale), (int)(144 * scale), sb_slash, true);
+	Sbar_IntermissionNumber (xofs + (int)(240 * scale), (int)(144 * scale), cl.stats[STAT_TOTALMONSTERS], 3, 0);
 }
 
 /*
@@ -1370,10 +1425,13 @@ Sbar_FinaleOverlay
 */
 void Sbar_FinaleOverlay (void)
 {
+	float	scale;
 	mpic_t	*pic;
 
 	scr_copyeverything = 1;
 
+	scale = Sbar_GetScaleAmount();
+
 	pic = Draw_CachePic ("gfx/finale.lmp");
-	Draw_TransPic ((vid.width - pic->width) / 2, 16, pic);
+	Draw_TransPic ((vid.width - (int)(pic->width * scale)) / 2, (int)(16 * scale), pic, true);
 }

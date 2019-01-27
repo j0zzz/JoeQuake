@@ -694,9 +694,9 @@ It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void Draw_Character (int x, int y, int num)
+void Draw_Character (int x, int y, int num, qboolean scale)
 {
-	int	row, col;
+	int	row, col, size;
 	float	frow, fcol;
 
 	if (y <= -8)
@@ -713,17 +713,19 @@ void Draw_Character (int x, int y, int num)
 	frow = row * 0.0625;
 	fcol = col * 0.0625;
 
+	size = scale ? Sbar_GetScaledCharacterSize() : 8;
+
 	GL_Bind (char_texture);
 
 	glBegin (GL_QUADS);
 	glTexCoord2f (fcol, frow);
 	glVertex2f (x, y);
 	glTexCoord2f (fcol + 0.0625, frow);
-	glVertex2f (x+8, y);
+	glVertex2f (x + size, y);
 	glTexCoord2f (fcol + 0.0625, frow + 0.03125);
-	glVertex2f (x+8, y+8);
+	glVertex2f (x + size, y + size);
 	glTexCoord2f (fcol, frow + 0.03125);
-	glVertex2f (x, y+8);
+	glVertex2f (x, y + size);
 	glEnd ();
 }
 
@@ -732,16 +734,18 @@ void Draw_Character (int x, int y, int num)
 Draw_String
 ================
 */
-void Draw_String (int x, int y, char *str)
+void Draw_String (int x, int y, char *str, qboolean scale)
 {
 	float	frow, fcol;
-	int	num;
+	int	num, size;
 
 	if (y <= -8)
 		return;		// totally off screen
 
 	if (!*str)
 		return;
+
+	size = scale ? Sbar_GetScaledCharacterSize() : 8;
 
 	GL_Bind (char_texture);
 
@@ -756,13 +760,13 @@ void Draw_String (int x, int y, char *str)
 			glTexCoord2f (fcol, frow);
 			glVertex2f (x, y);
 			glTexCoord2f (fcol + 0.0625, frow);
-			glVertex2f (x+8, y);
+			glVertex2f (x + size, y);
 			glTexCoord2f (fcol + 0.0625, frow + 0.03125);
-			glVertex2f (x+8, y+8);
+			glVertex2f (x + size, y + size);
 			glTexCoord2f (fcol, frow + 0.03125);
-			glVertex2f (x, y+8);
+			glVertex2f (x, y + size);
 		}
-		x += 8;
+		x += size;
 	}
 
 	glEnd ();
@@ -773,16 +777,18 @@ void Draw_String (int x, int y, char *str)
 Draw_Alt_String
 ================
 */
-void Draw_Alt_String (int x, int y, char *str)
+void Draw_Alt_String (int x, int y, char *str, qboolean scale)
 {
 	float	frow, fcol;
-	int	num;
+	int	num, size;
 
 	if (y <= -8)
 		return;		// totally off screen
 
 	if (!*str)
 		return;
+
+	size = scale ? Sbar_GetScaledCharacterSize() : 8;
 
 	GL_Bind (char_texture);
 
@@ -797,13 +803,13 @@ void Draw_Alt_String (int x, int y, char *str)
 			glTexCoord2f (fcol, frow);
 			glVertex2f (x, y);
 			glTexCoord2f (fcol + 0.0625, frow);
-			glVertex2f (x+8, y);
+			glVertex2f (x + size, y);
 			glTexCoord2f (fcol + 0.0625, frow + 0.03125);
-			glVertex2f (x+8, y+8);
+			glVertex2f (x + size, y + size);
 			glTexCoord2f (fcol, frow + 0.03125);
-			glVertex2f (x, y+8);
+			glVertex2f (x, y + size);
 		}
-		x += 8;
+		x += size;
 	}
 
 	glEnd ();
@@ -897,18 +903,12 @@ void Draw_Crosshair (qboolean draw_menu)
 			sh = th = 1;
 		}
 
+		frac = 4 * bound(0, crosshairsize.value, 20);
 		if (draw_menu)
-		{
-			frac =  ((float)(menuheight * 4) / (float)vid.conheight) * bound(0, crosshairsize.value, 20);
-			ofs1 *= frac;
-			ofs2 *= frac;
-		}
-		else
-		{
-			frac = 4 * (1 / scr_sbarscale_amount.value) * bound(0, crosshairsize.value, 20);	//j0zzz: need to be fixed
-			ofs1 *= frac;
-			ofs2 *= frac;
-		}
+			frac *=  (float)menuwidth / (float)vid.width;
+
+		ofs1 *= frac;
+		ofs2 *= frac;
 
 		glBegin (GL_QUADS);
 		glTexCoord2f (sl, tl);
@@ -932,7 +932,9 @@ void Draw_Crosshair (qboolean draw_menu)
 	}
 	else if (crosshair.value)
 	{
-		Draw_Character (x - 4, y - 4, '+');
+		int half_size = Sbar_GetScaledCharacterSize() / 2;
+
+		Draw_Character (x - half_size, y - half_size, '+', true);
 	}
 }
 
@@ -941,7 +943,7 @@ void Draw_Crosshair (qboolean draw_menu)
 Draw_TextBox
 ================
 */
-void Draw_TextBox (int x, int y, int width, int lines)
+void Draw_TextBox (int x, int y, int width, int lines, qboolean scale)
 {
 	mpic_t	*p;
 	int	cx, cy, n;
@@ -950,15 +952,15 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	cx = x;
 	cy = y;
 	p = Draw_CachePic ("gfx/box_tl.lmp");
-	Draw_TransPic (cx, cy, p);
+	Draw_TransPic (cx, cy, p, scale);
 	p = Draw_CachePic ("gfx/box_ml.lmp");
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		Draw_TransPic (cx, cy, p);
+		Draw_TransPic (cx, cy, p, scale);
 	}
 	p = Draw_CachePic ("gfx/box_bl.lmp");
-	Draw_TransPic (cx, cy+8, p);
+	Draw_TransPic (cx, cy+8, p, scale);
 
 	// draw middle
 	cx += 8;
@@ -966,17 +968,17 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	{
 		cy = y;
 		p = Draw_CachePic ("gfx/box_tm.lmp");
-		Draw_TransPic (cx, cy, p);
+		Draw_TransPic (cx, cy, p, scale);
 		p = Draw_CachePic ("gfx/box_mm.lmp");
 		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
 			if (n == 1)
 				p = Draw_CachePic ("gfx/box_mm2.lmp");
-			Draw_TransPic (cx, cy, p);
+			Draw_TransPic (cx, cy, p, scale);
 		}
 		p = Draw_CachePic ("gfx/box_bm.lmp");
-		Draw_TransPic (cx, cy+8, p);
+		Draw_TransPic (cx, cy+8, p, scale);
 		width -= 2;
 		cx += 16;
 	}
@@ -984,15 +986,15 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	// draw right side
 	cy = y;
 	p = Draw_CachePic ("gfx/box_tr.lmp");
-	Draw_TransPic (cx, cy, p);
+	Draw_TransPic (cx, cy, p, scale);
 	p = Draw_CachePic ("gfx/box_mr.lmp");
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		Draw_TransPic (cx, cy, p);
+		Draw_TransPic (cx, cy, p, scale);
 	}
 	p = Draw_CachePic ("gfx/box_br.lmp");
-	Draw_TransPic (cx, cy+8, p);
+	Draw_TransPic (cx, cy+8, p, scale);
 }
 
 /*
@@ -1017,6 +1019,7 @@ void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha)
 {
 	if (scrap_dirty)
 		Scrap_Upload ();
+	
 	glDisable (GL_ALPHA_TEST);
 	glEnable (GL_BLEND);
 	glCullFace (GL_FRONT);
@@ -1042,26 +1045,31 @@ void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha)
 Draw_Pic
 =============
 */
-void Draw_Pic (int x, int y, mpic_t *pic)
+void Draw_Pic (int x, int y, mpic_t *pic, qboolean scale)
 {
+	float sbar_scale;
+
 	if (scrap_dirty)
 		Scrap_Upload ();
+
+	sbar_scale = scale ? Sbar_GetScaleAmount() : 1.0;
+
 	GL_Bind (pic->texnum);
 	glBegin (GL_QUADS);
 	glTexCoord2f (pic->sl, pic->tl);
 	glVertex2f (x, y);
 	glTexCoord2f (pic->sh, pic->tl);
-	glVertex2f (x+pic->width, y);
+	glVertex2f (x + (int)(pic->width * sbar_scale), y);
 	glTexCoord2f (pic->sh, pic->th);
-	glVertex2f (x+pic->width, y+pic->height);
+	glVertex2f (x + (int)(pic->width * sbar_scale), y + (int)(pic->height * sbar_scale));
 	glTexCoord2f (pic->sl, pic->th);
-	glVertex2f (x, y+pic->height);
+	glVertex2f (x, y + (int)(pic->height * sbar_scale));
 	glEnd ();
 }
 
 void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height)
 {
-	float	newsl, newtl, newsh, newth, oldglwidth, oldglheight;
+	float	newsl, newtl, newsh, newth, oldglwidth, oldglheight, scale;
 
 	if (scrap_dirty)
 		Scrap_Upload ();
@@ -1075,16 +1083,18 @@ void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int 
 	newtl = pic->tl + (srcy * oldglheight) / pic->height;
 	newth = newtl + (height * oldglheight) / pic->height;
 	
+	scale = Sbar_GetScaleAmount();
+
 	GL_Bind (pic->texnum);
 	glBegin (GL_QUADS);
 	glTexCoord2f (newsl, newtl);
 	glVertex2f (x, y);
 	glTexCoord2f (newsh, newtl);
-	glVertex2f (x+width, y);
+	glVertex2f (x + (int)(width * scale), y);
 	glTexCoord2f (newsh, newth);
-	glVertex2f (x+width, y+height);
+	glVertex2f (x + (int)(width * scale), y + (int)(height * scale));
 	glTexCoord2f (newsl, newth);
-	glVertex2f (x, y+height);
+	glVertex2f (x, y + (int)(height * scale));
 	glEnd ();
 }
 
@@ -1093,12 +1103,12 @@ void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int 
 Draw_TransPic
 =============
 */
-void Draw_TransPic (int x, int y, mpic_t *pic)
+void Draw_TransPic (int x, int y, mpic_t *pic, qboolean scale)
 {
 	//if (x < 0 || (unsigned)(x + pic->width) > vid.width || y < 0 || (unsigned)(y + pic->height) > vid.height)
 	//	Sys_Error ("Draw_TransPic: bad coordinates");
 		
-	Draw_Pic (x, y, pic);
+	Draw_Pic (x, y, pic, scale);
 }
 
 /*
@@ -1249,19 +1259,21 @@ Draw_ConsoleBackground
 */
 void Draw_ConsoleBackground (int lines)
 {
+	int		size;
 	char	ver[80];
 
 	if (!gl_conalpha.value && lines < vid.height)
 		goto end;
 
 	if (lines == vid.height)
-		Draw_Pic (0, lines - vid.height, conback);
+		Draw_Pic (0, lines - vid.height, conback, false);
 	else
 		Draw_AlphaPic (0, lines - vid.height, conback, bound(0, gl_conalpha.value, 1));
 
 end:
+	size = Sbar_GetScaledCharacterSize();
 	sprintf (ver, "JoeQuake %s", JOEQUAKE_VERSION);
-	Draw_Alt_String (vid.width - strlen(ver) * 8 - 8, lines - 10, ver);
+	Draw_Alt_String (vid.width - strlen(ver) * size - size, lines - (int)(size * 1.25), ver, true);
 }
 
 /*
@@ -1279,11 +1291,11 @@ void Draw_TileClear (int x, int y, int w, int h)
 	glTexCoord2f (x/64.0, y/64.0);
 	glVertex2f (x, y);
 	glTexCoord2f ((x+w)/64.0, y/64.0);
-	glVertex2f (x+w, y);
+	glVertex2f (x + w, y);
 	glTexCoord2f ((x+w)/64.0, (y+h)/64.0);
-	glVertex2f (x+w, y+h);
+	glVertex2f (x + w, y + h);
 	glTexCoord2f (x/64.0, (y+h)/64.0);
-	glVertex2f (x, y+h);
+	glVertex2f (x, y + h);
 	glEnd ();
 }
 
@@ -1296,14 +1308,18 @@ Fills a box of pixels with a single color
 */
 void Draw_Fill (int x, int y, int w, int h, int c)
 {
+	float	sbar_scale;
+
+	sbar_scale = Sbar_GetScaleAmount();
+
 	glDisable (GL_TEXTURE_2D);
 	glColor3f (host_basepal[c*3] / 255.0, host_basepal[c*3+1] / 255.0, host_basepal[c*3+2] / 255.0);
 
 	glBegin (GL_QUADS);
 	glVertex2f (x, y);
-	glVertex2f (x+w, y);
-	glVertex2f (x+w, y+h);
-	glVertex2f (x, y+h);
+	glVertex2f (x + (int)(w * sbar_scale), y);
+	glVertex2f (x + (int)(w * sbar_scale), y + (int)(h * sbar_scale));
+	glVertex2f (x, y + (int)(h * sbar_scale));
 	glEnd ();
 
 	glEnable (GL_TEXTURE_2D);
@@ -1349,11 +1365,15 @@ Call before beginning any disc IO.
 */
 void Draw_BeginDisc (void)
 {
+	float	scale;
+
 	if (!draw_disc)
 		return;
 
+	scale = Sbar_GetScaleAmount();
+
 	glDrawBuffer  (GL_FRONT);
-	Draw_Pic (vid.width - 24, 0, draw_disc);
+	Draw_Pic (vid.width - (int)(24 * scale), 0, draw_disc, true);
 	glDrawBuffer  (GL_BACK);
 }
 

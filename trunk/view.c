@@ -1171,8 +1171,16 @@ void V_CalcRefdef (void)
 		Chase_Update ();
 }
 
-#define	ELEMENT_X_COORD(var)	((var##_x.value < 0) ? vid.width - strlen(str) * 8 + 8 * var##_x.value: 8 * var##_x.value)
-#define	ELEMENT_Y_COORD(var)	((var##_y.value < 0) ? vid.height - sb_lines + 8 * var##_y.value : 8 * var##_y.value)
+int _view_temp_int;
+float _view_temp_float;
+
+#define	ELEMENT_X_COORD(var)	\
+(_view_temp_int = Sbar_GetScaledCharacterSize(),\
+((var##_x.value < 0) ? vid.width - strlen(str) * _view_temp_int + _view_temp_int * var##_x.value : _view_temp_int * var##_x.value))
+
+#define	ELEMENT_Y_COORD(var)	\
+(_view_temp_int = Sbar_GetScaledCharacterSize(), _view_temp_float = Sbar_GetScaleAmount(),\
+((var##_y.value < 0) ? vid.height - (int)(sb_lines * _view_temp_float) + _view_temp_int * var##_y.value : _view_temp_int * var##_y.value))
 
 char *LocalTime (char *format)
 {
@@ -1210,7 +1218,7 @@ void SCR_DrawClock (void)
 
 	x = ELEMENT_X_COORD(scr_clock);
 	y = ELEMENT_Y_COORD(scr_clock);
-	Draw_String (x, y, str);
+	Draw_String (x, y, str, true);
 }
 
 /*
@@ -1241,7 +1249,7 @@ void SCR_DrawFPS (void)
 	Q_snprintfz (str, sizeof(str), "%3.1f%s", lastfps + 0.05, show_fps.value == 2 ? " FPS" : "");
 	x = ELEMENT_X_COORD(show_fps);
 	y = ELEMENT_Y_COORD(show_fps);
-	Draw_String (x, y, str);
+	Draw_String (x, y, str, true);
 }
 
 /*
@@ -1251,9 +1259,9 @@ SCR_DrawSpeed
 */
 void SCR_DrawSpeed (void)
 {
-	int		x, y;
+	int		x, y, size;
 	char		st[8];
-	float		speed, vspeed, speedunits;
+	float		speed, vspeed, speedunits, scale;
 	vec3_t		vel;
 	static	float	maxspeed = 0, display_speed = -1;
 	static	double	lastrealtime = 0;
@@ -1276,30 +1284,33 @@ void SCR_DrawSpeed (void)
 	if (speed > maxspeed)
 		maxspeed = speed;
 
+	scale = Sbar_GetScaleAmount();
+	size = Sbar_GetScaledCharacterSize();
+
 	if (display_speed >= 0)
 	{
 		sprintf (st, "%3d", (int)display_speed);
 
-		x = vid.width/2 - 80;
+		x = vid.width / 2 - (10 * size);
 
 		if (scr_viewsize.value >= 120)
-			y = vid.height - 16;
+			y = vid.height - (2 * size);
 
 		if (scr_viewsize.value < 120)
-			y = vid.height - 8*5;
+			y = vid.height - (5 * size);
 
 		if (scr_viewsize.value < 110)
-			y = vid.height - 8*8;
+			y = vid.height - (8 * size);
 
 		if (cl.intermission)
-			y = vid.height - 16;
+			y = vid.height - (2 * size);
 
-		Draw_Fill (x, y-1, 160, 1, 10);
-		Draw_Fill (x, y+9, 160, 1, 10);
-		Draw_Fill (x+32, y-2, 1, 13, 10);
-		Draw_Fill (x+64, y-2, 1, 13, 10);
-		Draw_Fill (x+96, y-2, 1, 13, 10);
-		Draw_Fill (x+128, y-2, 1, 13, 10);
+		Draw_Fill (x, y - (int)(1 * scale), 160, 1, 10);
+		Draw_Fill (x, y + (int)(9 * scale), 160, 1, 10);
+		Draw_Fill (x + (int)(32 * scale), y - (int)(2 * scale), 1, 13, 10);
+		Draw_Fill (x + (int)(64 * scale), y - (int)(2 * scale), 1, 13, 10);
+		Draw_Fill (x + (int)(96 * scale), y - (int)(2 * scale), 1, 13, 10);
+		Draw_Fill (x + (int)(128 * scale), y - (int)(2 * scale), 1, 13, 10);
 
 		Draw_Fill (x, y, 160, 9, 52);
 
@@ -1314,7 +1325,7 @@ void SCR_DrawSpeed (void)
 				speedunits -= 500;
 			Draw_Fill (x, y, (int)(speedunits / 3.125), 9, 68);
 		}
-		Draw_String (x + 36 - strlen(st) * 8, y, st);
+		Draw_String (x + (int)(4.5 * size) - (strlen(st) * size), y, st, true);
 	}
 
 	if (realtime - lastrealtime >= 0.1)
@@ -1334,11 +1345,15 @@ SCR_DrawStats
 */
 void SCR_DrawStats (void)
 {
-	int		mins, secs, tens;
+	int		mins, secs, tens, size;
+	float	scale;
 	extern	mpic_t	*sb_colon, *sb_nums[2][11];
 
 	if (!show_stats.value || ((show_stats.value == 3 || show_stats.value == 4) && drawstats_limit < cl.time))
 		return;
+
+	scale = Sbar_GetScaleAmount();
+	size = Sbar_GetScaledCharacterSize();
 
 	mins = cl.ctime / 60;
 	secs = cl.ctime - 60 * mins;
@@ -1346,28 +1361,28 @@ void SCR_DrawStats (void)
 
 	if (!show_stats_small.value)
 	{
-		Sbar_IntermissionNumber (vid.width - 140, 0, mins, 2, 0);
+		Sbar_IntermissionNumber (vid.width - (int)(140 * scale), 0, mins, 2, 0);
 
-		Draw_TransPic (vid.width - 92, 0, sb_colon);
-		Draw_TransPic (vid.width - 80, 0, sb_nums[0][secs/10]);
-		Draw_TransPic (vid.width - 58, 0, sb_nums[0][secs%10]);
+		Draw_TransPic (vid.width - (int)(92 * scale), 0, sb_colon, true);
+		Draw_TransPic (vid.width - (int)(80 * scale), 0, sb_nums[0][secs/10], true);
+		Draw_TransPic (vid.width - (int)(58 * scale), 0, sb_nums[0][secs%10], true);
 
-		Draw_TransPic (vid.width - 36, 0, sb_colon);
-		Draw_TransPic (vid.width - 24, 0, sb_nums[0][tens]);
+		Draw_TransPic (vid.width - (int)(36 * scale), 0, sb_colon, true);
+		Draw_TransPic (vid.width - (int)(24 * scale), 0, sb_nums[0][tens], true);
 
 		if (show_stats.value == 2 || show_stats.value == 4)
 		{
-			Sbar_IntermissionNumber (vid.width - 48, 24, cl.stats[STAT_SECRETS], 2, 0);
-			Sbar_IntermissionNumber (vid.width - 72, 48, cl.stats[STAT_MONSTERS], 3, 0);
+			Sbar_IntermissionNumber (vid.width - (int)(48 * scale), (int)(24 * scale), cl.stats[STAT_SECRETS], 2, 0);
+			Sbar_IntermissionNumber (vid.width - (int)(72 * scale), (int)(48 * scale), cl.stats[STAT_MONSTERS], 3, 0);
 		}
 	}
 	else
 	{
-		Draw_String (vid.width - 56, 0, va("%2i:%02i:%i", mins, secs, tens));
+		Draw_String (vid.width - (int)(56 * scale), 0, va("%2i:%02i:%i", mins, secs, tens), true);
 		if (show_stats.value == 2 || show_stats.value == 4)
 		{
-			Draw_String (vid.width - 16, 8, va("%2i", cl.stats[STAT_SECRETS]));
-			Draw_String (vid.width - 24, 16, va("%3i", cl.stats[STAT_MONSTERS]));
+			Draw_String (vid.width - (int)(16 * scale), size, va("%2i", cl.stats[STAT_SECRETS]), true);
+			Draw_String (vid.width - (int)(24 * scale), size * 2, va("%3i", cl.stats[STAT_MONSTERS]), true);
 		}
 	}
 }
@@ -1379,7 +1394,7 @@ SCR_DrawVolume
 */
 void SCR_DrawVolume (void)
 {
-	int		i, yofs;
+	int		i, yofs, size;
 	float		j;
 	char		bar[11];
 	static	float	volume_time = 0;
@@ -1406,15 +1421,17 @@ void SCR_DrawVolume (void)
 
 	bar[10] = 0;
 
-	if (show_stats.value == 1 || show_stats.value == 3)
-		yofs = !show_stats_small.value ? 32 : 16;
-	else if (show_stats.value == 2 || show_stats.value == 4)
-		yofs = !show_stats_small.value ? 80 : 32;
-	else
-		yofs = 8;
+	size = Sbar_GetScaledCharacterSize();
 
-	Draw_String (vid.width - 88, yofs, bar);
-	Draw_String (vid.width - 88, yofs + 8, "volume");
+	if (show_stats.value == 1 || show_stats.value == 3)
+		yofs = !show_stats_small.value ? size * 4 : size * 2;
+	else if (show_stats.value == 2 || show_stats.value == 4)
+		yofs = !show_stats_small.value ? size * 10 : size * 4;
+	else
+		yofs = size;
+
+	Draw_String (vid.width - (size * 11), yofs, bar, true);
+	Draw_String (vid.width - (size * 11), yofs + size, "volume", true);
 }
 
 /*

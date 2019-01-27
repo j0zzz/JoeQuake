@@ -174,7 +174,7 @@ void SCR_CenterPrint (char *str)
 void SCR_DrawCenterString (void)
 {
 	char	*start;
-	int	l, j, x, y, remaining;
+	int		l, j, x, y, remaining, size;
 
 // the finale prints the characters one at a time
 	if (cl.intermission)
@@ -190,20 +190,22 @@ void SCR_DrawCenterString (void)
 	else
 		y = 48;
 
+	size = Sbar_GetScaledCharacterSize();
+
 	do {
 	// scan the width of the line
 		for (l=0 ; l<40 ; l++)
 			if (start[l] == '\n' || !start[l])
 				break;
-		x = (vid.width - l*8) / 2;
-		for (j=0 ; j<l ; j++, x+=8)
+		x = (vid.width - l * size) / 2;
+		for (j=0 ; j<l ; j++, x += size)
 		{
-			Draw_Character (x, y, start[j]);	
+			Draw_Character (x, y, start[j], true);
 			if (!remaining--)
 				return;
 		}
 			
-		y += 8;
+		y += size;
 
 		while (*start && *start != '\n')
 			start++;
@@ -279,7 +281,7 @@ Internal use only
 */
 static void SCR_CalcRefdef (void)
 {
-	int		h;
+	int		h, scaled_sb_lines;
 	float		size;
 	qboolean	full = false;
 
@@ -331,7 +333,9 @@ static void SCR_CalcRefdef (void)
 	}
 	size /= 100.0;
 
-	h = (cl_sbar.value != 1 && full) ? vid.height : vid.height - sb_lines;
+	scaled_sb_lines = (int)(sb_lines * Sbar_GetScaleAmount());
+
+	h = (cl_sbar.value != 1 && full) ? vid.height : vid.height - scaled_sb_lines;
 
 	r_refdef.vrect.width = vid.width * size;
 	if (r_refdef.vrect.width < 96)
@@ -344,8 +348,8 @@ static void SCR_CalcRefdef (void)
 
 	if (cl_sbar.value == 1 || !full)
 	{
-		if (r_refdef.vrect.height > vid.height - sb_lines)
-			r_refdef.vrect.height = vid.height - sb_lines;
+		if (r_refdef.vrect.height > vid.height - scaled_sb_lines)
+			r_refdef.vrect.height = vid.height - scaled_sb_lines;
 	}
 	else if (r_refdef.vrect.height > vid.height)
 	{
@@ -463,10 +467,14 @@ SCR_DrawRam
 */
 void SCR_DrawRam (void)
 {
+	float	scale;
+	
 	if (!scr_showram.value || !r_cache_thrash)
 		return;
 
-	Draw_Pic (scr_vrect.x + 32, scr_vrect.y, scr_ram);
+	scale = Sbar_GetScaleAmount();
+
+	Draw_Pic (scr_vrect.x + (int)(32 * scale), scr_vrect.y, scr_ram, true);
 }
 
 /*
@@ -491,7 +499,7 @@ void SCR_DrawTurtle (void)
 	if (count < 3)
 		return;
 
-	Draw_Pic (scr_vrect.x, scr_vrect.y, scr_turtle);
+	Draw_Pic (scr_vrect.x, scr_vrect.y, scr_turtle, true);
 }
 
 /*
@@ -501,10 +509,14 @@ SCR_DrawNet
 */
 void SCR_DrawNet (void)
 {
+	float	scale;
+	
 	if (realtime - cl.last_received_message < 0.3 || cls.demoplayback)
 		return;
 
-	Draw_Pic (scr_vrect.x + 64, scr_vrect.y, scr_net);
+	scale = Sbar_GetScaleAmount();
+
+	Draw_Pic (scr_vrect.x + (int)(64 * scale), scr_vrect.y, scr_net, true);
 }
 
 /*
@@ -514,6 +526,7 @@ DrawPause
 */
 void SCR_DrawPause (void)
 {
+	float	scale;
 	mpic_t	*pic;
 
 	if (!scr_showpause.value)		// turn off for screenshots
@@ -522,8 +535,10 @@ void SCR_DrawPause (void)
 	if (!cl.paused)
 		return;
 
+	scale = Sbar_GetScaleAmount();
+
 	pic = Draw_CachePic ("gfx/pause.lmp");
-	Draw_Pic ((vid.width - pic->width) / 2, (vid.height - 48 - pic->height) / 2, pic);
+	Draw_Pic ((vid.width - (int)(pic->width * scale)) / 2, (vid.height - (int)((48 - pic->height) * scale)) / 2, pic, true);
 }
 
 /*
@@ -533,13 +548,16 @@ SCR_DrawLoading
 */
 void SCR_DrawLoading (void)
 {
+	float	scale;
 	mpic_t	*pic;
 
 	if (!scr_drawloading)
 		return;
 		
+	scale = Sbar_GetScaleAmount();
+
 	pic = Draw_CachePic ("gfx/loading.lmp");
-	Draw_Pic ((vid.width - pic->width) / 2, (vid.height - 48 - pic->height) / 2, pic);
+	Draw_Pic ((vid.width - (int)(pic->width * scale)) / 2, (vid.height - (int)((48 - pic->height) * scale)) / 2, pic, true);
 }
 
 //=============================================================================
@@ -700,16 +718,19 @@ void SCR_SetupAutoID (void)
 
 void SCR_DrawAutoID (void)
 {
-	int	i, x, y;
+	int	i, x, y, size, half_size;
 
 	if (!scr_autoid.value || !cls.demoplayback)
 		return;
+
+	size = Sbar_GetScaledCharacterSize();
+	half_size = size / 2;
 
 	for (i = 0 ; i < autoid_count ; i++)
 	{
 		x = autoids[i].x * vid.width / glwidth;
 		y = (glheight - autoids[i].y) * vid.height / glheight;
-		Draw_String (x - strlen(autoids[i].player->name) * 4, y - 8, autoids[i].player->name);
+		Draw_String (x - strlen(autoids[i].player->name) * half_size, y - size, autoids[i].player->name, true);
 	}
 }
 
@@ -860,22 +881,24 @@ qboolean	scr_drawdialog;
 void SCR_DrawNotifyString (void)
 {
 	char	*start;
-	int	l, j, x, y;
+	int		l, j, x, y, size;
 
 	start = scr_notifystring;
 
 	y = vid.height * 0.35;
+
+	size = Sbar_GetScaledCharacterSize();
 
 	do {
 	// scan the width of the line
 		for (l=0 ; l<40 ; l++)
 			if (start[l] == '\n' || !start[l])
 				break;
-		x = (vid.width - l*8) / 2;
-		for (j=0 ; j<l ; j++, x+=8)
-			Draw_Character (x, y, start[j]);	
+		x = (vid.width - l * size) / 2;
+		for (j=0 ; j<l ; j++, x += size)
+			Draw_Character (x, y, start[j], true);
 			
-		y += 8;
+		y += size;
 
 		while (*start && *start != '\n')
 			start++;
@@ -890,13 +913,17 @@ void SCR_DrawNotifyString (void)
 
 void SCR_TileClear (void)
 {
+	float	sbar_scale;
+
+	sbar_scale = Sbar_GetScaleAmount();
+
 	if (r_refdef.vrect.x > 0)
 	{
 		// left
-		Draw_TileClear (0, 0, r_refdef.vrect.x, vid.height - sb_lines);
+		Draw_TileClear (0, 0, r_refdef.vrect.x, vid.height - (int)(sb_lines * sbar_scale));
 		// right
 		Draw_TileClear (r_refdef.vrect.x + r_refdef.vrect.width, 0, 
-			vid.width - r_refdef.vrect.x + r_refdef.vrect.width, vid.height - sb_lines);
+			vid.width - r_refdef.vrect.x + r_refdef.vrect.width, vid.height - (int)(sb_lines * sbar_scale));
 	}
 	if (r_refdef.vrect.y > 0)
 	{
@@ -904,26 +931,16 @@ void SCR_TileClear (void)
 		Draw_TileClear (r_refdef.vrect.x, 0, r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y);
 		// bottom
 		Draw_TileClear (r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height, 
-			r_refdef.vrect.width, vid.height - sb_lines - (r_refdef.vrect.height + r_refdef.vrect.y));
+			r_refdef.vrect.width, vid.height - (int)(sb_lines * sbar_scale) - (r_refdef.vrect.height + r_refdef.vrect.y));
 	}
 }
-
-#ifdef GLQUAKE
-//
-// Calculates the cursor scale based on the current screen/text size
-//
-static double SCR_GetCursorScale(void)
-{
-	return (double)scr_cursor_scale.value * ((double)vid.width / (double)vid.conwidth);
-}
-#endif // GLQUAKE
 
 static void SCR_DrawCursor(void)
 {
 	// from in_*.c
 	extern double mouse_x, mouse_y;
 #ifdef GLQUAKE
-	double scale = SCR_GetCursorScale();
+	double scale = (double)scr_cursor_scale.value;
 #endif 
 	mpic_t *cursor;
 
@@ -993,9 +1010,6 @@ needs almost the entire 256k of stack space!
 */
 void SCR_UpdateScreen (void)
 {
-	float sbar_scale_amount;
-	extern cvar_t scr_sbarscale_amount;
-
 	if (block_drawing)
 		return;
 
@@ -1028,19 +1042,6 @@ void SCR_UpdateScreen (void)
 	{
 		oldsbar = cl_sbar.value;
 		vid.recalc_refdef = true;
-	}
-
-	sbar_scale_amount = bound(1, scr_sbarscale_amount.value, 4);
-	if (oldsbarscale != sbar_scale_amount)
-	{
-		extern void Draw_AdjustConback(void);
-
-		oldsbarscale = sbar_scale_amount;
-		vid.width = vid.conwidth / sbar_scale_amount;
-		vid.height = vid.conheight / sbar_scale_amount;
-		vid.recalc_refdef = true;
-
-		Draw_AdjustConback();
 	}
 
 	// determine size of refresh window

@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern	int		sb_lines;	// scan lines to draw
 extern cvar_t scr_sbarscale_amount;
 
+float Sbar_GetScaleAmount(void);
+int Sbar_GetScaledCharacterSize(void);
+
 void Sbar_Init (void);
 void Sbar_Hipnotic_Init (void);
 void Sbar_Rogue_Init (void);

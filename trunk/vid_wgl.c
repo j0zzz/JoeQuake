@@ -134,10 +134,6 @@ qboolean OnChange_vid_displayfrequency(cvar_t *var, char *string);
 cvar_t		vid_displayfrequency = {"vid_displayfrequency", "60", 0, OnChange_vid_displayfrequency };
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 
-qboolean OnChange_vid_con_xxx(cvar_t *var, char *string);
-cvar_t      vid_conwidth = { "vid_conwidth", "640", 0, OnChange_vid_con_xxx };
-cvar_t      vid_conheight = { "vid_conheight", "0", 0, OnChange_vid_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something 
-
 // VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
 // HACK!!! FIXME { 
 cvar_t		vid_forcerestoregamma = { "vid_forcerestoregamma", "0" };
@@ -327,71 +323,6 @@ qboolean OnChange_vid_displayfrequency(cvar_t *var, char *string)
 	return !ChangeFreq(Q_atoi(string));
 }
 
-void SetWidthWithSbarScale(void)
-{
-	float sbar_scale_amount;
-	extern cvar_t scr_sbarscale_amount;
-
-	sbar_scale_amount = bound(1, scr_sbarscale_amount.value, 4);
-	vid.width = vid.conwidth / sbar_scale_amount;
-}
-
-void SetHeightWithSbarScale(void)
-{
-	float sbar_scale_amount;
-	extern cvar_t scr_sbarscale_amount;
-
-	sbar_scale_amount = bound(1, scr_sbarscale_amount.value, 4);
-	vid.height = vid.conheight / sbar_scale_amount;
-}
-
-qboolean OnChange_vid_con_xxx(cvar_t *var, char *string) 
-{
-	// this is safe but do not allow set this variables from cmd line
-	//	if (!vid_initialized || !host_initialized || vid_modenum < 0 || vid_modenum >= nummodes)
-	//		return true;
-
-	if (var == &vid_conwidth) 
-	{
-		int width = Q_atoi(string);
-
-		width = max(320, width);
-		width &= 0xfff8; // make it a multiple of eight
-
-		vid.conwidth = width;
-		SetWidthWithSbarScale();
-
-		Cvar_SetValue(var, (float)width);
-
-		Draw_AdjustConback();
-
-		vid.recalc_refdef = 1;
-
-		return true;
-	}
-
-	if (var == &vid_conheight) 
-	{
-		int height = Q_atoi(string);
-
-		height = max(200, height);
-//		height &= 0xfff8; // make it a multiple of eight
-
-		vid.conheight = height;
-		SetHeightWithSbarScale();
-
-		Cvar_SetValue(var, (float)height);
-
-		Draw_AdjustConback();
-
-		vid.recalc_refdef = 1;
-
-		return true;
-	}
-
-	return true;
-}
-
 qboolean VID_SetWindowedMode (int modenum)
 {
 	HDC	hdc;
@@ -451,10 +382,8 @@ qboolean VID_SetWindowedMode (int modenum)
 	PatBlt (hdc, 0, 0, modelist[modenum].width, modelist[modenum].height, BLACKNESS);
 	ReleaseDC (dibwindow, hdc);
 
-	vid.conwidth = modelist[modenum].width;
-	SetWidthWithSbarScale();
-	vid.conheight = modelist[modenum].height;
-	SetHeightWithSbarScale();
+	vid.width = modelist[modenum].width;
+	vid.height = modelist[modenum].height;
 
 	vid.numpages = 2;
 
@@ -546,10 +475,8 @@ qboolean VID_SetFullDIBMode (int modenum)
 	PatBlt (hdc, 0, 0, modelist[modenum].width, modelist[modenum].height, BLACKNESS);
 	ReleaseDC (dibwindow, hdc);
 
-	vid.conwidth = modelist[modenum].width;
-	SetWidthWithSbarScale();
-	vid.conheight = modelist[modenum].height;
-	SetHeightWithSbarScale();
+	vid.width = modelist[modenum].width;
+	vid.height = modelist[modenum].height;
 
 	vid.numpages = 2;
 
@@ -620,11 +547,7 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	vid_modenum = modenum;
 	Cvar_SetValue (&vid_mode, (float)vid_modenum);
 
-// { after vid_modenum set we can safe do this
-	Cvar_SetValue(&vid_conwidth, (float)modelist[vid_modenum].width);
-	Cvar_SetValue(&vid_conheight, (float)modelist[vid_modenum].height);
 	Draw_AdjustConback(); // need this even vid_conwidth have callback which leads to call this
-// }
 
 	//while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	//{
@@ -1598,7 +1521,6 @@ void VID_Init (unsigned char *palette)
 	int		i, temp, basenummodes, width, height, bpp, findbpp, done;
 	HDC		hdc;
 	DEVMODE	devmode;
-	float	aspect;
 
 	if (COM_CheckParm("-window"))
 		windowed = true;
@@ -1610,8 +1532,6 @@ void VID_Init (unsigned char *palette)
 	//Cvar_Register (&_vid_default_mode_win);
 	//Cvar_Register (&vid_config_x);
 	//Cvar_Register (&vid_config_y);
-	Cvar_Register(&vid_conwidth);
-	Cvar_Register(&vid_conheight);
 	Cvar_Register(&vid_displayfrequency);
 	Cvar_Register(&vid_hwgammacontrol);
 	Cvar_Register(&vid_forcerestoregamma);
@@ -1790,20 +1710,6 @@ void VID_Init (unsigned char *palette)
 		Cvar_Set(&vid_displayfrequency, com_argv[i+1]);
 
 	vid_initialized = true;
-
-	if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
-		Cvar_SetValue(&vid_conwidth, (float)Q_atoi(com_argv[i+1]));
-	else // this is ether +set vid_con... or just default value which we select in cvar initialization
-		Cvar_SetValue(&vid_conwidth, vid_conwidth.value); // must trigger callback which validate value 
-
-	// set console aspect using video frame's aspect
-	aspect = (float)modelist[vid_default].height / (float)modelist[vid_default].width;
-
-	if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
-		Cvar_SetValue(&vid_conheight, (float)Q_atoi(com_argv[i+1]));
-	else // this is ether +set vid_con... or just default value which we select in cvar initialization
-		 // also select vid_conheight with proper aspect ratio if user omit it
-		Cvar_SetValue(&vid_conheight, vid_conheight.value ? vid_conheight.value : vid_conwidth.value * aspect); // must trigger callback which validate value 
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;

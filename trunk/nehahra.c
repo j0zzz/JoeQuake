@@ -362,7 +362,7 @@ void SHOWLMP_drawall (void)
 
 	for (i=0 ; i<SHOWLMP_MAXLABELS ; i++)
 		if (showlmp[i].isactive)
-			Draw_TransPic (showlmp[i].x, showlmp[i].y, Draw_CachePic(showlmp[i].pic));
+			Draw_TransPic (showlmp[i].x, showlmp[i].y, Draw_CachePic(showlmp[i].pic), true);
 }
 
 void SHOWLMP_clear (void)

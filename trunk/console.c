@@ -409,7 +409,7 @@ The input line scrolls horizontally if typing goes beyond the right edge
 */
 void Con_DrawInput (void)
 {
-	int	i;
+	int	i, size;
 	char	*text, temp[MAXCMDLINE];
 
 	if (key_dest != key_console && !con_forcedup)
@@ -429,9 +429,11 @@ void Con_DrawInput (void)
 	if (key_linepos >= con_linewidth)
 		text += 1 + key_linepos - con_linewidth;
 		
+	size = Sbar_GetScaledCharacterSize();
+
 	// draw it
 #ifdef GLQUAKE
-	Draw_String (8, con_vislines - 16, text);
+	Draw_String (size, con_vislines - (size * 2), text, true);
 #else
 	for (i=0 ; i<con_linewidth ; i++)
 		Draw_Character ((i+1)<<3, con_vislines - 16, text[i]);
@@ -447,12 +449,14 @@ Draws the last few lines of output transparently over the game top
 */
 void Con_DrawNotify (void)
 {
-	int		x, v, i, maxlines;
+	int		x, v, i, maxlines, size;
 	char		*text;
 	float		time;
 	extern	char	chat_buffer[];
 
 	maxlines = bound(0, _con_notifylines.value, NUM_CON_TIMES);
+
+	size = Sbar_GetScaledCharacterSize();
 
 	v = 0;
 	for (i = con_current - maxlines + 1 ; i <= con_current ; i++)
@@ -471,9 +475,9 @@ void Con_DrawNotify (void)
 		scr_copytop = 1;
 
 		for (x = 0 ; x < con_linewidth ; x++)
-			Draw_Character ((x+1)<<3, v, text[x]);
+			Draw_Character ((x + 1) * size, v, text[x], true);
 
-		v += 8;
+		v += size;
 	}
 
 	if (key_dest == key_message)
@@ -485,29 +489,29 @@ void Con_DrawNotify (void)
 		
 		if (team_message)
 		{
-			Draw_String (8, v, "(say):");
+			Draw_String (size, v, "(say):", true);
 			x = 7;
 		}
 		else
 		{
-			Draw_String (8, v, "say:");
+			Draw_String (size, v, "say:", true);
 			x = 5;
 		}
 
 		while (chat_buffer[i])
 		{
-			Draw_Character (x << 3, v, chat_buffer[i]);
+			Draw_Character (x * size, v, chat_buffer[i], true);
 			x++;
 
 			i++;
 			if (x > con_linewidth)
 			{
 				x = team_message ? 7 : 5;
-				v += 8;
+				v += size;
 			}
 		}
-		Draw_Character (x << 3, v, 10 + ((int)(realtime * con_cursorspeed) & 1));
-		v += 8;
+		Draw_Character (x * size, v, 10 + ((int)(realtime * con_cursorspeed) & 1), true);
+		v += size;
 	}
 	
 	if (v > con_notifylines)
@@ -524,7 +528,7 @@ The typing input line at the bottom should only be drawn if typing is allowed
 */
 void Con_DrawConsole (int lines, qboolean drawinput)
 {
-	int	i, j, x, y, rows;
+	int	i, j, x, y, rows, size;
 	char	*text;
 	
 	if (lines <= 0)
@@ -536,10 +540,12 @@ void Con_DrawConsole (int lines, qboolean drawinput)
 // draw the text
 	con_vislines = lines;
 
-	rows = (lines - 16)>>3;		// rows of text to draw
-	y = lines - 16 - (rows<<3);	// may start slightly negative
+	size = Sbar_GetScaledCharacterSize();
 
-	for (i = con_current - rows + 1 ; i <= con_current ; i++, y += 8)
+	rows = (lines - (2 * size)) / size;		// rows of text to draw
+	y = lines - (2 * size) - (rows * size);	// may start slightly negative
+
+	for (i = con_current - rows + 1 ; i <= con_current ; i++, y += size)
 	{
 		j = i - con_backscroll;
 		if (j < 0)
@@ -547,15 +553,15 @@ void Con_DrawConsole (int lines, qboolean drawinput)
 
 		if (con_backscroll && i == con_current)
 		{
-			for (x = 0 ; x < con_linewidth ; x += 4)
-				Draw_Character ((x+1)<<3, y, '^');
+			for (x = 0 ; x < con_linewidth ; x += (size / 2))
+				Draw_Character ((x + 1) * size, y, '^', true);
 			continue;
 		}
 
 		text = con_text + (j % con_totallines)*con_linewidth;
 
 		for (x = 0 ; x < con_linewidth ; x++)
-			Draw_Character ((x+1)<<3, y, text[x]);
+			Draw_Character ((x + 1) * size, y, text[x], true);
 	}
 
 // draw the input prompt, user text, and cursor if desired

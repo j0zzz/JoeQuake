@@ -193,7 +193,7 @@ Draws one solid graphics character
 */
 void M_DrawCharacter (int cx, int line, int num)
 {
-	Draw_Character (cx + ((menuwidth - 320) >> 1), line + m_yofs, num);
+	Draw_Character (cx + ((menuwidth - 320) >> 1), line + m_yofs, num, false);
 }
 
 void M_Print_GetPoint(int cx, int cy, int *rx, int *ry, char *str, qboolean red) 
@@ -203,9 +203,9 @@ void M_Print_GetPoint(int cx, int cy, int *rx, int *ry, char *str, qboolean red)
 	*rx = cx;
 	*ry = cy;
 	if (red)
-		Draw_Alt_String(cx, cy, str);
+		Draw_Alt_String(cx, cy, str, false);
 	else
-		Draw_String(cx, cy, str);
+		Draw_String(cx, cy, str, false);
 }
 
 void M_Print (int cx, int cy, char *str)
@@ -216,7 +216,7 @@ void M_Print (int cx, int cy, char *str)
 
 void M_PrintWhite (int cx, int cy, char *str)
 {
-	Draw_String (cx + ((menuwidth - 320) >> 1), cy + m_yofs, str);
+	Draw_String (cx + ((menuwidth - 320) >> 1), cy + m_yofs, str, false);
 }
 
 // replacement of M_DrawTransPic - sometimes we need the real coordinate of the pic
@@ -224,7 +224,7 @@ static void M_DrawTransPic_GetPoint(int x, int y, int *rx, int *ry, mpic_t *pic)
 {
 	*rx = x + ((menuwidth - 320) >> 1);
 	*ry = y + m_yofs;
-	Draw_TransPic(x + ((menuwidth - 320) >> 1), y + m_yofs, pic);
+	Draw_TransPic(x + ((menuwidth - 320) >> 1), y + m_yofs, pic, false);
 }
 
 void M_DrawTransPic (int x, int y, mpic_t *pic)
@@ -235,7 +235,7 @@ void M_DrawTransPic (int x, int y, mpic_t *pic)
 
 void M_DrawPic (int x, int y, mpic_t *pic)
 {
-	Draw_Pic (x + ((menuwidth - 320) >> 1), y + m_yofs, pic);
+	Draw_Pic (x + ((menuwidth - 320) >> 1), y + m_yofs, pic, false);
 }
 
 byte	identityTable[256], translationTable[256];
@@ -272,7 +272,7 @@ void M_DrawTransPicTranslate (int x, int y, mpic_t *pic)
 
 void M_DrawTextBox (int x, int y, int width, int lines)
 {
-	Draw_TextBox (x + ((menuwidth - 320) >> 1), y + m_yofs, width, lines);
+	Draw_TextBox (x + ((menuwidth - 320) >> 1), y + m_yofs, width, lines, false);
 }
 
 // will apply menu scaling effect for given window region
@@ -7185,7 +7185,7 @@ void M_Draw (void)
 	{
 		scr_copyeverything = 1;
 
-		if (scr_con_current == vid.conheight)
+		if (scr_con_current == vid.height)	// console is full screen
 		{
 			Draw_ConsoleBackground (scr_con_current); // joe: was vid.height
 			VID_UnlockBuffer ();
