@@ -55,14 +55,28 @@ typedef struct
 {
 	int		width;
 	int		height;
-} lmode_t;
+} hmode_t;
 
-lmode_t	lowresmodes[] =
+hmode_t	hiresmodes[] =
 {
-	{320, 200},
-	{320, 240},
-	{400, 300},
-	{512, 384},
+	{ 640, 480 },
+	{ 800, 600 },
+	{ 1024, 768 },
+	{ 1280, 720 },
+	{ 1280, 768 },
+	{ 1280, 800 },
+	{ 1280, 960 },
+	{ 1280, 1024 },
+	{ 1366, 768 },
+	{ 1400, 1050 },
+	{ 1440, 900 },
+	{ 1600, 900 },
+	{ 1600, 1024 },
+	{ 1680, 1050 },
+	{ 1920, 1080 },
+	{ 2560, 1440 },
+	{ 3840, 2160 },
+	{ 4096, 2160 },
 };
 
 qboolean	DDActive;
@@ -124,14 +138,10 @@ void GL_Init (void);
 qboolean OnChange_vid_mode(cvar_t *var, char *string);
 cvar_t		vid_mode = {"vid_mode", "-1", 0, OnChange_vid_mode };
 
-//cvar_t		_vid_default_mode = {"_vid_default_mode", "0", CVAR_ARCHIVE};
-//cvar_t		_vid_default_mode_win = {"_vid_default_mode_win", "3", CVAR_ARCHIVE};
-//cvar_t		vid_config_x = {"vid_config_x", "800", CVAR_ARCHIVE};
-//cvar_t		vid_config_y = {"vid_config_y", "600", CVAR_ARCHIVE};
 cvar_t		_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE};
 
 qboolean OnChange_vid_displayfrequency(cvar_t *var, char *string); 
-cvar_t		vid_displayfrequency = {"vid_displayfrequency", "60", 0, OnChange_vid_displayfrequency };
+cvar_t		vid_displayfrequency = {"vid_displayfrequency", "0", 0, OnChange_vid_displayfrequency };
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 
 // VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
@@ -204,69 +214,7 @@ void CenterWindow (HWND hWndCenter, int width, int height, BOOL lefttopjustify)
 	SetWindowPos (hWndCenter, NULL, CenterX, CenterY, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW | SWP_DRAWFRAME);
 }
 
-int GetBestFreq(int w, int h, int bpp) 
-{
-	int freq = 0;
-	DEVMODE	testMode;
-
-	memset((void*)&testMode, 0, sizeof(testMode));
-	testMode.dmSize = sizeof(testMode);
-
-	testMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
-	testMode.dmPelsWidth = w; // here we must pass right value if modelist[vid_modenum].halfscreen
-	testMode.dmPelsHeight = h;
-	testMode.dmBitsPerPel = bpp;
-
-	for (freq = 301; freq >= 0; freq--)
-	{
-		testMode.dmDisplayFrequency = freq;
-		if (ChangeDisplaySettings(&testMode, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
-			continue; // mode can't be set
-
-		break; // wow, we found something
-	}
-
-	return max(0, freq);
-}
-
-int display_freq_modes[20];
-int display_freq_modes_num;
-
-void VID_ShowFreq_f(void) 
-{
-	int freq;
-	DEVMODE	testMode;
-
-	if (!vid_initialized || vid_modenum < 0 || vid_modenum >= MAX_MODE_LIST)
-		return;
-
-	memset((void*)&testMode, 0, sizeof(testMode));
-	testMode.dmSize = sizeof(testMode);
-
-	Con_Printf("Possible display frequency:");
-
-	testMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
-	testMode.dmPelsWidth = modelist[vid_modenum].width << modelist[vid_modenum].halfscreen;
-	testMode.dmPelsHeight = modelist[vid_modenum].height;
-	testMode.dmBitsPerPel = modelist[vid_modenum].bpp;
-
-	memset(display_freq_modes, 0, sizeof(display_freq_modes));
-	display_freq_modes_num = 0;
-
-	for (freq = 1; freq < 301; freq++)
-	{
-		testMode.dmDisplayFrequency = freq;
-		if (ChangeDisplaySettings(&testMode, CDS_FULLSCREEN | CDS_TEST) != DISP_CHANGE_SUCCESSFUL)
-			continue; // mode can't be set
-
-		Con_Printf(" %d", freq);
-		
-		display_freq_modes[display_freq_modes_num] = freq;
-		display_freq_modes_num++;
-	}
-
-	Con_Printf("%s\n", display_freq_modes_num ? "" : " none");
-}
+int display_freq_modes[8] = { 60, 75, 100, 120, 144, 165, 180, 240 };
 
 int GetCurrentFreq(void) 
 {
@@ -296,7 +244,13 @@ qboolean ChangeFreq(int freq)
 		return false;
 	}
 
-	if (GetCurrentFreq() == freq) 
+	if (freq == 0)
+	{
+		//Con_Printf("Display frequency forcing switched off. Please restart Quake to apply this setting\n", freq);
+		return true;
+	}
+
+	if (GetCurrentFreq() == freq)
 	{
 		Con_Printf("Display frequency %d already set\n", freq);
 		return false;
@@ -410,10 +364,10 @@ qboolean VID_SetFullDIBMode (int modenum)
 		gdevmode.dmSize = sizeof (gdevmode);
 
 		if (vid_displayfrequency.value) // freq was somehow specified, use it
+		{
 			gdevmode.dmDisplayFrequency = vid_displayfrequency.value;
-		else // guess best possible freq
-			gdevmode.dmDisplayFrequency = GetBestFreq(gdevmode.dmPelsWidth, gdevmode.dmPelsHeight, gdevmode.dmBitsPerPel);
-		gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
+			gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
+		}
 
 		if (ChangeDisplaySettings(&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) 
 		{
@@ -776,12 +730,6 @@ qboolean OnChange_vid_mode(cvar_t *var, char *string)
 	if (!vid_initialized || !host_initialized)
 		return false; // set from cmd line or from VID_Init(), allow change but do not issue callback
 
-	if (leavecurrentmode) 
-	{
-		Con_Printf("Can't switch vid mode when using -current cmd line parammeter\n");
-		return true;
-	}
-
 	if (!ActiveApp || Minimized || !vid_canalttab || vid_wassuspended) 
 	{
 		Con_Printf("Can't switch vid mode while minimized\n");
@@ -794,7 +742,7 @@ qboolean OnChange_vid_mode(cvar_t *var, char *string)
 	{ 
 		if (modenum == vid_mode.value) 
 		{
-			Con_Printf("Vid mode %d alredy set\n", modenum);
+			Con_Printf("Vid mode %d already set\n", modenum);
 			return true;
 		}
 	}
@@ -1242,7 +1190,7 @@ void VID_ModeList_f(void)
 	lnummodes = VID_NumModes();
 
 	t = leavecurrentmode;
-	leavecurrentmode = 0;
+	leavecurrentmode = false;
 
 	for (i = 1; i < lnummodes; i++) {
 		if (width != -1 && modelist[i].width != width)
@@ -1294,7 +1242,7 @@ void VID_DescribeMode_f (void)
 	modenum = Q_atoi(Cmd_Argv(1));
 
 	t = leavecurrentmode;
-	leavecurrentmode = 0;
+	leavecurrentmode = false;
 
 	Con_Printf ("%s\n", VID_GetExtModeDescription(modenum));
 
@@ -1314,7 +1262,7 @@ void VID_DescribeModes_f (void)
 	lnummodes = VID_NumModes ();
 
 	t = leavecurrentmode;
-	leavecurrentmode = 0;
+	leavecurrentmode = false;
 
 	for (i=1 ; i<lnummodes ; i++)
 	{
@@ -1379,131 +1327,44 @@ VID_InitFullDIB
 */
 void VID_InitFullDIB (HINSTANCE hInstance)
 {
-	DEVMODE	devmode;
-	int	i, j, bpp, done, modenum, originalnummodes, existingmode, numlowresmodes;
-	BOOL	stat;
+	int	i, bpp, originalnummodes, numhiresmodes;
 
 // enumerate >8 bpp modes
 	originalnummodes = nummodes;
-	modenum = 0;
+	bpp = 32;	//FIXME
 
-	do {
-		stat = EnumDisplaySettings (NULL, modenum, &devmode);
+	numhiresmodes = sizeof(hiresmodes) / sizeof(hiresmodes[0]);
 
-		if ((devmode.dmBitsPerPel >= 15) &&
-		    (devmode.dmPelsWidth <= MAXWIDTH) &&
-		    (devmode.dmPelsHeight <= MAXHEIGHT) &&
-		    (nummodes < MAX_MODE_LIST))
+	for (i = 0; i < numhiresmodes; i++)
+	{
+		modelist[nummodes].type = (windowed ? MS_WINDOWED : MS_FULLDIB);
+		modelist[nummodes].width = hiresmodes[i].width;
+		modelist[nummodes].height = hiresmodes[i].height;
+		modelist[nummodes].modenum = 0;
+		modelist[nummodes].halfscreen = 0;
+		modelist[nummodes].dib = 1;
+		modelist[nummodes].fullscreen = (windowed ? 0 : 1);
+		modelist[nummodes].bpp = (windowed ? 0 : bpp);
+
+		if (windowed)
+			sprintf(modelist[nummodes].modedesc, "%dx%d", hiresmodes[i].width, hiresmodes[i].height);
+		else
+			sprintf(modelist[nummodes].modedesc, "%dx%dx%d", hiresmodes[i].width, hiresmodes[i].height, bpp);
+
+		// if the width is more than twice the height, reduce it by half because this
+		// is probably a dual-screen monitor
+		if (!COM_CheckParm("-noadjustaspect"))
 		{
-			devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-
-			if (ChangeDisplaySettings(&devmode, CDS_TEST | (windowed ? 0 : CDS_FULLSCREEN)) == DISP_CHANGE_SUCCESSFUL)
+			if (modelist[nummodes].width > (modelist[nummodes].height << 1))
 			{
-				modelist[nummodes].type = (windowed ? MS_WINDOWED : MS_FULLDIB);
-				modelist[nummodes].width = devmode.dmPelsWidth;
-				modelist[nummodes].height = devmode.dmPelsHeight;
-				modelist[nummodes].modenum = 0;
-				modelist[nummodes].halfscreen = 0;
-				modelist[nummodes].dib = 1;
-				modelist[nummodes].fullscreen = (windowed ? 0 : 1);
-				modelist[nummodes].bpp = (windowed ? 0 : devmode.dmBitsPerPel);
-
-				if (windowed)
-					sprintf(modelist[nummodes].modedesc, "%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight);
-				else
-					sprintf(modelist[nummodes].modedesc, "%dx%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight, devmode.dmBitsPerPel);
-
-			// if the width is more than twice the height, reduce it by half because this
-			// is probably a dual-screen monitor
-				if (!COM_CheckParm("-noadjustaspect"))
-				{
-					if (modelist[nummodes].width > (modelist[nummodes].height << 1))
-					{
-						modelist[nummodes].width >>= 1;
-						modelist[nummodes].halfscreen = 1;
-						sprintf (modelist[nummodes].modedesc, "%dx%dx%d", modelist[nummodes].width, modelist[nummodes].height, modelist[nummodes].bpp);
-					}
-				}
-
-				for (i = originalnummodes, existingmode = 0 ; i < nummodes ; i++)
-				{
-					if ((modelist[nummodes].width == modelist[i].width) &&
-					    (modelist[nummodes].height == modelist[i].height) &&
-					    (modelist[nummodes].bpp == modelist[i].bpp))
-					{
-						existingmode = 1;
-						break;
-					}
-				}
-
-				if (!existingmode)
-					nummodes++;
+				modelist[nummodes].width >>= 1;
+				modelist[nummodes].halfscreen = 1;
+				sprintf(modelist[nummodes].modedesc, "%dx%dx%d", modelist[nummodes].width, modelist[nummodes].height, modelist[nummodes].bpp);
 			}
 		}
 
-		modenum++;
-	} while (stat);
-
-// see if there are any low-res modes that aren't being reported
-	numlowresmodes = sizeof(lowresmodes) / sizeof(lowresmodes[0]);
-	bpp = 16;
-	done = 0;
-
-	do {
-		for (j = 0 ; j < numlowresmodes && nummodes < MAX_MODE_LIST ; j++)
-		{
-			devmode.dmBitsPerPel = bpp;
-			devmode.dmPelsWidth = lowresmodes[j].width;
-			devmode.dmPelsHeight = lowresmodes[j].height;
-			devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-
-			if (ChangeDisplaySettings(&devmode, CDS_TEST | (windowed ? 0 : CDS_FULLSCREEN)) == DISP_CHANGE_SUCCESSFUL)
-			{
-				modelist[nummodes].type = (windowed ? MS_WINDOWED : MS_FULLDIB);
-				modelist[nummodes].width = devmode.dmPelsWidth;
-				modelist[nummodes].height = devmode.dmPelsHeight;
-				modelist[nummodes].modenum = 0;
-				modelist[nummodes].halfscreen = 0;
-				modelist[nummodes].dib = 1;
-				modelist[nummodes].fullscreen = (windowed ? 0 : 1);
-				modelist[nummodes].bpp = (windowed ? 0 : devmode.dmBitsPerPel);
-
-				if (windowed)
-					sprintf(modelist[nummodes].modedesc, "%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight);
-				else
-					sprintf(modelist[nummodes].modedesc, "%dx%dx%d", devmode.dmPelsWidth, devmode.dmPelsHeight, devmode.dmBitsPerPel);
-
-				for (i=originalnummodes, existingmode = 0 ; i<nummodes ; i++)
-				{
-					if ((modelist[nummodes].width == modelist[i].width) &&
-					    (modelist[nummodes].height == modelist[i].height) &&
-					    (modelist[nummodes].bpp == modelist[i].bpp))
-					{
-						existingmode = 1;
-						break;
-					}
-				}
-
-				if (!existingmode)
-					nummodes++;
-			}
-		}
-
-		switch (bpp)
-		{
-			case 16:
-				bpp = 32;
-				break;
-
-			case 32:
-				bpp = 24;
-				break;
-
-			case 24:
-				done = 1;
-				break;
-		}
-	} while (!done);
+		nummodes++;
+	}
 
 	if (nummodes == originalnummodes)
 		Con_Printf ("No fullscreen DIB modes found\n");
@@ -1527,11 +1388,7 @@ void VID_Init (unsigned char *palette)
 
 	memset (&devmode, 0, sizeof(devmode));
 
-	Cvar_Register (&vid_mode);
-	//Cvar_Register (&_vid_default_mode);
-	//Cvar_Register (&_vid_default_mode_win);
-	//Cvar_Register (&vid_config_x);
-	//Cvar_Register (&vid_config_y);
+	Cvar_Register(&vid_mode);
 	Cvar_Register(&vid_displayfrequency);
 	Cvar_Register(&vid_hwgammacontrol);
 	Cvar_Register(&vid_forcerestoregamma);
@@ -1587,34 +1444,28 @@ void VID_Init (unsigned char *palette)
 	}
 	else
 	{
-		Cmd_AddCommand("vid_showfreq", VID_ShowFreq_f);
-
 		if (nummodes == 1)
 			Sys_Error ("No RGB fullscreen modes available");
 
 		windowed = false;
 
 		if ((i = COM_CheckParm("-mode")) && i + 1 < com_argc)
-		{
 			vid_default = Q_atoi(com_argv[i+1]);
-		}
 		else if (vid_mode.value != NO_MODE) // serve +set vid_mode
-		{ 
 			vid_default = vid_mode.value;
-		}
-		else if (COM_CheckParm("-current"))
-		{
-			modelist[MODE_FULLSCREEN_DEFAULT].width = GetSystemMetrics (SM_CXSCREEN);
-			modelist[MODE_FULLSCREEN_DEFAULT].height = GetSystemMetrics (SM_CYSCREEN);
-			vid_default = MODE_FULLSCREEN_DEFAULT;
-			leavecurrentmode = 1;
-		}
 		else
 		{
+			leavecurrentmode = true;
+
 			if ((i = COM_CheckParm("-width")) && i + 1 < com_argc)
 				width = Q_atoi(com_argv[i+1]);
 			else
-				width = 640;
+				width = GetSystemMetrics(SM_CXSCREEN);
+
+			if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
+				height = Q_atoi(com_argv[i+1]);
+			else
+				height = GetSystemMetrics(SM_CYSCREEN);
 
 			if ((i = COM_CheckParm("-bpp")) && i + 1 < com_argc)
 			{
@@ -1626,9 +1477,6 @@ void VID_Init (unsigned char *palette)
 				bpp = 15;
 				findbpp = 1;
 			}
-
-			if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
-				height = Q_atoi(com_argv[i+1]);
 
 			// if they want to force it, add the specified mode to the list
 			if (COM_CheckParm("-force") && nummodes < MAX_MODE_LIST)
@@ -1658,15 +1506,10 @@ void VID_Init (unsigned char *palette)
 			done = 0;
 
 			do {
-				height = 0;
-				if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
-					height = Q_atoi(com_argv[i+1]);
-				else
-					height = 0;
 
 				for (i = 1, vid_default = 0 ; i < nummodes ; i++)
 				{
-					if (modelist[i].width == width && (!height || modelist[i].height == height) && modelist[i].bpp == bpp)
+					if (modelist[i].width == width && modelist[i].height == height && modelist[i].bpp == bpp)
 					{
 						vid_default = i;
 						done = 1;
@@ -1741,6 +1584,7 @@ void VID_Init (unsigned char *palette)
 
 	strcpy (badmode.modedesc, "Bad mode");
 	vid_canalttab = true;
+	leavecurrentmode = false;
 
 	if (COM_CheckParm("-fullsbar"))
 		fullsbardraw = true;
@@ -1915,7 +1759,7 @@ VID_MenuKey
 */
 void VID_MenuKey (int key)
 {
-	int i, selected_modenum;
+	int i, selected_modenum, num_display_freq_modes;
 
 	switch (key)
 	{
@@ -1990,10 +1834,11 @@ void VID_MenuKey (int key)
 			break;
 
 		case 1:
-			for (i = 0; i < display_freq_modes_num; i++)
+			num_display_freq_modes = sizeof(display_freq_modes) / sizeof(display_freq_modes[0]);
+			for (i = 0; i < num_display_freq_modes; i++)
 				if (display_freq_modes[i] == menu_display_freq)
 					break;
-			if (i >= (display_freq_modes_num - 1))
+			if (i >= (num_display_freq_modes - 1))
 				i = -1;
 			menu_display_freq = display_freq_modes[i + 1];
 			break;
@@ -2009,7 +1854,6 @@ void VID_MenuKey (int key)
 		default:
 			selected_modenum = (video_cursor_row - VIDEO_ITEMS) * VID_ROW_SIZE + (video_cursor_column + 1);
 			Cvar_SetValue(&vid_mode, (float)selected_modenum);
-			VID_ShowFreq_f(); // refresh possible display frequencies after a resolution change
 			break;
 		}
 	}

@@ -2006,9 +2006,6 @@ void M_Options_Draw (void)
 
 void M_Options_Key (int k)
 {
-	extern int menu_display_freq;
-	extern void VID_ShowFreq_f(void);
-
 	switch (k)
 	{
 	case K_ESCAPE:
@@ -2051,15 +2048,7 @@ void M_Options_Key (int k)
 
 		case 7:
 			if (vid_menudrawfn)
-			{
-				//FIXME - find a better place for this during startup
-				if (menu_display_freq == 0)
-				{
-					menu_display_freq = (int)vid_displayfrequency.value;
-					VID_ShowFreq_f(); // query possible display frequencies for the menu
-				}
 				M_Menu_VideoModes_f();
-			}
 			break;
 
 #ifndef GLQUAKE
@@ -5096,8 +5085,13 @@ void M_ScreenFlashes_Key(int k)
 //=============================================================================
 /* VIDEO MENU */
 
+extern int menu_display_freq;
+extern int GetCurrentFreq(void);
+
 void M_Menu_VideoModes_f (void)
 {
+	menu_display_freq = GetCurrentFreq();
+
 	key_dest = key_menu;
 	m_state = m_videomodes;
 	m_entersound = true;
