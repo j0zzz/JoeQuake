@@ -1249,7 +1249,7 @@ Checks whether the given path is absolute or relative.
 */
 qboolean COM_IsAbsolutePath (char *path)
 {
-	return strstr(path, ":\\") != NULL;
+	return strstr(path, ":\\") != NULL || strstr(path, ":/") != NULL;
 }
 
 /*
