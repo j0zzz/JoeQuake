@@ -246,7 +246,7 @@ qboolean ChangeFreq(int freq)
 
 	if (freq == 0)
 	{
-		//Con_Printf("Display frequency forcing switched off. Please restart Quake to apply this setting\n", freq);
+		Con_Printf("Display frequency forcing switched off. Please restart Quake to apply this setting\n");
 		return true;
 	}
 
@@ -747,6 +747,12 @@ qboolean OnChange_vid_mode(cvar_t *var, char *string)
 		}
 	}
 
+	if (modenum == -1)
+	{
+		Con_Printf("Video mode forcing switched off. Please restart Quake to apply this setting\n");
+		return false;
+	}
+
 	if (modenum < 0 || modenum >= nummodes
 		|| (windowed && modelist[modenum].type != MS_WINDOWED)
 		|| (!windowed && modelist[modenum].type != MS_FULLDIB))
@@ -758,7 +764,7 @@ qboolean OnChange_vid_mode(cvar_t *var, char *string)
 	// we call a few Cvar_SetValues in VID_SetMode and in deeper functions but their callbacks will not be triggered
 	VID_SetMode(modenum, host_basepal);
 
-	Cbuf_AddText("v_cshift 0 0 0 1\n");	//FIXME
+	//Cbuf_AddText("v_cshift 0 0 0 1\n");	//FIXME
 
 	return true;
 }
@@ -881,8 +887,9 @@ void AppActivate (BOOL fActive, BOOL minimize)
 					Sys_Error ("Couldn't set fullscreen DIB mode");
 				ShowWindow (mainwindow, SW_SHOWNORMAL);
 
+				//joe: this is screwed on my PC, removing it gets it fixed
 				// Fix for alt-tab bug in NVidia drivers
-				MoveWindow (mainwindow, 0, 0, gdevmode.dmPelsWidth, gdevmode.dmPelsHeight, false);
+				//MoveWindow (mainwindow, 0, 0, gdevmode.dmPelsWidth, gdevmode.dmPelsHeight, false);
 				
 				// scr_fullupdate = 0;
 				Sbar_Changed ();
@@ -1713,7 +1720,7 @@ void VID_MenuDraw (void)
 	M_DrawCheckbox(188, 32, !windowed);
 
 	M_Print(16, 40, "      Refresh rate");
-	sprintf(display_freq, "%i Hz", menu_display_freq);
+	sprintf(display_freq, menu_display_freq == 0 ? "desktop" : "%i Hz", menu_display_freq);
 	M_Print(188, 40, display_freq);
 
 	M_Print(16, 48, "     Vertical sync");
