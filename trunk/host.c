@@ -601,9 +601,11 @@ void Host_ServerFrame (double time)
 {
 	// joe, from ProQuake: stuff the port number into the server console once every minute
 	static	double	port_time = 0;
+	extern double sv_frametime;
 
-//	if (!sv.paused)
-//		sv.time += time;
+	//if (!sv.paused)
+	//	sv.time += time;
+	sv_frametime = time;
 
 	if (port_time > sv.time + 1 || port_time < sv.time - 60)
 	{
@@ -612,7 +614,7 @@ void Host_ServerFrame (double time)
 	}
 
 	// run the world state	
-	pr_global_struct->frametime = host_frametime;
+	pr_global_struct->frametime = sv_frametime;
 
 	// set the time and clear the general datagram
 	SV_ClearDatagram ();
@@ -676,18 +678,23 @@ void _Host_Frame (double time)
 			physframe = true;
 
 			if (extraphysframetime > minphysframetime * 2)	// FIXME: this is for the case when
-				physframetime = extraphysframetime;	// actual fps is too low
-			else						// Dunno how to do it right
+				physframetime = extraphysframetime;			// actual fps is too low
+			else											// Dunno how to do it right
 				physframetime = minphysframetime;
 
 			extraphysframetime -= physframetime;
 		}	
 	}
+	else
+	{
+		// this vars SHOULD NOT be used in case of cl_independentPhysics == 0, so we just reset it for sanity
+		physframetime = extraphysframetime = 0;
+		// this var actually used
+		physframe = true;
+	}
 
-#ifdef INDEPENDENTPHYSICS
 	if (!cl_independentphysics.value)
 	{
-#endif
 		// get new key events
 		Sys_SendKeyEvents ();
 
@@ -739,7 +746,6 @@ void _Host_Frame (double time)
 			usercmd_t dummy;
 			IN_Move(&dummy);
 		}
-#ifdef INDEPENDENTPHYSICS
 	}
 	else
 	{
@@ -788,14 +794,30 @@ void _Host_Frame (double time)
 			// fetch results from server
 			if (cls.state == ca_connected)
 				CL_ReadFromServer ();
+
+			if (cls.state == ca_disconnected) // We need to move the mouse also when disconnected
+			{
+				usercmd_t dummy;
+				IN_Move(&dummy);
+			}
 		}
 		else
 		{
-			usercmd_t dummy;
-			IN_Move (&dummy);
+			host_time += host_frametime;
+			
+			// fetch results from server
+			if (cls.state == ca_connected)
+				CL_ReadFromServer();
+
+			if (!cls.demoplayback || // not demo playback
+				cls.state == ca_disconnected // We need to move the mouse also when disconnected 
+				)
+			{
+				usercmd_t dummy;
+				IN_Move(&dummy);
+			}
 		}
 	}
-#endif
 
 	if (host_speeds.value)
 		time1 = Sys_DoubleTime ();

@@ -46,6 +46,8 @@ cvar_t	sv_gravity = {"sv_gravity", "800", CVAR_SERVER};
 cvar_t	sv_maxvelocity = {"sv_maxvelocity", "2000"};
 cvar_t	sv_nostep = {"sv_nostep", "0"};
 
+double	sv_frametime;
+
 #define	MOVE_EPSILON	0.01
 
 void SV_Physics_Toss (edict_t *ent);
@@ -120,7 +122,7 @@ qboolean SV_RunThink (edict_t *ent)
 	float	thinktime;
 
 	thinktime = ent->v.nextthink;
-	if (thinktime <= 0 || thinktime > sv.time + host_frametime)
+	if (thinktime <= 0 || thinktime > sv.time + sv_frametime)
 		return true;
 		
 	if (thinktime < sv.time)
@@ -355,7 +357,7 @@ void SV_AddGravity (edict_t *ent)
 		ent_gravity = val->_float;
 	else
 		ent_gravity = 1.0;
-	ent->v.velocity[2] -= ent_gravity * sv_gravity.value * host_frametime;
+	ent->v.velocity[2] -= ent_gravity * sv_gravity.value * sv_frametime;
 }
 
 
@@ -532,14 +534,14 @@ void SV_Physics_Pusher (edict_t *ent)
 	oldltime = ent->v.ltime;
 	
 	thinktime = ent->v.nextthink;
-	if (thinktime < ent->v.ltime + host_frametime)
+	if (thinktime < ent->v.ltime + sv_frametime)
 	{
 		movetime = thinktime - ent->v.ltime;
 		if (movetime < 0)
 			movetime = 0;
 	}
 	else
-		movetime = host_frametime;
+		movetime = sv_frametime;
 
 	if (movetime)
 		SV_PushMove (ent, movetime);	// advances ent->v.ltime if not blocked
@@ -753,7 +755,7 @@ void SV_WalkMove (edict_t *ent)
 	VectorCopy (ent->v.origin, oldorg);
 	VectorCopy (ent->v.velocity, oldvel);
 
-	clip = SV_FlyMove (ent, host_frametime, &steptrace);
+	clip = SV_FlyMove (ent, sv_frametime, &steptrace);
 
 	if (!(clip & 2))
 		return;		// move didn't block on a step
@@ -779,7 +781,7 @@ void SV_WalkMove (edict_t *ent)
 	VectorCopy (vec3_origin, upmove);
 	VectorCopy (vec3_origin, downmove);
 	upmove[2] = STEPSIZE;
-	downmove[2] = -STEPSIZE + oldvel[2]*host_frametime;
+	downmove[2] = -STEPSIZE + oldvel[2]* sv_frametime;
 
 // move up
 	SV_PushEntity (ent, upmove);	// FIXME: don't link?
@@ -788,7 +790,7 @@ void SV_WalkMove (edict_t *ent)
 	ent->v.velocity[0] = oldvel[0];
 	ent->v. velocity[1] = oldvel[1];
 	ent->v. velocity[2] = 0;
-	clip = SV_FlyMove (ent, host_frametime, &steptrace);
+	clip = SV_FlyMove (ent, sv_frametime, &steptrace);
 
 // check for stuckness, possibly due to the limited precision of floats
 // in the clipping hulls
@@ -871,13 +873,13 @@ void SV_Physics_Client (edict_t	*ent, int num)
 	case MOVETYPE_FLY:
 		if (!SV_RunThink(ent))
 			return;
-		SV_FlyMove (ent, host_frametime, NULL);
+		SV_FlyMove (ent, sv_frametime, NULL);
 		break;
 
 	case MOVETYPE_NOCLIP:
 		if (!SV_RunThink(ent))
 			return;
-		VectorMA (ent->v.origin, host_frametime, ent->v.velocity, ent->v.origin);
+		VectorMA (ent->v.origin, sv_frametime, ent->v.velocity, ent->v.origin);
 		break;
 
 	default:
@@ -920,8 +922,8 @@ void SV_Physics_Noclip (edict_t *ent)
 	if (!SV_RunThink (ent))
 		return;
 
-	VectorMA (ent->v.angles, host_frametime, ent->v.avelocity, ent->v.angles);
-	VectorMA (ent->v.origin, host_frametime, ent->v.velocity, ent->v.origin);
+	VectorMA (ent->v.angles, sv_frametime, ent->v.avelocity, ent->v.angles);
+	VectorMA (ent->v.origin, sv_frametime, ent->v.velocity, ent->v.origin);
 
 	SV_LinkEdict (ent, false);
 }
@@ -999,10 +1001,10 @@ void SV_Physics_Toss (edict_t *ent)
 		SV_AddGravity (ent);
 
 // move angles
-	VectorMA (ent->v.angles, host_frametime, ent->v.avelocity, ent->v.angles);
+	VectorMA (ent->v.angles, sv_frametime, ent->v.avelocity, ent->v.angles);
 
 // move origin
-	VectorScale (ent->v.velocity, host_frametime, move);
+	VectorScale (ent->v.velocity, sv_frametime, move);
 	trace = SV_PushEntity (ent, move);
 	if (trace.fraction == 1)
 		return;
@@ -1062,7 +1064,7 @@ void SV_Physics_Step (edict_t *ent)
 
 		SV_AddGravity (ent);
 		SV_CheckVelocity (ent);
-		SV_FlyMove (ent, host_frametime, NULL);
+		SV_FlyMove (ent, sv_frametime, NULL);
 		SV_LinkEdict (ent, true);
 
 		if ((int)ent->v.flags & FL_ONGROUND)	// just hit ground
@@ -1130,7 +1132,7 @@ void SV_Physics (void)
 	if (pr_global_struct->force_retouch)
 		pr_global_struct->force_retouch--;	
 
-	sv.time += host_frametime;
+	sv.time += sv_frametime;
 }
 
 trace_t SV_Trace_Toss (edict_t *ent, edict_t *ignore)
@@ -1140,8 +1142,8 @@ trace_t SV_Trace_Toss (edict_t *ent, edict_t *ignore)
 	edict_t	tempent, *tent;
 	trace_t	trace;
 
-	save_frametime = host_frametime;
-	host_frametime = 0.05;
+	save_frametime = sv_frametime;
+	sv_frametime = 0.05;
 
 	memcpy (&tempent, ent, sizeof(edict_t));
 	tent = &tempent;
@@ -1150,8 +1152,8 @@ trace_t SV_Trace_Toss (edict_t *ent, edict_t *ignore)
 	{
 		SV_CheckVelocity (tent);
 		SV_AddGravity (tent);
-		VectorMA (tent->v.angles, host_frametime, tent->v.avelocity, tent->v.angles);
-		VectorScale (tent->v.velocity, host_frametime, move);
+		VectorMA (tent->v.angles, sv_frametime, tent->v.avelocity, tent->v.angles);
+		VectorScale (tent->v.velocity, sv_frametime, move);
 		VectorAdd (tent->v.origin, move, end);
 		trace = SV_Move (tent->v.origin, tent->v.mins, tent->v.maxs, end, MOVE_NORMAL, tent);	
 		VectorCopy (trace.endpos, tent->v.origin);
@@ -1160,7 +1162,7 @@ trace_t SV_Trace_Toss (edict_t *ent, edict_t *ignore)
 			if (trace.ent != ignore)
 				break;
 	}
-	host_frametime = save_frametime;
+	sv_frametime = save_frametime;
 
 	return trace;
 }

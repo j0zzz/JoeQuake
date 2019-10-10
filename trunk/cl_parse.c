@@ -654,7 +654,9 @@ void CL_ParseUpdate (int bits)
 #endif
 
 	if (bits & U_NOLERP)
-		ent->forcelink = true;
+		//ent->forcelink = true;
+		// joe (independentphysics): need a full forcelink so that model animations look ok
+		forcelink = true;
 
 	if (forcelink)
 	{	// didn't have an update last message

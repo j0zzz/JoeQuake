@@ -41,6 +41,7 @@ usercmd_t	cmd;
 
 cvar_t	sv_idealpitchscale = {"sv_idealpitchscale", "0.8"};
 
+extern double sv_frametime;
 
 /*
 ===============
@@ -141,7 +142,7 @@ void SV_UserFriction (void)
 
 // apply friction	
 	control = speed < sv_stopspeed.value ? sv_stopspeed.value : speed;
-	newspeed = speed - host_frametime * control * friction;
+	newspeed = speed - sv_frametime * control * friction;
 	
 	if (newspeed < 0)
 		newspeed = 0;
@@ -168,7 +169,7 @@ void SV_Accelerate (void)
 	addspeed = wishspeed - currentspeed;
 	if (addspeed <= 0)
 		return;
-	accelspeed = sv_accelerate.value*host_frametime*wishspeed;
+	accelspeed = sv_accelerate.value*sv_frametime*wishspeed;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
@@ -188,8 +189,8 @@ void SV_AirAccelerate (vec3_t wishveloc)
 	addspeed = wishspd - currentspeed;
 	if (addspeed <= 0)
 		return;
-//	accelspeed = sv_accelerate.value * host_frametime;
-	accelspeed = sv_accelerate.value*wishspeed * host_frametime;
+//	accelspeed = sv_accelerate.value * sv_frametime;
+	accelspeed = sv_accelerate.value*wishspeed * sv_frametime;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
@@ -203,7 +204,7 @@ void DropPunchAngle (void)
 
 	len = VectorNormalize (sv_player->v.punchangle);
 
-	len -= 10 * host_frametime;
+	len -= 10 * sv_frametime;
 	if (len < 0)
 		len = 0;
 
@@ -244,7 +245,7 @@ void SV_WaterMove (void)
 	speed = VectorLength (velocity);
 	if (speed)
 	{
-		newspeed = speed - host_frametime * speed * sv_friction.value;
+		newspeed = speed - sv_frametime * speed * sv_friction.value;
 		if (newspeed < 0)
 			newspeed = 0;	
 		VectorScale (velocity, newspeed/speed, velocity);
@@ -263,7 +264,7 @@ void SV_WaterMove (void)
 		return;
 
 	VectorNormalize (wishvel);
-	accelspeed = sv_accelerate.value * wishspeed * host_frametime;
+	accelspeed = sv_accelerate.value * wishspeed * sv_frametime;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 

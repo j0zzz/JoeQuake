@@ -1026,6 +1026,7 @@ void SV_SpawnServer (char *server)
 	int	i;
 	edict_t	*ent;
 	extern	void R_PreMapLoad (char *);
+	extern double sv_frametime;
 
 #ifdef GLQUAKE
 	if (nehahra)
@@ -1158,6 +1159,7 @@ void SV_SpawnServer (char *server)
 
 // run two frames to allow everything to settle
 	host_frametime += 0.1;
+	sv_frametime = host_frametime;
 	SV_Physics ();
 //	sv.time += 0.1;
 	SV_Physics ();

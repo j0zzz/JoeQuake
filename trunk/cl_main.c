@@ -79,6 +79,7 @@ tagentity_t		q3player_body, q3player_head, q3player_weapon, q3player_weapon_flas
 qboolean		r_loadq3player = false;
 
 extern qboolean physframe;
+extern double physframetime;
 
 unsigned CheckModel (char *mdl);
 
@@ -494,7 +495,7 @@ float CL_LerpPoint (void)
 
 	f = cl.mtime[0] - cl.mtime[1];
 
-	if (!f || cl_nolerp.value || cls.timedemo || sv.active)
+	if ((!f || cl_nolerp.value || cls.timedemo || (sv.active && cl_independentphysics.value == 0)))
 	{
 		cl.time = cl.ctime = cl.mtime[0];
 		return 1;
@@ -505,7 +506,7 @@ float CL_LerpPoint (void)
 		cl.mtime[1] = cl.mtime[0] - 0.1;
 		f = 0.1;
 	}
-	frac = (cl.ctime - cl.mtime[1]) / f;
+	frac = (cl.time - cl.mtime[1]) / f;
 	if (frac < 0)
 	{
 		if (frac < -0.01)
