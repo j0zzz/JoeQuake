@@ -147,10 +147,11 @@ If the line width has changed, reformat the buffer.
 */
 void Con_CheckResize (void)
 {
-	int		i, j, width, oldwidth, oldtotallines, numlines, numchars;
+	int		i, j, width, oldwidth, oldtotallines, numlines, numchars, size;
 	char	tbuf[CON_TEXTSIZE];
 
-	width = (vid.width >> 3) - 2;
+	size = Sbar_GetScaledCharacterSize();
+	width = (vid.width / size) - 2;
 
 	if (width == con_linewidth)
 		return;
