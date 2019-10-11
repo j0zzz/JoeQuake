@@ -2425,9 +2425,9 @@ void M_Mouse_Draw(void)
 
 	if (mouse_cursor == 4)
 	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "Mouse smoothing must be set from the");
-		M_Print(2 * 8, 192 + 8 * 4, "command line with -dinput and -m_smooth");
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Mouse smoothing must be set from the");
+		M_Print(2 * 8, 176 + 8 * 4, "command line with -dinput and -m_smooth");
 	}
 }
 
@@ -2595,21 +2595,21 @@ void M_Misc_Draw(void)
 
 	if (misc_cursor == 3)
 	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "Shows a list of relevant commands when");
-		M_Print(2 * 8, 192 + 8 * 4, "pressing the TAB key for completion");
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Shows a list of relevant commands when");
+		M_Print(2 * 8, 176 + 8 * 4, "pressing the TAB key for completion");
 	}
 	else if (misc_cursor == 4)
 	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "Defines which console variables");
-		M_Print(2 * 8, 192 + 8 * 4, "are saved when exiting the game");
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Defines which console variables");
+		M_Print(2 * 8, 176 + 8 * 4, "are saved when exiting the game");
 	}
 	else if (misc_cursor == 5)
 	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "Shows a confirmation screen");
-		M_Print(2 * 8, 192 + 8 * 4, "when exiting the game");
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Shows a confirmation screen");
+		M_Print(2 * 8, 176 + 8 * 4, "when exiting the game");
 	}
 }
 
@@ -3428,9 +3428,9 @@ void M_Sound_Draw(void)
 
 	if (sound_cursor == 2)
 	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "Sound quality must be set from the");
-		M_Print(2 * 8, 192 + 8 * 4, "command line with +set s_khz <22 or 44>");
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Sound quality must be set from the");
+		M_Print(2 * 8, 176 + 8 * 4, "command line with +set s_khz <22 or 44>");
 	}
 }
 
@@ -3627,9 +3627,9 @@ void M_Display_Draw (void)
 
 	if (display_cursor == 14)
 	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "Shows the player's name on top");
-		M_Print(2 * 8, 192 + 8 * 4, "of him when watching from outside");
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Shows the player's name on top");
+		M_Print(2 * 8, 176 + 8 * 4, "of him when watching from outside");
 	}
 }
 
@@ -4138,23 +4138,23 @@ void M_Textures_Draw(void)
 
 	if (textures_cursor == 7)
 	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "Static objects are health boxes,");
-		M_Print(2 * 8, 192 + 8 * 4, "ammo boxes and explosion barrels");
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Static objects are health boxes,");
+		M_Print(2 * 8, 176 + 8 * 4, "ammo boxes and explosion barrels");
 	}
 	else if (textures_cursor == 8)
 	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "Dynamic objects are players, monsters,");
-		M_Print(2 * 8, 192 + 8 * 4, "weapons, armors, keys, gibs, backpack,");
-		M_Print(2 * 8, 192 + 8 * 5, "rocket, grenade and torches");
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Dynamic objects are players, monsters,");
+		M_Print(2 * 8, 176 + 8 * 4, "weapons, armors, keys, gibs, backpack,");
+		M_Print(2 * 8, 176 + 8 * 5, "rocket, grenade and torches");
 	}
 	else if (textures_cursor == 9)
 	{
-		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 192 + 8 * 3, "This option must be set from the");
-		M_Print(2 * 8, 192 + 8 * 4, "command line with");
-		M_Print(2 * 8, 192 + 8 * 5, "+set gl_externaltextures_gfx <0 or 1>");
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "This option must be set from the");
+		M_Print(2 * 8, 176 + 8 * 4, "command line with");
+		M_Print(2 * 8, 176 + 8 * 5, "+set gl_externaltextures_gfx <0 or 1>");
 	}
 }
 
@@ -4470,9 +4470,9 @@ void M_Decals_Draw(void)
 	// cursor
 	M_DrawCharacter(200, 32 + decals_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
-	M_Print(2 * 8, 192 + 8 * 3, "Decals are displayed only when using");
-	M_Print(2 * 8, 192 + 8 * 4, "QMB or Quake3 style particle effects");
+	M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+	M_Print(2 * 8, 176 + 8 * 3, "Decals are displayed only when using");
+	M_Print(2 * 8, 176 + 8 * 4, "QMB or Quake3 style particle effects");
 }
 
 void M_Decals_Key(int k)
