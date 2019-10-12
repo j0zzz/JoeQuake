@@ -918,7 +918,7 @@ void CalcGunAngle (void)
 		if (key_dest != key_console && key_dest != key_menu)
 		{
 			// on odd legs, invert some angles
-			bobtime += 0.01388888888888888888888888888889;
+			bobtime += host_frametime;
 			//Con_Printf("%f\n", bobtime);
 			bobfracsin = fabs(sin((((int)(bobtime * 300)) & 127) / 127.0 * M_PI));
 			if (prevbobfracsin2 >= prevbobfracsin1 && prevbobfracsin1 < bobfracsin)
