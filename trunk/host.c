@@ -880,9 +880,13 @@ void _Host_Frame (double time)
 		if (cls.demorecording)
 		{
 			Cvar_SetValue (&cl_truelightning, 0);
-		// don't allow higher than 72 fps during recording
-			if (cl_maxfps.value > 72)
-				Cvar_SetValue (&cl_maxfps, 72);
+
+			// don't allow higher than 72 fps during recording
+			if (cl_independentphysics.value == 0 && cl_maxfps.value > 72)
+			{
+				Con_Printf("Capping fps at 72 for recording.\n");
+				Cvar_SetValue(&cl_maxfps, 72);
+			}
 		}
 	}
 
