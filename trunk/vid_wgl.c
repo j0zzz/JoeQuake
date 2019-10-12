@@ -256,6 +256,10 @@ qboolean ChangeFreq(int freq)
 		return false;
 	}
 
+	memset(&gdevmode, 0, sizeof(gdevmode));
+	gdevmode.dmSize = sizeof(gdevmode);
+	EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &gdevmode);
+
 	gdevmode.dmDisplayFrequency = freq;
 	gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
 
@@ -357,11 +361,14 @@ qboolean VID_SetFullDIBMode (int modenum)
 
 	if (!leavecurrentmode)
 	{
+		memset(&gdevmode, 0, sizeof(gdevmode));
+		gdevmode.dmSize = sizeof(gdevmode);
+		EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &gdevmode);
+
 		gdevmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 		gdevmode.dmBitsPerPel = modelist[modenum].bpp;
 		gdevmode.dmPelsWidth = modelist[modenum].width << modelist[modenum].halfscreen;
 		gdevmode.dmPelsHeight = modelist[modenum].height;
-		gdevmode.dmSize = sizeof (gdevmode);
 
 		if (vid_displayfrequency.value) // freq was somehow specified, use it
 		{
@@ -377,7 +384,7 @@ qboolean VID_SetFullDIBMode (int modenum)
 		}
 
 		gdevmode.dmDisplayFrequency = GetCurrentFreq();
-		Cvar_SetValue(&vid_displayfrequency, (float)(int)gdevmode.dmDisplayFrequency); // so variable will we set to actual value (sometimes this fail, but does't cause any damage)
+		Cvar_SetValue(&vid_displayfrequency, (float)(int)gdevmode.dmDisplayFrequency); // so variable will we set to actual value (sometimes this fail, but doesn't cause any damage)
 	}
 
 	lastmodestate = modestate;
@@ -1837,7 +1844,7 @@ void VID_MenuKey (int key)
 		switch (video_cursor_row)
 		{
 		case 0:
-			//FIXME when switching windowed/fullscreen mode is supported
+			//TODO when switching windowed/fullscreen mode is supported
 			break;
 
 		case 1:
@@ -1855,6 +1862,7 @@ void VID_MenuKey (int key)
 			break;
 
 		case 4:
+			//TODO change to windowed/fullscreen mode also
 			Cvar_SetValue(&vid_displayfrequency, menu_display_freq);
 			break;
 
