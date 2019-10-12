@@ -552,7 +552,12 @@ void M_List_Key (int k, int num_elements, int num_lines)
 	case K_UPARROW:
 		S_LocalSound("misc/menu1.wav");
 		if (list_cursor == 0)
-			GotoEndOfList(num_elements, num_lines);
+		{
+			if (list_base > 0)
+				list_base--;
+			else
+				GotoEndOfList(num_elements, num_lines);
+		}
 		else if (list_cursor > 0)
 			list_cursor--;
 		else if (list_base > 0)
