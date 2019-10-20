@@ -1318,7 +1318,9 @@ void VID_InitDIB (HINSTANCE hInstance)
 		modelist[0].width = 320;
 
 	if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
-		modelist[0].height= Q_atoi(com_argv[i+1]);
+		modelist[0].height = Q_atoi(com_argv[i+1]);
+	else
+		modelist[0].height = 480;
 
 	if (modelist[0].height < 240)
 		modelist[0].height = 240;
@@ -1738,7 +1740,7 @@ void VID_MenuDraw (void)
 	column = 0;
 	row = 32 + VIDEO_ITEMS * 8;
 
-	video_mode_rows = 1;
+	video_mode_rows = 0;
 	for (i = 0 ; i < vid_wmodes ; i++)
 	{
 		if (modedescs[i].iscur)
@@ -1752,6 +1754,10 @@ void VID_MenuDraw (void)
 		{
 			column = 0;
 			row += 8;
+		}
+		
+		if ((i % VID_ROW_SIZE) == (VID_ROW_SIZE - 2))
+		{
 			video_mode_rows++;
 		}
 	}
@@ -1763,7 +1769,20 @@ void VID_MenuDraw (void)
 		M_DrawCharacter(-8 + video_cursor_column * 14 * 8, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
 
 	M_Print(8 * 8, row + 8, "Press enter to set mode");
-	M_Print(6 * 8, row + 8 * 3, "T to test mode for 5 seconds");
+	//M_Print(6 * 8, row + 8 * 3, "T to test mode for 5 seconds");
+
+	if (video_cursor_row == 0 && modestate == MS_FULLDIB)
+	{
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Windowed mode must be set from the");
+		M_Print(2 * 8, 176 + 8 * 4, "command line with -window");
+	}
+	else if (video_cursor_row == 1 && modestate == MS_WINDOWED)
+	{
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Refresh rate can only be changed");
+		M_Print(2 * 8, 176 + 8 * 4, "in fullscreen mode");
+	}
 }
 
 /*
@@ -1848,6 +1867,8 @@ void VID_MenuKey (int key)
 			break;
 
 		case 1:
+			if (modestate == MS_WINDOWED)
+				break;
 			num_display_freq_modes = sizeof(display_freq_modes) / sizeof(display_freq_modes[0]);
 			for (i = 0; i < num_display_freq_modes; i++)
 				if (display_freq_modes[i] == menu_display_freq)
