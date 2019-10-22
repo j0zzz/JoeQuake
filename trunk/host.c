@@ -537,7 +537,7 @@ qboolean Host_FilterTime (double time)
 
 	realtime += time;
 
-	fps = max(10, cl_maxfps.value);
+	fps = bound(10, cl_maxfps.value, 999);
 
 	if (!cls.capturedemo && !cls.timedemo && realtime - oldrealtime < 1.0 / fps)
 		return false;
