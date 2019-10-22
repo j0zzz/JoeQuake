@@ -1027,6 +1027,8 @@ void SV_SpawnServer (char *server)
 	edict_t	*ent;
 	extern	void R_PreMapLoad (char *);
 	extern double sv_frametime;
+	extern double physframetime;
+	extern cvar_t cl_independentphysics;
 
 #ifdef GLQUAKE
 	if (nehahra)
@@ -1158,8 +1160,16 @@ void SV_SpawnServer (char *server)
 	sv.state = ss_active;
 
 // run two frames to allow everything to settle
-	host_frametime += 0.1;
-	sv_frametime = host_frametime;
+	if (!cl_independentphysics.value)
+	{
+		host_frametime += 0.1;
+		sv_frametime = host_frametime;
+	}
+	else
+	{
+		physframetime += 0.1;
+		sv_frametime = physframetime;
+	}
 	SV_Physics ();
 //	sv.time += 0.1;
 	SV_Physics ();
