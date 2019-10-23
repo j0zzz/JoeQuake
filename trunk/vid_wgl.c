@@ -1137,16 +1137,16 @@ char *VID_GetModeDescription (int mode)
 	if ((mode < 0) || (mode >= nummodes))
 		return NULL;
 
-	if (!leavecurrentmode)
+	//if (!leavecurrentmode)
 	{
 		pv = VID_GetModePtr (mode);
 		pinfo = pv->modedesc;
 	}
-	else
-	{
-		sprintf (temp, "Desktop resolution (%dx%d)", modelist[MODE_FULLSCREEN_DEFAULT].width, modelist[MODE_FULLSCREEN_DEFAULT].height);
-		pinfo = temp;
-	}
+	//else
+	//{
+	//	sprintf (temp, "Desktop resolution (%dx%d)", modelist[MODE_FULLSCREEN_DEFAULT].width, modelist[MODE_FULLSCREEN_DEFAULT].height);
+	//	pinfo = temp;
+	//}
 
 	return pinfo;
 }
@@ -1164,10 +1164,10 @@ char *VID_GetExtModeDescription (int mode)
 	pv = VID_GetModePtr (mode);
 	if (modelist[mode].type == MS_FULLDIB)
 	{
-		if (!leavecurrentmode)
+		//if (!leavecurrentmode)
 			sprintf(pinfo, "%12s fullscreen", pv->modedesc); // "%dx%dx%d" worse is WWWWxHHHHxBB
-		else
-			sprintf (pinfo, "Desktop resolution (%dx%d)", modelist[MODE_FULLSCREEN_DEFAULT].width, modelist[MODE_FULLSCREEN_DEFAULT].height);
+		//else
+		//	sprintf (pinfo, "Desktop resolution (%dx%d)", modelist[MODE_FULLSCREEN_DEFAULT].width, modelist[MODE_FULLSCREEN_DEFAULT].height);
 	}
 	else
 	{
@@ -1206,7 +1206,8 @@ void VID_ModeList_f(void)
 	t = leavecurrentmode;
 	leavecurrentmode = false;
 
-	for (i = 1; i < lnummodes; i++) {
+	for (i = 1; i < lnummodes; i++) 
+	{
 		if (width != -1 && modelist[i].width != width)
 			continue;
 
