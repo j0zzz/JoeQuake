@@ -887,6 +887,10 @@ void _Host_Frame (double time)
 				Con_Printf("Capping fps at 72 for recording.\n");
 				Cvar_SetValue(&cl_maxfps, 72);
 			}
+			else if (cl_independentphysics.value)
+			{
+				Host_Error("Demo recording is not yet supported with independent physics.");
+			}
 		}
 	}
 
