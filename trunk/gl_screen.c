@@ -190,6 +190,8 @@ void SCR_DrawCenterString (void)
 	else
 		y = 48;
 
+	y *= Sbar_GetScaleAmount();
+
 	size = Sbar_GetScaledCharacterSize();
 
 	do {
