@@ -506,7 +506,7 @@ float CL_LerpPoint (void)
 		cl.mtime[1] = cl.mtime[0] - 0.1;
 		f = 0.1;
 	}
-	frac = (cl.time - cl.mtime[1]) / f;
+	frac = (cl.ctime - cl.mtime[1]) / f;
 	if (frac < 0)
 	{
 		if (frac < -0.01)
