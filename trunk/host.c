@@ -46,7 +46,11 @@ double		host_frametime;
 double		host_time;
 double		realtime;			// without any filtering or bounding
 double		oldrealtime;			// last frame run
+double		oldphysrealtime;
 int		host_framecount;
+
+qboolean physframe;
+double	physframetime;
 
 int		host_hunklevel;
 
@@ -526,6 +530,18 @@ void Host_ClearMemory (void)
 
 /*
 ===================
+MinPhysFrameTime
+===================
+*/
+static double MinPhysFrameTime(void)
+{
+	double physfps = bound(10, cl_maxfps.value, 72);
+
+	return 1.0 / physfps;
+}
+
+/*
+===================
 Host_FilterTime
 
 Returns false if the time is too short to run a frame
@@ -533,44 +549,45 @@ Returns false if the time is too short to run a frame
 */
 qboolean Host_FilterTime (double time)
 {
-	double	fps;
+	qboolean result;
+	double	fps, minphysframetime;
 
 	realtime += time;
 
 	fps = bound(10, cl_maxfps.value, 999);
 
-	if (!cls.capturedemo && !cls.timedemo && realtime - oldrealtime < 1.0 / fps)
-		return false;
+	result = false;
 
+	if (cls.capturedemo || cls.timedemo || realtime - oldrealtime >= 1.0 / fps)
+	{
 #ifdef _WIN32
-	if (Movie_IsActive())
-		host_frametime = Movie_FrameTime ();
-	else
+		if (Movie_IsActive())
+			host_frametime = Movie_FrameTime();
+		else
 #endif
-		host_frametime = realtime - oldrealtime;
-	if (cls.demoplayback)
-		host_frametime *= bound(0, cl_demospeed.value, 20);
-	oldrealtime = realtime;
+			host_frametime = realtime - oldrealtime;
+		if (cls.demoplayback)
+			host_frametime *= bound(0, cl_demospeed.value, 20);
+		oldrealtime = realtime;
 
-	if (host_framerate.value > 0)
-		host_frametime = host_framerate.value;
-	else
-	// don't allow really long or short frames
-		host_frametime = bound(0.001, host_frametime, 0.1);
+		if (host_framerate.value > 0)
+			host_frametime = host_framerate.value;
+		else
+			// don't allow really long or short frames
+			host_frametime = bound(0.001, host_frametime, 0.1);
 
-	return true;
-}
+		result = true;
+	}
+	
+	minphysframetime = MinPhysFrameTime();
+	if (cls.capturedemo || cls.timedemo || realtime - oldphysrealtime >= minphysframetime)
+	{
+		//physframe = true;
+		physframetime = realtime - oldphysrealtime;
+		oldphysrealtime = realtime;
+	}
 
-/*
-===================
-MinPhysFrameTime
-===================
-*/
-static double MinPhysFrameTime (void)
-{
-	float fpscap = bound(10, cl_maxfps.value, 72);
-
-	return 1 / fpscap;
+	return result;
 }
 
 /*
@@ -634,9 +651,6 @@ void Host_ServerFrame (double time)
 	SV_SendClientMessages ();
 }
 
-qboolean physframe;
-double	physframetime;
-
 /*
 ==================
 Host_Frame
@@ -664,7 +678,13 @@ void _Host_Frame (double time)
 		return;			// don't run too fast, or packets will flood out
 	}
 
-	if (cl_independentphysics.value)
+	if (!cl_independentphysics.value)
+	{
+		physframe = true;
+		physframetime = host_frametime;
+		extraphysframetime = 0;
+	}
+	else
 	{
 		double	minphysframetime = MinPhysFrameTime ();
 
@@ -676,39 +696,26 @@ void _Host_Frame (double time)
 		else
 		{
 			physframe = true;
-
-			if (extraphysframetime > minphysframetime * 2)	// FIXME: this is for the case when
-				physframetime = extraphysframetime;			// actual fps is too low
-			else											// Dunno how to do it right
-				physframetime = minphysframetime;
-
-			extraphysframetime -= physframetime;
-		}	
-	}
-	else
-	{
-		// this vars SHOULD NOT be used in case of cl_independentPhysics == 0, so we just reset it for sanity
-		physframetime = extraphysframetime = 0;
-		// this var actually used
-		physframe = true;
+			extraphysframetime = 0;
+		}
 	}
 
-	if (!cl_independentphysics.value)
+	if (!cl_independentphysics.value || physframe)
 	{
 		// get new key events
-		Sys_SendKeyEvents ();
+		Sys_SendKeyEvents();
 
 		// allow mice or other external controllers to add commands
-		IN_Commands ();
+		IN_Commands();
 
 		// process console commands
-		Cbuf_Execute ();
+		Cbuf_Execute();
 
-		NET_Poll ();
+		NET_Poll();
 
 		// if running the server locally, make intentions now
 		if (sv.active)
-			CL_SendCmd ();
+			CL_SendCmd();
 
 	//-------------------
 	//
@@ -717,10 +724,10 @@ void _Host_Frame (double time)
 	//-------------------
 
 		// check for commands typed to the host
-		Host_GetConsoleCommands ();
+		Host_GetConsoleCommands();
 
 		if (sv.active)
-			Host_ServerFrame (host_frametime);
+			Host_ServerFrame(physframetime);
 
 	//-------------------
 	//
@@ -731,17 +738,15 @@ void _Host_Frame (double time)
 		// if running the server remotely, send intentions now after
 		// the incoming messages have been read
 		if (!sv.active)
-			CL_SendCmd ();
+			CL_SendCmd();
 
 		host_time += host_frametime;
 
 		// fetch results from server
 		if (cls.state == ca_connected)
-			CL_ReadFromServer ();
+			CL_ReadFromServer();
 
-		// We need to move the mouse also when disconnected
-		// to get the cursor working properly.
-		if (cls.state == ca_disconnected)
+		if (cls.state == ca_disconnected) // We need to move the mouse also when disconnected
 		{
 			usercmd_t dummy;
 			IN_Move(&dummy);
@@ -749,73 +754,18 @@ void _Host_Frame (double time)
 	}
 	else
 	{
-		if (physframe)
+		host_time += host_frametime;
+
+		// fetch results from server
+		if (cls.state == ca_connected)
+			CL_ReadFromServer();
+
+		if (!cls.demoplayback || // not demo playback
+			cls.state == ca_disconnected // We need to move the mouse also when disconnected 
+			)
 		{
-			// get new key events
-			Sys_SendKeyEvents ();
-
-			// allow mice or other external controllers to add commands
-			IN_Commands ();
-
-			// process console commands
-			Cbuf_Execute ();
-
-			NET_Poll ();
-
-			// if running the server locally, make intentions now
-			if (sv.active)
-				CL_SendCmd ();
-
-		//-------------------
-		//
-		// server operations
-		//
-		//-------------------
-
-			// check for commands typed to the host
-			Host_GetConsoleCommands ();
-
-			if (sv.active)
-				Host_ServerFrame (physframetime);
-
-		//-------------------
-		//
-		// client operations
-		//
-		//-------------------
-
-			// if running the server remotely, send intentions now after
-			// the incoming messages have been read
-			if (!sv.active)
-				CL_SendCmd ();
-
-			host_time += host_frametime;
-
-			// fetch results from server
-			if (cls.state == ca_connected)
-				CL_ReadFromServer ();
-
-			if (cls.state == ca_disconnected) // We need to move the mouse also when disconnected
-			{
-				usercmd_t dummy;
-				IN_Move(&dummy);
-			}
-		}
-		else
-		{
-			host_time += host_frametime;
-			
-			// fetch results from server
-			if (cls.state == ca_connected)
-				CL_ReadFromServer();
-
-			if (!cls.demoplayback || // not demo playback
-				cls.state == ca_disconnected // We need to move the mouse also when disconnected 
-				)
-			{
-				usercmd_t dummy;
-				IN_Move(&dummy);
-			}
+			usercmd_t dummy;
+			IN_Move(&dummy);
 		}
 	}
 
