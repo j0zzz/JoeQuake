@@ -277,7 +277,8 @@ extern	byte	*host_basepal;
 extern	byte	*host_colormap;
 extern	int	host_framecount;	// incremented every frame, never reset
 extern	double	realtime;		// not bounded in any way, changed at
-					// start of every frame, never reset
+								// start of every frame, never reset
+extern	double	physframetime;
 
 void Host_ClearMemory (void);
 void Host_ServerFrame (double time);

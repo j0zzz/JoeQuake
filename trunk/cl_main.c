@@ -495,7 +495,7 @@ float CL_LerpPoint (void)
 
 	f = cl.mtime[0] - cl.mtime[1];
 
-	if ((!f || cl_nolerp.value || cls.timedemo || (sv.active && cl_independentphysics.value == 0)))
+	if ((!f || cl_nolerp.value || cls.timedemo || (sv.active && !cl_independentphysics.value)))
 	{
 		cl.time = cl.ctime = cl.mtime[0];
 		return 1;
@@ -1275,8 +1275,7 @@ void CL_SendCmd (void)
 		CL_BaseMove (&cmd);
 
 	// allow mice or other external controllers to add to the move
-		if (!cl_independentphysics.value || (physframe && cl_independentphysics.value))
-			IN_Move (&cmd);
+		IN_Move (&cmd);
 
 	// send the unreliable message
 		CL_SendMove (&cmd);

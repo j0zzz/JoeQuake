@@ -535,7 +535,7 @@ MinPhysFrameTime
 */
 static double MinPhysFrameTime(void)
 {
-	double physfps = bound(10, cl_maxfps.value, 72);
+	double physfps = !cl_maxfps.value ? 72 : bound(10, cl_maxfps.value, 72);
 
 	return 1.0 / physfps;
 }
@@ -554,7 +554,7 @@ qboolean Host_FilterTime (double time)
 
 	realtime += time;
 
-	fps = bound(10, cl_maxfps.value, 999);
+	fps = !cl_maxfps.value ? 999 : bound(10, cl_maxfps.value, 999);
 
 	result = false;
 
@@ -832,14 +832,10 @@ void _Host_Frame (double time)
 			Cvar_SetValue (&cl_truelightning, 0);
 
 			// don't allow higher than 72 fps during recording
-			if (cl_independentphysics.value == 0 && cl_maxfps.value > 72)
+			if (!cl_independentphysics.value && (!cl_maxfps.value || cl_maxfps.value > 72))
 			{
 				Con_Printf("Capping fps at 72 for recording.\n");
 				Cvar_SetValue(&cl_maxfps, 72);
-			}
-			else if (cl_independentphysics.value)
-			{
-				Host_Error("Demo recording is not yet supported with independent physics.");
 			}
 		}
 	}

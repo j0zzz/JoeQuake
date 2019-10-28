@@ -83,6 +83,8 @@ char *svc_strings[] =
 	"?"	// 49
 };
 
+extern cvar_t cl_independentphysics;
+
 //=============================================================================
 
 void CL_InitModelnames (void)
@@ -654,9 +656,13 @@ void CL_ParseUpdate (int bits)
 #endif
 
 	if (bits & U_NOLERP)
-		//ent->forcelink = true;
-		// joe (independentphysics): need a full forcelink so that model animations look ok
-		forcelink = true;
+	{
+		// joe: need a full forcelink so that model animations look ok
+		if (cl_independentphysics.value)
+			forcelink = true;
+		else
+			ent->forcelink = true;
+	}
 
 	if (forcelink)
 	{	// didn't have an update last message
