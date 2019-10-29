@@ -188,9 +188,7 @@ void SCR_DrawCenterString (void)
 	if (scr_center_lines <= 4)
 		y = vid.height * 0.35;
 	else
-		y = 48;
-
-	y *= Sbar_GetScaleAmount();
+		y = 48 * Sbar_GetScaleAmount();
 
 	size = Sbar_GetScaledCharacterSize();
 
