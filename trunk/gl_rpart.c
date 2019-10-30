@@ -1833,6 +1833,13 @@ void QMB_StaticBubble (entity_t *ent)
 
 void QMB_TorchFlame (vec3_t org, float size, float time)
 {
+	static double flametime = 0;
+
+	if (flametime + physframetime < cl.time || flametime >= cl.time)
+		flametime = cl.time;
+	else
+		return;
+
 	if (fabs(cl.ctime - cl.oldtime))
 		AddParticle (p_flame, org, 1, size, time, NULL, zerodir);
 }
