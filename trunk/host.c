@@ -582,7 +582,6 @@ qboolean Host_FilterTime (double time)
 	minphysframetime = MinPhysFrameTime();
 	if (cls.capturedemo || cls.timedemo || realtime - oldphysrealtime >= minphysframetime)
 	{
-		//physframe = true;
 		physframetime = realtime - oldphysrealtime;
 		oldphysrealtime = realtime;
 	}
@@ -686,17 +685,15 @@ void _Host_Frame (double time)
 	}
 	else
 	{
-		double	minphysframetime = MinPhysFrameTime ();
-
 		extraphysframetime += host_frametime;
-		if (extraphysframetime < minphysframetime)
+		if (extraphysframetime < physframetime)
 		{
 			physframe = false;
 		}
 		else
 		{
 			physframe = true;
-			extraphysframetime = 0;
+			extraphysframetime -= physframetime;
 		}
 	}
 
