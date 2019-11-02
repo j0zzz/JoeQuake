@@ -408,8 +408,11 @@ This is sent just before a server changes levels
 */
 void Host_Reconnect_f (void)
 {
-	if (cls.demoplayback)
+	if (cls.demoplayback)//R00k: Don't. This causes all muckymuck that you really don't want to deal with.
+	{
+		SCR_EndLoadingPlaque(); //Baker: reconnect happens before signon reply #4
 		return;
+	}
 
 	SCR_BeginLoadingPlaque ();
 	cls.signon = 0;		// need new connection messages
