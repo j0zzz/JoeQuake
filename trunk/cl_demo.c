@@ -415,21 +415,26 @@ void CL_Record_f (void)
 		}
 
 		// send stats
+		/*
+		CRASH FORT
+		In coop demos on the client, "pr_global_struct" gets zerod in "Hunk_FreeToLowMark"
+		which causes the stats to be garbage values. The stats in the "cl" object work in both SP and MP.
+		*/
 		MSG_WriteByte (&net_message, svc_updatestat);
 		MSG_WriteByte (&net_message, STAT_TOTALSECRETS);
-		MSG_WriteLong (&net_message, pr_global_struct->total_secrets);
+		MSG_WriteLong (&net_message, cl.stats[STAT_TOTALSECRETS]);
 
 		MSG_WriteByte (&net_message, svc_updatestat);
 		MSG_WriteByte (&net_message, STAT_TOTALMONSTERS);
-		MSG_WriteLong (&net_message, pr_global_struct->total_monsters);
+		MSG_WriteLong (&net_message, cl.stats[STAT_TOTALMONSTERS]);
 
 		MSG_WriteByte (&net_message, svc_updatestat);
 		MSG_WriteByte (&net_message, STAT_SECRETS);
-		MSG_WriteLong (&net_message, pr_global_struct->found_secrets);
+		MSG_WriteLong (&net_message, cl.stats[STAT_SECRETS]);
 
 		MSG_WriteByte (&net_message, svc_updatestat);
 		MSG_WriteByte (&net_message, STAT_MONSTERS);
-		MSG_WriteLong (&net_message, pr_global_struct->killed_monsters);
+		MSG_WriteLong (&net_message, cl.stats[STAT_MONSTERS]);
 
 		// view entity
 		MSG_WriteByte (&net_message, svc_setview);
