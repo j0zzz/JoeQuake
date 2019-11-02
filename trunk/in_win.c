@@ -153,6 +153,8 @@ static DIDATAFORMAT	df = {
 	rgodf,                      // and here they are
 };
 
+qboolean rawinput;
+
 // forward-referenced functions
 void IN_StartupJoystick (void);
 void Joy_AdvancedUpdate_f (void);
@@ -726,6 +728,39 @@ qboolean IN_InitDInput (void)
 }
 
 /*
+CRASH FORT
+*/
+qboolean IN_InitRawInput(void)
+{
+	RAWINPUTDEVICE rawdevices[1];
+	memset(rawdevices, 0, sizeof(rawdevices));
+
+	RAWINPUTDEVICE* mouse = &rawdevices[0];
+	mouse->hwndTarget = mainwindow;
+	mouse->usUsagePage = 1;
+
+	/*
+	2 for mouse, 6 for keyboard
+	*/
+	mouse->usUsage = 2;
+
+	/*
+	Can't use RIDEV_NOLEGACY here as it won't create any messages.
+	They are needed for things like moving the window or activating it.
+	*/
+	mouse->dwFlags = 0;
+
+	BOOL res = RegisterRawInputDevices(rawdevices, 1, sizeof(RAWINPUTDEVICE));
+
+	if (!res)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+/*
 ===========
 IN_StartupMouse
 ===========
@@ -756,26 +791,34 @@ void IN_StartupMouse (void)
 
 	if (!dinput)
 	{
-		mouseparmsvalid = SystemParametersInfo (SPI_GETMOUSE, 0, originalmouseparms, 0);
-		if (mouseparmsvalid)
+		rawinput = IN_InitRawInput();
+		if (rawinput)
 		{
-			if (COM_CheckParm("-noforcemspd"))
-				newmouseparms[2] = originalmouseparms[2];
-
-			if (COM_CheckParm("-noforcemaccel"))
-			{
-				newmouseparms[0] = originalmouseparms[0];
-				newmouseparms[1] = originalmouseparms[1];
-			}
-
-			if (COM_CheckParm("-noforcemparms"))
-			{
-				newmouseparms[0] = originalmouseparms[0];
-				newmouseparms[1] = originalmouseparms[1];
-				newmouseparms[2] = originalmouseparms[2];
-			}
+			Con_Printf("Raw mouse input initialized\n");
 		}
-		mouse_buttons = 8;
+		else
+		{
+			mouseparmsvalid = SystemParametersInfo(SPI_GETMOUSE, 0, originalmouseparms, 0);
+			if (mouseparmsvalid)
+			{
+				if (COM_CheckParm("-noforcemspd"))
+					newmouseparms[2] = originalmouseparms[2];
+
+				if (COM_CheckParm("-noforcemaccel"))
+				{
+					newmouseparms[0] = originalmouseparms[0];
+					newmouseparms[1] = originalmouseparms[1];
+				}
+
+				if (COM_CheckParm("-noforcemparms"))
+				{
+					newmouseparms[0] = originalmouseparms[0];
+					newmouseparms[1] = originalmouseparms[1];
+					newmouseparms[2] = originalmouseparms[2];
+				}
+			}
+			mouse_buttons = 8;
+		}
 	}
 
 	if (COM_CheckParm ("-m_mwhook"))
@@ -875,6 +918,54 @@ void IN_MouseEvent (int mstate)
 
 		mouse_oldbuttonstate = mstate;
 	}
+}
+
+/*
+CRASH FORT
+*/
+void IN_RawMouseEvent(RAWMOUSE* state)
+{
+	if (!mouseactive)
+	{
+		return;
+	}
+
+	mx_accum += state->lLastX;
+	my_accum += state->lLastY;
+
+	USHORT buttonflags = state->usButtonFlags;
+
+	if (buttonflags & RI_MOUSE_WHEEL)
+	{
+		short delta = (short)state->usButtonData;
+
+		if (delta < 0)
+		{
+			Key_Event(K_MWHEELDOWN, true);
+			Key_Event(K_MWHEELDOWN, false);
+		}
+
+		else
+		{
+			Key_Event(K_MWHEELUP, true);
+			Key_Event(K_MWHEELUP, false);
+		}
+	}
+
+	buttonflags & RI_MOUSE_BUTTON_1_DOWN ? Key_Event(K_MOUSE1, true) : __noop;
+	buttonflags & RI_MOUSE_BUTTON_1_UP ? Key_Event(K_MOUSE1, false) : __noop;
+
+	buttonflags & RI_MOUSE_BUTTON_2_DOWN ? Key_Event(K_MOUSE2, true) : __noop;
+	buttonflags & RI_MOUSE_BUTTON_2_UP ? Key_Event(K_MOUSE2, false) : __noop;
+
+	buttonflags & RI_MOUSE_BUTTON_3_DOWN ? Key_Event(K_MOUSE3, true) : __noop;
+	buttonflags & RI_MOUSE_BUTTON_3_UP ? Key_Event(K_MOUSE3, false) : __noop;
+
+	buttonflags & RI_MOUSE_BUTTON_4_DOWN ? Key_Event(K_MOUSE4, true) : __noop;
+	buttonflags & RI_MOUSE_BUTTON_4_UP ? Key_Event(K_MOUSE4, false) : __noop;
+
+	buttonflags & RI_MOUSE_BUTTON_5_DOWN ? Key_Event(K_MOUSE5, true) : __noop;
+	buttonflags & RI_MOUSE_BUTTON_5_UP ? Key_Event(K_MOUSE5, false) : __noop;
 }
 
 /*
@@ -995,8 +1086,9 @@ void IN_MouseMove (usercmd_t *cmd)
 		if (m_accel.value)
 		{
 			float mousespeed = sqrt(mx * mx + my * my);
-			mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
-			mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
+			float m_accel_factor = m_accel.value * 0.1;
+			mouse_x *= ((mousespeed * m_accel_factor) + sensitivity.value);
+			mouse_y *= ((mousespeed * m_accel_factor) + sensitivity.value);
 		}
 		else
 		{

@@ -159,6 +159,8 @@ cvar_t		vid_vsync = {"vid_vsync", "0", 0, OnChange_vid_vsync};
 int		window_center_x, window_center_y, window_x, window_y, window_width, window_height;
 RECT	window_rect;
 
+extern qboolean rawinput;
+
 void GL_WGL_CheckExtensions(void)
 {
 	if (!COM_CheckParm("-noswapctrl") && CheckExtension("WGL_EXT_swap_control"))
@@ -1008,6 +1010,27 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// keep Alt-Space from happening
 		break;
 
+	/*
+	CRASH FORT
+	*/
+	case WM_INPUT:
+	{
+		RAWINPUT buf;
+		UINT bufsize = sizeof(buf);
+
+		UINT size = GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &buf, &bufsize, sizeof(RAWINPUTHEADER));
+
+		if (size <= sizeof(buf))
+		{
+			if (buf.header.dwType == RIM_TYPEMOUSE)
+			{
+				IN_RawMouseEvent(&buf.data.mouse);
+			}
+		}
+
+		break;
+	}
+
 // this is complicated because Win32 seems to pack multiple mouse events into
 // one update sometimes, so we always check all states and look for events
 	case WM_LBUTTONDOWN:
@@ -1017,34 +1040,39 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_MBUTTONDOWN:
 	case WM_MBUTTONUP:
 	case WM_MOUSEMOVE:
-		temp = 0;
+		if (!rawinput)
+		{
+			temp = 0;
 
-		if (wParam & MK_LBUTTON)
-			temp |= 1;
+			if (wParam & MK_LBUTTON)
+				temp |= 1;
 
-		if (wParam & MK_RBUTTON)
-			temp |= 2;
+			if (wParam & MK_RBUTTON)
+				temp |= 2;
 
-		if (wParam & MK_MBUTTON)
-			temp |= 4;
+			if (wParam & MK_MBUTTON)
+				temp |= 4;
 
-		IN_MouseEvent (temp);
-
+			IN_MouseEvent(temp);
+		}
 		break;
 
 	// JACK: This is the mouse wheel with the Intellimouse
 	// Its delta is either positive or neg, and we generate the proper
 	// Event.
-	case WM_MOUSEWHEEL: 
-		if ((short)HIWORD(wParam) > 0)
+	case WM_MOUSEWHEEL:
+		if (!rawinput)
 		{
-			Key_Event (K_MWHEELUP, true);
-			Key_Event (K_MWHEELUP, false);
-		}
-		else
-		{
-			Key_Event (K_MWHEELDOWN, true);
-			Key_Event (K_MWHEELDOWN, false);
+			if ((short)HIWORD(wParam) > 0)
+			{
+				Key_Event(K_MWHEELUP, true);
+				Key_Event(K_MWHEELUP, false);
+			}
+			else
+			{
+				Key_Event(K_MWHEELDOWN, true);
+				Key_Event(K_MWHEELDOWN, false);
+			}
 		}
 		break;
 

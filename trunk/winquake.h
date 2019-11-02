@@ -79,6 +79,11 @@ void IN_RestoreOriginalMouseState (void);
 void IN_SetQuakeMouseState (void);
 void IN_MouseEvent (int mstate);
 
+/*
+CRASH FORT
+*/
+void IN_RawMouseEvent(RAWMOUSE* state);
+
 extern qboolean	winsock_lib_initialized;
 
 extern int	window_center_x, window_center_y;
