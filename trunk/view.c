@@ -60,7 +60,7 @@ cvar_t	cl_rollangle = {"cl_rollangle", "2.0"};
 cvar_t	cl_bob = {"cl_bob", "0.02"};
 cvar_t	cl_bobcycle = {"cl_bobcycle", "0.6"};
 cvar_t	cl_bobup = {"cl_bobup", "0.5"};
-cvar_t	cl_oldbob = {"cl_oldbob", "0"};
+cvar_t	cl_newbob = {"cl_newbob", "0"};
 cvar_t	cl_hand = {"cl_hand", "0"};
 
 cvar_t	v_kicktime = {"v_kicktime", "0.5"};
@@ -854,61 +854,17 @@ void CalcGunAngle (void)
 	extern qboolean player_jumped;
 #endif
 
-	cl.viewent.angles[PITCH] = -r_refdef.viewangles[PITCH];
-	cl.viewent.angles[YAW] = r_refdef.viewangles[YAW];
-	cl.viewent.angles[ROLL] = r_refdef.viewangles[ROLL];
-
-	cl.viewent.angles[PITCH] -= v_idlescale.value * sin(cl.time * v_ipitch_cycle.value) * v_ipitch_level.value;
-	cl.viewent.angles[YAW] -= v_idlescale.value * sin(cl.time * v_iyaw_cycle.value) * v_iyaw_level.value;
-	cl.viewent.angles[ROLL] -= v_idlescale.value * sin(cl.time * v_iroll_cycle.value) * v_iroll_level.value;
-
 	player_jumped = !cl.onground;
 
-	if (cl_oldbob.value)
-	{
-		yaw = r_refdef.viewangles[YAW];
-		pitch = -r_refdef.viewangles[PITCH];
-
-		yaw = angledelta(yaw - r_refdef.viewangles[YAW]) * 0.4;
-		yaw = bound(-10, yaw, 10);
-
-		pitch = angledelta(-pitch - r_refdef.viewangles[PITCH]) * 0.4;
-		pitch = bound(-10, pitch, 10);
-
-		move = host_frametime * 20;
-		if (yaw > oldyaw)
-		{
-			if (oldyaw + move < yaw)
-				yaw = oldyaw + move;
-		}
-		else
-		{
-			if (oldyaw - move > yaw)
-				yaw = oldyaw - move;
-		}
-	
-		if (pitch > oldpitch)
-		{
-			if (oldpitch + move < pitch)
-				pitch = oldpitch + move;
-		}
-		else
-		{
-			if (oldpitch - move > pitch)
-				pitch = oldpitch - move;
-		}
-	
-		oldyaw = yaw;
-		oldpitch = pitch;
-
-		cl.viewent.angles[PITCH] -= pitch;
-		cl.viewent.angles[YAW] -= yaw;
-	}
-	else
+	if (cl_newbob.value)
 	{
 #ifndef GLQUAKE
 		extern cvar_t r_drawviewmodel;
 #endif
+
+		cl.viewent.angles[PITCH] = -r_refdef.viewangles[PITCH];
+		cl.viewent.angles[YAW] = r_refdef.viewangles[YAW];
+		cl.viewent.angles[ROLL] = r_refdef.viewangles[ROLL];
 
 		if (r_drawviewmodel.value == 2)
 		{
@@ -989,6 +945,52 @@ void CalcGunAngle (void)
 		//cl.viewent.angles[YAW] += scale * fracsin * 0.01;
 		//cl.viewent.angles[ROLL] += scale * fracsin * 0.01;
 	}
+	else
+	{
+		yaw = r_refdef.viewangles[YAW];
+		pitch = -r_refdef.viewangles[PITCH];
+
+		yaw = angledelta(yaw - r_refdef.viewangles[YAW]) * 0.4;
+		yaw = bound(-10, yaw, 10);
+
+		pitch = angledelta(-pitch - r_refdef.viewangles[PITCH]) * 0.4;
+		pitch = bound(-10, pitch, 10);
+
+		move = host_frametime * 20;
+		if (yaw > oldyaw)
+		{
+			if (oldyaw + move < yaw)
+				yaw = oldyaw + move;
+		}
+		else
+		{
+			if (oldyaw - move > yaw)
+				yaw = oldyaw - move;
+		}
+
+		if (pitch > oldpitch)
+		{
+			if (oldpitch + move < pitch)
+				pitch = oldpitch + move;
+		}
+		else
+		{
+			if (oldpitch - move > pitch)
+				pitch = oldpitch - move;
+		}
+
+		oldyaw = yaw;
+		oldpitch = pitch;
+
+		cl.viewent.angles[PITCH] = -(r_refdef.viewangles[PITCH] + pitch);
+		cl.viewent.angles[YAW] = r_refdef.viewangles[YAW] + yaw;
+		// joe: this makes it fix when strafing
+		cl.viewent.angles[ROLL] = r_refdef.viewangles[ROLL];
+	}
+
+	cl.viewent.angles[PITCH] -= v_idlescale.value * sin(cl.time * v_ipitch_cycle.value) * v_ipitch_level.value;
+	cl.viewent.angles[YAW] -= v_idlescale.value * sin(cl.time * v_iyaw_cycle.value) * v_iyaw_level.value;
+	cl.viewent.angles[ROLL] -= v_idlescale.value * sin(cl.time * v_iroll_cycle.value) * v_iroll_level.value;
 }
 
 /*
@@ -1073,6 +1075,19 @@ void V_AddViewWeapon (float bob)
 	// angles
 	CalcGunAngle ();
 
+	if (!cl_newbob.value)
+	{
+		// fudge position around to keep amount of weapon visible roughly equal with different FOV
+		if (scr_viewsize.value == 110)
+			view->origin[2] += 1;
+		else if (scr_viewsize.value == 100)
+			view->origin[2] += 2;
+		else if (scr_viewsize.value == 90)
+			view->origin[2] += 1;
+		else if (scr_viewsize.value == 80)
+			view->origin[2] += 0.5;
+	}
+
 	view->model = cl.model_precache[cl.stats[STAT_WEAPON]];
 	view->frame = cl.stats[STAT_WEAPONFRAME];
 	view->colormap = vid.colormap;
@@ -1127,8 +1142,10 @@ void V_CalcRefdef (void)
 	ent->angles[YAW] = cl.viewangles[YAW];		// the model should face the view dir
 	ent->angles[PITCH] = -cl.viewangles[PITCH];	//
 										
+	// bob is proportional to velocity in the xy plane
+	// (don't count Z, or jumping messes it up)
 	xyspeed = sqrt(cl.velocity[0]*cl.velocity[0] + cl.velocity[1]*cl.velocity[1]);
-	bob = cl_oldbob.value ? V_CalcBob() : 0.0;
+	bob = (cl_newbob.value || (r_drawviewmodel.value == 2)) ? 0.0 : V_CalcBob();
 	
 	// set up the refresh position
 	VectorCopy (ent->origin, r_refdef.vieworg);
@@ -1634,7 +1651,7 @@ void V_Init (void)
 	Cvar_Register (&cl_bob);
 	Cvar_Register (&cl_bobcycle);
 	Cvar_Register (&cl_bobup);
-	Cvar_Register (&cl_oldbob);
+	Cvar_Register (&cl_newbob);
 	Cvar_Register (&cl_hand);
 
 	Cvar_Register (&v_kicktime);
