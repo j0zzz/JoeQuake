@@ -1,0 +1,651 @@
+ version 0.16.1 build 6258
+ -----------------------
+
+-framerate independent physics (BETA only, can be switched on optionally)
+ separated server and client fps. from now the client may display as many fps as
+ possible. an fps cap can be set by the cl_maxfps cvar, by default 72.
+ the server (and therefore the physics) always run at a max of 72 fps - just like since 
+ the beginning.
+ this new behavior can be controlled by the cvar cl_independentphysics, default is 0.
+ to turn it on, use "+set cl_independentphysics 1" at the command line.
+ demo recording is not yet possible if cl_independentphysics is 1.
+
+-added dynamic video mode change
+ from now the default video mode is the desktop resolution. 
+ the video mode is saved to the config file and restored during the next startup.
+ there is not need to define vid_modes at every restart by -width/-height or -mode params.
+ you can of course override this by the regular line switches if you want to.
+ the goal with this solution is to keep the starting command line as simple as possible
+ and give users a modern, more convenient way to set their preferred resolution.
+ setting vid_mode to 0 will force the override to switch off, meaning the game will
+ use the default (desktop) video mode at the next startup.
+
+-new video options menu with interactive resolution change support
+
+-added on-the-fly vid_displayfrequency change
+ there's also no need to use "+set vid_displayfrequency <xy>" during startup.
+ after setting this cvar's value in the console, the game automatically tries to switch
+ to the desired video mode. you can also find this option in the video menu.
+ setting vid_displayfrequency to 0 will force the override to switch off, meaning the game will
+ use the default (desktop) display frequency at the next startup.
+
+-got rid of vid.conwidth, vid.conheight stuff completely (removed -conwidth, -conheight options too)
+ from now ONLY scr_sbarscale_amount can be used to specify the scaling (from 1.0 to 4.0)
+
+-added gl_externaltextures_gfx cvar to support switching off hi-res menu and sbar images.
+ since Quake loads these images right at the startup, you need to specify the value of
+ this cvar via "+set gl_externaltextures_gfx 0" in the command line.
+
+-bugfix: capturedemo crashed if absolute path was set using '/' characters instead of '\'
+
+-bugfix: removed adding svc_stufftext "reconnect" at SV_Reconnect, so it won't fuck up multilevel demos anymore
+
+-bugfix: when navigating in the demos/maps menu was working wrong: in case of not in the beginning of the 
+ list and going up via UPARROW, the cursor mistakenly was set to the end of the list
+
+====================================================================================
+
+ version 0.15 build 5288
+ -----------------------
+
+-from now r_wateralpha does NOT affect teleports with '*teleport' textures, since it
+ looked horribly ugly. Probably gonna add a cvar for it, if required.
+
+-bugfix: con_notifytime is affected by cl_demospeed/host_framerate.
+
+-extended gl_part_muzzleflash for the soldier and enforcer models either.
+
+-fixed bug when the user could screw the console's fontsize by adding a very large
+ number after -conheight, for example -conheight 1500 was treated as valid.
+ From now, Quake converts the conheight parameter to the same aspect as the video frame.
+ So, if Quake is started in 1024x768 (4:3) resolution, and the console's resolution is
+ 640x400 (16:10), then the conheight will be converted to the 4:3 equivalent value,
+ and the resulted console resolution will be 640x480.
+
+-removed cvar initializing lines from default.cfg (in joequake's pak0.pak).
+ Also changed a few cvar's default values to be more user friendly when Quake is
+ started for the first time.
+
+-fixed bug when vid_vsync was not set to 0 properly after startup.
+
+-added scr_widescreen_fov cvar, default value is 1. From now the fov is properly
+ calculated in 16:9 resolutions also.
+
+-removed scr_scalemenu cvar, the menu is always displayed in a proper size.
+
+-added scr_sbarscale_amount cvar, default value is 2. It controls how much the
+ console font and status bar icons are scaled. You don't need to use -consize and
+ -conwidth any more from the command line when starting Quake.
+
+-changed the default allocated memory to 128 Megabytes.
+
+-added new style weapon bobbing code. If you still prefer the old style, use the
+ 'cl_oldbob' cvar to turn it back.
+
+-added a complete new Options menu system with a ton of options to adjust.
+ My main goal with this feature was to make JoeQuake easy-to-customize for newcomers
+ who do not know the shitload of cvars, but just want a client which can be set
+ up easily.
+
+-added an alternative HUD with cl_sbar 2.
+
+-from now the JoeQuake package comes with various built-in crosshairs and console
+ fonts which can be set from the new menu system.
+
+====================================================================================
+
+ version 0.15 build 3798
+ -----------------------
+
+-fixed bug when recording marathon runs with QdQStats: the summarized time was not
+ displayed at the end of the map when finishing multi-level runs.
+
+====================================================================================
+
+ version 0.15 build 1862
+ -----------------------
+
+-fixed bug when playback of demo file with corrupted header got system to hang up.
+
+-extended the effect of gl_picmip to .mdl and .md3 files either.
+
+-added particle muzzleflashes from QRack. You can enable/disable it via the
+ gl_part_muzzleflash cvar. Note that you need to restart the map if you change
+ it to take effect as it requires the model to be reloaded.
+
+-added decals from QRack. Cvars are gl_decal_blood, gl_decal_explosions,
+ gl_decal_bullets and gl_decal_sparks. They all speak for themselves. Also gl_decaltime
+ for the amount of seconds and gl_decal_viewdistance for the distance how far the
+ decals can be seen.
+
+-added stencil shadows, "r_shadows 2" to use it. I kept the old shadow too since
+ the use of stencil buffer results a massive performance loss.
+
+-fixed a bug with video capturing when the game got freezed if capturedemo was
+ stopped with capture_stop command.
+
+-fixed a bug when compressing the audio to mp3 during video capturing. If there's
+ any mp3 encoder exist in the system, Quake _does_ find and use it.
+
+-added r_fullbrightskins 2 mode: among the player, it also changes the skin of
+ monsters to full bright as well.
+
+-made a workaround for the "e2m2 bug" which occurs when playing on easy skill and
+ the players shots only one button at the beginning to enter the citadel and the
+ game freezes. It won't crash from now on, but results a Host_Error call.
+ I know I could've fix this bug for real I mean to not even drop the Host_Error
+ but keep running. The problem is (once again) loosing backward compatibility with
+ older Quake engines if a demo recorded in e2m2 using JoeQuake gets played in an
+ other engine, it will still cause the crash.
+
+-added lightstyle interpolation to both GL and software versions.
+ Start e1m1 and check the flickering light at the beginning of the map to see the
+ effect. In my opinion it rocks skyhard :)
+
+====================================================================================
+
+ version 0.15 build 1329
+ -----------------------
+
+-added gl_part_telesplash 2 for Q3 style teleport effect. Note that you have to
+ copy the Q3 teleport model (Quake3/baseq3/pak0.pk3/models/misc/telep.md3) into
+ your joequake/progs/ directory and the teleport texture
+ (Quake3/baseq3/pak0.pk3/gfx/misc/teleportEffect2.jpg) into your
+ joequake/textures/q3models/ directory in order to get this working.
+
+-removed gl_part_spiketrails cvar. The underwater spike affected bubble trails
+ are controlled via the gl_part_trails cvar from now.
+
+-fixed a bug when a dedicated server was started.
+
+-added gl_lerptextures cvar. Its role is the same like gl_lerpimages in FuhQuake
+ with the addition of lerping the player's texture as well even when it's colored.
+ The texture lerping was default and unchangable in previous versions of JoeQuake
+ but the resampling possibility of the playertexture is a new feature.
+ By default, this cvar's value is 1.
+
+-fixed showing ping in deathmatch overlay.
+
+-removed gl_part_inferno cvar as it wasn't used anymore for a while.
+
+-added mouseware support for logitech 8-button mice.
+ Usage is the same as in FuhQuake (i.e. -m_mwhook at the cmd line).
+
+-faster vertex lighting on md3 models.
+
+-added gl_part_damagesplash cvar. When turned on, it draws a Q3 style on-screen
+ damage splash when the player gets hurt.
+
+-added gl_part_gunshots 2, gl_part_spikes 2 and gl_part_flames 2 for Q3 style
+ gunshot, spike and flame effects. Note that you have to copy the Q3 gunshot model
+ (Quake3/baseq3/pak0.pk3/models/weaphits/bullet.md3) into your joequake/progs/
+ directory and the gunshot textures (Quake3/baseq3/pak0.pk3/models/weaphits/bullet1,2,3.jpg)
+ into your joequake/textures/q3models/ directory in order to get the gunshots and
+ spikes working.
+
+-r_viewmodelsize now works for .md3 weapon models too.
+
+-fixed a bug with .md3 weapon models when they were drawn badly sometimes.
+
+-implemented "early commands" from FuhQuake (it was high time). This means you need
+ to use the "+set" command line switch from now instead of exact command line
+ modifiers: I removed -22khz, -44khz and -displayfrequency switches and added
+ "s_khz" and "vid_displayfrequency" cvars. The usage is quite simple: you need to
+ use the +set switch in the command line to setzp the value of these cvars.
+ For example "+set s_khz 44" or "+set vid_displayfrequency 85". The above mentioned
+ entirely hide what is changed in the system.
+
+-added cl_chatmode variable: if turned on (1), everything that Quake can't interpret
+ (not command or cvar or alias) is sent as chat. Similar to QW clients, you don't
+ have to type "say " every time you wanna say something. Default value is "1".
+
+-due to conflicts from the default cvar_savevars setting, I decided to not live
+ with the automatic saving option, which means that from now cvar_savevars defaults
+ to the value "0".
+
+====================================================================================
+
+ version 0.15 build 1189
+ -----------------------
+
+-added vid_vsync cvar from FuhQuake, to override the default vsync settings of
+ your graphics card's driver. Default value is "0" which means vsync is turned off.
+
+-added -displayfrequency command line switch which works similar to FuhQuake's
+ vid_displayfrequency cvar: the value given after -displayfrequency will override
+ your monitor's refresh rate.
+
+-gl_smoothmodels's bug has been fixed.
+
+-v_gunkick's bug has been fixed, and changed cvar's behaviour:
+ when using with value 1 the weapon kicks the original (old) way.
+ when using with value 2 the kick is much smoother just like in QW.
+
+-_windowed_mouse works properly now, even if the game starts in windowed mode and
+ _windowed_mouse is turned off.
+
+-server list now works properly: it saves the file servers.txt every time even if
+ it wasn't created before. Also, the saving of server description names which
+ contain spaces have been fixed.
+
+-added function to a few keys during demoplayback (originally made by Sputnikutah):
+ LEFTARROW plays the demo rewind
+ RIGHTARROW plays the demo forward
+ UPARROW increases the playback speed (cl_demospeed)
+ DOWNARROW decreases the playback speed
+ ENTER sets default demospeed and plays it forward
+
+====================================================================================
+
+ version 0.15 build 1146
+ -----------------------
+
+-iplog commands now get registered only if you start quake with the -iplog
+ command line switch (previously iplog commands were accepted but refused to
+ work if one didn't use the -iplog switch, but now they won't even get accepted).
+
+-changed iplod.dat's location: from now it places out in the main quake folder
+ so it can be commonly used between other engines like QRack, similarly to
+ servers.txt.
+
+-changed cmdhist.dat's location: from now it places in the joequake dir.
+
+-made the server list one line shorter: the last line prints help on editing
+ the list.
+
+-when using volumeup or volumedown, the same sound gets played just like when
+ using the options menu's volume slider bar (idea by Baker).
+
+-fixed namemaker menu's bug (not changing the name properly).
+ From now it works the following way: pressing ESCAPE in the namemaker menu
+ won't modify anything, while pressing ENTER will, BUT won't replace the
+ player's name with the new one, it only shows up the new name in the
+ multiplayer setup menu. You NEED to press "accept changes" here to get the
+ changes taking effect.
+
+-added cl_keypad cvar to toggle between the using of keypad or not, 1 by default.
+
+====================================================================================
+
+ version 0.15 build 1140
+ -----------------------
+
+-added png screenshot format support to the software version.
+
+-renamed scr_sshot_type to scr_sshot_format.
+
+-added server list from FuhQuake as it was requested. It uses the same
+ servers.txt file like the QW engines so it's compatible with them.
+ Reachable via console as well using the menu_slist command.
+
+-added "mp optimized" to the options menu. When turned on, it changes a
+ few variables to a value which is - in general - an optimal setting when
+ playing a multiplayer game. The settings are the following:
+
+ lookstrafe 0
+ lookspring 0
+ v_kickroll 0
+ v_kickpitch 0
+ v_kicktime 0
+ cl_bob 0
+ cl_rollangle 0
+ scr_conspeed 99999
+
+ Note that using this will change your custom settings on these cvars.
+ Turning off changes them back to their DEFAULT values.
+
+-renamed cfg_savevars to cvar_savevars.
+
+-added IP logging from ProQuake. New commands are "ipdump", "ipmerge" and
+ "identify". Note that I haven't tested it yet, so there's a slight chance
+ that it won't functional 100% well. Any feedback is highly welcomed.
+
+-confirmation on starting a new single player game can be accepted via
+ ENTER from now, not just the 'y' button.
+
+-renamed pq_lag to cl_lag.
+
+-added a new default.cfg into JoeQuake's pak0.pak. The zoom_in binding to
+ F11 is removed in this config, because it screwed up the sensitivity of
+ the mouse if it was accidently pressed. Also, bindings to the '+' and '-'
+ keypad keys are added with volumeup and volumedown.
+
+-added support for keypad keys. Should've been added long ago...
+
+-added 2 new commands: volumeup and volumedown. volumeup increases the
+ volume by 0.1 and volumedown decreases by the same value. The maximum
+ volume is 1.0, it won't raise higher than that. You'll see a graphical
+ volume control bar at the top right corner of the screen for 2 seconds
+ any time you change the volume using volumeup or volumedown.
+
+-renamed scr_printstats* cvars to show_stats*. Also there's show_stats_small
+ instead of scr_printstats_style to indicate that the drawing is done with
+ smaller console characters.
+
+-cl_confirmquit is now applied to the game's window as well
+ (closing the game using the 'X' button on the top-right corner).
+
+-maps menu works different when playing deathmatch:
+ it changes level ("changelevel" command) instead of disconnecting and 
+ starting a new map ("map" command).
+
+-from now, there is the opportunity to record the console screens either
+ during video capturing. The cvar for it is capture_console, 1 by default.
+
+-added a "Name maker" menu (menu_namemaker) as a submenu in the net setup
+ menu. You can now create any kind of names for yourself in a pretty damn
+ easy and comfortable way.
+
+-removed the shadow alpha slider from the video options menu. From now
+ the transparency of shadows' cannot be adjusted directly. It's counted
+ by the height of the object from the ground.
+
+-added "bestweapon" command from ProQuake.
+
+-ping is now printed in deathmatch overlay.
+ UPDATE: no, it's broken, and it only shows "0" every time. Requires fixing.
+
+-added show_fps_x and show_fps_y cvars. You can now place them anywhere.
+
+-screenshots are now placed in joequake/shots directory.
+
+-fmod.dll is now placed inside joequake dir to avoid problems when other
+ engines' fmod.dll overwrote it.
+
+-scr_sshot_type is now "jpg" by default.
+
+-added new key bindings to keys menu, but they only show up if you start
+ the game with the -runequake command line switch (RuneQuake specific).
+
+-added new cvar "freelook", does the same effect like -mlook/+mlook.
+
+-added new menupoints to options menu, removed a few unused ones.
+
+-removed gl_interpolate_* cvars, since I removed non-interpolated mode in
+ the OpenGL version.
+
+-renamed "bump mapping" to "detailed textures"
+
+-added scr_autoid from FuhQuake, but it's very beta. I shouldn't even
+ have mentioned it here :)
+
+-added cl_smartjump from FuhQuake.
+
+-QMB lightning splash fixed (thanks to sputnikutah/Justin Thyme).
+
+-added _luma support on both mdl and md3 models.
+
+-removed gl_picmip_all cvar, this means all objects are mipped from now,
+ and mipping can't be turned off coz it looks fucking ugly that way.
+
+-added q3 style explosion (gl_part_explosions 2), blood (gl_part_blood 2)
+ and trails (gl_part_trails 2).
+
+-added md3 support. You can either place it to the progs or to the maps folder
+ depending which models you wish to replace. For example progs/grenade.md3 will
+ replace the grenade.mdl model and maps/b_rock0.md3 will replace the b_rock0.bsp
+ rocket ammo box. So you can replace brush models too. The texture files are not
+ separated, all of them need to be placed in /textures/q3models folder.
+
+-loading from jpg, saving to jpg. This means you may use jpg textures as well,
+ JoeQuake will load it. Note that the loading order is tga, png, jpg. And you may
+ also use scr_sshot_type as "jpg" or "jpeg" to save the screenshots in that format.
+
+-cfg_savevars defaults to 1.
+
+-removed gl_clipparticles. This is now automatic just like in quake3.
+ And particles are not only clipped from 1st person view but always instead.
+ This means that even in refilmed demos the player model is never hidden by
+ some particles (looks better).
+
+-Modified q3 rocket and grenade smokes a bit to get them looking better.
+
+-fixed r_rockettrail 0 in QMB.
+
+====================================================================================
+
+ version 0.14 build 839
+ ----------------------
+
+-removed r_explosiontype's mode when particles were unaffected by 
+ gravity (value 1).
+-changed QMB trails slightly: r_rockettrail/r_grenadetrail 1: default
+ smoke, 2: darkplaces style colored smoke, 3: Q3 style smoke. So there's no
+ gl_q3particles anymore. Also added new (beta version) Q3 style explosion
+ sprite for QMB, try gl_part_explosions 2. And gl_part_blood 2 for getting
+ Q3 style blood.
+-cl_advancedcompletion worked wrong, this has now been fixed.
+-sound capturing now works right if host_framerate is changed (slowmo/ffwd).
+-Some changes in the states of scr_printstats:
+  0 - off
+  1 - only time
+  2 - time + kills + secrets
+  3 - only time, only when action
+  4 - time + kills + secrets, only when action
+-added mp3 audio compression for avi capturing. Cvar capture_mp3 toggles it, and
+ capture_mp3_kbps sets the bitrate (128 by default).
+-video capturing is now supported in software JoeQuake too.
+-added capture_dir, default is "capture".
+-v_gunkick now affects demoplaying as well (thx to Nolan for pointing out).
+-raised maximal number of supported video modes from 30 to 128 (my stupidity,
+ should've done much earlier).
+-added gl_part_spiketrails (to keep Stubby happy).
+
+====================================================================================
+
+ version 0.14DEV (3rd release)
+ -----------------------------
+
+-added a cvar called "cl_advancedcompletion" which toggles between
+ advanced and normal (old) command/cvar completion (i.e. you can now turn
+ advanced completion off). Default is "1" (advanced on).
+-gamma changing now possible in windowed mode too with setting
+ vid_hwgammacontrol to "2".
+-added -22khz and -44khz starting parameters into linux versions.
+-gl_smoothfont's default value is 0 from now.
+-joequake GLX is finally available!
+-alias models (.mdl files) are affected by dynamic lights as well.
+-added vertex lighting and texture quality support into video options menu.
+-"gl_picmip_all" is now 1 by default.
+-added vertex lighting support from AMFQuake, cvar is "gl_vertexlights"
+ and its value is "0" by default.
+-paramater completion is now working with loadcharset, gl_consolefont and
+ crosshairimage commands.
+-you can now use "gamma" and "contrast" commands under GL as well to change
+ gl_gamma and gl_contrast cvars.
+
+====================================================================================
+
+ version 0.14DEV (2nd release)
+ -----------------------------
+
+-stair step ups now really smoothed out, just as the gun's knockback.
+-modified a few QMB particle effects, mainly from the AMFQuake engine:
+  -changed lavaball trails
+  -changed torch's fire
+  -nails now throw bubble trails when firing underwater
+  -improved shambler's lightning
+-added variable "gl_q3particles" to enable q3 style blood and smoke trails
+ when using the QMB particles.
+-set back automatic startdemos sequence, but not supported by joequake. This
+ means that it won't start playing the demos back unless you delete the quake.rc
+ from the joequake directory (inside pak0.pak) or use another one with
+ startdemos included.
+-added "gl_solidparticles" cvar: if your fps lowers when drawing particles, try
+ switching this to 1, hopefully it helps.
+-added "loadcharset" command and  "gl_consolefont" cvar: now you need to load
+ the charsets, they won't automatically be loaded, but you can specify which
+ you want to load and also can modify it during the game. Charsets go to
+ textures/charsets/ dir.
+-got the 72 fps limit to work only when recording demos.
+-added "gl_externaltextures_world" and "gl_externaltextures_bmodels" cvars.
+ This means you can turn external textures off if you wish and they won't
+ automatically be loaded.
+-plenty of minor bugfixes.
+
+====================================================================================
+
+ version 0.14DEV (first release)
+ -------------------------------
+
+-added "cl_confirmquit" variable, to disable confirmation when exiting the game.
+ Default value is "1" (confirmation required).
+-Modified the role of "r_shadows" a bit: from now, it changes the transparency
+ of the shadow, similarly to r_wateralpha, 1 means non-transparent (opaque black),
+ while 0 means fully transparent (no shadow).
+-non-multitextured mode (-nomtex) was screwed up, this has now been fixed.
+-added "gl_fb_models" and "gl_fb_bmodels" variables to enable/disable fullbright
+ textures. I heard that on some video cards fullbright textures could be fucked
+ up, so people having this problem can turn fullbrights off.
+ The default value is set to "1", for both variables.
+-raised maximal number of edicts from 600 to 2048.
+-QMB torch flames didn't work properly, this has now been fixed.
+-fixed a problem with player models: DME models weren't colormapped as they
+ are not regular player.mdl files, but I extended the comparison for them too.
+
+====================================================================================
+
+ version 0.13 Final (bugfix release)
+ -----------------------------------
+
+-fixed a bug with the player model (it hadn't changed back to default
+ player.mdl when it was replaced with something else, like the head model
+ in case the player was gibbed).
+-fixed messagemode echo bug.
+-fixed a bug with security/enforcer lasers (they were red/blue colored when
+ they were not supposed to).
+
+====================================================================================
+
+ version 0.13 Final (5th release)
+ --------------------------------
+
+-added "cl_maxfps" cvar to customize the maximal fps. Default is "72".
+ You can only lower this if you're playing single player or coop.
+-added "cl_gibfilter" cvar to avoid gibs. Can be "0" (on) or "1" (off).
+-added "cl_deadbodyfilter" cvar to avoid corps. The main reason for this is
+ that you are not allowed to use "coop 2" (QdQstats) on maps with only one
+ starting spot.
+ You can choose between value "1" and "2". At the first case, the dead body is
+ to be removed in the last animation frame. At the second case it is removed
+ immediately when the monster/player dies. Its value is "0" (off) by default.
+-added "getcoords" command. It writes the player's origin into a given file
+ or to "camfile.cam" if there was no name given.
+-removed blue/red glows from the powerups' models which were hacked onto them
+ from the engine side. They're still supported, but only from the progs
+ (i.e. the mod) side (meaning EF_BLUE and EF_RED here).
+-fixed cl_bobcycle's clipping bug when it was set to "0".
+-added recording without demoname (easyrecording). If you don't give a name
+ after the "record" command, it'll use a format similar to the following example:
+ E1M1-Jan-04-2004-134408.dem - which means that the recording was done on
+ E1M1, in the 4th of January 2004, started at 13:44.08 (hours:mins.secs).
+-added a new menu called "Maps" into mainmenu. It shows all the available
+ maps from your mod directory (if given) and also from your id1/maps dir.
+ I think this "id1/maps" is the most common directory for maps for everyone
+ but tell me if I'm wrong. It also shows maps from pak files as well.
+-added record-after-connecting from ProQuake. Now you can start recording
+ without reconnecting to the server.
+-fixed chase camera in software version: it only showed the weapon model
+ instead of the player, until now.
+
+====================================================================================
+
+ version 0.13DEV (4th release)
+ -----------------------------
+
+-added Nehahra support. Use -nehahra at the command line if you want to
+ use Nehahra with JoeQuake.
+-renamed "dem_rewind" to "cl_demorewind".
+-Added particles submenu into the Video Options menu. Now you can set each
+ variable the _most_ pleasant way. From the console, you can reach this
+ menu via the "menu_particles" command.
+-fixed rogue's missing color mapped explosion (my mistake). Also created
+ QMB style version of it.
+-modified writeconfig command: it's depended on a new cvar called
+ "cfg_savevars" which variables will be saved. If cfg_savevars is "0"
+ than it saves only archieved vars (regular, as it worked so far). If "1"
+ it'll save the ones which have other than default values (i.e. changed).
+ And with value "2" it'll save ALL variables.
+-integrated ctrl+v (paste) function into the console.
+-restored "exec quake.rc" at the beginning, and disabled popping up
+ Main Menu automatically.
+-renamed "r_ringalpha" to "gl_ringalpha".
+-extended underwater QMB smoke trails with bubbles.
+ (thanks to sputnikutah@hotmail.com for the idea)
+-raised number of chat characters in a message (ProQuake).
+-same commands typed in the console won't be saved multiple times.
+-"Connected to JoeQuake server" will now only be printed when playing
+ mulitplayer game.
+-replaced the QMB torch model with a better one, also modified the flames
+ to - hopefully - make them look better than before.
+
+====================================================================================
+
+ version 0.13DEV (3rd release)
+ -----------------------------
+
+-added NAT support from ProQuake.
+-disabled "r_fullbrightskins" for multiplayer.
+-added qflood protection from ProQuake.
+-renamed "r_r2g" cvar to "cl_r2g".
+-removed "gl_colorlights" cvar and added "gl_loadlitfiles". This one only
+ denies the static colored lights, but not the dynamic ones.
+-added -no24bit command line parameter, you can disable loading those high
+ resolution textures if you use this switch.
+-added synthetic lag from ProQuake. Cvar is "pq_lag", 0 by default.
+-added "rcon" command from ProQuake.
+-changing of r_skybox now take effect immediately, w/o restarting the map.
+-added "gl_smoothfont" cvar. Now you can turn off this feature.
+-added 5 new crosshairs from FuhQuake, and also new variables to configure
+ crosshairs even more: crosshairsize, crosshaircolor, crosshairalpha (GL),
+ and crosshairimage, with this last one you can load a custom image as crosshair.
+-added q3-style bobbing, you can turn it on/off with "cl_bobbing" cvar.
+-removed alpha from shadows, they're now full black.
+-added precise aiming from Proquake.
+-added "scr_printstats_style" cvar: when using with value "1" it replaces
+ scr_printstats's HUD numbers with console characters.
+-added "cl_clock" cvar which turns on/off the local time. I've built in 4 different
+ formats to the values 0, 1, 2 and 3, hopefully you'll find the one that fits the
+ best for you (in case you'd like to use this feature). Also added "cl_clock_x" and
+ "cl_clock_y": these represent the x and y coordinates of the clock on the screen.
+ Play with the values if you aren't satisfied with the default position.
+-added the possibilty of changing water caustics from the video options menu.
+-added -m_smooth command line parameter: It smoothens your mouse movement even
+ more. Use it only with -dinput. Also, set m_rate to the refresh rate of your mouse
+ (in Hz). If you don't know this value, you can check it out with m_showrate cvar.
+-mission packs' status bars will be updated properly with using their own
+ gfx.wad, even when not using -<name> or -game <name> (this means you switch
+ to the mission pack folder inside the Demos menu).
+
+====================================================================================
+
+ version 0.13DEV (2nd release)
+ -----------------------------
+
+-gamma and contrast changing from menu under GL didn't work, fixed this.
+-fixed missing "r_fullbright 1" in GL.
+-now, the game doesn't exit after "capturedemo" finished.
+-banned cl_truelightning bigger than zero for demorecording.
+-now player.mdl has shadow as well.
+-dzip extraction now works only with version > 2.5 (v2.9 included in the zip).
+-dzip extraction now works from subfolders as well.
+-txt file after dzip extraction will be deleted from now (if exists).
+-scr_printstats now work also when cl_sbar is 1.
+-added "r_ringalpha" cvar. It sets the transparency of your weapon
+ model when you're invisible, default is "0.4". Under GL only.
+-added linux svgalib support (squake).
+-added CAPS LOCK to bindable keys list.
+-added "gl_caustics" cvar. It results improved underwater quality.
+-fixed strange freezing bug when mission pack was started.
+-extended r_rtrail's function: 0 - no trail, 1 - normal trail, 2 - grenade trail, 
+ 3 - alternative rockettrail (QMB only).
+-added "gl_part_flames" cvar. With the help of this you can toggle between
+ QMB like torches and normal ones.
+
+====================================================================================
+
+ version 0.13DEV (1st release)
+ -----------------------------
+
+ ....see joequake.txt for details
+
