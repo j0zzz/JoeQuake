@@ -301,6 +301,12 @@ void CL_Record_f (void)
 	if (cmd_source != src_command)
 		return;
 
+	if (cls.demoplayback)
+	{
+		Con_Printf("Can't record during demo playback\n");
+		return;
+	}
+
 	c = Cmd_Argc ();
 
 	if (c > 4)
@@ -336,6 +342,9 @@ void CL_Record_f (void)
 		}
 	}
 
+	if (cls.demorecording)
+		CL_Stop_f();
+
 // write the forced cd track number, or -1
 	if (c == 4)
 	{
@@ -365,10 +374,15 @@ void CL_Record_f (void)
 	COM_ForceExtension (name, ".dem");
 
 	Con_Printf ("recording to %s\n", name);
+
 	if (!(cls.demofile = fopen(name, "wb")))
 	{
-		Con_Printf ("ERROR: couldn't open %s\n", name);
-		return;
+		COM_CreatePath(name);
+		if (!(cls.demofile = fopen(name, "wb")))
+		{
+			Con_Printf("ERROR: couldn't open %s\n", name);
+			return;
+		}
 	}
 
 	cls.forcetrack = track;

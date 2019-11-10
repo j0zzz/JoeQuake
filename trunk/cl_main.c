@@ -59,6 +59,7 @@ cvar_t	cl_maxfps = {"cl_maxfps", "0", CVAR_SERVER};
 cvar_t	cl_advancedcompletion = {"cl_advancedcompletion", "1"};
 cvar_t	cl_independentphysics = {"cl_independentphysics", "1", CVAR_INIT};
 cvar_t	cl_viewweapons = {"cl_viewweapons", "0"};
+cvar_t	cl_autodemo = { "cl_autodemo", "0" };
 
 client_static_t	cls;
 client_state_t	cl;
@@ -322,6 +323,8 @@ void CL_SignonReply (void)
 
 	case 4:
 		SCR_EndLoadingPlaque ();	// allow normal screen updates
+		if ((cl_autodemo.value == 1) && !cls.demoplayback && !cls.demorecording)
+			Cmd_ExecuteString("record\n", src_command);
 		break;
 	}
 }
@@ -1355,6 +1358,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_advancedcompletion);
 	Cvar_Register (&cl_independentphysics);
 	Cvar_Register (&cl_viewweapons);
+	Cvar_Register(&cl_autodemo);
 
 	if (COM_CheckParm("-noindphys"))
 	{
