@@ -124,6 +124,8 @@ void R_DrawQ3Model (entity_t *ent);
 void QMB_Q3Gunshot (vec3_t org, int skinnum, float alpha);
 void QMB_Q3Teleport (vec3_t org, float alpha);
 
+extern qboolean physframe;
+
 #define TruePointContents(p) SV_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
 
 #define ISUNDERWATER(x) ((x) == CONTENTS_WATER || (x) == CONTENTS_SLIME || (x) == CONTENTS_LAVA)
@@ -1833,11 +1835,7 @@ void QMB_StaticBubble (entity_t *ent)
 
 void QMB_TorchFlame (vec3_t org, float size, float time)
 {
-	static double flametime = 0;
-
-	if (flametime + physframetime < cl.time || flametime >= cl.time)
-		flametime = cl.time;
-	else
+	if (!physframe)
 		return;
 
 	if (fabs(cl.ctime - cl.oldtime))
@@ -1945,12 +1943,14 @@ void QMB_LightningSplash (vec3_t org)
 
 void QMB_LightningBeam (vec3_t start, vec3_t end)
 {
-	float	frametime = fabs(cl.ctime - cl.oldtime);
 	vec3_t	neworg;
 
-	if (frametime)
+	if (!physframe)
+		return;
+
+	if (fabs(cl.ctime - cl.oldtime))
 	{
-		AddParticle (p_lightningbeam, start, 1, 80, frametime * 2, NULL, end);
+		AddParticle (p_lightningbeam, start, 1, 80, physframetime * 2, NULL, end);
 
 		if (TraceLineN(start, end, neworg, NULL))
 		{
