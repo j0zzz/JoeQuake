@@ -5090,12 +5090,17 @@ void M_ScreenFlashes_Key(int k)
 //=============================================================================
 /* VIDEO MENU */
 
-extern int menu_display_freq;
+extern int menu_bpp, menu_display_freq;
+extern float menu_vsync;
+extern cvar_t vid_vsync;
+extern int GetCurrentBpp(void);
 extern int GetCurrentFreq(void);
 
-void M_Menu_VideoModes_f (void)
+void M_Menu_VideoModes_f(void)
 {
+	menu_bpp = GetCurrentBpp();
 	menu_display_freq = GetCurrentFreq();
+	menu_vsync = vid_vsync.value;
 
 	key_dest = key_menu;
 	m_state = m_videomodes;
