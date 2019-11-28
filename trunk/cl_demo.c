@@ -323,9 +323,9 @@ void CL_Record_f (void)
 			char	str[MAX_OSPATH];
 
 			time (&ltime);
-			strftime (str, sizeof(str)-1, "%b-%d-%Y-%H%M%S", localtime(&ltime));
+			strftime (str, sizeof(str)-1, "%Y%m%d_%H%M%S", localtime(&ltime));
 
-			Q_snprintfz (easyname, sizeof(easyname), "%s-%s", CL_MapName(), str);
+			Q_snprintfz (easyname, sizeof(easyname), "%s_%s", CL_MapName(), str);
 		}
 		else if (c == 2)
 		{
@@ -393,7 +393,7 @@ void CL_Record_f (void)
 	// joe: initialize the demo file if we're already connected
 	if (c < 3 && cls.state == ca_connected)
 	{
-		byte	*data = net_message.data;
+		byte *data = net_message.data;
 		int	i, cursize = net_message.cursize;
 
 		for (i=0 ; i<2 ; i++)
@@ -800,4 +800,44 @@ void CL_TimeDemo_f (void)
 	cls.timedemo = true;
 	cls.td_startframe = host_framecount;
 	cls.td_lastframe = -1;		// get a new message this frame
+}
+
+/*
+====================
+CL_KeepDemo_f
+====================
+*/
+void CL_KeepDemo_f(void)
+{
+	int		mins, secs, tenths;
+	char	oldname[MAX_OSPATH*2], newname[MAX_OSPATH*2];
+	extern cvar_t cl_autodemo_name;
+	
+	if (cmd_source != src_command)
+		return;
+
+	if (!cls.demorecording)
+	{
+		Con_Printf("Not recording a demo\n");
+		return;
+	}
+
+	if (!cl_autodemo_name.string[0])
+	{
+		Con_Printf("Keepdemo is only allowed is cl_autodemo_name is set\n");
+		return;
+	}
+
+	CL_Stop_f();
+
+	Q_snprintfz(oldname, sizeof(oldname), "%s/%s.%s", com_gamedir, cl_autodemo_name.string, "dem");
+	mins = cl.completed_time / 60;
+	secs = cl.completed_time - (mins * 60);
+	tenths = (cl.completed_time - secs) * 1000;
+	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%i%i_%i_%s.%s", com_gamedir, CL_MapName(), mins, secs, tenths, (int)skill.value, cl_name.string, "dem");
+
+	if (rename(oldname, newname))
+		Con_Printf("Renaming of demo failed! %i\n", errno);
+	else
+		Con_Printf("Renamed demo to %s\n", newname);
 }

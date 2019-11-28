@@ -60,6 +60,7 @@ cvar_t	cl_advancedcompletion = {"cl_advancedcompletion", "1"};
 cvar_t	cl_independentphysics = {"cl_independentphysics", "1", CVAR_INIT};
 cvar_t	cl_viewweapons = {"cl_viewweapons", "0"};
 cvar_t	cl_autodemo = { "cl_autodemo", "0" };
+cvar_t	cl_autodemo_name = { "cl_autodemo_name", "" };
 
 client_static_t	cls;
 client_state_t	cl;
@@ -323,8 +324,13 @@ void CL_SignonReply (void)
 
 	case 4:
 		SCR_EndLoadingPlaque ();	// allow normal screen updates
-		if ((cl_autodemo.value == 1) && !cls.demoplayback && !cls.demorecording)
-			Cmd_ExecuteString("record\n", src_command);
+		if (cl_autodemo.value && !cls.demoplayback && !cls.demorecording)
+		{
+			if (cl_autodemo_name.string[0])
+				Cmd_ExecuteString(va("record %s\n", cl_autodemo_name.string), src_command);
+			else
+				Cmd_ExecuteString("record\n", src_command);
+		}
 		break;
 	}
 }
@@ -1359,6 +1365,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_independentphysics);
 	Cvar_Register (&cl_viewweapons);
 	Cvar_Register(&cl_autodemo);
+	Cvar_Register(&cl_autodemo_name);
 
 	if (COM_CheckParm("-noindphys"))
 	{
@@ -1371,4 +1378,5 @@ void CL_Init (void)
 	Cmd_AddCommand ("stop", CL_Stop_f);
 	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
+	Cmd_AddCommand("keepdemo", CL_KeepDemo_f);
 }

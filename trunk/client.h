@@ -198,7 +198,7 @@ typedef struct
 	qboolean	inwater;
 	
 	int		intermission;		// don't change view angle, full screen, etc
-	int		completed_time;		// latched at intermission start
+	double	completed_time;		// latched at intermission start
 	
 	double		mtime[2];		// the timestamp of last two messages	
 	double		time;			// clients view of time, should be between
@@ -361,7 +361,8 @@ int CL_GetMessage (void);
 void CL_Stop_f (void);
 void CL_Record_f (void);
 void CL_PlayDemo_f (void);
-void CL_TimeDemo_f (void);
+void CL_TimeDemo_f(void);
+void CL_KeepDemo_f (void);
 
 // cl_parse.c
 void CL_ParseServerMessage (void);
