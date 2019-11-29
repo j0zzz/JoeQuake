@@ -809,9 +809,10 @@ CL_KeepDemo_f
 */
 void CL_KeepDemo_f(void)
 {
-	int		mins, secs, tenths;
+	int		mins, secs, tenths, fname_counter = 1;
 	char	oldname[MAX_OSPATH*2], newname[MAX_OSPATH*2];
-	extern cvar_t cl_autodemo_name;
+	extern cvar_t cl_autodemo;
+	extern char *cl_autodemo_name;
 	
 	if (cmd_source != src_command)
 		return;
@@ -822,21 +823,31 @@ void CL_KeepDemo_f(void)
 		return;
 	}
 
-	if (!cl_autodemo_name.string[0])
+	if (!cl.intermission)
 	{
-		Con_Printf("Keepdemo is only allowed is cl_autodemo_name is set\n");
+		Con_Printf("Keepdemo is only allowed after you finished the level\n");
+		return;
+	}
+
+	if (cl_autodemo.value != 2)
+	{
+		Con_Printf("Keepdemo is only allowed when cl_autodemo is set to 2\n");
 		return;
 	}
 
 	CL_Stop_f();
 
-	Q_snprintfz(oldname, sizeof(oldname), "%s/%s.%s", com_gamedir, cl_autodemo_name.string, "dem");
+	Q_snprintfz(oldname, sizeof(oldname), "%s/%s.%s", com_gamedir, cl_autodemo_name, "dem");
 	mins = cl.completed_time / 60;
 	secs = cl.completed_time - (mins * 60);
 	tenths = (cl.completed_time - secs) * 1000;
-	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%i%i_%i_%s.%s", com_gamedir, CL_MapName(), mins, secs, tenths, (int)skill.value, cl_name.string, "dem");
+	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%i%i_%i_%s", com_gamedir, CL_MapName(), mins, secs, tenths, (int)skill.value, cl_name.string);
 
-	if (rename(oldname, newname))
+	// try with a different name if this file already exists
+	while (Sys_FileTime(va("%s.%s", newname, "dem")) == 1)
+		Q_snprintfz(newname, sizeof(newname), "%s_%03i", newname, fname_counter++);
+
+	if (rename(oldname, va("%s.%s", newname, "dem")))
 		Con_Printf("Renaming of demo failed! %i\n", errno);
 	else
 		Con_Printf("Renamed demo to %s\n", newname);
