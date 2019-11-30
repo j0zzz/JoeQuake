@@ -811,8 +811,7 @@ void CL_KeepDemo_f(void)
 {
 	int		mins, secs, tenths, fname_counter = 1;
 	char	oldname[MAX_OSPATH*2], newname[MAX_OSPATH*2];
-	extern cvar_t cl_autodemo;
-	extern char *cl_autodemo_name;
+	extern cvar_t cl_autodemo, cl_autodemo_name;
 	
 	if (cmd_source != src_command)
 		return;
@@ -829,19 +828,19 @@ void CL_KeepDemo_f(void)
 		return;
 	}
 
-	if (cl_autodemo.value != 2)
+	if (cl_autodemo.value && !cl_autodemo_name.string[0])
 	{
-		Con_Printf("Keepdemo is only allowed when cl_autodemo is set to 2\n");
+		Con_Printf("Keepdemo is only allowed if cl_autodemo is enabled and cl_autodemo_name is not empty\n");
 		return;
 	}
 
 	CL_Stop_f();
 
-	Q_snprintfz(oldname, sizeof(oldname), "%s/%s.%s", com_gamedir, cl_autodemo_name, "dem");
+	Q_snprintfz(oldname, sizeof(oldname), "%s/%s.%s", com_gamedir, cl_autodemo_name.string, "dem");
 	mins = cl.completed_time / 60;
 	secs = cl.completed_time - (mins * 60);
 	tenths = (cl.completed_time - secs) * 1000;
-	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%i%i_%i_%s", com_gamedir, CL_MapName(), mins, secs, tenths, (int)skill.value, cl_name.string);
+	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%i%i_%i_%s", com_gamedir, cl_autodemo_name.string, mins, secs, tenths, (int)skill.value, cl_name.string);
 
 	// try with a different name if this file already exists
 	while (Sys_FileTime(va("%s.%s", newname, "dem")) == 1)
