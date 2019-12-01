@@ -1897,6 +1897,9 @@ static	int	vid_line, vid_wmodes;
 int menu_bpp, menu_display_freq;
 float menu_vsync;
 
+extern qboolean m_videomode_change_confirm;
+extern qboolean	m_entersound;
+
 typedef struct
 {
 	int		modenum;
@@ -1993,7 +1996,6 @@ void VID_MenuDraw (void)
 		M_DrawCharacter(-8 + video_cursor_column * 14 * 8, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
 
 	M_Print(8 * 8, row + 8, "Press enter to set mode");
-	//M_Print(6 * 8, row + 8 * 3, "T to test mode for 5 seconds");
 
 	if (video_cursor_row == 0 && modestate == MS_FULLDIB)
 	{
@@ -2007,6 +2009,13 @@ void VID_MenuDraw (void)
 		M_Print(2 * 8, 176 + 8 * 3, "Refresh rate and color depth can only");
 		M_Print(2 * 8, 176 + 8 * 4, "be changed in fullscreen mode");
 	}
+
+	if (m_videomode_change_confirm)
+	{
+		M_DrawTextBox(40, 10 * 8, 27, 2);
+		M_PrintWhite(48, 11 * 8, "Would you like to keep this");
+		M_PrintWhite(48, 12 * 8, "        video mode?");
+	}
 }
 
 /*
@@ -2017,6 +2026,23 @@ VID_MenuKey
 void VID_MenuKey (int key)
 {
 	int i, selected_modenum, num_bpp_modes, num_display_freq_modes;
+	static int oldmodenum;
+
+	if (m_videomode_change_confirm)
+	{
+		if (key == 'y' || key == K_ENTER /*|| key == K_MOUSE1*/)
+		{
+			m_videomode_change_confirm = false;
+			m_entersound = true;
+		}
+		else if (key == 'n' || key == K_ESCAPE /*|| key == K_MOUSE2*/)
+		{
+			Cvar_SetValue(&vid_mode, (float)oldmodenum);
+			m_videomode_change_confirm = false;
+			m_entersound = true;
+		}
+		return;
+	}
 
 	switch (key)
 	{
@@ -2132,10 +2158,23 @@ void VID_MenuKey (int key)
 			break;
 
 		default:
-			selected_modenum = (video_cursor_row - VIDEO_ITEMS) * VID_ROW_SIZE + video_cursor_column;
-			Cvar_SetValue(&vid_mode, (float)modedescs[selected_modenum].modenum);
+			if (video_cursor_row >= VIDEO_ITEMS)
+			{
+				int mode_index = (video_cursor_row - VIDEO_ITEMS) * VID_ROW_SIZE + video_cursor_column;
+				selected_modenum = modedescs[mode_index].modenum;
+			}
+			else
+				selected_modenum = vid_modenum;
+
+			if (selected_modenum != vid_modenum)
+			{
+				oldmodenum = vid_modenum;
+				Cvar_SetValue(&vid_mode, (float)selected_modenum);
+				m_videomode_change_confirm = true;
+			}
 			break;
 		}
+		break;
 	}
 
 	if (key == K_UPARROW && (video_cursor_row == 4 || video_cursor_row == 6))

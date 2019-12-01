@@ -29,3 +29,4 @@ void M_ToggleMenu_f (void);
 void M_Menu_Main_f (void);
 void M_Menu_Quit_f (void);
 qboolean Menu_Mouse_Event(const mouse_state_t* ms);
+void M_DrawTextBox(int x, int y, int width, int lines);
