@@ -677,7 +677,13 @@ void _Host_Frame (double time)
 		return;			// don't run too fast, or packets will flood out
 	}
 
-	if (!cl_independentphysics.value || host_framerate.value > 0)
+	if (!cl_independentphysics.value || 
+		host_framerate.value > 0 ||
+		(cls.demoplayback && cl_demospeed.value != 1)
+#ifdef _WIN32
+		|| Movie_IsActive()
+#endif
+		)
 	{
 		physframe = true;
 		physframetime = host_frametime;
