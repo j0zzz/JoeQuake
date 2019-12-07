@@ -768,6 +768,7 @@ void _Host_Frame (double time)
 			)
 		{
 			usercmd_t dummy;
+			Sys_SendKeyEvents(); 
 			IN_Move(&dummy);
 		}
 	}
