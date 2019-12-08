@@ -45,6 +45,12 @@ cvar_t	scr_clock_x = {"cl_clock_x", "0"};
 cvar_t	scr_clock_y = {"cl_clock_y", "-1"};
 
 cvar_t	show_speed = {"show_speed", "0"};
+/*
+CRASH FORT
+
+The interval at which the speed display on the HUD updates
+*/
+cvar_t show_speed_interval = { "show_speed_interval", "0.05" };
 
 cvar_t	show_fps = {"show_fps", "0"};
 cvar_t	show_fps_x = {"show_fps_x", "-5"};
@@ -1345,7 +1351,7 @@ void SCR_DrawSpeed (void)
 		Draw_String (x + (int)(4.5 * size) - (strlen(st) * size), y, st, true);
 	}
 
-	if (realtime - lastrealtime >= 0.1)
+	if (realtime - lastrealtime >= show_speed_interval.value)
 	{
 		lastrealtime = realtime;
 		display_speed = maxspeed;
@@ -1636,6 +1642,10 @@ void V_Init (void)
 	Cvar_Register (&scr_clock_y);
 
 	Cvar_Register (&show_speed);
+	/*
+	CRASH FORT
+	*/
+	Cvar_Register(&show_speed_interval);
 
 	Cvar_Register (&show_fps);
 	Cvar_Register (&show_fps_x);
