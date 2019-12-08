@@ -1785,6 +1785,12 @@ void VID_Init (unsigned char *palette)
 		}
 	}
 
+	// sort the refreshrate arrays for all vid_modes in ascending order
+	for (i = 1; i < nummodes; i++)
+	{
+		SortIntArrayAscending(modelist[i].refreshrate, modelist[i].numrefreshrates);
+	}
+
 	vid_initialized = true;
 
 	vid.maxwarpwidth = WARP_WIDTH;
@@ -2143,7 +2149,7 @@ void VID_MenuKey (int key)
 			if (i >= (num_display_freq_modes - 1))
 				i = -1;
 
-			menu_display_freq = modelist[vid_modenum].refreshrate[i + 1];
+			menu_display_freq = modelist[vid_modenum].refreshrate[i+1];
 			break;
 
 		case 3:

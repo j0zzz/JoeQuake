@@ -392,6 +392,17 @@ int GreatestCommonDivisor (int i1, int i2)
 	}
 }
 
+int compare_int(const void* a, const void* b)
+{
+	if (*(int*)a == *(int*)b) return 0;
+	return *(int*)a < *(int*)b ? -1 : 1;
+}
+
+void SortIntArrayAscending(int *elements, int num_elem)
+{
+	qsort(elements, num_elem, sizeof(int), compare_int);
+}
+
 #if !id386
 
 /*
