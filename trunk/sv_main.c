@@ -965,10 +965,6 @@ Tell all the clients that the server is changing levels
 */
 void SV_SendReconnect (void)
 {
-	// joe: removed adding "reconnect" as stufftext between level changes
-	// the problem here is that the svc_stufftext runs a Cbuf_AddText, but the Cbuf_Execute is done a lot later
-	// when the signons already past 1, 2, 3 and then it'll be reverted back to 0, that's why the server stops processing messages in marathon demos
-#ifdef BAD_RECONNECT
 	char		data[128];
 	sizebuf_t	msg;
 
@@ -979,7 +975,6 @@ void SV_SendReconnect (void)
 	MSG_WriteChar (&msg, svc_stufftext);
 	MSG_WriteString (&msg, "reconnect\n");
 	NET_SendToAll (&msg, 5);
-#endif
 
 	if (cls.state != ca_dedicated)
 		Cmd_ExecuteString ("reconnect\n", src_command);
