@@ -1672,8 +1672,6 @@ void VID_Init (unsigned char *palette)
 			vid_default = vid_mode.value;
 		else
 		{
-			leavecurrentmode = true;
-
 			if ((i = COM_CheckParm("-width")) && i + 1 < com_argc)
 				width = Q_atoi(com_argv[i+1]);
 			else
@@ -1823,7 +1821,6 @@ void VID_Init (unsigned char *palette)
 
 	strcpy (badmode.modedesc, "Bad mode");
 	vid_canalttab = true;
-	leavecurrentmode = false;
 
 	if (COM_CheckParm("-fullsbar"))
 		fullsbardraw = true;
