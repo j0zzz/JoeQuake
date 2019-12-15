@@ -648,13 +648,13 @@ void S_UpdateAmbientSounds (void)
 	// don't adjust volume too fast
 		if (chan->master_vol < vol)
 		{
-			chan->master_vol += Q_rint (host_frametime * s_ambientfade.value);
+			chan->master_vol += Q_rint (physframetime * s_ambientfade.value);
 			if (chan->master_vol > vol)
 				chan->master_vol = vol;
 		}
 		else if (chan->master_vol > vol)
 		{
-			chan->master_vol -= Q_rint (host_frametime * s_ambientfade.value);
+			chan->master_vol -= Q_rint (physframetime * s_ambientfade.value);
 			if (chan->master_vol < vol)
 				chan->master_vol = vol;
 		}
