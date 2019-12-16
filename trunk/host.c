@@ -550,19 +550,24 @@ Returns false if the time is too short to run a frame
 qboolean Host_FilterTime (double time)
 {
 	qboolean result;
-	double	fps, minphysframetime;
+	double	frametime, minphysframetime;
 
 	realtime += time;
 
-	fps = !cl_maxfps.value ? 999 : bound(10, cl_maxfps.value, 999);
+	if (host_framerate.value > 0 || (cls.demoplayback && cl_demospeed.value != 1))
+		frametime = MinPhysFrameTime();
+	else if (Movie_IsActive())
+		frametime = Movie_FrameTime();
+	else
+		frametime = 1.0 / (!cl_maxfps.value ? 999 : bound(10, cl_maxfps.value, 999));
 
 	result = false;
 
-	if (cls.capturedemo || cls.timedemo || realtime - oldrealtime >= 1.0 / fps)
+	if (cls.capturedemo || cls.timedemo || realtime - oldrealtime >= frametime)
 	{
 #ifdef _WIN32
 		if (Movie_IsActive())
-			host_frametime = Movie_FrameTime();
+			host_frametime = frametime;
 		else
 #endif
 			host_frametime = realtime - oldrealtime;
