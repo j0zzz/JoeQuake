@@ -791,7 +791,11 @@ void IN_StartupMouse (void)
 
 	if (!dinput)
 	{
-		rawinput = IN_InitRawInput();
+		if (COM_CheckParm("-norawinput"))
+			rawinput = false;
+		else
+			rawinput = IN_InitRawInput();
+
 		if (rawinput)
 		{
 			Con_Printf("Raw mouse input initialized\n");
@@ -1052,8 +1056,17 @@ void IN_MouseMove (usercmd_t *cmd)
 	}
 	else
 	{
-		mx = mx_accum;
-		my = my_accum;
+		if (rawinput)
+		{
+			mx = mx_accum;
+			my = my_accum;
+		}
+		else
+		{
+			GetCursorPos(&current_pos);
+			mx = current_pos.x - window_center_x + mx_accum;
+			my = current_pos.y - window_center_y + my_accum;
+		}
 	}
 
 	//
@@ -1078,8 +1091,7 @@ void IN_MouseMove (usercmd_t *cmd)
 			mouse_y = my;
 		}
 
-		mx_accum = 0;
-		my_accum = 0;
+		mx_accum = my_accum = 0;
 
 		old_mouse_x = mx;
 		old_mouse_y = my;
@@ -1146,6 +1158,16 @@ IN_Accumulate
 */
 void IN_Accumulate (void)
 {
+	if (mouseactive && !dinput && !rawinput)
+	{
+		GetCursorPos(&current_pos);
+
+		mx_accum += current_pos.x - window_center_x;
+		my_accum += current_pos.y - window_center_y;
+
+		// force the mouse to the center, so there's room to move
+		SetCursorPos(window_center_x, window_center_y);
+	}
 }
 
 /*
