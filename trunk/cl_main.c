@@ -731,7 +731,7 @@ void CL_RelinkEntities (void)
 
 		VectorCopy (ent->origin, oldorg);
 
-		if (ent->forcelink || (cl_independentphysics.value && ent != &cl_entities[cl.viewentity]))
+		if (ent->forcelink)
 		{	// the entity was not updated in the last message so move to the final spot
 			VectorCopy (ent->msg_origins[0], ent->origin);
 			VectorCopy (ent->msg_angles[0], ent->angles);
@@ -1070,7 +1070,8 @@ void CL_RelinkEntities (void)
 		}
 #endif
 
-		ent->forcelink = false;
+		if (!cl_independentphysics.value)
+			ent->forcelink = false;
 
 #ifdef GLQUAKE
 		// q3 multimodel support

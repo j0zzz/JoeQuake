@@ -552,6 +552,7 @@ void CL_ParseUpdate (int bits)
 #ifdef GLQUAKE
 	int		skin;
 #endif
+	extern cvar_t cl_independentphysics;
 
 	if (cls.signon == SIGNONS - 1)
 	{	// first update is the final signon stage
@@ -569,6 +570,9 @@ void CL_ParseUpdate (int bits)
 	for (i=0 ; i<16 ; i++)
 		if (bits & (1 << i))
 			bitcounts[i]++;
+
+	if (cl_independentphysics.value)
+		ent->forcelink = false;
 
 	forcelink = (ent->msgtime != cl.mtime[1]) ? true : false;
 
