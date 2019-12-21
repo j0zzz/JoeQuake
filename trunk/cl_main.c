@@ -731,7 +731,7 @@ void CL_RelinkEntities (void)
 
 		VectorCopy (ent->origin, oldorg);
 
-		if (ent->forcelink)
+		if (ent->forcelink || (cl_independentphysics.value && ent != &cl_entities[cl.viewentity]))
 		{	// the entity was not updated in the last message so move to the final spot
 			VectorCopy (ent->msg_origins[0], ent->origin);
 			VectorCopy (ent->msg_angles[0], ent->angles);
@@ -752,7 +752,7 @@ void CL_RelinkEntities (void)
 				ent->translate_start_time = ent->rotate_start_time = 0;
 #endif
 
-		// interpolate the origin and angles
+			// interpolate the origin and angles
 			for (j = 0 ; j < 3 ; j++)
 			{
 				ent->origin[j] = ent->msg_origins[1][j] + f * delta[j];

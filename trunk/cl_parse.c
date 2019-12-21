@@ -83,8 +83,6 @@ char *svc_strings[] =
 	"?"	// 49
 };
 
-extern cvar_t cl_independentphysics;
-
 //=============================================================================
 
 void CL_InitModelnames (void)
@@ -624,7 +622,7 @@ void CL_ParseUpdate (int bits)
 
 	ent->effects = (bits & U_EFFECTS) ? MSG_ReadByte() : ent->baseline.effects;
 
-// shift the known values for interpolation
+	// shift the known values for interpolation
 	VectorCopy (ent->msg_origins[0], ent->msg_origins[1]);
 	VectorCopy (ent->msg_angles[0], ent->msg_angles[1]);
 
@@ -656,13 +654,7 @@ void CL_ParseUpdate (int bits)
 #endif
 
 	if (bits & U_NOLERP)
-	{
-		// joe: need a full forcelink so that model animations look ok
-		if (cl_independentphysics.value)
-			forcelink = true;
-		else
-			ent->forcelink = true;
-	}
+		ent->forcelink = true;
 
 	if (forcelink)
 	{	// didn't have an update last message
