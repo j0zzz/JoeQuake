@@ -504,7 +504,7 @@ float CL_LerpPoint (void)
 
 	f = cl.mtime[0] - cl.mtime[1];
 
-	if ((!f || cl_nolerp.value || cls.timedemo || (sv.active && !cl_independentphysics.value)))
+	if (!f || cl_nolerp.value || cls.timedemo || (sv.active && (!cl_independentphysics.value || (cl_maxfps.value > 0 && cl_maxfps.value <= 72))))
 	{
 		cl.time = cl.ctime = cl.mtime[0];
 		return 1;
