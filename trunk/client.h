@@ -266,6 +266,7 @@ extern	cvar_t	r_rocketlightcolor;
 extern	cvar_t	r_rockettrail;
 extern	cvar_t	r_grenadetrail;
 extern	cvar_t	r_powerupglow;
+extern	cvar_t	r_coloredpowerupglow;
 
 extern	cvar_t	cl_bobbing;
 extern	cvar_t	cl_demospeed;

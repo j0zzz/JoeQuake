@@ -38,6 +38,7 @@ cvar_t	cl_mapname = {"mapname", "", CVAR_ROM};
 cvar_t	cl_muzzleflash = {"cl_muzzleflash", "1"};
 
 cvar_t	r_powerupglow = {"r_powerupglow", "1"};
+cvar_t	r_coloredpowerupglow = {"r_coloredpowerupglow", "1"};
 cvar_t	r_explosiontype = {"r_explosiontype", "0"};
 cvar_t	r_explosionlight = {"r_explosionlight", "1"};
 cvar_t	r_rocketlight = {"r_rocketlight", "1"};
@@ -805,14 +806,17 @@ void CL_RelinkEntities (void)
 		if (ent->effects & EF_BRIGHTFIELD)
 			R_EntityParticles (ent);
 
-		// joe: force colored powerup glows for relevant models
-		if (ent->model->modhint == MOD_QUAD)
+		if (r_coloredpowerupglow.value)
 		{
-			CL_NewDlight(i, ent->origin, 200 + (rand() & 31), 0.1, lt_blue);
-		}
-		if (ent->model->modhint == MOD_PENT)
-		{
-			CL_NewDlight(i, ent->origin, 200 + (rand() & 31), 0.1, lt_red);
+			// joe: force colored powerup glows for relevant models
+			if (ent->model->modhint == MOD_QUAD)
+			{
+				CL_NewDlight(i, ent->origin, 200 + (rand() & 31), 0.1, lt_blue);
+			}
+			if (ent->model->modhint == MOD_PENT)
+			{
+				CL_NewDlight(i, ent->origin, 200 + (rand() & 31), 0.1, lt_red);
+			}
 		}
 
 		if ((ent->effects & EF_MUZZLEFLASH) && cl_muzzleflash.value)
@@ -942,7 +946,8 @@ void CL_RelinkEntities (void)
 			{
 				dlighttype_t lighttype = lt_default;
 
-				if (i == cl.viewentity || ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_PLAYER_DME)
+				if (r_coloredpowerupglow.value &&
+				    (i == cl.viewentity || ent->model->modhint == MOD_PLAYER || ent->model->modhint == MOD_PLAYER_DME))
 				{
 					if ((cl.items & IT_QUAD) && (cl.items & IT_INVULNERABILITY))
 						lighttype = lt_redblue;
@@ -1347,6 +1352,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_warncmd);
 
 	Cvar_Register (&r_powerupglow);
+	Cvar_Register (&r_coloredpowerupglow);
 	Cvar_Register (&r_explosiontype);
 	Cvar_Register (&r_explosionlight);
 	Cvar_Register (&r_rocketlight);

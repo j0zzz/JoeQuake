@@ -96,6 +96,9 @@ value 2 the kick is much smoother just like in QW.
 r_powerupglow
 Turns powerup glow around player's body on/off, 1 by default.
 
+r_coloredpowerupglow
+Turns forced coloration of powerup glow for quad and pentagram on/off, 1 by default.
+
 scr_consize
 Adjust the console's size, 0.5 (half size) by default.
 Can be 0.0 (nothing visible) - 1.0 (fully visble).
