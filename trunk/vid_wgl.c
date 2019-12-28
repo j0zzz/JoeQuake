@@ -1900,7 +1900,7 @@ static	int	vid_line, vid_wmodes;
 int menu_bpp, menu_display_freq;
 float menu_vsync;
 
-extern qboolean m_videomode_change_confirm;
+qboolean m_videomode_change_confirm;
 extern qboolean	m_entersound;
 
 typedef struct
