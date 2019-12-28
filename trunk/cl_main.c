@@ -504,7 +504,8 @@ float CL_LerpPoint (void)
 
 	f = cl.mtime[0] - cl.mtime[1];
 
-	if (!f || cl_nolerp.value || cls.timedemo || (sv.active && (!cl_independentphysics.value || (cl_maxfps.value > 0 && cl_maxfps.value <= 72))))
+	if (!f || cl_nolerp.value || cls.timedemo || 
+		(sv.active && (!cl_independentphysics.value || host_frametime > 1.0 / 72.0)))	// ignore lerping if client fps is too low (not goes above 72 - the server fps)
 	{
 		cl.time = cl.ctime = cl.mtime[0];
 		return 1;
