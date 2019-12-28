@@ -56,6 +56,9 @@ static	int		interp_weap_num = 0;
 
 int DoWeaponInterpolation (void);
 
+int				cl_numtransvisedicts;
+entity_t		*cl_transvisedicts[MAX_VISEDICTS];
+
 // view origin
 vec3_t	vup;
 vec3_t	vpn;
@@ -1446,7 +1449,7 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 			glBlendFunc (GL_SRC_ALPHA, GL_ONE);
 		else
 			glBlendFunc (GL_ONE, GL_ONE);
-		glDepthMask (GL_FALSE);
+		glDepthMask(GL_FALSE);
 		glDisable (GL_CULL_FACE);
 	}
 	else if (ISTRANSPARENT(ent))
@@ -1534,7 +1537,7 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 	{
 		glDisable (GL_BLEND);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDepthMask (GL_TRUE);
+		glDepthMask(GL_TRUE);
 		glEnable (GL_CULL_FACE);
 	}
 	else if (ISTRANSPARENT(ent))
@@ -1661,7 +1664,7 @@ R_SetupQ3Frame
 */
 void R_SetupQ3Frame (entity_t *ent)
 {
-	int			i, j, frame, shadernum, texture, fb_texture;
+	int			i, j, frame, shadernum, texture, fb_texture, draw_trans;
 	float		m[16];
 	md3header_t	*pmd3hdr;
 	md3surface_t *pmd3surf;
@@ -1683,16 +1686,18 @@ void R_SetupQ3Frame (entity_t *ent)
 	// draw all the triangles
 
 	// draw non-transparent surfaces first, then the transparent ones
-	for (i = 0 ; i < 2 ; i++)
+	for (draw_trans = 0; draw_trans < 2; draw_trans++)
 	{
 		pmd3surf = (md3surface_t *)((byte *)pmd3hdr + pmd3hdr->ofssurfs);
-		for (j = 0 ; j < pmd3hdr->numsurfs ; j++)
+		for (j = 0; j < pmd3hdr->numsurfs; j++)
 		{
 			md3shader_mem_t	*shader;
 
 			surface_transparent = Mod_IsTransparentSurface(pmd3surf);
 			//surface_transparent = ent->model->flags & EF_Q3TRANS;
-			if ((!i && surface_transparent) || (i && !surface_transparent))
+
+			if ((!draw_trans && surface_transparent) ||
+				(draw_trans && !surface_transparent))
 			{
 				pmd3surf = (md3surface_t *)((byte *)pmd3surf + pmd3surf->ofsend);
 				continue;
@@ -1703,7 +1708,7 @@ void R_SetupQ3Frame (entity_t *ent)
 			shadernum = ent->skinnum;
 			if ((shadernum >= pmd3surf->numshaders) || (shadernum < 0))
 			{
-				Con_DPrintf ("R_SetupQ3Frame: no such skin # %d\n", shadernum);
+				Con_DPrintf("R_SetupQ3Frame: no such skin # %d\n", shadernum);
 				shadernum = 0;
 			}
 
@@ -1714,33 +1719,33 @@ void R_SetupQ3Frame (entity_t *ent)
 
 			if (fb_texture && gl_mtexable)
 			{
-				GL_DisableMultitexture ();
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-				GL_Bind (texture);
+				GL_DisableMultitexture();
+				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+				GL_Bind(texture);
 
-				GL_EnableMultitexture ();
+				GL_EnableMultitexture();
 				if (gl_add_ext)
 				{
-					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-					GL_Bind (fb_texture);
+					glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+					GL_Bind(fb_texture);
 				}
 
-				R_DrawQ3Frame (frame, pmd3hdr, pmd3surf, ent, INTERP_MAXDIST);
+				R_DrawQ3Frame(frame, pmd3hdr, pmd3surf, ent, INTERP_MAXDIST);
 
 				if (!gl_add_ext)
 				{
 					ADD_EXTRA_TEXTURE(fb_texture, GL_DECAL);
 				}
 
-				GL_DisableMultitexture ();
+				GL_DisableMultitexture();
 			}
 			else
 			{
-				GL_DisableMultitexture ();
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-				GL_Bind (texture);
+				GL_DisableMultitexture();
+				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+				GL_Bind(texture);
 
-				R_DrawQ3Frame (frame, pmd3hdr, pmd3surf, ent, INTERP_MAXDIST);
+				R_DrawQ3Frame(frame, pmd3hdr, pmd3surf, ent, INTERP_MAXDIST);
 
 				if (fb_texture)
 				{
@@ -2103,45 +2108,19 @@ int SetFlameModelState (void)
 	return 0;
 }
 
-void SortEntitiesByTransparency (void)
-{
-	int		i, j;
-	entity_t	*tmp;
-
-	for (i = 0 ; i < cl_numvisedicts ; i++)
-	{
-		if (cl_visedicts[i]->istransparent)
-		{
-			for (j = cl_numvisedicts - 1 ; j > i ; j--)
-			{
-				// if not transparent, exchange with transparent
-				if (!(cl_visedicts[j]->istransparent))
-				{
-					tmp = cl_visedicts[i];
-					cl_visedicts[i] = cl_visedicts[j];
-					cl_visedicts[j] = tmp;
-					break;
-				}
-			}
-			if (j == i)
-				return;
-		}
-	}
-}
-
 /*
 =============
 R_DrawEntitiesOnList
 =============
 */
-void R_DrawEntitiesOnList (void)
+void R_DrawEntitiesOnList ()
 {
 	int	i;
 
 	if (!r_drawentities.value)
 		return;
 
-	SortEntitiesByTransparency ();
+	cl_numtransvisedicts = 0;
 
 	// draw sprites seperately, because of alpha blending
 	for (i = 0 ; i < cl_numvisedicts ; i++)
@@ -2150,6 +2129,12 @@ void R_DrawEntitiesOnList (void)
 
 		if (qmb_initialized && SetFlameModelState() == -1)
 			continue;
+
+		if (ISTRANSPARENT(currententity) && cl_numvisedicts < MAX_VISEDICTS)
+		{
+			cl_transvisedicts[cl_numtransvisedicts++] = currententity;
+			continue;
+		}
 
 		switch (currententity->model->type)
 		{
@@ -2193,6 +2178,45 @@ void R_DrawEntitiesOnList (void)
 
 	R_SetSpritesState (false);
 	R_SetSpr32State (false);
+}
+
+/*
+=============
+R_DrawTransEntitiesOnList
+=============
+*/
+void R_DrawTransEntitiesOnList()
+{
+	int	i;
+
+	if (!r_drawentities.value)
+		return;
+
+	for (i = 0; i < cl_numtransvisedicts; i++)
+	{
+		currententity = cl_transvisedicts[i];
+
+		if (qmb_initialized && SetFlameModelState() == -1)
+			continue;
+
+		switch (currententity->model->type)
+		{
+		case mod_alias:
+			R_DrawAliasModel(currententity);
+			break;
+
+		case mod_md3:
+			R_DrawQ3Model(currententity);
+			break;
+
+		case mod_brush:
+			R_DrawBrushModel(currententity);
+			break;
+
+		default:
+			break;
+		}
+	}
 }
 
 /*
@@ -2644,9 +2668,13 @@ void R_RenderScene (void)
 
 	R_DrawDecals ();
 
+	// draw opaque entites first
 	R_DrawEntitiesOnList ();
 
 	R_DrawWaterSurfaces ();
+
+	// then draw the transparent ones
+	R_DrawTransEntitiesOnList ();
 
 	GL_DisableMultitexture ();
 }
