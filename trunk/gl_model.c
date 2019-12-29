@@ -2263,7 +2263,7 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 // some models are special
 	if (!strcmp(mod->name, "progs/player.md3") ||
 		!strcmp(mod->name, "progs/vwplayer.md3") ||
-		!strcmp(mod->name, "progs/lower.md3"))
+		!strcmp(mod->name, "progs/player/lower.md3"))
 		mod->modhint = MOD_PLAYER;
 	else if (!strcmp(mod->name, "progs/flame.md3"))
 		mod->modhint = MOD_FLAME;
