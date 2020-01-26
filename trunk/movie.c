@@ -44,7 +44,7 @@ static qboolean OnChange_capture_dir (cvar_t *var, char *string);
 cvar_t	capture_dir	= {"capture_dir", "capture", 0, OnChange_capture_dir};
 
 cvar_t	capture_codec	= {"capture_codec", "0"};
-cvar_t	capture_fps	= {"capture_fps", "30.0"};
+cvar_t	capture_fps	= {"capture_fps", "30"};
 cvar_t	capture_console	= {"capture_console", "1"};
 cvar_t	capture_mp3	= {"capture_mp3", "0"};
 cvar_t	capture_mp3_kbps = {"capture_mp3_kbps", "128"};
@@ -186,10 +186,7 @@ void Movie_StopPlayback (void)
 
 double Movie_FrameTime (void)
 {
-	double	time;
-
-	time = 1.0 / ((capture_fps.value > 0) ? capture_fps.value : 30.0);
-	return bound(1.0 / 1000, time, 1.0);
+	return 1.0 / (!capture_fps.value ? 30 : bound(10, capture_fps.value, 1000));
 }
 
 void Movie_UpdateScreen (void)

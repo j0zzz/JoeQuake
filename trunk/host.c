@@ -559,7 +559,7 @@ qboolean Host_FilterTime (double time)
 	else if (Movie_IsActive())
 		frametime = Movie_FrameTime();
 	else
-		frametime = 1.0 / (!cl_maxfps.value ? 999 : bound(10, cl_maxfps.value, 999));
+		frametime = 1.0 / (!cl_maxfps.value ? 1000 : bound(10, cl_maxfps.value, 1000));
 
 	result = false;
 
