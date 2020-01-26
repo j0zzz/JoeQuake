@@ -1240,8 +1240,10 @@ void Mod_LoadLeafs (lump_t *l)
 		out->firstmarksurface = loadmodel->marksurfaces + LittleShort (in->firstmarksurface);
 		out->nummarksurfaces = LittleShort(in->nummarksurfaces);
 		
-		if (!*(out->firstmarksurface))
-			Sys_Error("MOD_LoadBrushModel: error when loading %s (NULL surface pointer)", loadmodel->name);
+		// a custom map called menk.bsp cannot be loaded due to this check and I can't figure out
+		// why was it added, so I decided to remove it. Couldn't find a way to get the game crash w/o it...
+		//if (!*(out->firstmarksurface))
+		//	Sys_Error("MOD_LoadBrushModel: error when loading %s (NULL surface pointer)", loadmodel->name);
 
 		p = LittleLong(in->visofs);
 		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
