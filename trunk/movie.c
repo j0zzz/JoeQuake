@@ -49,11 +49,17 @@ cvar_t	capture_console	= {"capture_console", "1"};
 cvar_t	capture_mp3	= {"capture_mp3", "0"};
 cvar_t	capture_mp3_kbps = {"capture_mp3_kbps", "128"};
 cvar_t	capture_avi = {"capture_avi", "1"};
+// By default split AVI files at 1900 Megabytes, to avoid running over the
+// 2 Gigabyte limit of old format AVI files.
+cvar_t	capture_avi_split = {"capture_avi_split", "1900"};
 
 static qboolean movie_is_capturing = false;
 qboolean	avi_loaded, acm_loaded;
 
 static SYSTEMTIME movie_start_date; 
+
+static int movie_avi_num_segments;
+static char movie_avi_path[256];
 
 qboolean Movie_IsActive (void)
 {
@@ -65,9 +71,40 @@ qboolean Movie_IsActive (void)
 	return movie_is_capturing;
 }
 
+void Movie_StartNewAviSegment()
+{
+	char segment_name[5];
+	char path[sizeof(movie_avi_path) + sizeof(segment_name)];
+
+	if (movie_avi_num_segments > 0)
+	{
+		COM_StripExtension(movie_avi_path, path);
+		Q_snprintfz(segment_name, sizeof(segment_name), "_%03d", movie_avi_num_segments);
+		strncat(path, segment_name, sizeof(path));
+		COM_ForceExtension(path, ".avi");
+	}
+	else
+	{
+		Q_strncpyz(path, movie_avi_path, sizeof(path));
+	}
+
+	if (!(moviefile = fopen(path, "wb")))
+	{
+		COM_CreatePath(path);
+		if (!(moviefile = fopen(path, "wb")))
+		{
+			Con_Printf("ERROR: Couldn't open %s\n", path);
+			return;
+		}
+	}
+
+	movie_is_capturing = Capture_Open(path);
+	++movie_avi_num_segments;
+}
+
 void Movie_Start_f (void)
 {
-	char	name[MAX_FILELENGTH], path[256];
+	char	name[MAX_FILELENGTH];
 
 	if (Cmd_Argc() != 2)
 	{
@@ -80,18 +117,10 @@ void Movie_Start_f (void)
 		Q_strncpyz (name, Cmd_Argv(1), sizeof(name));
 		COM_ForceExtension (name, ".avi");
 
-		Q_snprintfz (path, sizeof(path), "%s/%s", !COM_IsAbsolutePath(capture_dir.string) ? va("%s/%s", com_basedir, capture_dir.string) : capture_dir.string, name);
-		if (!(moviefile = fopen(path, "wb")))
-		{
-			COM_CreatePath (path);
-			if (!(moviefile = fopen(path, "wb")))
-			{
-				Con_Printf ("ERROR: Couldn't open %s\n", name);
-				return;
-			}
-		}
+		Q_snprintfz (movie_avi_path, sizeof(movie_avi_path), "%s/%s", !COM_IsAbsolutePath(capture_dir.string) ? va("%s/%s", com_basedir, capture_dir.string) : capture_dir.string, name);
 
-		movie_is_capturing = Capture_Open (path);
+		movie_avi_num_segments = 0;
+		Movie_StartNewAviSegment();
 	}
 	else
 	{
@@ -166,6 +195,7 @@ void Movie_Init (void)
 	Cvar_Register (&capture_dir);
 	Cvar_Register (&capture_console);
 	Cvar_Register (&capture_avi);
+	Cvar_Register (&capture_avi_split);
 
 	ACM_LoadLibrary ();
 	if (!acm_loaded)
@@ -196,6 +226,12 @@ void Movie_UpdateScreen (void)
 
 	if (capture_avi.value)
 	{
+		if (capture_avi_split.value > 0 && Capture_GetNumWrittenBytes() >= capture_avi_split.value * 1024 * 1024)
+		{
+			Movie_Stop();
+			Movie_StartNewAviSegment();
+		}
+
 #ifdef GLQUAKE
 		int	i, size = glwidth * glheight * 3;
 		byte *buffer, temp;

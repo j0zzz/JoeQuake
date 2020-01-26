@@ -54,6 +54,7 @@ PAVISTREAM	m_uncompressed_video_stream, m_compressed_video_stream, m_audio_strea
 unsigned long m_codec_fourcc;
 int			m_video_frame_counter;
 int			m_video_frame_size;
+LONG		m_bytes_written;
 
 qboolean	m_audio_is_mp3;
 int			m_audio_frame_counter;
@@ -225,6 +226,7 @@ qboolean Capture_Open (char *filename)
 	char			*fourcc;
 
 	m_video_frame_counter = m_audio_frame_counter = 0;
+	m_bytes_written = 0;
 	m_file = NULL;
 	m_codec_fourcc = 0;
 	m_uncompressed_video_stream = m_compressed_video_stream = m_audio_stream = NULL;
@@ -385,12 +387,14 @@ void Capture_Close (void)
 	if (m_file)
 		qAVIFileRelease (m_file);
 
+	m_bytes_written = 0;
 	qAVIFileExit ();
 }
 
 void Capture_WriteVideo (byte *pixel_buffer)
 {
 	HRESULT	hr;
+	LONG frame_bytes_written;
 #ifdef GLQUAKE
 	int	size = glwidth * glheight * 3;
 #else
@@ -409,17 +413,20 @@ void Capture_WriteVideo (byte *pixel_buffer)
 		return;
 	}
 
-	hr = qAVIStreamWrite (Capture_VideoStream(), m_video_frame_counter++, 1, pixel_buffer, m_video_frame_size, AVIIF_KEYFRAME, NULL, NULL);
+	hr = qAVIStreamWrite (Capture_VideoStream(), m_video_frame_counter++, 1, pixel_buffer, m_video_frame_size, AVIIF_KEYFRAME, NULL, &frame_bytes_written);
 	if (FAILED(hr))
 	{
 		Con_Printf ("ERROR: Couldn't write video stream\n");
 		return;
 	}
+
+	m_bytes_written += frame_bytes_written;
 }
 
 void Capture_WriteAudio (int samples, byte *sample_buffer)
 {
 	HRESULT		hr;
+	LONG		frame_bytes_written;
 	unsigned long sample_bufsize;
 
 	if (!m_audio_stream)
@@ -467,7 +474,8 @@ void Capture_WriteAudio (int samples, byte *sample_buffer)
 			goto clean;
 		}
 
-		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, mp3_buffer, m_mp3_stream_header.cbDstLengthUsed, AVIIF_KEYFRAME, NULL, NULL);
+		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, mp3_buffer, m_mp3_stream_header.cbDstLengthUsed, AVIIF_KEYFRAME, NULL, &frame_bytes_written);
+		m_bytes_written += frame_bytes_written;
 
 clean:
 		if ((mmr = qacmStreamUnprepareHeader(m_mp3_stream, &m_mp3_stream_header, 0)))
@@ -481,11 +489,17 @@ clean:
 	}
 	else
 	{
-		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, sample_buffer, sample_bufsize, AVIIF_KEYFRAME, NULL, NULL);
+		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, sample_buffer, sample_bufsize, AVIIF_KEYFRAME, NULL, &frame_bytes_written);
+		m_bytes_written += frame_bytes_written;
 	}
 	if (FAILED(hr))
 	{
 		Con_Printf ("ERROR: Couldn't write audio stream\n");
 		return;
 	}
+}
+
+LONG Capture_GetNumWrittenBytes (void)
+{
+	return m_bytes_written;
 }
