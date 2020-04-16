@@ -346,6 +346,14 @@ Turns mp3 audio compression on/off, 0 by default.
 Sets mp3 compression's bitrate, 128 by default.
 Only works if `capture_mp3` is 1 (trivial).
 
+### `capture_avi_split`
+
+Set this to the number of megabytes at which to split captured video into more
+than one AVI file. The used video capture module has a problem with files
+getting corrupted when reaching a size of over 2 gigabytes, so splitting them
+into smaller files is a good idea to avoid this corruption. Default is
+1900 megabytes. Setting to 0 disables splitting.
+
 ### `gl_externaltextures_world` and `gl_externaltextures_bmodels`
 
 Load external textures when set to "1".
