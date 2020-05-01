@@ -25,3 +25,4 @@ qboolean Capture_Open (char *filename);
 void Capture_WriteVideo (byte *pixel_buffer);
 void Capture_WriteAudio (int samples, byte *sample_buffer);
 void Capture_Close (void);
+LONG Capture_GetNumWrittenBytes (void);
