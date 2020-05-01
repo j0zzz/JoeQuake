@@ -697,6 +697,11 @@ qboolean SV_SendClientDatagram (client_t *client)
 	msg.maxsize = sizeof(buf);
 	msg.cursize = 0;
 
+	//johnfitz -- if client is nonlocal, use smaller max size so packets aren't fragmented
+	if (strcmp(client->netconnection->address, "LOCAL") != 0)
+		msg.maxsize = DATAGRAM_MTU;
+	//johnfitz
+
 	MSG_WriteByte (&msg, svc_time);
 	MSG_WriteFloat (&msg, sv.time);
 

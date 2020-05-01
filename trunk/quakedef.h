@@ -67,14 +67,16 @@ void VID_UnlockBuffer (void);
 
 #define	ON_EPSILON		0.1		// point on plane side epsilon
 
-#define	MAX_MSGLEN		8000		// max length of a reliable message
-#define	MAX_DATAGRAM	1024		// max length of unreliable message
+#define	MAX_MSGLEN		32000		// max length of a reliable message
+#define	MAX_DATAGRAM	32000		// max length of unreliable message
+
+#define DATAGRAM_MTU	1400	// johnfitz -- actual limit for unreliable messages to nonlocal clients
 
 // per-level limits
-#define	MAX_EDICTS		2048
+#define	MAX_EDICTS		32000
 #define	MAX_LIGHTSTYLES	64
-#define	MAX_MODELS		512		// these are sent over the net as bytes
-#define	MAX_SOUNDS		512		// so they cannot be blindly increased
+#define	MAX_MODELS		2048		// these are sent over the net as bytes
+#define	MAX_SOUNDS		2048		// so they cannot be blindly increased
 
 #define	SAVEGAME_COMMENT_LENGTH	39
 

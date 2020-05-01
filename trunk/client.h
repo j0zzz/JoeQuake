@@ -277,8 +277,8 @@ extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_confirmquit;
 
-#define	MAX_TEMP_ENTITIES	64		// lightning bolts, etc
-#define	MAX_STATIC_ENTITIES	128		// torches, etc
+#define	MAX_TEMP_ENTITIES	256		// lightning bolts, etc
+#define	MAX_STATIC_ENTITIES	512		// torches, etc
 
 // FIXME, allocate dynamically
 extern	efrag_t			cl_efrags[MAX_EFRAGS];
@@ -307,7 +307,7 @@ void CL_Disconnect (void);
 void CL_Disconnect_f (void);
 int CL_NextDemo (void);
 
-#define			MAX_VISEDICTS	256
+#define			MAX_VISEDICTS	4096
 extern	int		cl_numvisedicts;
 extern	entity_t *cl_visedicts[MAX_VISEDICTS];
 
