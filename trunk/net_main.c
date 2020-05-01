@@ -781,9 +781,7 @@ int NET_SendToAll (sizebuf_t *data, int blocktime)
 
 	for (i = 0, host_client = svs.clients ; i < svs.maxclients ; i++, host_client++)
 	{
-		if (!host_client->netconnection)
-			continue;
-		if (host_client->active)
+		if (host_client->netconnection && host_client->active)
 		{
 			if (host_client->netconnection->driver == 0)
 			{
