@@ -710,7 +710,7 @@ automatically extracted and played. Works from the Demos menu too.
 NOTE: make sure the dzip binary (dzip.exe or dzip-linux, comes with the zip)
 is present in your main Quake folder.
 
-### Framerate independent physics (BETA)
+### Framerate independent physics
 
 Server and Client calculates fps differently.
 The server always operates at a maximum of 72 fps. This guarantees that vanilla Quake
@@ -736,6 +736,7 @@ You may freely redistribute or modify JoeQuake as you wish.
 
 I would like to thank the following people for using their stuff:
 
+* Sphere, for his help and participation in development of JoeQuake 🖤
 * A. "Fuh" Nourai, for every FuhQuake addition
 * Anton "Tonik" Gavrilov, for every ZQuake addition
 * fenix@io.com, for alias model interpolation
