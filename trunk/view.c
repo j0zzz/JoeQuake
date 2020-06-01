@@ -811,9 +811,9 @@ void V_UpdatePalette (void)
 
 		for (j=0 ; j<NUM_CSHIFTS ; j++)	
 		{
-			r += (cl.cshifts[j].percent*(cl.cshifts[j].destcolor[0]-r)) >> 8;
-			g += (cl.cshifts[j].percent*(cl.cshifts[j].destcolor[1]-g)) >> 8;
-			b += (cl.cshifts[j].percent*(cl.cshifts[j].destcolor[2]-b)) >> 8;
+			r += (int)(cl.cshifts[j].percent*(cl.cshifts[j].destcolor[0]-r)) >> 8;
+			g += (int)(cl.cshifts[j].percent*(cl.cshifts[j].destcolor[1]-g)) >> 8;
+			b += (int)(cl.cshifts[j].percent*(cl.cshifts[j].destcolor[2]-b)) >> 8;
 		}
 
 		newpal[0] = gammatable[r];
@@ -858,15 +858,13 @@ void CalcGunAngle (void)
 	static qboolean oldonground = false;
 #ifdef GLQUAKE
 	extern qboolean player_jumped;
-#endif
 
 	player_jumped = !cl.onground;
+#endif
 
 	if (cl_newbob.value)
 	{
-#ifndef GLQUAKE
 		extern cvar_t r_drawviewmodel;
-#endif
 
 		cl.viewent.angles[PITCH] = -r_refdef.viewangles[PITCH];
 		cl.viewent.angles[YAW] = r_refdef.viewangles[YAW];
@@ -1137,6 +1135,7 @@ void V_CalcRefdef (void)
 	entity_t	*ent;
 	vec3_t		forward;
 	float		bob;
+	extern cvar_t r_drawviewmodel;
 
 	V_DriftPitch ();
 

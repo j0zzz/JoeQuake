@@ -129,7 +129,7 @@ It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void Draw_Character (int x, int y, int num)
+void Draw_Character (int x, int y, int num, qboolean scale)
 {
 	byte	*dest, *source;
 	int	drawline, row, col;
@@ -190,11 +190,11 @@ void Draw_Character (int x, int y, int num)
 Draw_String
 ================
 */
-void Draw_String (int x, int y, char *str)
+void Draw_String (int x, int y, char *str, qboolean scale)
 {
 	while (*str)
 	{
-		Draw_Character (x, y, *str);
+		Draw_Character (x, y, *str, false);
 		str++;
 		x += 8;
 	}
@@ -205,11 +205,11 @@ void Draw_String (int x, int y, char *str)
 Draw_Alt_String
 ================
 */
-void Draw_Alt_String (int x, int y, char *str)
+void Draw_Alt_String (int x, int y, char *str, qboolean scale)
 {
 	while (*str)
 	{
-		Draw_Character (x, y, (*str) | 0x80);
+		Draw_Character (x, y, (*str) | 0x80, false);
 		str++;
 		x += 8;
 	}
@@ -277,7 +277,7 @@ static qboolean crosshairdata[NUMCROSSHAIRS][64] = {
 	false, false, false, false, false, false, false, false
 };
 
-void Draw_Crosshair (void)
+void Draw_Crosshair (qboolean draw_menu)
 {
 	int		x, y, row, col;
 	extern	cvar_t	crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
@@ -331,7 +331,7 @@ void Draw_Crosshair (void)
 		}
 	}
 	else
-		Draw_Character (x - 4, y - 4, '+');
+		Draw_Character (x - 4, y - 4, '+', false);
 }
 
 /*
@@ -339,7 +339,7 @@ void Draw_Crosshair (void)
 Draw_TextBox
 ================
 */
-void Draw_TextBox (int x, int y, int width, int lines)
+void Draw_TextBox (int x, int y, int width, int lines, qboolean scale)
 {
 	mpic_t	*p;
 	int	n, cx, cy;
@@ -348,15 +348,15 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	cx = x;
 	cy = y;
 	p = Draw_CachePic ("gfx/box_tl.lmp");
-	Draw_TransPic (cx, cy, p);
+	Draw_TransPic (cx, cy, p, false);
 	p = Draw_CachePic ("gfx/box_ml.lmp");
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		Draw_TransPic (cx, cy, p);
+		Draw_TransPic (cx, cy, p, false);
 	}
 	p = Draw_CachePic ("gfx/box_bl.lmp");
-	Draw_TransPic (cx, cy+8, p);
+	Draw_TransPic (cx, cy+8, p, false);
 
 	// draw middle
 	cx += 8;
@@ -364,17 +364,17 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	{
 		cy = y;
 		p = Draw_CachePic ("gfx/box_tm.lmp");
-		Draw_TransPic (cx, cy, p);
+		Draw_TransPic (cx, cy, p, false);
 		p = Draw_CachePic ("gfx/box_mm.lmp");
 		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
 			if (n == 1)
 				p = Draw_CachePic ("gfx/box_mm2.lmp");
-			Draw_TransPic (cx, cy, p);
+			Draw_TransPic (cx, cy, p, false);
 		}
 		p = Draw_CachePic ("gfx/box_bm.lmp");
-		Draw_TransPic (cx, cy+8, p);
+		Draw_TransPic (cx, cy+8, p, false);
 		width -= 2;
 		cx += 16;
 	}
@@ -382,15 +382,15 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	// draw right side
 	cy = y;
 	p = Draw_CachePic ("gfx/box_tr.lmp");
-	Draw_TransPic (cx, cy, p);
+	Draw_TransPic (cx, cy, p, false);
 	p = Draw_CachePic ("gfx/box_mr.lmp");
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		Draw_TransPic (cx, cy, p);
+		Draw_TransPic (cx, cy, p, false);
 	}
 	p = Draw_CachePic ("gfx/box_br.lmp");
-	Draw_TransPic (cx, cy+8, p);
+	Draw_TransPic (cx, cy+8, p, false);
 }
 
 /*
@@ -439,14 +439,14 @@ void Draw_DebugChar (char num)
 Draw_Pic
 =============
 */
-void Draw_Pic (int x, int y, mpic_t *pic)
+void Draw_Pic (int x, int y, mpic_t *pic, qboolean scale)
 {
 	byte	*dest, *source;
 	int	v;
 
 	if (pic->alpha)
 	{
-		Draw_TransPic (x, y, pic);
+		Draw_TransPic (x, y, pic, false);
 		return;
 	}
 
@@ -503,7 +503,7 @@ void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int 
 Draw_TransPic
 =============
 */
-void Draw_TransPic (int x, int y, mpic_t *pic)
+void Draw_TransPic (int x, int y, mpic_t *pic, qboolean scale)
 {
 	byte	*dest, *source, tbyte;
 	int	v, u;

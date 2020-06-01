@@ -437,7 +437,7 @@ void Con_DrawInput (void)
 	Draw_String (size, con_vislines - (size * 2), text, true);
 #else
 	for (i=0 ; i<con_linewidth ; i++)
-		Draw_Character ((i+1)<<3, con_vislines - 16, text[i]);
+		Draw_Character ((i+1)<<3, con_vislines - 16, text[i], false);
 #endif
 }
 

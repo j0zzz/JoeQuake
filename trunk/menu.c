@@ -2735,9 +2735,11 @@ void M_AdjustHudSliders(int dir)
 		break;
 
 	case 6:	// crosshair alpha
+#ifdef GLQUAKE
 		gl_crosshairalpha.value += dir * 0.1;
 		gl_crosshairalpha.value = bound(0, gl_crosshairalpha.value, 1);
 		Cvar_SetValue(&gl_crosshairalpha, gl_crosshairalpha.value);
+#endif
 		break;
 
 	case 18:// console height
@@ -2751,9 +2753,11 @@ void M_AdjustHudSliders(int dir)
 		break;
 
 	case 20:// console alpha
+#ifdef GLQUAKE
 		gl_conalpha.value += dir * 0.1;
 		gl_conalpha.value = bound(0, gl_conalpha.value, 1);
 		Cvar_SetValue(&gl_conalpha, gl_conalpha.value);
+#endif
 		break;
 
 	default:
@@ -2920,7 +2924,9 @@ void M_Hud_Draw(void)
 	int x, y;
 	float r;
 	mpic_t *p;
+#ifdef GLQUAKE
 	byte *col;
+#endif
 
 	//M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
 	p = Draw_CachePic("gfx/ttl_cstm.lmp");
@@ -2934,14 +2940,19 @@ void M_Hud_Draw(void)
 	DrawHudType(220, 40);
 
 	M_Print(16, 56, "        Crosshair type");
+#ifdef GLQUAKE
 	if (draw_no24bit)
+#endif
 		DrawCrosshairType(220, 56);
+#ifdef GLQUAKE
 	else
 		M_Print(220, 56, !strcmp(gl_crosshairimage.string, "") ? "off" : gl_crosshairimage.string);
+#endif
 
 	M_Print(16, 64, "       Crosshair color");
 	x = 220 + ((menuwidth - 320) >> 1);
 	y = 64 + m_yofs;
+#ifdef GLQUAKE
 	col = StringToRGB(crosshaircolor.string);
 	glDisable(GL_TEXTURE_2D);
 	glColor3ubv(col);
@@ -2953,13 +2964,16 @@ void M_Hud_Draw(void)
 	glEnd();
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
+#endif
 
 	M_Print(16, 72, "       Crosshair scale");
 	r = crosshairsize.value / 3;
 	M_DrawSliderFloat(220, 72, r, crosshairsize.value);
 
 	M_Print(16, 80, "Crosshair transparency");
+#ifdef GLQUAKE
 	M_DrawSliderFloat(220, 80, gl_crosshairalpha.value, gl_crosshairalpha.value);
+#endif
 
 	M_DrawTextBox(180, 88, 3, 3);
 	Draw_Crosshair(true);
@@ -2987,7 +3001,9 @@ void M_Hud_Draw(void)
 	M_DrawSliderInt(220, 184, r, scr_conspeed.value);
 
 	M_Print(16, 192, "  Console transparency");
+#ifdef GLQUAKE
 	M_DrawSliderFloat(220, 192, gl_conalpha.value, gl_conalpha.value);
+#endif
 
 	// cursor
 	M_DrawCharacter(200, 32 + hud_cursor * 8, 12 + ((int)(realtime * 4) & 1));
@@ -2995,9 +3011,7 @@ void M_Hud_Draw(void)
 
 void M_Hud_Key(int k)
 {
-	int i;
 	float newvalue;
-	direntry_t *crosshairfile;
 
 	switch (k)
 	{
@@ -3017,7 +3031,9 @@ void M_Hud_Key(int k)
 			break;
 
 		case 3: // crosshair
+#ifdef GLQUAKE
 			if (draw_no24bit)
+#endif
 			{
 				newvalue = crosshair.value + 1;
 				if (newvalue == 1)	// skip the good old '+' character crosshair
@@ -3026,11 +3042,14 @@ void M_Hud_Key(int k)
 					newvalue = 0;
 				Cvar_SetValue (&crosshair, newvalue);
 			}
+#ifdef GLQUAKE
 			else
 			{
 				if (num_files > 0)
 				{
+					int i;
 					char *crosshairimage;
+					direntry_t *crosshairfile;
 
 					for (i = 0, crosshairfile = filelist; i < num_files; i++, crosshairfile++)
 					{
@@ -3053,6 +3072,7 @@ void M_Hud_Key(int k)
 						Cvar_SetValue(&crosshair, 0);
 				}
 			}
+#endif
 			break;
 		
 		case 4:
@@ -3182,6 +3202,7 @@ void M_AdjustColorChooserSliders(int dir)
 
 void M_Menu_Crosshair_ColorChooser_f(void)
 {
+#ifdef GLQUAKE
 	byte *col;
 
 	key_dest = key_menu;
@@ -3193,10 +3214,12 @@ void M_Menu_Crosshair_ColorChooser_f(void)
 	red = col[0];
 	green = col[1];
 	blue = col[2];
+#endif
 }
 
 void M_Menu_Sky_ColorChooser_f(void)
 {
+#ifdef GLQUAKE
 	byte *col;
 
 	key_dest = key_menu;
@@ -3208,6 +3231,7 @@ void M_Menu_Sky_ColorChooser_f(void)
 	red = col[0];
 	green = col[1];
 	blue = col[2];
+#endif
 }
 
 void M_ColorChooser_Draw(colorchooser_t cstype)
@@ -3216,18 +3240,24 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	float r;
 	char title[MAX_QPATH];
 	int x, y, square_size = 96;
+#ifdef GLQUAKE
 	byte *col;
+#endif
 
 	switch (cstype)
 	{
 	case cs_crosshair:
 		sprintf(title, "Choose crosshair color");
+#ifdef GLQUAKE
 		col = StringToRGB(crosshaircolor.string);
+#endif
 		break;
 
 	case cs_sky:
 		sprintf(title, "Choose sky color");
+#ifdef GLQUAKE
 		col = StringToRGB(r_skycolor.string);
+#endif
 		break;
 
 	default:
@@ -3260,6 +3290,7 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	M_Print(16, 96, "Original");
 	x = 16 + ((menuwidth - 320) >> 1);
 	y = 108 + m_yofs;
+#ifdef GLQUAKE
 	glDisable(GL_TEXTURE_2D);
 	glColor3ubv(col);
 	glBegin(GL_QUADS);
@@ -3284,6 +3315,7 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	glEnd();
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
+#endif
 }
 
 void M_ColorChooser_Key(int k, colorchooser_t cstype)
@@ -3300,7 +3332,9 @@ void M_ColorChooser_Key(int k, colorchooser_t cstype)
 			break;
 
 		case cs_sky:
+#ifdef GLQUAKE
 			M_Menu_Display_f();
+#endif
 			break;
 
 		default:
@@ -3321,7 +3355,9 @@ void M_ColorChooser_Key(int k, colorchooser_t cstype)
 				break;
 
 			case cs_sky:
+#ifdef GLQUAKE
 				Cvar_Set(&r_skycolor, color);
+#endif
 				break;
 
 			default:
@@ -5090,21 +5126,28 @@ void M_ScreenFlashes_Key(int k)
 //=============================================================================
 /* VIDEO MENU */
 
+qboolean m_videomode_change_confirm;
+
+#ifdef GLQUAKE
 extern int menu_bpp, menu_display_freq;
 extern float menu_vsync;
 extern cvar_t vid_vsync;
 extern int GetCurrentBpp(void);
 extern int GetCurrentFreq(void);
+#endif
 
 void M_Menu_VideoModes_f(void)
 {
+#ifdef GLQUAKE
 	menu_bpp = GetCurrentBpp();
 	menu_display_freq = GetCurrentFreq();
 	menu_vsync = vid_vsync.value;
+#endif
 
 	key_dest = key_menu;
 	m_state = m_videomodes;
 	m_entersound = true;
+	m_videomode_change_confirm = false;
 }
 
 void M_VideoModes_Draw (void)
@@ -7180,7 +7223,9 @@ void M_Init (void)
 
 void M_Draw (void)
 {
+#ifdef GLQUAKE
 	double aspect;
+#endif
 
 	if (m_state == m_none || key_dest != key_menu)
 		return;

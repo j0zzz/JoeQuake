@@ -158,7 +158,7 @@ void SCR_DrawCenterString (void)
 		x = (vid.width - l*8)/2;
 		for (j=0 ; j<l ; j++, x+=8)
 		{
-			Draw_Character (x, y, start[j]);	
+			Draw_Character (x, y, start[j], false);
 			if (!remaining--)
 				return;
 		}
@@ -356,7 +356,7 @@ void SCR_DrawRam (void)
 	if (!r_cache_thrash)
 		return;
 
-	Draw_Pic (scr_vrect.x + 32, scr_vrect.y, scr_ram);
+	Draw_Pic (scr_vrect.x + 32, scr_vrect.y, scr_ram, false);
 }
 
 /*
@@ -381,7 +381,7 @@ void SCR_DrawTurtle (void)
 	if (count < 3)
 		return;
 
-	Draw_Pic (scr_vrect.x, scr_vrect.y, scr_turtle);
+	Draw_Pic (scr_vrect.x, scr_vrect.y, scr_turtle, false);
 }
 
 /*
@@ -397,7 +397,7 @@ void SCR_DrawNet (void)
 	if (cls.demoplayback)
 		return;
 
-	Draw_Pic (scr_vrect.x + 64, scr_vrect.y, scr_net);
+	Draw_Pic (scr_vrect.x + 64, scr_vrect.y, scr_net, false);
 }
 
 /*
@@ -416,7 +416,7 @@ void SCR_DrawPause (void)
 		return;
 
 	pic = Draw_CachePic ("gfx/pause.lmp");
-	Draw_Pic ((vid.width - pic->width)/2, (vid.height - 48 - pic->height)/2, pic);
+	Draw_Pic ((vid.width - pic->width)/2, (vid.height - 48 - pic->height)/2, pic, false);
 }
 
 /*
@@ -432,7 +432,7 @@ void SCR_DrawLoading (void)
 		return;
 		
 	pic = Draw_CachePic ("gfx/loading.lmp");
-	Draw_Pic ((vid.width - pic->width)/2, (vid.height - 48 - pic->height)/2, pic);
+	Draw_Pic ((vid.width - pic->width)/2, (vid.height - 48 - pic->height)/2, pic, false);
 }
 
 //=============================================================================
@@ -656,7 +656,7 @@ void SCR_DrawNotifyString (void)
 				break;
 		x = (vid.width - l*8)/2;
 		for (j=0 ; j<l ; j++, x+=8)
-			Draw_Character (x, y, start[j]);	
+			Draw_Character (x, y, start[j], false);
 			
 		y += 8;
 
@@ -802,7 +802,7 @@ void SCR_UpdateScreen (void)
 	}
 	else
 	{
-		Draw_Crosshair ();
+		Draw_Crosshair (false);
 		SCR_DrawRam ();
 		SCR_DrawNet ();
 		SCR_DrawTurtle ();

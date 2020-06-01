@@ -989,6 +989,9 @@ void Host_Init (quakeparms_t *parms)
 	Host_InitVCR (parms);
 	COM_Init (parms->basedir);
 	Host_InitLocal ();
+#ifndef GLQUAKE
+	W_LoadWadFile("gfx.wad");
+#endif
 	Key_Init ();
 
 	Cbuf_AddEarlyCommands ();
