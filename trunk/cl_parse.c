@@ -1107,6 +1107,13 @@ void CL_ParseServerMessage (void)
 		case svc_setangle:
 			for (i = 0 ; i < 3 ; i++)
 				cl.viewangles[i] = MSG_ReadAngle ();
+
+			if (cls.demoplayback)
+			{
+				VectorCopy(cl.viewangles, cl.mviewangles[0]);
+				VectorCopy(cl.mviewangles[0], cl.mviewangles[1]);
+				cl.mviewangles[0][0] = cl.mviewangles[1][0] = cl.viewangles[0] = -cl.viewangles[0];
+			}
 			break;
 
 		case svc_setview:
