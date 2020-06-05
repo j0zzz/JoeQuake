@@ -163,7 +163,7 @@ void IN_UseUp (void) {KeyUp(&in_use);}
 void IN_JumpDown (void)
 {
 	if (cls.state == ca_connected && cl_smartjump.value && cl.stats[STAT_HEALTH] > 0 && 
-	    !cls.demoplayback && sv_player->v.waterlevel >= 2 && !(in_forward.state & 1))
+	    !cls.demoplayback && cl.inwater && !(in_forward.state & 1))
 		KeyDown (&in_up);
 	else
 		KeyDown (&in_jump);
