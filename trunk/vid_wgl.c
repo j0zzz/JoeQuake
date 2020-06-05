@@ -84,6 +84,7 @@ static qboolean	windowed, leavecurrentmode;
 static qboolean vid_canalttab = false;
 static qboolean vid_wassuspended = false;
 static qboolean windowed_mouse = true;
+static qboolean borderless = false;
 extern qboolean	mouseactive;	// from in_win.c
 static HICON	hIcon;
 
@@ -348,7 +349,11 @@ qboolean VID_SetWindowedMode (int modenum)
 	window_width = modelist[modenum].width;
 	window_height = modelist[modenum].height;
 
-	WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+	if (borderless)
+		WindowStyle = WS_POPUP;
+	else
+		WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+
 	ExWindowStyle = 0;
 
 	AdjustWindowRectEx (&rect, WindowStyle, FALSE, 0);
@@ -1047,6 +1052,30 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	/*
 	CRASH FORT
 	*/
+	case WM_LBUTTONDOWN:
+	{
+		/*
+		Trick to simulate window moving in borderless windows by dragging anywhere,
+		but only if the mouse is free and not playing
+		*/
+		if (borderless && !mouseactive && key_dest != key_game)
+		{
+			/*
+			Equivalent of GET_X_LPARAM and GET_Y_LPARAM from Windowsx.h,
+			but no need to drag in that huge header
+			*/
+			int posx = ((int)(short)LOWORD(lParam));
+			int posy = ((int)(short)HIWORD(lParam));
+
+			SendMessageA(mainwindow, WM_NCLBUTTONDOWN, HTCAPTION, MAKELPARAM(posx, posy));
+		}
+
+		break;
+	} 
+
+	/*
+	CRASH FORT
+	*/
 	case WM_INPUT:
 	{
 		RAWINPUT buf;
@@ -1067,7 +1096,6 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 // this is complicated because Win32 seems to pack multiple mouse events into
 // one update sometimes, so we always check all states and look for events
-	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
@@ -1602,6 +1630,8 @@ void VID_Init (unsigned char *palette)
 
 	if (COM_CheckParm("-window"))
 		windowed = true;
+	if (COM_CheckParm("-borderless"))
+		borderless = true;
 
 	memset (&devmode, 0, sizeof(devmode));
 
