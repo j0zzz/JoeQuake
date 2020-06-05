@@ -1177,6 +1177,7 @@ __inline static void AddParticleTrail (part_type_t type, vec3_t start, vec3_t en
 	particle_t	*p;
 	particle_type_t	*pt;
 	static float rotangle = 0;
+	vec3_t		tmp1, tmp2;
 
 	if (!qmb_initialized)
 	{
@@ -1250,7 +1251,9 @@ __inline static void AddParticleTrail (part_type_t type, vec3_t start, vec3_t en
 		switch (type)
 		{
 		case p_trailpart:
-			VectorCopy (point, p->org);
+			VectorScale(delta, 10, tmp1);
+			VectorSubtract(point, tmp1, tmp2);
+			VectorCopy(tmp2, p->org);
 			VectorClear (p->vel);
 			p->growth = -size / time;
 			break;
