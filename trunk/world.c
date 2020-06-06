@@ -263,7 +263,8 @@ void SV_TouchLinks (edict_t *ent, areanode_t *node)
 	{
 		// e2m2 bug fix
 		if (!l)
-			Host_Error("NULL area link");
+			//Host_Error("NULL area link");
+			break;
 
 		next = l->next;
 		touch = EDICT_FROM_AREA(l);
