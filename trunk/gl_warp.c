@@ -27,6 +27,7 @@ extern	msurface_t *skychain;
 extern	msurface_t **skychain_tail;
 
 static	int	solidskytexture, alphaskytexture;
+static	int	gl_filter_minmax_sky = GL_LINEAR;
 static	float	speedscale, speedscale2;	// for top sky and bottom sky
 
 static	msurface_t *warpface;
@@ -419,8 +420,8 @@ void R_InitSky (byte *src)
 
 	GL_Bind (solidskytexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_sky);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_sky);
 
 	for (i=0 ; i<128 ; i++)
 		for (j=0 ; j<128 ; j++)
@@ -434,8 +435,33 @@ void R_InitSky (byte *src)
 
 	GL_Bind (alphaskytexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_sky);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_sky);
+}
+
+qboolean OnChange_gl_texturemode_sky (cvar_t *var, char *string)
+{
+	if (!Q_strcasecmp("GL_LINEAR", string))
+	{
+		gl_filter_minmax_sky = GL_LINEAR;
+	}
+	else if (!Q_strcasecmp("GL_NEAREST", string))
+	{
+		gl_filter_minmax_sky = GL_NEAREST;
+	}
+	else
+	{
+		Con_Printf ("bad filter name: %s\n", string);
+		return true;
+	}
+
+	GL_Bind (solidskytexture);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_sky);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_sky);
+	GL_Bind (alphaskytexture);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_sky);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_sky);
+	return false;
 }
 
 static	char	*skybox_ext[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
