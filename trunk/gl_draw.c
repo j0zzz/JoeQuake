@@ -494,20 +494,19 @@ qboolean OnChange_gl_texturemode (cvar_t *var, char *string)
 
 qboolean OnChange_gl_texturemode_hud (cvar_t *var, char *string)
 {
-	int		i;
-	for (i = 0 ; i < GLMODE_NUMMODES ; i++)
+	if (!Q_strcasecmp("GL_LINEAR", string))
 	{
-		if (!Q_strcasecmp(modes[i].name, string))
-			break;
+		gl_filter_minmax_hud = GL_LINEAR;
 	}
-
-	if (i == GLMODE_NUMMODES)
+	else if (!Q_strcasecmp("GL_NEAREST", string))
+	{
+		gl_filter_minmax_hud = GL_NEAREST;
+	}
+	else
 	{
 		Con_Printf ("bad filter name: %s\n", string);
 		return true;
 	}
-
-	gl_filter_minmax_hud = modes[i].maximize;
 
 	return false;
 }
