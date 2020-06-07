@@ -514,6 +514,17 @@ If not equals to 0, overrides the monitor's refresh rate to the given value.
 Load external textures for menu and hud/status bar.
 1 by default.
 
+### `gl_texturemode_hud`
+
+Set texture filtering mode for HUD elements, for example health display, menu
+images and so on. Valid modes: `GL_LINEAR` and `GL_NEAREST`, `GL_LINEAR` by
+default.
+
+### `gl_texturemode_sky`
+
+Set texture filtering mode for sky textures. Valid modes: `GL_LINEAR` and
+`GL_NEAREST`, `GL_LINEAR` by default.
+
 ## New commands
 
 ### `cmdlist`

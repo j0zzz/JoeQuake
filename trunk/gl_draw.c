@@ -34,7 +34,11 @@ qboolean OnChange_gl_max_size (cvar_t *var, char *string);
 cvar_t	gl_max_size = {"gl_max_size", "1024", 0, OnChange_gl_max_size};
 
 qboolean OnChange_gl_texturemode (cvar_t *var, char *string);
+qboolean OnChange_gl_texturemode_hud (cvar_t *var, char *string);
+extern qboolean OnChange_gl_texturemode_sky (cvar_t *var, char *string);
 cvar_t	gl_texturemode = {"gl_texturemode", "GL_LINEAR_MIPMAP_NEAREST", 0, OnChange_gl_texturemode};
+cvar_t	gl_texturemode_hud = {"gl_texturemode_hud", "GL_LINEAR", 0, OnChange_gl_texturemode_hud};
+cvar_t	gl_texturemode_sky = {"gl_texturemode_sky", "GL_LINEAR", 0, OnChange_gl_texturemode_sky};
 
 cvar_t	gl_externaltextures_world = {"gl_externaltextures_world", "1"};
 cvar_t	gl_externaltextures_bmodels = {"gl_externaltextures_bmodels", "1"};
@@ -76,6 +80,7 @@ int		gl_lightmap_format = 3, gl_solid_format = 3, gl_alpha_format = 4;
 
 static	int	gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 static	int	gl_filter_max = GL_LINEAR;
+static	int	gl_filter_minmax_hud = GL_LINEAR;
 
 
 extern	byte	vid_gamma_table[256];
@@ -487,6 +492,25 @@ qboolean OnChange_gl_texturemode (cvar_t *var, char *string)
 	return false;
 }
 
+qboolean OnChange_gl_texturemode_hud (cvar_t *var, char *string)
+{
+	if (!Q_strcasecmp("GL_LINEAR", string))
+	{
+		gl_filter_minmax_hud = GL_LINEAR;
+	}
+	else if (!Q_strcasecmp("GL_NEAREST", string))
+	{
+		gl_filter_minmax_hud = GL_NEAREST;
+	}
+	else
+	{
+		Con_Printf ("bad filter name: %s\n", string);
+		return true;
+	}
+
+	return false;
+}
+
 static qboolean Draw_LoadCharset (char *name)
 {
 	int	texnum;
@@ -649,6 +673,8 @@ void Draw_Init (void)
 	Cvar_Register (&gl_crosshairalpha);
 	Cvar_Register (&gl_crosshairimage);
 	Cvar_Register (&gl_texturemode);
+	Cvar_Register (&gl_texturemode_hud);
+	Cvar_Register (&gl_texturemode_sky);
 	Cvar_Register (&gl_externaltextures_world);
 	Cvar_Register (&gl_externaltextures_bmodels);
 	Cvar_Register (&gl_externaltextures_models);
@@ -1034,6 +1060,8 @@ void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha)
 	glCullFace (GL_FRONT);
 	glColor4f (1, 1, 1, alpha);
 	GL_Bind (pic->texnum);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_hud);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_hud);
 	glBegin (GL_QUADS);
 	glTexCoord2f (pic->sl, pic->tl);
 	glVertex2f (x, y);
@@ -1064,6 +1092,8 @@ void Draw_Pic (int x, int y, mpic_t *pic, qboolean scale)
 	sbar_scale = scale ? Sbar_GetScaleAmount() : 1.0;
 
 	GL_Bind (pic->texnum);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_hud);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_hud);
 	glBegin (GL_QUADS);
 	glTexCoord2f (pic->sl, pic->tl);
 	glVertex2f (x, y);
@@ -1095,6 +1125,8 @@ void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int 
 	scale = Sbar_GetScaleAmount();
 
 	GL_Bind (pic->texnum);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_hud);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_hud);
 	glBegin (GL_QUADS);
 	glTexCoord2f (newsl, newtl);
 	glVertex2f (x, y);
@@ -1150,8 +1182,8 @@ void Draw_TransPicTranslate (int x, int y, mpic_t *pic, byte *translation)
 
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_hud);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_hud);
 
 	glBegin (GL_QUADS);
 	glTexCoord2f (0, 0);
