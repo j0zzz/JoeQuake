@@ -802,6 +802,32 @@ void CL_TimeDemo_f (void)
 	cls.td_lastframe = -1;		// get a new message this frame
 }
 
+static char quakechars[8*16] = {
+	'<', '=', '>', '§', 'o', '.', 'o', 'o', 'o', 'o', ' ', 'o', ' ', '>', '.', '.',
+	'[', ']', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '<', '=', '>',
+	' ', '!', '"', '#', '$', '%', '&','\'', '(', ')', '*', '+', ',', '-', '.', '/',
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?',
+	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[','\\', ']', '^', '_',
+	'´', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+	'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~', '<'
+};
+
+void CL_ClearPlayerName(char *cleared_playername)
+{
+	int		i, j, playername_len, quakechar_idx;
+	
+	playername_len = strlen(cl_name.string);
+	for (i = 0, j = 0; i < playername_len; i++)
+	{
+		quakechar_idx = (cl_name.string[i] < 0) ? (cl_name.string[i] + 0x80) : cl_name.string[i];
+		if (strchr("<>:\"/\\|?*", quakechars[quakechar_idx]))
+			continue;
+		cleared_playername[j++] = quakechars[quakechar_idx];
+	}
+	cleared_playername[j] = 0;
+}
+
 /*
 ====================
 CL_KeepDemo_f
@@ -809,10 +835,10 @@ CL_KeepDemo_f
 */
 void CL_KeepDemo_f(void)
 {
-	int		mins, secs, tenths, fname_counter = 1;
-	char	oldname[MAX_OSPATH*2], newname[MAX_OSPATH*2];
+	int		mins, secs, millisecs, fname_counter = 1;
+	char	oldname[MAX_OSPATH*2], newname[MAX_OSPATH*2], *demoname_prefix, cleared_playername[16];
 	extern cvar_t cl_autodemo, cl_autodemo_name;
-	
+
 	if (cmd_source != src_command)
 		return;
 
@@ -836,11 +862,14 @@ void CL_KeepDemo_f(void)
 
 	CL_Stop_f();
 
+	CL_ClearPlayerName(cleared_playername);
+
 	Q_snprintfz(oldname, sizeof(oldname), "%s/%s.%s", com_gamedir, cl_autodemo_name.string, "dem");
+	demoname_prefix = cl_autodemo.value == 2 ? CL_MapName() : cl_autodemo_name.string;
 	mins = cl.completed_time / 60;
 	secs = cl.completed_time - (mins * 60);
-	tenths = (cl.completed_time - secs) * 1000;
-	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%i%i_%i_%s", com_gamedir, cl_autodemo_name.string, mins, secs, tenths, (int)skill.value, cl_name.string);
+	millisecs = (cl.completed_time - secs) * 1000;
+	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%02i%03i_%i_%s", com_gamedir, demoname_prefix, mins, secs, millisecs, (int)skill.value, cleared_playername);
 
 	// try with a different name if this file already exists
 	while (Sys_FileTime(va("%s.%s", newname, "dem")) == 1)
