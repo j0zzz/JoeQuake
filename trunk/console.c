@@ -48,6 +48,7 @@ char	*con_text = 0;
 
 cvar_t	con_notifytime = {"con_notifytime", "3"};	// seconds
 cvar_t	_con_notifylines = {"con_notifylines", "4"};
+cvar_t	con_notify_intermission = { "con_notify_intermission", "0" };	// console messages get shown in intermission
 
 #define	NUM_CON_TIMES 16
 float	con_times[NUM_CON_TIMES];	// realtime time the line was generated for transparent notify lines
@@ -219,6 +220,7 @@ void Con_Init (void)
 // register our commands
 	Cvar_Register (&con_notifytime);
 	Cvar_Register (&_con_notifylines);
+	Cvar_Register (&con_notify_intermission);
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);

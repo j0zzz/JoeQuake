@@ -997,6 +997,8 @@ static void SCR_DrawCursor(void)
 	scr_pointer_state.y_old = scr_pointer_state.y;
 }
 
+extern cvar_t con_notify_intermission;
+
 /*
 ==================
 SCR_UpdateScreen
@@ -1105,12 +1107,18 @@ void SCR_UpdateScreen (void)
 	{
 		Sbar_IntermissionOverlay ();
 		SCR_DrawVolume ();
+
+		if (con_notify_intermission.value)
+			SCR_DrawConsole();
 	}
 	else if (cl.intermission == 2 && key_dest == key_game)
 	{
 		Sbar_FinaleOverlay ();
 		SCR_CheckDrawCenterString ();
 		SCR_DrawVolume ();
+
+		if (con_notify_intermission.value)
+			SCR_DrawConsole();
 	}
 	else
 	{
