@@ -31,7 +31,7 @@ enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_
 #ifdef GLQUAKE
 	m_display, m_opengl, m_textures, m_particles, m_decals, m_weapons, m_screenflashes, m_sky_colorchooser,
 #endif
-	m_videomodes, m_nehdemos, m_maps, m_demos, m_help, m_quit, m_serialconfig, m_modemconfig,
+	m_videomodes, m_nehdemos, m_maps, m_demos, m_mods, m_help, m_quit, m_serialconfig, m_modemconfig,
 	m_lanconfig, m_gameoptions, m_search, m_servers, m_slist, m_sedit} m_state;
 
 void M_Menu_Main_f (void);
@@ -64,8 +64,9 @@ void M_Menu_Main_f (void);
 		void M_Menu_VideoModes_f (void);
 	void M_Menu_NehDemos_f (void);
 	void M_Menu_Maps_f (void);
-	void M_Menu_Demos_f (void);
-	void M_Menu_Help_f (void);
+	void M_Menu_Demos_f(void);
+	void M_Menu_Mods_f (void);
+	void M_Menu_Help_f (void);	// not used anymore
 	void M_Menu_Quit_f (void);
 void M_Menu_SerialConfig_f (void);
 	void M_Menu_ModemConfig_f (void);
@@ -102,7 +103,8 @@ void M_Main_Draw (void);
 		void M_VideoModes_Draw (void);
 	void M_NehDemos_Draw (void);
 	void M_Maps_Draw (void);
-	void M_Demos_Draw (void);
+	void M_Demos_Draw(void);
+	void M_Mods_Draw (void);
 	void M_Quit_Draw (void);
 void M_SerialConfig_Draw (void);
 	void M_ModemConfig_Draw (void);
@@ -139,7 +141,8 @@ void M_Main_Key (int key);
 		void M_VideoModes_Key (int key);
 	void M_NehDemos_Key (int key);
 	void M_Maps_Key (int key);
-	void M_Demos_Key (int key);
+	void M_Demos_Key(int key);
+	void M_Mods_Key (int key);
 	void M_Quit_Key (int key);
 void M_SerialConfig_Key (int key);
 	void M_ModemConfig_Key (int key);
@@ -840,7 +843,7 @@ void M_Main_Key (int key)
 				break;
 
 			case 5:
-				M_Menu_Help_f ();
+				M_Menu_Mods_f ();
 				break;
 
 			case 6:
@@ -5443,6 +5446,105 @@ void M_Demos_Key (int k)
 }
 
 //=============================================================================
+/* MODS MENU */
+
+void SearchForMods(void)
+{
+	RDFlags |= (RD_MENU_DEMOS | RD_MENU_DEMOS_MAIN);
+	ReadDir(com_basedir, "*");
+
+	SaveCursorPos();
+}
+
+void M_Menu_Mods_f(void)
+{
+	key_dest = key_menu;
+	m_state = m_mods;
+	m_entersound = true;
+
+	SearchForMods();
+}
+
+void M_Mods_Draw(void)
+{
+	M_List_Draw("MODS");
+}
+
+void M_Mods_Key(int k)
+{
+	int		i;
+	qboolean	worx;
+
+	M_List_Key(k, num_files, MAXLINES);
+
+	switch (k)
+	{
+	case K_ESCAPE:
+		if (searchbox)
+		{
+			KillSearchBox();
+		}
+		else
+		{
+			Q_strncpyz(prevdir, filelist[list_base + list_cursor].name, sizeof(prevdir));
+			M_Menu_Main_f();
+		}
+		break;
+
+	case K_ENTER:
+		if (!num_files || filelist[list_base + list_cursor].type == 3)
+			break;
+
+		key_dest = key_game;
+		m_state = m_none;
+		Cbuf_AddText(va("disconnect\ngamedir %s\nexec quake.rc\n", filelist[list_base + list_cursor].name));
+		Q_strncpyz(prevdir, filelist[list_base + list_cursor].name, sizeof(prevdir));
+
+		if (searchbox)
+			KillSearchBox();
+		break;
+
+	case K_BACKSPACE:
+		if (strcmp(searchfile, ""))
+			searchfile[--num_searchs] = 0;
+		break;
+
+	default:
+		if (k < 32 || k > 127)
+			break;
+
+		searchbox = true;
+		searchfile[num_searchs++] = k;
+		worx = false;
+		for (i = 0; i<num_files; i++)
+		{
+			if (strstr(filelist[i].name, searchfile) == filelist[i].name)
+			{
+				worx = true;
+				S_LocalSound("misc/menu1.wav");
+				list_base = i - 10;
+				if (list_base < 0)
+				{
+					list_base = 0;
+					list_cursor = i;
+				}
+				else if (list_base >(num_files - MAXLINES))
+				{
+					list_base = num_files - MAXLINES;
+					list_cursor = MAXLINES - (num_files - i);
+				}
+				else
+					list_cursor = 10;
+				break;
+			}
+		}
+		if (!worx)
+			searchfile[--num_searchs] = 0;
+		break;
+	}
+}
+
+//=============================================================================
 /* QUIT MENU */
 
 int		m_quit_prevstate;
@@ -7217,6 +7319,7 @@ void M_Init (void)
 #endif
 	Cmd_AddCommand ("help", M_Menu_Help_f);
 	Cmd_AddCommand ("menu_maps", M_Menu_Maps_f);
+	Cmd_AddCommand("menu_mods", M_Menu_Mods_f);
 	Cmd_AddCommand ("menu_demos", M_Menu_Demos_f);
 	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
 }
@@ -7379,6 +7482,10 @@ void M_Draw (void)
 		M_Demos_Draw ();
 		break;
 
+	case m_mods:
+		M_Mods_Draw();
+		break;
+
 	case m_help:
 		M_Help_Draw ();
 		break;
@@ -7471,6 +7578,7 @@ void M_Keydown (int key)
 	case m_nehdemos:		M_NehDemos_Key (key); return;
 	case m_maps:			M_Maps_Key (key); return;
 	case m_demos:			M_Demos_Key (key); return;
+	case m_mods:			M_Mods_Key(key); return;
 	case m_help:			M_Help_Key (key); return;
 	case m_quit:			M_Quit_Key (key); return;
 	case m_serialconfig:	M_SerialConfig_Key (key); return;
