@@ -1615,8 +1615,6 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 		Con_Printf ("No fullscreen DIB modes found\n");
 }
 
-void VID_Restart_f(void);
-
 /*
 ===================
 VID_Init
@@ -1648,7 +1646,6 @@ void VID_Init (unsigned char *palette)
 	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
 
 	Cmd_AddCommand("vid_modelist", VID_ModeList_f); 
-	Cmd_AddCommand ("vid_restart", VID_Restart_f);
 
 	hIcon = LoadIcon (global_hInstance, MAKEINTRESOURCE (IDI_ICON2));
 
@@ -1854,57 +1851,6 @@ void VID_Init (unsigned char *palette)
 
 	if (COM_CheckParm("-fullsbar"))
 		fullsbardraw = true;
-}
-
-void VID_Restart()
-{
-	// TODO: de-init more things, and re-init it
-
-	if (baseRC)
-		wglDeleteContext(baseRC);
-
-	baseRC = NULL;
-
-	VID_SetMode(vid_mode.value, host_basepal);
-
-	baseRC = wglCreateContext(maindc);
-	if (!baseRC)
-		Sys_Error("Could not initialize GL (wglCreateContext failed).\n\nMake sure you in are 65535 color mode, and try running -window.");
-
-	if (!wglMakeCurrent(maindc, baseRC))
-		Sys_Error("wglMakeCurrent failed");
-}
-
-void VID_Restart_f(void)
-{
-	extern void GFX_Init(void);
-
-	if (!host_initialized) // sanity
-	{
-		Con_Printf("Can't do %s yet\n", Cmd_Argv(0));
-		return;
-	}
-
-	VID_Restart();
-
-	GL_Init();
-#ifdef WIN32
-	GL_Init_Win();
-#else
-	// TODO: some *nix related here
-#endif
-
-	// force models to reload (just flush, no actual loading code here)
-	Cache_Flush();
-
-	// reload 2D textures, particles textures, some other textures and gfx.wad
-	GFX_Init();
-
-	// we need done something like for map reloading, for example reload textures for brush models
-	R_NewMap(true);
-
-	// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
-	Mod_TouchModels();
 }
 
 //========================================================

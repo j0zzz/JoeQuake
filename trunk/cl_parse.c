@@ -521,11 +521,7 @@ void CL_ParseServerInfo (void)
 // local state
 	cl_entities[0].model = cl.worldmodel = cl.model_precache[1];
 
-#ifdef GLQUAKE
-	R_NewMap(false);
-#else
 	R_NewMap();
-#endif
 
 	Hunk_Check ();			// make sure nothing is hurt
 

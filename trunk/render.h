@@ -145,20 +145,12 @@ void R_InitTextures (void);
 void R_InitEfrags (void);
 void R_RenderView (void);		// must set r_refdef first
 void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect); // called whenever r_refdef or vid change
-#ifdef GLQUAKE
-void R_InitSky(byte *src);		// called at level load
-#else
-void R_InitSky (miptex_t *mt);		// called at level load
-#endif
+void R_InitSky(miptex_t *mt);		// called at level load
 
 void R_AddEfrags (entity_t *ent);
 void R_RemoveEfrags (entity_t *ent);
 
-#ifdef GLQUAKE
-void R_NewMap(qboolean vid_restart);
-#else
 void R_NewMap(void);
-#endif
 
 // particles
 

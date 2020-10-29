@@ -577,8 +577,8 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 {
 	cmd_function_t	*cmd;
 
-	//if (host_initialized)	// because hunk allocation would get stomped
-	//	Sys_Error ("Cmd_AddCommand after host_initialized");
+	if (host_initialized)	// because hunk allocation would get stomped
+		Sys_Error ("Cmd_AddCommand after host_initialized");
 
 // fail if the command is a variable name
 	if (Cvar_VariableString(cmd_name)[0])

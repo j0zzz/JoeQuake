@@ -689,14 +689,6 @@ void Draw_Init (void)
 	if (!Q_strncasecmp((char *)gl_renderer, "3dfx", 4) || strstr((char *)gl_renderer, "Glide"))
 		Cvar_SetValue (&gl_max_size, 256);
 
-	W_LoadWadFile("gfx.wad");
-	//CachePics_DeInit();	//j0zzz: FIXME?!?
-
-	// Clear the scrap.
-	memset(scrap_allocated, 0, sizeof(scrap_allocated));
-	memset(scrap_texels, 0, sizeof(scrap_texels));
-	scrap_dirty = 0;	// Bit mask.
-
 	Draw_InitCharset ();
 	Draw_InitConback ();
 

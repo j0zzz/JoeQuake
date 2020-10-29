@@ -222,56 +222,46 @@ void R_PreMapLoad (char *mapname)
 R_NewMap
 ===============
 */
-void R_NewMap (qboolean vid_restart)
+void R_NewMap(void)
 {
 	int	i, waterline;
 
-	if (!vid_restart)
+	for (i = 0; i < 256; i++)
+		d_lightstylevalue[i] = 264;		// normal light value
+
+	memset(&r_worldentity, 0, sizeof(r_worldentity));
+	r_worldentity.model = cl.worldmodel;
+
+	// clear out efrags in case the level hasn't been reloaded
+	// FIXME: is this one short?
+	for (i = 0; i < cl.worldmodel->numleafs; i++)
+		cl.worldmodel->leafs[i].efrags = NULL;
+
+	r_viewleaf = NULL;
+	R_ClearParticles();
+	R_ClearDecals();
+
+	GL_BuildLightmaps();
+
+	// identify sky texture
+	for (i = 0; i < cl.worldmodel->numtextures; i++)
 	{
-		for (i = 0; i < 256; i++)
-			d_lightstylevalue[i] = 264;		// normal light value
+		if (!cl.worldmodel->textures[i])
+			continue;
 
-		memset(&r_worldentity, 0, sizeof(r_worldentity));
-		r_worldentity.model = cl.worldmodel;
-
-		// clear out efrags in case the level hasn't been reloaded
-		// FIXME: is this one short?
-		for (i = 0; i < cl.worldmodel->numleafs; i++)
-			cl.worldmodel->leafs[i].efrags = NULL;
-
-		r_viewleaf = NULL;
-		R_ClearParticles();
-		R_ClearDecals();
-	}
-	else
-	{
-		Mod_ReloadModelsTextures(); // reload textures for brush models
-	}
-
-	GL_BuildLightmaps ();
-
-	if (!vid_restart) 
-	{
-		// identify sky texture
-		for (i = 0; i < cl.worldmodel->numtextures; i++)
+		for (waterline = 0; waterline < 2; waterline++)
 		{
-			if (!cl.worldmodel->textures[i])
-				continue;
-
-			for (waterline = 0; waterline < 2; waterline++)
-			{
-				cl.worldmodel->textures[i]->texturechain[waterline] = NULL;
-				cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
-			}
+			cl.worldmodel->textures[i]->texturechain[waterline] = NULL;
+			cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
 		}
+	}
 
-		if (r_loadq3player)
-		{
-			memset(&q3player_body, 0, sizeof(tagentity_t));
-			memset(&q3player_head, 0, sizeof(tagentity_t));
-			memset(&q3player_weapon, 0, sizeof(tagentity_t));
-			memset(&q3player_weapon_flash, 0, sizeof(tagentity_t));
-		}
+	if (r_loadq3player)
+	{
+		memset(&q3player_body, 0, sizeof(tagentity_t));
+		memset(&q3player_head, 0, sizeof(tagentity_t));
+		memset(&q3player_weapon, 0, sizeof(tagentity_t));
+		memset(&q3player_weapon_flash, 0, sizeof(tagentity_t));
 	}
 }
 
