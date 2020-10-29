@@ -1744,7 +1744,7 @@ void GL_Upload8 (byte *data, int width, int height, int mode)
 {
 	int		i, size, p;
 	unsigned	*table;
-	static unsigned	trans[960*480];
+	static unsigned	trans[512*512*4];	// joe: raised value from 960*480
 
 	table = (mode & TEX_BRIGHTEN) ? d_8to24table2 : d_8to24table;
 	size = width * height;

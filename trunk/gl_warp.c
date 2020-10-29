@@ -145,6 +145,22 @@ boundaries so that turbulent and sky warps
 can be done reasonably.
 ================
 */
+#if 0
+void GL_SubdivideSurface(msurface_t *fa)
+{
+	vec3_t	verts[64];
+	int		i;
+
+	warpface = fa;
+
+	//the first poly in the chain is the undivided poly for newwater rendering.
+	//grab the verts from that.
+	for (i = 0; i<fa->polys->numverts; i++)
+		VectorCopy(fa->polys->verts[i], verts[i]);
+
+	SubdividePolygon(fa->polys->numverts, verts[0]);
+}
+#else
 void GL_SubdivideSurface (msurface_t *fa)
 {
 	vec3_t		verts[64];
@@ -169,6 +185,7 @@ void GL_SubdivideSurface (msurface_t *fa)
 
 	SubdividePolygon (numverts, verts[0]);
 }
+#endif
 
 //=========================================================
 

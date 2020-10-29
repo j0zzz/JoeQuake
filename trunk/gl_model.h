@@ -78,17 +78,24 @@ typedef struct texture_s
 	int			isLumaTexture;
 } texture_t;
 
-#define	SURF_PLANEBACK		1
-#define	SURF_DRAWSKY		2
-#define SURF_DRAWTURB		4
-#define SURF_DRAWTILED		8
-#define SURF_DRAWBACKGROUND	16
-#define SURF_UNDERWATER		32
+#define	SURF_PLANEBACK		2
+#define	SURF_DRAWSKY		4
+#define SURF_DRAWSPRITE		8
+#define SURF_DRAWTURB		0x10
+#define SURF_DRAWTILED		0x20
+#define SURF_DRAWBACKGROUND	0x40
+#define SURF_UNDERWATER		0x80
+#define SURF_NOTEXTURE		0x100 //johnfitz
+#define SURF_DRAWFENCE		0x200
+#define SURF_DRAWLAVA		0x400
+#define SURF_DRAWSLIME		0x800
+#define SURF_DRAWTELE		0x1000
+#define SURF_DRAWWATER		0x2000
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct
 {
-	unsigned short	v[2];
+	unsigned int	v[2];
 	unsigned int	cachededgeoffset;
 } medge_t;
 
@@ -99,7 +106,8 @@ typedef struct
 	int			flags;
 } mtexinfo_t;
 
-#define	VERTEXSIZE	9
+#define	VERTEXSIZE	9	//xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
+						//s2t2 = lightmap tex coords; s3t3 = detail tex coords 
 
 typedef struct glpoly_s
 {
@@ -116,6 +124,9 @@ typedef struct glpoly_s
 typedef struct msurface_s
 {
 	int			visframe;	// should be drawn when node is crossed
+	qboolean	culled;			// johnfitz -- for frustum culling
+	float		mins[3];		// johnfitz -- for frustum culling
+	float		maxs[3];		// johnfitz -- for frustum culling
 
 	mplane_t	*plane;
 	int			flags;
@@ -158,8 +169,8 @@ typedef struct mnode_s
 	mplane_t	*plane;
 	struct mnode_s *children[2];	
 
-	unsigned short firstsurface;
-	unsigned short numsurfaces;
+	unsigned int firstsurface;
+	unsigned int numsurfaces;
 } mnode_t;
 
 typedef struct mleaf_s
@@ -181,10 +192,18 @@ typedef struct mleaf_s
 	byte		ambient_sound_level[NUM_AMBIENTS];
 } mleaf_t;
 
+//johnfitz -- for clipnodes>32k
+typedef struct mclipnode_s
+{
+	int			planenum;
+	int			children[2]; // negative numbers are contents
+} mclipnode_t;
+//johnfitz
+
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
 typedef struct
 {
-	dclipnode_t	*clipnodes;
+	mclipnode_t	*clipnodes; //johnfitz -- was dclipnode_t 
 	mplane_t	*planes;
 	int			firstclipnode;
 	int			lastclipnode;
@@ -475,7 +494,14 @@ typedef struct model_s
 
 // volume occupied by the model graphics
 	vec3_t		mins, maxs;
+	vec3_t		ymins, ymaxs; //johnfitz -- bounds for entities with nonzero yaw
+	vec3_t		rmins, rmaxs; //johnfitz -- bounds for entities with nonzero pitch or roll
+	//johnfitz -- removed float radius;
 	float		radius;
+
+// solid volume for clipping
+	qboolean	clipbox;
+	vec3_t		clipmins, clipmaxs;
 
 // brush model
 	int			firstmodelsurface, nummodelsurfaces;
@@ -508,7 +534,7 @@ typedef struct model_s
 	int			*surfedges;
 
 	int			numclipnodes;
-	dclipnode_t	*clipnodes;
+	mclipnode_t	*clipnodes; //johnfitz -- was dclipnode_t 
 
 	int			nummarksurfaces;
 	msurface_t	**marksurfaces;

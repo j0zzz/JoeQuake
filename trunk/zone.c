@@ -426,7 +426,7 @@ void *Hunk_AllocName (int size, char *name)
 	size = sizeof(hunk_t) + ((size + 15) & ~15);
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size)
-	  	Sys_Error ("Not enough RAM allocated.  Try using \"-mem 32\" on the command line.");
+	  	Sys_Error ("Not enough RAM allocated. Try using \"-mem 512\" or higher on the command line.");
 
 	h = (hunk_t *)(hunk_base + hunk_low_used);
 	hunk_low_used += size;
@@ -514,7 +514,7 @@ void *Hunk_HighAllocName (int size, char *name)
 	size = sizeof(hunk_t) + ((size + 15) & ~15);
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size)
-	  	Sys_Error ("Not enough RAM allocated.  Try using \"-mem 32\" on the command line.");
+	  	Sys_Error ("Not enough RAM allocated. Try using \"-mem 512\" or higher on the command line.");
 
 	hunk_high_used += size;
 	Cache_FreeHigh (hunk_high_used);

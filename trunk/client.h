@@ -104,10 +104,10 @@ typedef struct framepos_s
 
 extern	framepos_t	*dem_framepos;
 
-#define	MAX_EFRAGS	640
+#define	MAX_EFRAGS		4096	// joe: was 640
 
 #define	MAX_MAPSTRING	2048
-#define	MAX_DEMOS	32
+#define	MAX_DEMOS		32
 #define	MAX_DEMONAME	64
 
 typedef enum

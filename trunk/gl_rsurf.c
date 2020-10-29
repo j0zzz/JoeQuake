@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	BLOCK_HEIGHT		128
 
 #define MAX_LIGHTMAP_SIZE	4096
-#define	MAX_LIGHTMAPS		64
+#define MAX_LIGHTMAPS		512 //johnfitz -- was 64 
 
 static	int	lightmap_textures;
 
@@ -800,7 +800,7 @@ void DrawTextureChains (model_t *model)
 	msurface_t	*s;
 	texture_t	*t;
 	qboolean	mtex_lightmaps, mtex_fbs, doMtex1, doMtex2, render_lightmaps = false;
-	qboolean	draw_fbs, draw_mtex_fbs, can_mtex_lightmaps, can_mtex_fbs;
+	qboolean	draw_fbs, draw_mtex_fbs, can_mtex_lightmaps, can_mtex_fbs, doAlphaTest;
 
 	if (gl_fb_bmodels.value)
 	{
@@ -826,6 +826,14 @@ void DrawTextureChains (model_t *model)
 		// bind the world texture
 		GL_SelectTexture (GL_TEXTURE0_ARB);
 		GL_Bind (t->gl_texturenum);
+
+		doAlphaTest = false;
+		if ((t->texturechain[0] && t->texturechain[0]->flags & SURF_DRAWFENCE) ||
+			(t->texturechain[1] && t->texturechain[1]->flags & SURF_DRAWFENCE))
+		{
+			glEnable(GL_ALPHA_TEST);
+			doAlphaTest = true;
+		}
 
 		draw_fbs = t->isLumaTexture || gl_fb_bmodels.value;
 		draw_mtex_fbs = draw_fbs && can_mtex_fbs;
@@ -976,6 +984,9 @@ void DrawTextureChains (model_t *model)
 			GL_DisableTMU (GL_TEXTURE1_ARB);
 		if (doMtex2)
 			GL_DisableTMU (GL_TEXTURE2_ARB);
+
+		if (doAlphaTest)
+			glDisable(GL_ALPHA_TEST);
 	}
 
 	if (gl_mtexable)
@@ -1036,6 +1047,8 @@ void R_DrawBrushModel (entity_t *ent)
 		if (R_CullBox(mins, maxs))
 			return;
 	}
+	//if (R_CullModelForEntity(ent))
+	//	return;
 
 	if (ISTRANSPARENT(ent))
 	{

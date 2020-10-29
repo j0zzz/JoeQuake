@@ -54,7 +54,7 @@ extern	byte	color_white[4], color_black[4];
 #define TEX_FULLBRIGHT		16
 #define	TEX_BRIGHTEN		32
 
-#define	MAX_GLTEXTURES	2048
+#define	MAX_GLTEXTURES	4096	//joe: was 2048
 
 void GL_SelectTexture (GLenum target);
 void GL_DisableMultitexture (void);
@@ -301,6 +301,7 @@ byte *StringToRGB(char *s);
 // gl_rmain.c
 qboolean R_CullBox (vec3_t mins, vec3_t maxs);
 qboolean R_CullSphere (vec3_t centre, float radius);
+qboolean R_CullModelForEntity(entity_t *e); 
 void R_PolyBlend (void);
 void R_BrightenScreen (void);
 void R_Q3DamageDraw (void);
