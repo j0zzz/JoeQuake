@@ -145,6 +145,9 @@ cvar_t	gl_decal_explosions = {"gl_decal_explosions", "0"};
 int		lightmode = 2;
 
 float	pitch_rot;
+#if 0
+float	q3legs_rot;
+#endif
 
 void R_MarkLeaves (void);
 void R_InitBubble (void);
@@ -266,7 +269,23 @@ void R_RotateForEntity (entity_t *ent, qboolean shadow)
 
 		// skip pitch rotation for the legs model
 		if (ent->modelindex != cl_modelindex[mi_q3legs])
-			glRotatef (pitch_rot, 0, 1, 0);
+			glRotatef(pitch_rot, 0, 1, 0);
+#if 0
+		else
+		{
+			//experimental velocity based rotate
+			float length;
+			vec3_t delta;
+			static	vec3_t	oldorigin = { 0, 0, 0 };
+
+			VectorSubtract(oldorigin, ent->origin, delta);
+			length = VectorLength(delta);
+			//Con_Printf("%f\n", length);
+			q3legs_rot = (length / host_frametime) / 20;
+			glRotatef(q3legs_rot, 0, 1, 0);
+			VectorCopy(ent->origin, oldorigin);
+		}
+#endif
 		glRotatef (ent->angles1[2] + (lerpfrac * d[2]), 1, 0, 0);
 	}
 }
@@ -1167,7 +1186,7 @@ int DoWeaponInterpolation (void)
 ===============================================================================
 */
 
-void R_RotateForTagEntity (tagentity_t *tagent, md3tag_t *tag, float *m)
+void R_RotateForTagEntity (tagentity_t *tagent, md3tag_t *tag, float *m, float frametime)
 {
 	int		i;
 	float	lerpfrac, timepassed;
@@ -1191,7 +1210,7 @@ void R_RotateForTagEntity (tagentity_t *tagent, md3tag_t *tag, float *m)
 	}
 	else
 	{
-		lerpfrac = timepassed / 0.1;
+		lerpfrac = timepassed / frametime;
 		if (cl.paused || lerpfrac > 1)
 			lerpfrac = 1;
 	}
@@ -1220,7 +1239,7 @@ void R_RotateForTagEntity (tagentity_t *tagent, md3tag_t *tag, float *m)
 		}
 		else
 		{
-			lerpfrac = timepassed / 0.1;
+			lerpfrac = timepassed / frametime;
 			if (cl.paused || lerpfrac > 1)
 				lerpfrac = 1;
 		}
@@ -1831,12 +1850,17 @@ void R_SetupQ3Frame (entity_t *ent)
 
 		glPushMatrix ();
 
-		R_RotateForTagEntity (tagent, tag, m);
+		R_RotateForTagEntity (tagent, tag, m, ent->frame_interval);
 		glMultMatrixf (m);
 
 		// apply pitch rotation from the torso model
 		if (ent->modelindex == cl_modelindex[mi_q3legs])
-			glRotatef (pitch_rot, 0, 1, 0);
+		{
+			glRotatef(pitch_rot, 0, 1, 0);
+#if 0
+			glRotatef(-q3legs_rot, 0, 1, 0);
+#endif
+		}
 
 		R_SetupQ3Frame (newent);
 
