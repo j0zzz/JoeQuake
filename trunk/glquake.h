@@ -292,6 +292,7 @@ void R_ClearSkyBox (void);
 void R_DrawSkyBox (void);
 extern qboolean	r_skyboxloaded;
 int R_SetSky (char *skyname);
+void Sky_NewMap(void);
 
 // gl_draw.c
 extern	cvar_t	gl_texturemode;

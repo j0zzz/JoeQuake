@@ -838,6 +838,51 @@ void R_DrawSkyBox (void)
 	skychain_tail = &skychain;
 }
 
+void Sky_NewMap(void)
+{
+	char	key[128], value[4096], *data;
+
+	// initially no sky
+	Cmd_ExecuteString("loadsky \"\"", src_command);
+	//skyfog = r_skyfog.value;
+
+	// read worldspawn (this is so ugly, and shouldn't it be done on the server?)
+	data = cl.worldmodel->entities;
+	if (!data)
+		return; //FIXME: how could this possibly ever happen? -- if there's no
+				// worldspawn then the sever wouldn't send the loadmap message to the client
+
+	data = COM_Parse(data);
+	if (!data) //should never happen
+		return; // error
+	if (com_token[0] != '{') //should never happen
+		return; // error
+	while (1)
+	{
+		data = COM_Parse(data);
+		if (!data)
+			return; // error
+		if (com_token[0] == '}')
+			break; // end of worldspawn
+		if (com_token[0] == '_')
+			strcpy(key, com_token + 1);
+		else
+			strcpy(key, com_token);
+		while (key[strlen(key) - 1] == ' ') // remove trailing spaces
+			key[strlen(key) - 1] = 0;
+		data = COM_Parse(data);
+		if (!data)
+			return; // error
+		strcpy(value, com_token);
+
+		if (!strcmp("sky", key))
+			R_SetSky(value);
+
+		//if (!strcmp("skyfog", key))
+		//	skyfog = atof(value);
+	}
+}
+
 void EmitCausticsPolys (void)
 {
 	glpoly_t	*p;

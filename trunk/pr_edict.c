@@ -777,10 +777,9 @@ qboolean ED_ParseEpair (void *base, ddef_t *key, char *s)
 	case ev_field:
 		if (!(def = ED_FindField(s)))
 		{
-			// LordHavoc: don't warn about worldspawn sky/fog fields
-			// because they don't require mod support
-			if (strcmp(s, "sky") && strncmp(s, "fog_", 4))
-				Con_Printf ("Can't find field %s\n", s);
+			//johnfitz -- HACK -- suppress error because fog/sky fields might not be mentioned in defs.qc
+			if (strncmp(s, "sky", 3) && strcmp(s, "fog"))
+				Con_DPrintf("Can't find field %s\n", s);
 			return false;
 		}
 		*(int *)d = G_INT(def->ofs);
@@ -875,7 +874,9 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		
 		if (!(key = ED_FindField (keyname)))
 		{
-			Con_Printf ("'%s' is not a field\n", keyname);
+			//johnfitz -- HACK -- suppress error because fog/sky/alpha fields might not be mentioned in defs.qc
+			if (strncmp(keyname, "sky", 3) && strcmp(keyname, "fog") && strcmp(keyname, "alpha"))
+				Con_DPrintf("\"%s\" is not a field\n", keyname); //johnfitz -- was Con_Printf
 			continue;
 		}
 

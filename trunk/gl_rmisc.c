@@ -255,6 +255,7 @@ void R_NewMap(void)
 			cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
 		}
 	}
+	Sky_NewMap();
 
 	if (r_loadq3player)
 	{
