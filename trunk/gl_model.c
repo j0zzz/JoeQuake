@@ -1161,6 +1161,12 @@ void Mod_LoadFaces (lump_t *l, qboolean bsp2)
 				out->flags |= SURF_DRAWTELE;
 			else out->flags |= SURF_DRAWWATER;
 
+			for (i = 0; i<2; i++)
+			{
+				out->extents[i] = 16384;
+				out->texturemins[i] = -8192;
+			}
+
 			//Mod_PolyForUnlitSurface(out);
 			GL_SubdivideSurface(out);
 		}
@@ -1408,16 +1414,17 @@ void Mod_ProcessLeafs_S(dsleaf_t *in, int filelen)
 		out->nummarksurfaces = (unsigned short)LittleShort(in->nummarksurfaces); //johnfitz -- unsigned short
 
 		p = LittleLong(in->visofs);
-		if (p == -1)
-			out->compressed_vis = NULL;
-		else
-			out->compressed_vis = loadmodel->visdata + p;
+		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
 		for (j = 0; j<4; j++)
 			out->ambient_sound_level[j] = in->ambient_level[j];
 
-		//johnfitz -- removed code to mark surfaces as SURF_UNDERWATER
+		if (out->contents != CONTENTS_EMPTY)
+		{
+			for (j = 0; j<out->nummarksurfaces; j++)
+				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
+		}
 	}
 }
 
@@ -1451,16 +1458,17 @@ void Mod_ProcessLeafs_L1(dl1leaf_t *in, int filelen)
 		out->nummarksurfaces = LittleLong(in->nummarksurfaces); //johnfitz -- unsigned short
 
 		p = LittleLong(in->visofs);
-		if (p == -1)
-			out->compressed_vis = NULL;
-		else
-			out->compressed_vis = loadmodel->visdata + p;
+		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
 		for (j = 0; j<4; j++)
 			out->ambient_sound_level[j] = in->ambient_level[j];
 
-		//johnfitz -- removed code to mark surfaces as SURF_UNDERWATER
+		if (out->contents != CONTENTS_EMPTY)
+		{
+			for (j = 0; j<out->nummarksurfaces; j++)
+				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
+		}
 	}
 }
 
@@ -1494,16 +1502,17 @@ void Mod_ProcessLeafs_L2(dl2leaf_t *in, int filelen)
 		out->nummarksurfaces = LittleLong(in->nummarksurfaces); //johnfitz -- unsigned short
 
 		p = LittleLong(in->visofs);
-		if (p == -1)
-			out->compressed_vis = NULL;
-		else
-			out->compressed_vis = loadmodel->visdata + p;
+		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
 		for (j = 0; j<4; j++)
 			out->ambient_sound_level[j] = in->ambient_level[j];
 
-		//johnfitz -- removed code to mark surfaces as SURF_UNDERWATER
+		if (out->contents != CONTENTS_EMPTY)
+		{
+			for (j = 0; j<out->nummarksurfaces; j++)
+				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
+		}
 	}
 }
 

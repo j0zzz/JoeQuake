@@ -1842,6 +1842,7 @@ void VID_Init (unsigned char *palette)
 
 	GL_Init ();
 	GL_Init_Win();
+	Fog_SetupState();
 
 	vid_menudrawfn = VID_MenuDraw;
 	vid_menukeyfn = VID_MenuKey;

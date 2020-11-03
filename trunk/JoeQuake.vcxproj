@@ -397,6 +397,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_fakegl.c" />
+    <ClCompile Include="gl_fog.c" />
     <ClCompile Include="gl_mesh.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>

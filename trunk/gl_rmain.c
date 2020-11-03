@@ -95,6 +95,8 @@ cvar_t	r_drawflame = {"r_drawflame", "1"};
 cvar_t	r_farclip = {"r_farclip", "4096"};
 qboolean OnChange_r_skybox (cvar_t *var, char *string);
 cvar_t	r_skybox = {"r_skybox", "", 0, OnChange_r_skybox};
+qboolean OnChange_r_skyfog(cvar_t *var, char *string);
+cvar_t	r_skyfog = { "r_skyfog", "0.5", 0, OnChange_r_skyfog };
 
 cvar_t	gl_clear = {"gl_clear", "0"};
 cvar_t	gl_cull = {"gl_cull", "1"};
@@ -1034,9 +1036,11 @@ void R_DrawAliasModel (entity_t *ent)
 			glDepthMask (GL_FALSE);
 			glEnable (GL_BLEND);
 			glBlendFunc (GL_ONE, GL_ONE);
+			Fog_StartAdditive();
 
 			R_DrawAliasFrame (ent->frame, paliashdr, ent, distance);
 
+			Fog_StopAdditive();
 			glDisable (GL_BLEND);
 			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glDepthMask (GL_TRUE);
@@ -1067,9 +1071,11 @@ void R_DrawAliasModel (entity_t *ent)
 			{
 				glEnable (GL_ALPHA_TEST);
 			}
+			Fog_StartAdditive();
 
 			R_DrawAliasFrame (ent->frame, paliashdr, ent, distance);
 
+			Fog_StopAdditive();
 			if (islumaskin)
 			{
 				glDisable (GL_BLEND);
@@ -1699,9 +1705,11 @@ void R_DrawQ3Shadow (entity_t *ent, float lheight, float s1, float c1, trace_t d
 	glDepthMask (GL_FALSE);									\
 	glEnable (GL_BLEND);									\
 	glBlendFunc (GL_ONE, GL_ONE);							\
+	Fog_StartAdditive ();									\
 															\
 	R_DrawQ3Frame (frame, pmd3hdr, pmd3surf, ent, INTERP_MAXDIST);\
 															\
+	Fog_StopAdditive ();									\
 	glDisable (GL_BLEND);									\
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);		\
 	glDepthMask (GL_TRUE);
@@ -2489,6 +2497,8 @@ void R_SetupFrame (void)
 
 	r_framecount++;
 
+	Fog_SetupFrame(); //johnfitz
+
 // build the transformation matrix for the given view angles
 	VectorCopy (r_refdef.vieworg, r_origin);
 	AngleVectors (r_refdef.viewangles, vpn, vright, vup);
@@ -2625,6 +2635,7 @@ void R_Init (void)
 	Cvar_Register (&r_drawflame);
 	Cvar_Register (&r_skybox);
 	Cvar_Register (&r_farclip);
+	Cvar_Register(&r_skyfog);
 
 	Cvar_Register (&gl_finish);
 	Cvar_Register (&gl_clear);
@@ -2684,6 +2695,7 @@ void R_Init (void)
 	R_InitParticles ();
 	R_InitVertexLights ();
 	R_InitDecals ();
+	Fog_Init(); //johnfitz 
 
 	R_InitOtherTextures ();
 
@@ -2713,6 +2725,8 @@ void R_RenderScene (void)
 	R_SetupGL ();
 
 	R_MarkLeaves ();	// done here so we know if we're in water
+
+	Fog_EnableGFog();	//johnfitz 
 
 	R_DrawWorld ();		// adds static entities to the list
 
@@ -2815,6 +2829,7 @@ void R_RenderView (void)
 	R_RenderScene ();
 	R_RenderDlights ();
 	R_DrawParticles ();
+	Fog_DisableGFog(); //johnfitz
 	R_DrawViewModel ();
 
 	if (r_speeds.value)

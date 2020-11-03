@@ -111,6 +111,7 @@ void R_RenderFullbrights (void)
 	glEnable (GL_ALPHA_TEST);
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	Fog_StartAdditive();
 
 	for (i = 1 ; i < MAX_GLTEXTURES ; i++)
 	{
@@ -122,6 +123,7 @@ void R_RenderFullbrights (void)
 		fullbright_polys[i] = NULL;
 	}
 
+	Fog_StopAdditive();
 	glDisable (GL_ALPHA_TEST);
 	glDepthMask (GL_TRUE);
 
@@ -141,6 +143,7 @@ void R_RenderLumas (void)
 	glBlendFunc (GL_ONE, GL_ONE);
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	Fog_StartAdditive();
 
 	for (i = 1 ; i < MAX_GLTEXTURES ; i++)
 	{
@@ -152,6 +155,7 @@ void R_RenderLumas (void)
 		luma_polys[i] = NULL;
 	}
 
+	Fog_StopAdditive();
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable (GL_BLEND);
 	glDepthMask (GL_TRUE);
@@ -532,6 +536,8 @@ void R_BlendLightmaps (void)
 	if (!r_lightmap.value)
 		glEnable (GL_BLEND);
 
+	Fog_StartAdditive();
+
 	for (i = 0 ; i < MAX_LIGHTMAPS ; i++)
 	{
 		if (!lightmap_polys[i])
@@ -553,6 +559,7 @@ void R_BlendLightmaps (void)
 		lightmap_polys[i] = NULL;
 	}
 
+	Fog_StopAdditive();
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable (GL_BLEND);
 	glDepthMask (GL_TRUE);		// back to normal Z buffering
@@ -1023,12 +1030,13 @@ R_DrawBrushModel
 void R_DrawBrushModel (entity_t *ent)
 {
 	int			i, k, underwater;
-	float		dot;
+	float		dot, transparency;
 	vec3_t		mins, maxs;
 	msurface_t	*psurf;
 	mplane_t	*pplane;
 	model_t		*clmodel = ent->model;
 	qboolean	rotated;
+	extern float GL_WaterAlphaForEntitySurface(entity_t *ent, msurface_t *s);
 
 	currenttexture = -1;
 
@@ -1050,11 +1058,14 @@ void R_DrawBrushModel (entity_t *ent)
 	//if (R_CullModelForEntity(ent))
 	//	return;
 
-	if (ISTRANSPARENT(ent))
+	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
+
+	if (ISTRANSPARENT(ent) || psurf->flags & (SURF_DRAWLAVA | SURF_DRAWSLIME | SURF_DRAWWATER))
 	{
+		transparency = GL_WaterAlphaForEntitySurface(ent, psurf);
 		glEnable (GL_BLEND);
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glColor4f (1, 1, 1, ent->transparency);
+		glColor4f (1, 1, 1, transparency);
 	}
 
 	VectorSubtract (r_refdef.vieworg, ent->origin, modelorg);
@@ -1068,8 +1079,6 @@ void R_DrawBrushModel (entity_t *ent)
 		modelorg[1] = -DotProduct (temp, right);
 		modelorg[2] = DotProduct (temp, up);
 	}
-
-	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
 
 	// calculate dynamic lighting for bmodel if it's not an instanced model
 	if (clmodel->firstmodelsurface != 0 && !gl_flashblend.value)
@@ -1271,10 +1280,7 @@ void R_DrawWorld (void)
 	// set up texture chains for the world
 	R_RecursiveWorldNode (cl.worldmodel->nodes, 15);
 
-	if (r_skyboxloaded)
-		R_DrawSkyBox ();
-	else
-		R_DrawSkyChain ();
+	R_DrawSky();
 
 	// draw the world
 	DrawTextureChains (cl.worldmodel);

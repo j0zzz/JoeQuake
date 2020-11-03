@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern qboolean r_loadq3player;
 
+float	map_wateralpha, map_lavaalpha, map_slimealpha;
+
 void R_InitOtherTextures (void)
 {
 	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN);
@@ -218,6 +220,82 @@ void R_PreMapLoad (char *mapname)
 }
 
 /*
+====================
+GL_WaterAlphaForSurfface -- ericw
+====================
+*/
+float GL_WaterAlphaForSurface(msurface_t *fa)
+{
+	if (fa->flags & SURF_DRAWLAVA)
+		return map_lavaalpha > 0 ? map_lavaalpha : map_wateralpha;
+	else if (fa->flags & SURF_DRAWSLIME)
+		return map_slimealpha > 0 ? map_slimealpha : map_wateralpha;
+	else
+		return map_wateralpha;
+}
+
+/*
+================
+GL_WaterAlphaForEntitySurface -- ericw
+
+Returns the water alpha to use for the entity and surface combination.
+================
+*/
+float GL_WaterAlphaForEntitySurface(entity_t *ent, msurface_t *s)
+{
+	return (ISTRANSPARENT(ent)) ? ent->transparency : GL_WaterAlphaForSurface(s);
+}
+
+/*
+=============
+R_ParseWorldspawn
+
+called at map load
+=============
+*/
+static void R_ParseWorldspawn(void)
+{
+	char key[128], value[4096], *data;
+
+	map_wateralpha = r_wateralpha.value;
+	map_lavaalpha = r_wateralpha.value;
+	map_slimealpha = r_wateralpha.value;
+
+	data = COM_Parse(cl.worldmodel->entities);
+	if (!data)
+		return; // error
+	if (com_token[0] != '{')
+		return; // error
+	while (1)
+	{
+		data = COM_Parse(data);
+		if (!data)
+			return; // error
+		if (com_token[0] == '}')
+			break; // end of worldspawn
+		if (com_token[0] == '_')
+			strcpy(key, com_token + 1);
+		else
+			strcpy(key, com_token);
+		while (key[strlen(key) - 1] == ' ') // remove trailing spaces
+			key[strlen(key) - 1] = 0;
+		data = COM_Parse(data);
+		if (!data)
+			return; // error
+		strcpy(value, com_token);
+
+		if (!strcmp("wateralpha", key))
+			map_wateralpha = atof(value);
+
+		if (!strcmp("lavaalpha", key))
+			map_lavaalpha = atof(value);
+
+		if (!strcmp("slimealpha", key))
+			map_slimealpha = atof(value);
+	}
+}
+
+/*
 ===============
 R_NewMap
 ===============
@@ -255,7 +333,9 @@ void R_NewMap(void)
 			cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
 		}
 	}
-	Sky_NewMap();
+	Sky_NewMap(); //johnfitz -- skybox in worldspawn 
+	Fog_NewMap(); //johnfitz -- global fog in worldspawn 
+	R_ParseWorldspawn(); //ericw -- wateralpha, lavaalpha, telealpha, slimealpha in worldspawn 
 
 	if (r_loadq3player)
 	{

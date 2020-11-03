@@ -33,8 +33,10 @@ static	float	speedscale, speedscale2;	// for top sky and bottom sky
 static	msurface_t *warpface;
 
 qboolean	r_skyboxloaded;
+float		skyfog; // ericw 
 
 extern	cvar_t	gl_subdivide_size;
+extern	cvar_t	r_skyfog;
 
 extern	byte *StringToRGB (char *s);
 
@@ -244,7 +246,7 @@ void EmitTurbulentPolys (msurface_t *fa)
 {
 	glpoly_t	*p;
 	float		*v, s, t, os, ot;
-	int		i;
+	int			i;
 
 	GL_DisableMultitexture ();
 
@@ -279,7 +281,7 @@ void EmitSkyPolys (msurface_t *fa, qboolean mtex)
 {
 	glpoly_t	*p;
 	float		*v, s, t, ss, tt, length;
-	int		i;
+	int			i;
 	vec3_t		dir;
 
 	for (p = fa->polys ; p ; p = p->next)
@@ -345,8 +347,13 @@ void R_DrawSkyChain (void)
 	{
 		glDisable (GL_TEXTURE_2D);
 
-		col = StringToRGB (r_skycolor.string);
-		glColor3ubv (col);
+		if (Fog_GetDensity() > 0)
+			glColor3fv(Fog_GetColor());
+		else
+		{
+			col = StringToRGB(r_skycolor.string);
+			glColor3ubv(col);
+		}
 
 		for (fa = skychain ; fa ; fa = fa->texturechain)
 			EmitFlatPoly (fa);
@@ -393,6 +400,34 @@ void R_DrawSkyChain (void)
 				EmitSkyPolys (fa, false);
 
 			glDisable (GL_BLEND);
+		}
+
+		if (Fog_GetDensity() > 0 && skyfog > 0)
+		{
+			glpoly_t	*p;
+			float		*v, *c;
+			int			i;
+
+			c = Fog_GetColor();
+			glEnable(GL_BLEND);
+			glDisable(GL_TEXTURE_2D);
+			glColor4f(c[0], c[1], c[2], bound(0.0, skyfog, 1.0));
+
+			speedscale = cl.time * 8;
+			speedscale -= (int)speedscale & ~127;
+
+			for (fa = skychain; fa; fa = fa->texturechain)
+				for (p = fa->polys; p; p = p->next)
+				{
+					glBegin(GL_POLYGON);
+					for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
+						glVertex3fv(v);
+					glEnd();
+				}
+
+			glColor3f(1, 1, 1);
+			glEnable(GL_TEXTURE_2D);
+			glDisable(GL_BLEND);
 		}
 	}
 
@@ -819,6 +854,27 @@ void R_DrawSkyBox (void)
 		MakeSkyVec (skymaxs[0][i], skymaxs[1][i], i);
 		MakeSkyVec (skymaxs[0][i], skymins[1][i], i);
 		glEnd ();
+
+		if (Fog_GetDensity() > 0 && skyfog > 0)
+		{
+			float *c;
+
+			c = Fog_GetColor();
+			glEnable(GL_BLEND);
+			glDisable(GL_TEXTURE_2D);
+			glColor4f(c[0], c[1], c[2], bound(0.0, skyfog, 1.0));
+
+			glBegin(GL_QUADS);
+			MakeSkyVec(skymins[0][i], skymins[1][i], i);
+			MakeSkyVec(skymins[0][i], skymaxs[1][i], i);
+			MakeSkyVec(skymaxs[0][i], skymaxs[1][i], i);
+			MakeSkyVec(skymaxs[0][i], skymins[1][i], i);
+			glEnd();
+
+			glColor3f(1, 1, 1);
+			glEnable(GL_TEXTURE_2D);
+			glDisable(GL_BLEND);
+		}
 	}
 
 	glDisable (GL_TEXTURE_2D);
@@ -838,13 +894,24 @@ void R_DrawSkyBox (void)
 	skychain_tail = &skychain;
 }
 
+qboolean OnChange_r_skyfog(cvar_t *var, char *string)
+{
+	if (!string[0])
+		return true;
+
+	// clear any skyfog setting from worldspawn
+	skyfog = Q_atof(string);
+
+	return false;
+}
+
 void Sky_NewMap(void)
 {
 	char	key[128], value[4096], *data;
 
 	// initially no sky
 	Cmd_ExecuteString("loadsky \"\"", src_command);
-	//skyfog = r_skyfog.value;
+	skyfog = r_skyfog.value;
 
 	// read worldspawn (this is so ugly, and shouldn't it be done on the server?)
 	data = cl.worldmodel->entities;
@@ -878,8 +945,8 @@ void Sky_NewMap(void)
 		if (!strcmp("sky", key))
 			R_SetSky(value);
 
-		//if (!strcmp("skyfog", key))
-		//	skyfog = atof(value);
+		if (!strcmp("skyfog", key))
+			skyfog = atof(value);
 	}
 }
 
@@ -920,4 +987,16 @@ void EmitCausticsPolys (void)
 	glDisable (GL_BLEND);
 
 	caustics_polys = NULL;
+}
+
+void R_DrawSky(void)
+{
+	Fog_DisableGFog();
+
+	if (r_skyboxloaded)
+		R_DrawSkyBox();
+	else
+		R_DrawSkyChain();
+
+	Fog_EnableGFog();
 }
