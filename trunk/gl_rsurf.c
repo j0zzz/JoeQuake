@@ -1055,8 +1055,6 @@ void R_DrawBrushModel (entity_t *ent)
 		if (R_CullBox(mins, maxs))
 			return;
 	}
-	//if (R_CullModelForEntity(ent))
-	//	return;
 
 	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
 

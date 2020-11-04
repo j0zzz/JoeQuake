@@ -307,7 +307,6 @@ byte *StringToRGB(char *s);
 // gl_rmain.c
 qboolean R_CullBox (vec3_t mins, vec3_t maxs);
 qboolean R_CullSphere (vec3_t centre, float radius);
-qboolean R_CullModelForEntity(entity_t *e); 
 void R_PolyBlend (void);
 void R_BrightenScreen (void);
 void R_Q3DamageDraw (void);

@@ -192,34 +192,6 @@ qboolean R_CullSphere (vec3_t centre, float radius)
 }
 
 /*
-===============
-R_CullModelForEntity -- johnfitz -- uses correct bounds based on rotation
-===============
-*/
-qboolean R_CullModelForEntity(entity_t *e)
-{
-	vec3_t mins, maxs;
-
-	if (e->angles[0] || e->angles[2]) //pitch or roll
-	{
-		VectorAdd(e->origin, e->model->rmins, mins);
-		VectorAdd(e->origin, e->model->rmaxs, maxs);
-	}
-	else if (e->angles[1]) //yaw
-	{
-		VectorAdd(e->origin, e->model->ymins, mins);
-		VectorAdd(e->origin, e->model->ymaxs, maxs);
-	}
-	else //no rotation
-	{
-		VectorAdd(e->origin, e->model->mins, mins);
-		VectorAdd(e->origin, e->model->maxs, maxs);
-	}
-
-	return R_CullBox(mins, maxs);
-}
-
-/*
 =============
 R_RotateForEntity
 =============
@@ -911,8 +883,6 @@ void R_DrawAliasModel (entity_t *ent)
 		if (R_CullBox(mins, maxs))
 			return;
 	}
-	//if (R_CullModelForEntity(ent))
-	//	return;
 
 	VectorCopy (ent->origin, r_entorigin);
 	VectorSubtract (r_origin, r_entorigin, modelorg);

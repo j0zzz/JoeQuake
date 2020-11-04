@@ -493,9 +493,6 @@ typedef struct model_s
 
 // volume occupied by the model graphics
 	vec3_t		mins, maxs;
-	vec3_t		ymins, ymaxs; //johnfitz -- bounds for entities with nonzero yaw
-	vec3_t		rmins, rmaxs; //johnfitz -- bounds for entities with nonzero pitch or roll
-	//johnfitz -- removed float radius;
 	float		radius;
 
 // solid volume for clipping
