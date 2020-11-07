@@ -77,13 +77,13 @@ void CL_ParseBeam (model_t *m)
 
 	ent = MSG_ReadShort ();
 
-	start[0] = MSG_ReadCoord ();
-	start[1] = MSG_ReadCoord ();
-	start[2] = MSG_ReadCoord ();
+	start[0] = MSG_ReadCoord (cl.protocolflags);
+	start[1] = MSG_ReadCoord (cl.protocolflags);
+	start[2] = MSG_ReadCoord (cl.protocolflags);
 
-	end[0] = MSG_ReadCoord ();
-	end[1] = MSG_ReadCoord ();
-	end[2] = MSG_ReadCoord ();
+	end[0] = MSG_ReadCoord (cl.protocolflags);
+	end[1] = MSG_ReadCoord (cl.protocolflags);
+	end[2] = MSG_ReadCoord (cl.protocolflags);
 
 	if (ent == cl.viewentity)
 		VectorCopy (end, playerbeam_end);
@@ -146,9 +146,9 @@ void CL_ParseTEnt (void)
 	switch (type)
 	{
 	case TE_WIZSPIKE:			// spike hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 #ifdef GLQUAKE
 		if (gl_part_spikes.value == 2 && !cl_q3gunshot_mod)
 			cl_q3gunshot_mod = Mod_ForName ("progs/bullet.md3", true);
@@ -158,9 +158,9 @@ void CL_ParseTEnt (void)
 		break;
 
 	case TE_KNIGHTSPIKE:			// spike hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 #ifdef GLQUAKE
 		if (gl_part_spikes.value == 2 && !cl_q3gunshot_mod)
 			cl_q3gunshot_mod = Mod_ForName ("progs/bullet.md3", true);
@@ -170,9 +170,9 @@ void CL_ParseTEnt (void)
 		break;
 
 	case TE_SPIKE:				// spike hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 #ifdef GLQUAKE
 		if (gl_part_spikes.value == 2 && !cl_q3gunshot_mod)
 			cl_q3gunshot_mod = Mod_ForName ("progs/bullet.md3", true);
@@ -201,9 +201,9 @@ void CL_ParseTEnt (void)
 		break;
 
 	case TE_SUPERSPIKE:			// super spike hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 #ifdef GLQUAKE
 		if (gl_part_spikes.value == 2 && !cl_q3gunshot_mod)
 			cl_q3gunshot_mod = Mod_ForName ("progs/bullet.md3", true);
@@ -226,9 +226,9 @@ void CL_ParseTEnt (void)
 		break;
 
 	case TE_GUNSHOT:			// bullet hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 #ifdef GLQUAKE
 		if (gl_part_gunshots.value == 2 && !cl_q3gunshot_mod)
 			cl_q3gunshot_mod = Mod_ForName ("progs/bullet.md3", true);
@@ -237,9 +237,9 @@ void CL_ParseTEnt (void)
 		break;
 
 	case TE_EXPLOSION:			// rocket explosion
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 
 		if (r_explosiontype.value == 3)
 			R_RunParticleEffect (pos, vec3_origin, 225, 50);
@@ -258,9 +258,9 @@ void CL_ParseTEnt (void)
 		break;
 
 	case TE_TAREXPLOSION:			// tarbaby explosion
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 		R_BlobExplosion (pos);
 
 		S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
@@ -301,16 +301,16 @@ void CL_ParseTEnt (void)
 // PGM 01/21/97
 
 	case TE_LAVASPLASH:	
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 		R_LavaSplash (pos);
 		break;
 
 	case TE_TELEPORT:
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 #ifdef GLQUAKE
 		if (gl_part_telesplash.value == 2 && !cl_q3teleport_mod)
 			cl_q3teleport_mod = Mod_ForName ("progs/telep.md3", true);
@@ -321,9 +321,9 @@ void CL_ParseTEnt (void)
 		break;
 
 	case TE_EXPLOSION2:			// color mapped explosion
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
 		colorStart = MSG_ReadByte ();
 		colorLength = MSG_ReadByte ();
 
@@ -349,12 +349,12 @@ void CL_ParseTEnt (void)
 
 	// nehahra support
 	case TE_EXPLOSION3:
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
-		ExploColor[0] = MSG_ReadCoord () / 2;
-		ExploColor[1] = MSG_ReadCoord () / 2;
-		ExploColor[2] = MSG_ReadCoord () / 2;
+		pos[0] = MSG_ReadCoord (cl.protocolflags);
+		pos[1] = MSG_ReadCoord (cl.protocolflags);
+		pos[2] = MSG_ReadCoord (cl.protocolflags);
+		ExploColor[0] = MSG_ReadCoord (cl.protocolflags) / 2;
+		ExploColor[1] = MSG_ReadCoord (cl.protocolflags) / 2;
+		ExploColor[2] = MSG_ReadCoord (cl.protocolflags) / 2;
 
 		if (r_explosiontype.value == 3)
 			R_RunParticleEffect (pos, vec3_origin, 225, 50);

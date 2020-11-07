@@ -101,6 +101,9 @@
       <UniqueIdentifier>{5f75ba52-d19b-4e35-b0f2-d42ed3ebb0a3}</UniqueIdentifier>
       <Extensions>c</Extensions>
     </Filter>
+    <Filter Include="Header Files\VM_h">
+      <UniqueIdentifier>{6844e548-1b5e-4b52-996d-b9c2789e0e3a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="joequake.rc">
@@ -565,6 +568,12 @@
     </ClInclude>
     <ClInclude Include="fakegl.h">
       <Filter>Header Files\OpenGL_h</Filter>
+    </ClInclude>
+    <ClInclude Include="progdefs.h">
+      <Filter>Header Files\VM_h</Filter>
+    </ClInclude>
+    <ClInclude Include="progs.h">
+      <Filter>Header Files\VM_h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

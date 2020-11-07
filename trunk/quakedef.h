@@ -183,11 +183,12 @@ typedef struct
 {
 	vec3_t	origin;
 	vec3_t	angles;
-	int	modelindex;
-	int	frame;
-	int	colormap;
-	int	skin;
-	int	effects;
+	unsigned short 	modelindex;	//johnfitz -- was int
+	unsigned short 	frame;		//johnfitz -- was int
+	unsigned char 	colormap;	//johnfitz -- was int
+	unsigned char 	skin;		//johnfitz -- was int
+	unsigned char	alpha;		//johnfitz -- added
+	int		effects;
 } entity_state_t;
 
 #include "wad.h"

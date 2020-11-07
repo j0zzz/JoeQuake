@@ -393,7 +393,7 @@ void R_ParseParticleEffect (void)
 	int	i, count, color;
 
 	for (i=0 ; i<3 ; i++)
-		org[i] = MSG_ReadCoord ();
+		org[i] = MSG_ReadCoord (cl.protocolflags);
 	for (i=0 ; i<3 ; i++)
 		dir[i] = MSG_ReadChar () * 0.0625;
 	count = MSG_ReadByte ();

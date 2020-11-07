@@ -29,7 +29,8 @@ ddef_t		*pr_globaldefs;
 dstatement_t	*pr_statements;
 globalvars_t	*pr_global_struct;
 float		*pr_globals;			// same as pr_global_struct
-int		pr_edict_size;			// in bytes
+int			pr_edict_size;			// in bytes
+qboolean	pr_alpha_supported; //johnfitz
 
 unsigned short	pr_crc;
 
@@ -172,6 +173,7 @@ void ED_Free (edict_t *ed)
 	VectorCopy (vec3_origin, ed->v.angles);
 	ed->v.nextthink = -1;
 	ed->v.solid = 0;
+	ed->alpha = ENTALPHA_DEFAULT; //johnfitz -- reset alpha for next entity 
 
 	ed->freetime = sv.time;
 }
@@ -538,6 +540,11 @@ void ED_Write (FILE *f, edict_t *ed)
 		fprintf (f, "\"%s\"\n", PR_UglyValueString(d->type, (eval_t *)v));		
 	}
 
+	//johnfitz -- save entity alpha manually when progs.dat doesn't know about alpha
+	if (!pr_alpha_supported && ed->alpha != ENTALPHA_DEFAULT)
+		fprintf(f, "\"alpha\" \"%f\"\n", ENTALPHA_TOSAVE(ed->alpha));
+	//johnfitz
+
 	fprintf (f, "}\n");
 }
 
@@ -872,6 +879,11 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		if (keyname[0] == '_')
 			continue;
 		
+		//johnfitz -- hack to support .alpha even when progs.dat doesn't know about it
+		if (!strcmp(keyname, "alpha"))
+			ent->alpha = ENTALPHA_ENCODE(atof(com_token));
+		//johnfitz
+
 		if (!(key = ED_FindField (keyname)))
 		{
 			//johnfitz -- HACK -- suppress error because fog/sky/alpha fields might not be mentioned in defs.qc
@@ -1051,6 +1063,8 @@ void PR_LoadProgs (void)
 		pr_globaldefs[i].s_name = LittleLong (pr_globaldefs[i].s_name);
 	}
 
+	pr_alpha_supported = false; //johnfitz
+
 	for (i=0 ; i<progs->numfielddefs ; i++)
 	{
 		pr_fielddefs[i].type = LittleShort (pr_fielddefs[i].type);
@@ -1058,6 +1072,11 @@ void PR_LoadProgs (void)
 			Sys_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
 		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
 		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
+
+		//johnfitz -- detect alpha support in progs.dat
+		if (!strcmp(pr_strings + pr_fielddefs[i].s_name, "alpha"))
+			pr_alpha_supported = true;
+		//johnfitz
 	}
 
 	for (i=0 ; i<progs->numglobals ; i++)

@@ -488,7 +488,7 @@ PF_ambientsound
 */
 void PF_ambientsound (void)
 {
-	int	i, soundnum;
+	int		i, soundnum, large = false; //johnfitz -- PROTOCOL_FITZQUAKE 
 	float	*pos, vol, attenuation;
 	char	**check, *samp;
 
@@ -508,12 +508,33 @@ void PF_ambientsound (void)
 		return;
 	}
 
-// add an svc_spawnambient command to the level signon packet
-	MSG_WriteByte (&sv.signon, svc_spawnstaticsound);
-	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv.signon, pos[i]);
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (soundnum > 255)
+	{
+		if (sv.protocol == PROTOCOL_NETQUAKE)
+			return; //don't send any info protocol can't support
+		else
+			large = true;
+	}
+	//johnfitz 
 
-	MSG_WriteByte (&sv.signon, soundnum);
+// add an svc_spawnambient command to the level signon packet
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (large)
+		MSG_WriteByte(&sv.signon, svc_spawnstaticsound2);
+	else
+		MSG_WriteByte(&sv.signon, svc_spawnstaticsound);
+	//johnfitz
+
+	for (i=0 ; i<3 ; i++)
+		MSG_WriteCoord (&sv.signon, pos[i], sv.protocolflags);
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (large)
+		MSG_WriteShort(&sv.signon, soundnum);
+	else
+		MSG_WriteByte(&sv.signon, soundnum);
+	//johnfitz
 
 	MSG_WriteByte (&sv.signon, vol * 255);
 	MSG_WriteByte (&sv.signon, attenuation * 64);
@@ -1502,12 +1523,12 @@ void PF_WriteLong (void)
 
 void PF_WriteAngle (void)
 {
-	MSG_WriteAngle (WriteDest(), G_FLOAT(OFS_PARM1));
+	MSG_WriteAngle (WriteDest(), G_FLOAT(OFS_PARM1), sv.protocolflags);
 }
 
 void PF_WriteCoord (void)
 {
-	MSG_WriteCoord (WriteDest(), G_FLOAT(OFS_PARM1));
+	MSG_WriteCoord (WriteDest(), G_FLOAT(OFS_PARM1), sv.protocolflags);
 }
 
 void PF_WriteString (void)
@@ -1526,23 +1547,69 @@ int SV_ModelIndex (char *name);
 
 void PF_makestatic (void)
 {
-	int	i;
+	int		i, bits = 0; //johnfitz -- PROTOCOL_FITZQUAKE
 	edict_t	*ent;
 
 	ent = G_EDICT(OFS_PARM0);
 
-	MSG_WriteByte (&sv.signon, svc_spawnstatic);
+	//johnfitz -- don't send invisible static entities
+	if (ent->alpha == ENTALPHA_ZERO) 
+	{
+		ED_Free(ent);
+		return;
+	}
+	//johnfitz
 
-	MSG_WriteByte (&sv.signon, SV_ModelIndex(pr_strings + ent->v.model));
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (sv.protocol == PROTOCOL_NETQUAKE)
+	{
+		if (SV_ModelIndex(pr_strings + ent->v.model) & 0xFF00 || (int)(ent->v.frame) & 0xFF00)
+		{
+			ED_Free(ent);
+			return; //can't display the correct model & frame, so don't show it at all
+		}
+	}
+	else
+	{
+		if (SV_ModelIndex(pr_strings + ent->v.model) & 0xFF00)
+			bits |= B_LARGEMODEL;
+		if ((int)(ent->v.frame) & 0xFF00)
+			bits |= B_LARGEFRAME;
+		if (ent->alpha != ENTALPHA_DEFAULT)
+			bits |= B_ALPHA;
+	}
 
-	MSG_WriteByte (&sv.signon, ent->v.frame);
+	if (bits)
+	{
+		MSG_WriteByte(&sv.signon, svc_spawnstatic2);
+		MSG_WriteByte(&sv.signon, bits);
+	}
+	else
+		MSG_WriteByte (&sv.signon, svc_spawnstatic);
+
+	if (bits & B_LARGEMODEL)
+		MSG_WriteShort(&sv.signon, SV_ModelIndex(pr_strings + ent->v.model));
+	else
+		MSG_WriteByte(&sv.signon, SV_ModelIndex(pr_strings + ent->v.model));
+
+	if (bits & B_LARGEFRAME)
+		MSG_WriteShort(&sv.signon, ent->v.frame);
+	else
+		MSG_WriteByte(&sv.signon, ent->v.frame);
+	//johnfitz
+
 	MSG_WriteByte (&sv.signon, ent->v.colormap);
 	MSG_WriteByte (&sv.signon, ent->v.skin);
 	for (i=0 ; i<3 ; i++)
 	{
-		MSG_WriteCoord (&sv.signon, ent->v.origin[i]);
-		MSG_WriteAngle (&sv.signon, ent->v.angles[i]);
+		MSG_WriteCoord (&sv.signon, ent->v.origin[i], sv.protocolflags);
+		MSG_WriteAngle (&sv.signon, ent->v.angles[i], sv.protocolflags);
 	}
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (bits & B_ALPHA)
+		MSG_WriteByte(&sv.signon, ent->alpha);
+	//johnfitz
 
 // throw the entity away now
 	ED_Free (ent);

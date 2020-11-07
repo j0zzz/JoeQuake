@@ -41,9 +41,11 @@ typedef struct edict_s
 	short		leafnums[MAX_ENT_LEAFS];
 
 	entity_state_t	baseline;
-	
+	unsigned char	alpha;		/* johnfitz -- hack to support alpha since it's not part of entvars_t */
+	qboolean	sendinterval;	/* johnfitz -- send time until nextthink to client for better lerp timing */
+
 	float		freetime;		// sv.time when the object was freed
-	entvars_t	v;			// C exported fields from progs
+	entvars_t	v;				// C exported fields from progs
 // other fields from progs come immediately after
 } edict_t;
 

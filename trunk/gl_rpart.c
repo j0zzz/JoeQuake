@@ -1987,7 +1987,6 @@ void QMB_Q3Gunshot (vec3_t org, int skinnum, float alpha)
 
 	ent->skinnum = skinnum;
 	ent->transparency = alpha;
-	ent->istransparent = true;
 
 	R_DrawQ3Model (ent);
 }
@@ -2014,7 +2013,6 @@ void QMB_Q3Teleport (vec3_t org, float alpha)
 		ent->model = cl_qlteleport_mod;
 	}
 	ent->transparency = alpha;
-	ent->istransparent = true;
 
 	R_DrawQ3Model (ent);
 }

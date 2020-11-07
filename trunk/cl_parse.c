@@ -69,18 +69,21 @@ char *svc_strings[] =
 	"svc_showlmp",		// [string] iconlabel [string] lmpfile [byte] x [byte] y
 	"svc_hidelmp",		// [string] iconlabel
 	"svc_skybox",		// [string] skyname
-	"?",	// 38
-	"?",	// 39
-	"?",	// 40
-	"?",	// 41
-	"?",	// 42
-	"?",	// 43
-	"?",	// 44
-	"?",	// 45
-	"?",	// 46
-	"?",	// 47
-	"?",	// 48
-	"?"	// 49
+//johnfitz -- new server messages 
+	"", // 38
+	"", // 39
+	"svc_bf", // 40						// no data
+	"svc_fog", // 41					// [byte] density [byte] red [byte] green [byte] blue [float] time
+	"svc_spawnbaseline2", //42			// support for large modelindex, large framenum, alpha, using flags
+	"svc_spawnstatic2", // 43			// support for large modelindex, large framenum, alpha, using flags
+	"svc_spawnstaticsound2", //	44		// [coord3] [short] samp [byte] vol [byte] aten
+	"", // 44
+	"", // 45
+	"", // 46
+	"", // 47
+	"", // 48
+	"", // 49
+//johnfitz
 };
 
 //=============================================================================
@@ -197,17 +200,35 @@ void CL_ParseStartSoundPacket (void)
 	volume = (field_mask & SND_VOLUME) ? MSG_ReadByte() : DEFAULT_SOUND_PACKET_VOLUME;
 	attenuation = (field_mask & SND_ATTENUATION) ? MSG_ReadByte() / 64.0 : DEFAULT_SOUND_PACKET_ATTENUATION;
 	
-	channel = MSG_ReadShort ();
-	sound_num = MSG_ReadByte ();
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (field_mask & SND_LARGEENTITY)
+	{
+		ent = (unsigned short)MSG_ReadShort();
+		channel = MSG_ReadByte();
+	}
+	else
+	{
+		channel = (unsigned short)MSG_ReadShort();
+		ent = channel >> 3;
+		channel &= 7;
+	}
 
-	ent = channel >> 3;
-	channel &= 7;
+	if (field_mask & SND_LARGESOUND)
+		sound_num = (unsigned short)MSG_ReadShort();
+	else
+		sound_num = MSG_ReadByte();
+	//johnfitz
+
+	//johnfitz -- check soundnum
+	if (sound_num >= MAX_SOUNDS)
+		Host_Error("CL_ParseStartSoundPacket: %i > MAX_SOUNDS", sound_num);
+	//johnfitz
 
 	if (ent > MAX_EDICTS)
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
 
 	for (i=0 ; i<3 ; i++)
-		pos[i] = MSG_ReadCoord ();
+		pos[i] = MSG_ReadCoord (cl.protocolflags);
 
 	S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 }       
@@ -298,11 +319,29 @@ void CL_ParseServerInfo (void)
 
 // parse protocol version number
 	i = MSG_ReadLong ();
-	if (i != PROTOCOL_VERSION)
+	//johnfitz -- support multiple protocols
+	if (i != PROTOCOL_NETQUAKE && i != PROTOCOL_FITZQUAKE && i != PROTOCOL_RMQ) 
 	{
-		Con_Printf ("Server returned version %i, not %i", i, PROTOCOL_VERSION);
-		return;
+		Con_Printf("\n"); //because there's no newline after serverinfo print
+		Host_Error("Server returned version %i, not %i or %i or %i", i, PROTOCOL_NETQUAKE, PROTOCOL_FITZQUAKE, PROTOCOL_RMQ);
 	}
+	cl.protocol = i;
+	//johnfitz
+
+	if (cl.protocol == PROTOCOL_RMQ)
+	{
+		const unsigned int supportedflags = (PRFL_SHORTANGLE | PRFL_FLOATANGLE | PRFL_24BITCOORD | PRFL_FLOATCOORD | PRFL_EDICTSCALE | PRFL_INT32COORD);
+
+		// mh - read protocol flags from server so that we know what protocol features to expect
+		cl.protocolflags = (unsigned int)MSG_ReadLong();
+
+		if (0 != (cl.protocolflags & (~supportedflags)))
+		{
+			Con_DPrintf("PROTOCOL_RMQ protocolflags %i contains unsupported flags\n", cl.protocolflags);
+		}
+	}
+	else 
+		cl.protocolflags = 0;
 
 // parse maxclients
 	cl.maxclients = MSG_ReadByte ();
@@ -323,6 +362,9 @@ void CL_ParseServerInfo (void)
 // seperate the printfs so the server message can have a color
 	Con_Printf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
 	Con_Printf ("%c%s\n", 2, str);
+
+//johnfitz -- tell user which protocol this is
+	Con_Printf("Using protocol %i\n", i);
 
 // first we go through and touch all of the precache data that still
 // happens to be in the cache, so precaching something else doesn't
@@ -537,11 +579,9 @@ If an entities model or origin changes from frame to frame, it must be
 relinked. Other attributes can change without relinking.
 ==================
 */
-int	bitcounts[16];
-
 void CL_ParseUpdate (int bits)
 {
-	int		i, num;
+	int			i, num;
 	model_t		*model;
 	qboolean	forcelink;
 	entity_t	*ent;
@@ -559,13 +599,19 @@ void CL_ParseUpdate (int bits)
 	if (bits & U_MOREBITS)
 		bits |= (MSG_ReadByte() << 8);
 
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol != PROTOCOL_NETQUAKE)
+	{
+		if (bits & U_EXTEND1)
+			bits |= MSG_ReadByte() << 16;
+		if (bits & U_EXTEND2)
+			bits |= MSG_ReadByte() << 24;
+	}
+	//johnfitz
+
 	num = (bits & U_LONGENTITY) ? MSG_ReadShort() : MSG_ReadByte();
 
 	ent = CL_EntityNum (num);
-
-	for (i=0 ; i<16 ; i++)
-		if (bits & (1 << i))
-			bitcounts[i]++;
 
 	if (cl_independentphysics.value)
 		ent->forcelink = false;
@@ -583,21 +629,6 @@ void CL_ParseUpdate (int bits)
 	else
 	{
 		ent->modelindex = ent->baseline.modelindex;
-	}
-
-	model = cl.model_precache[ent->modelindex];
-	if (model != ent->model)
-	{
-		ent->model = model;
-	// automatic animation (torches, etc) can be either all together or randomized
-		if (model)
-			ent->syncbase = (model->synctype == ST_RAND) ? (float)(rand() & 0x7fff) / 0x7fff : 0.0;
-		else
-			forcelink = true;	// hack to make null model players work
-#ifdef GLQUAKE
-		if (num > 0 && num <= cl.maxclients)
-			R_TranslatePlayerSkin (num - 1);
-#endif
 	}
 
 	ent->frame = (bits & U_FRAME) ? MSG_ReadByte() : ent->baseline.frame;
@@ -626,35 +657,78 @@ void CL_ParseUpdate (int bits)
 	VectorCopy (ent->msg_origins[0], ent->msg_origins[1]);
 	VectorCopy (ent->msg_angles[0], ent->msg_angles[1]);
 
-	ent->msg_origins[0][0] = (bits & U_ORIGIN1) ? MSG_ReadCoord() : ent->baseline.origin[0];
-	ent->msg_angles[0][0] = (bits & U_ANGLE1) ? MSG_ReadAngle() : ent->baseline.angles[0];
+	ent->msg_origins[0][0] = (bits & U_ORIGIN1) ? MSG_ReadCoord(cl.protocolflags) : ent->baseline.origin[0];
+	ent->msg_angles[0][0] = (bits & U_ANGLE1) ? MSG_ReadAngle(cl.protocolflags) : ent->baseline.angles[0];
 
-	ent->msg_origins[0][1] = (bits & U_ORIGIN2) ? MSG_ReadCoord() : ent->baseline.origin[1];
-	ent->msg_angles[0][1] = (bits & U_ANGLE2) ? MSG_ReadAngle() : ent->baseline.angles[1];
+	ent->msg_origins[0][1] = (bits & U_ORIGIN2) ? MSG_ReadCoord(cl.protocolflags) : ent->baseline.origin[1];
+	ent->msg_angles[0][1] = (bits & U_ANGLE2) ? MSG_ReadAngle(cl.protocolflags) : ent->baseline.angles[1];
 
-	ent->msg_origins[0][2] = (bits & U_ORIGIN3) ? MSG_ReadCoord() : ent->baseline.origin[2];
-	ent->msg_angles[0][2] = (bits & U_ANGLE3) ? MSG_ReadAngle() : ent->baseline.angles[2];
+	ent->msg_origins[0][2] = (bits & U_ORIGIN3) ? MSG_ReadCoord(cl.protocolflags) : ent->baseline.origin[2];
+	ent->msg_angles[0][2] = (bits & U_ANGLE3) ? MSG_ReadAngle(cl.protocolflags) : ent->baseline.angles[2];
 
+	if (cl.protocol == PROTOCOL_NETQUAKE)
+	{
 #ifdef GLQUAKE
-	if (bits & U_TRANS)
-	{
-		int	fullbright, temp;
+		if (bits & U_TRANS)
+		{
+			int	fullbright, temp;
 
-		temp = MSG_ReadFloat ();
-		ent->istransparent = true;
-		ent->transparency = MSG_ReadFloat ();
-		if (temp == 2)
-			fullbright = MSG_ReadFloat ();
-	}
-	else
-	{
-		ent->istransparent = (ent->model && ent->model->type == mod_md3 && (ent->model->flags & EF_Q3TRANS)) ? true : false;
-		ent->transparency = 1;
-	}
+			temp = MSG_ReadFloat();
+			ent->transparency = MSG_ReadFloat();
+			if (temp == 2)
+				fullbright = MSG_ReadFloat();
+		}
+		else
+		{
+			ent->transparency = 1;
+		}
 #endif
+	}
 
 	if (bits & U_NOLERP)
 		ent->forcelink = true;
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol != PROTOCOL_NETQUAKE)
+	{
+		if (bits & U_ALPHA)
+		{
+			byte alpha = MSG_ReadByte();
+			ent->transparency = ENTALPHA_DECODE(alpha);
+		}
+		else
+			ent->transparency = ENTALPHA_DECODE(ent->baseline.alpha);
+		if (bits & U_SCALE)
+			MSG_ReadByte(); // PROTOCOL_RMQ: currently ignored
+		if (bits & U_FRAME2)
+			ent->frame = (ent->frame & 0x00FF) | (MSG_ReadByte() << 8);
+		if (bits & U_MODEL2)
+			ent->modelindex = (ent->modelindex & 0x00FF) | (MSG_ReadByte() << 8);
+		if (bits & U_LERPFINISH)	//joe: lerping is not used yet
+		{
+			float lerpfinish = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
+			//ent->lerpfinish = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
+			//ent->lerpflags |= LERP_FINISH;
+		}
+		//else
+		//	ent->lerpflags &= ~LERP_FINISH;
+	}
+	//johnfitz
+
+	model = cl.model_precache[ent->modelindex];
+	if (model != ent->model)
+	{
+		ent->model = model;
+		// automatic animation (torches, etc) can be either all together or randomized
+		if (model)
+			ent->syncbase = (model->synctype == ST_RAND) ? (float)(rand() & 0x7fff) / 0x7fff : 0.0;
+		else
+			forcelink = true;	// hack to make null model players work
+#ifdef GLQUAKE
+		if (num > 0 && num <= cl.maxclients)
+			R_TranslatePlayerSkin(num - 1);
+#endif
+	}
 
 	if (forcelink)
 	{	// didn't have an update last message
@@ -671,19 +745,25 @@ void CL_ParseUpdate (int bits)
 CL_ParseBaseline
 ==================
 */
-void CL_ParseBaseline (entity_t *ent)
+void CL_ParseBaseline (entity_t *ent, int version) //johnfitz -- added argument 
 {
-	int	i;
+	int	i, bits; //johnfitz 
 
-	ent->baseline.modelindex = MSG_ReadByte ();
-	ent->baseline.frame = MSG_ReadByte ();
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	bits = (version == 2) ? MSG_ReadByte() : 0;
+	ent->baseline.modelindex = (bits & B_LARGEMODEL) ? MSG_ReadShort() : MSG_ReadByte();
+	ent->baseline.frame = (bits & B_LARGEFRAME) ? MSG_ReadShort() : MSG_ReadByte();
+	//johnfitz
+
 	ent->baseline.colormap = MSG_ReadByte ();
 	ent->baseline.skin = MSG_ReadByte ();
 	for (i=0 ; i<3 ; i++)
 	{
-		ent->baseline.origin[i] = MSG_ReadCoord ();
-		ent->baseline.angles[i] = MSG_ReadAngle ();
+		ent->baseline.origin[i] = MSG_ReadCoord (cl.protocolflags);
+		ent->baseline.angles[i] = MSG_ReadAngle (cl.protocolflags);
 	}
+
+	ent->baseline.alpha = (bits & B_ALPHA) ? MSG_ReadByte() : ENTALPHA_DEFAULT; //johnfitz -- PROTOCOL_FITZQUAKE
 }
 
 extern	float	cl_ideal_punchangle;
@@ -695,9 +775,18 @@ CL_ParseClientdata
 Server information pertaining to this client only
 ==================
 */
-void CL_ParseClientdata (int bits)
+void CL_ParseClientdata ()
 {
-	int	i, j;
+	int	i, j, bits; //johnfitz 
+
+	bits = (unsigned short)MSG_ReadShort(); //johnfitz -- read bits here isntead of in CL_ParseServerMessage() 
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (bits & SU_EXTEND1)
+		bits |= (MSG_ReadByte() << 16);
+	if (bits & SU_EXTEND2)
+		bits |= (MSG_ReadByte() << 24);
+	//johnfit
 
 	cl.viewheight = (bits & SU_VIEWHEIGHT) ? MSG_ReadChar() : DEFAULT_VIEWHEIGHT;
 	cl.idealpitch = (bits & SU_IDEALPITCH) ? MSG_ReadChar() : 0;
@@ -789,6 +878,32 @@ void CL_ParseClientdata (int bits)
 			Sbar_Changed ();
 		}
 	}
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (bits & SU_WEAPON2)
+		cl.stats[STAT_WEAPON] |= (MSG_ReadByte() << 8);
+	if (bits & SU_ARMOR2)
+		cl.stats[STAT_ARMOR] |= (MSG_ReadByte() << 8);
+	if (bits & SU_AMMO2)
+		cl.stats[STAT_AMMO] |= (MSG_ReadByte() << 8);
+	if (bits & SU_SHELLS2)
+		cl.stats[STAT_SHELLS] |= (MSG_ReadByte() << 8);
+	if (bits & SU_NAILS2)
+		cl.stats[STAT_NAILS] |= (MSG_ReadByte() << 8);
+	if (bits & SU_ROCKETS2)
+		cl.stats[STAT_ROCKETS] |= (MSG_ReadByte() << 8);
+	if (bits & SU_CELLS2)
+		cl.stats[STAT_CELLS] |= (MSG_ReadByte() << 8);
+	if (bits & SU_WEAPONFRAME2)
+		cl.stats[STAT_WEAPONFRAME] |= (MSG_ReadByte() << 8);
+	if (bits & SU_WEAPONALPHA)
+	{
+		byte weaponalpha = MSG_ReadByte();
+		cl.viewent.transparency = ENTALPHA_DECODE(weaponalpha);
+	}
+	else
+		cl.viewent.transparency = 1;
+	//johnfitz
 }
 
 /*
@@ -835,15 +950,16 @@ void CL_NewTranslation (int slot)
 CL_ParseStatic
 =====================
 */
-void CL_ParseStatic (void)
+void CL_ParseStatic (int version) //johnfitz -- added a parameter 
 {
 	entity_t	*ent;
 
 	if (cl.num_statics >= MAX_STATIC_ENTITIES)
 		Host_Error ("Too many static entities");
+
 	ent = &cl_static_entities[cl.num_statics];
 	cl.num_statics++;
-	CL_ParseBaseline (ent);
+	CL_ParseBaseline (ent, version); //johnfitz -- added second parameter 
 
 // copy it to the current state
 	ent->model = cl.model_precache[ent->baseline.modelindex];
@@ -851,6 +967,7 @@ void CL_ParseStatic (void)
 	ent->colormap = vid.colormap;
 	ent->skinnum = ent->baseline.skin;
 	ent->effects = ent->baseline.effects;
+	ent->transparency = ENTALPHA_DECODE(ent->baseline.alpha); //johnfitz -- alpha 
 
 	VectorCopy (ent->baseline.origin, ent->origin);
 	VectorCopy (ent->baseline.angles, ent->angles);
@@ -862,14 +979,21 @@ void CL_ParseStatic (void)
 CL_ParseStaticSound
 ===================
 */
-void CL_ParseStaticSound (void)
+void CL_ParseStaticSound (int version) //johnfitz -- added argument 
 {
-	int	i, sound_num, vol, atten;
+	int		i, sound_num, vol, atten;
 	vec3_t	org;
 
 	for (i=0 ; i<3 ; i++)
-		org[i] = MSG_ReadCoord ();
-	sound_num = MSG_ReadByte ();
+		org[i] = MSG_ReadCoord (cl.protocolflags);
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (version == 2)
+		sound_num = MSG_ReadShort();
+	else
+		sound_num = MSG_ReadByte();
+	//johnfitz
+
 	vol = MSG_ReadByte ();
 	atten = MSG_ReadByte ();
 
@@ -1008,8 +1132,8 @@ CL_ParseServerMessage
 */
 void CL_ParseServerMessage (void)
 {
-	int		i, cmd;
-	char		*s;
+	int		i, cmd, lastcmd;
+	char	*s;
 	extern	float	drawstats_limit;
 	extern	cvar_t	show_stats, show_stats_length;
 
@@ -1024,6 +1148,7 @@ void CL_ParseServerMessage (void)
 // parse the message
 	MSG_BeginReading ();
 
+	lastcmd = 0;
 	while (1)
 	{
 		if (msg_badread)
@@ -1037,7 +1162,7 @@ void CL_ParseServerMessage (void)
 		}
 
 	// if the high bit of the command byte is set, it is a fast update
-		if (cmd & 128)
+		if (cmd & U_SIGNAL) //johnfitz -- was 128, changed for clarity 
 		{
 			SHOWNET("fast update");
 			CL_ParseUpdate (cmd & 127);
@@ -1050,7 +1175,7 @@ void CL_ParseServerMessage (void)
 		switch (cmd)
 		{
 		default:
-			Host_Error ("CL_ParseServerMessage: Illegible server message");
+			Host_Error ("Illegible server message, previous was %s", svc_strings[lastcmd]); //johnfitz -- added svc_strings[lastcmd]
 			break;
 
 		case svc_nop:
@@ -1062,14 +1187,16 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_clientdata:
-			i = MSG_ReadShort ();
-			CL_ParseClientdata (i);
+			CL_ParseClientdata(); //johnfitz -- removed bits parameter, we will read this inside CL_ParseClientdata() 
 			break;
 
 		case svc_version:
 			i = MSG_ReadLong ();
-			if (i != PROTOCOL_VERSION)
-				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i", i, PROTOCOL_VERSION);
+			//johnfitz -- support multiple protocols
+			if (i != PROTOCOL_NETQUAKE && i != PROTOCOL_FITZQUAKE && i != PROTOCOL_RMQ)
+				Host_Error("Server returned version %i, not %i or %i or %i", i, PROTOCOL_NETQUAKE, PROTOCOL_FITZQUAKE, PROTOCOL_RMQ);
+			cl.protocol = i;
+			//johnfitz
 			break;
 
 		case svc_disconnect:
@@ -1102,8 +1229,9 @@ void CL_ParseServerMessage (void)
 
 		case svc_setangle:
 			for (i = 0 ; i < 3 ; i++)
-				cl.viewangles[i] = MSG_ReadAngle ();
+				cl.viewangles[i] = MSG_ReadAngle (cl.protocolflags);
 
+			//joe: intermission cam fix
 			if (cls.demoplayback)
 			{
 				VectorCopy(cl.viewangles, cl.mviewangles[0]);
@@ -1165,11 +1293,11 @@ void CL_ParseServerMessage (void)
 		case svc_spawnbaseline:
 			i = MSG_ReadShort ();
 			// must use CL_EntityNum() to force cl.num_entities up
-			CL_ParseBaseline (CL_EntityNum(i));
+			CL_ParseBaseline (CL_EntityNum(i), 1); // johnfitz -- added second parameter 
 			break;
 
 		case svc_spawnstatic:
-			CL_ParseStatic ();
+			CL_ParseStatic (1); //johnfitz -- added parameter 
 			break;			
 
 		case svc_temp_entity:
@@ -1215,7 +1343,7 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_spawnstaticsound:
-			CL_ParseStaticSound ();
+			CL_ParseStaticSound (1); //johnfitz -- added parameter 
 			break;
 
 		case svc_cdtrack:
@@ -1266,6 +1394,30 @@ void CL_ParseServerMessage (void)
 			Cvar_Set (&r_skybox, MSG_ReadString());
 			break;
 #endif
+
+		//johnfitz -- new svc types
+		case svc_bf:
+			Cmd_ExecuteString("bf", src_command);
+			break;
+
+		case svc_fog:
+			Fog_ParseServerMessage();
+			break;
+
+		case svc_spawnbaseline2: //PROTOCOL_FITZQUAKE
+			i = MSG_ReadShort();
+			// must use CL_EntityNum() to force cl.num_entities up
+			CL_ParseBaseline(CL_EntityNum(i), 2);
+			break;
+
+		case svc_spawnstatic2: //PROTOCOL_FITZQUAKE
+			CL_ParseStatic(2);
+			break;
+
+		case svc_spawnstaticsound2: //PROTOCOL_FITZQUAKE
+			CL_ParseStaticSound(2);
+			break;
+			//johnfitz
 		}
 	}
 }

@@ -406,12 +406,12 @@ void SV_ReadClientMove (usercmd_t *move)
 	if (host_client->netconnection->mod == MOD_JOEQUAKE)
 	{
 		for (i=0 ; i<3 ; i++)
-			angle[i] = MSG_ReadAngle16 ();
+			angle[i] = MSG_ReadAngle16 (sv.protocolflags);
 	}
 	else
 	{
 		for (i=0 ; i<3 ; i++)
-			angle[i] = MSG_ReadAngle ();
+			angle[i] = MSG_ReadAngle (sv.protocolflags);
 	}
 
 	VectorCopy (angle, host_client->edict->v.v_angle);

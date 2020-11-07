@@ -1232,7 +1232,6 @@ void CL_CopyEntity (entity_t *dst, entity_t *src, int modelindex)
 
 	dst->transparency = src->transparency;
 	dst->smokepuff_time = src->smokepuff_time;
-	dst->istransparent = src->istransparent;
 }
 #endif
 

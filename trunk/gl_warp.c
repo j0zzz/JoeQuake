@@ -910,7 +910,7 @@ void Sky_NewMap(void)
 	char	key[128], value[4096], *data;
 
 	// initially no sky
-	Cmd_ExecuteString("loadsky \"\"", src_command);
+	Cvar_Set(&r_skybox, "");
 	skyfog = r_skyfog.value;
 
 	// read worldspawn (this is so ugly, and shouldn't it be done on the server?)

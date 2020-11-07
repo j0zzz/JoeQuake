@@ -100,7 +100,7 @@ void R_TimeRefresh_f (void);
 void R_ReadPointFile_f (void);
 texture_t *R_TextureAnimation (texture_t *base);
 
-#define ISTRANSPARENT(ent)	(((ent)->istransparent && (ent)->transparency > 0 && (ent)->transparency < 1) || \
+#define ISTRANSPARENT(ent)	(((ent)->transparency > 0 && (ent)->transparency < 1) || \
 							 (ent)->model && (ent)->model->type == mod_md3 && ((ent)->model->flags & EF_Q3TRANS))
 
 //====================================================

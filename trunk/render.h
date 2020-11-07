@@ -86,8 +86,6 @@ typedef struct entity_s
 	// nehahra support
 	float	transparency;
 	float	smokepuff_time;
-
-	qboolean istransparent;
 #endif
 } entity_t;
 

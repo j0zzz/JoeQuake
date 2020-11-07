@@ -236,6 +236,9 @@ typedef struct
 	qboolean	console_ping;		// true if the ping came from the console
 	double		last_status_time;	// last time status was obtained
 	qboolean	console_status;		// true if the status came from the console
+
+	unsigned	protocol; //johnfitz
+	unsigned	protocolflags;
 } client_state_t;
 
 extern	client_state_t	cl;

@@ -649,6 +649,8 @@
     <ClInclude Include="gl_model.h" />
     <ClInclude Include="glquake.h" />
     <ClInclude Include="cdaudio.h" />
+    <ClInclude Include="progdefs.h" />
+    <ClInclude Include="progs.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="server.h" />
     <ClInclude Include="draw.h" />

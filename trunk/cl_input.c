@@ -414,12 +414,12 @@ void CL_SendMove (usercmd_t *cmd)
 	if (!cls.demoplayback && (cls.netcon->mod == MOD_JOEQUAKE))
 	{
 		for (i = 0 ; i < 3 ; i++)
-			MSG_WriteAngle16 (buf, cl.viewangles[i]);
+			MSG_WriteAngle16 (buf, cl.viewangles[i], cl.protocolflags);
 	}
 	else
 	{
 		for (i = 0 ; i < 3 ; i++)
-			MSG_WriteAngle (buf, cl.viewangles[i]);
+			MSG_WriteAngle (buf, cl.viewangles[i], cl.protocolflags);
 	}
 
 	MSG_WriteShort (buf, cmd->forwardmove);

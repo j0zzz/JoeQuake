@@ -70,6 +70,9 @@ typedef struct
 	// JoeQuake additions
 	unsigned 	player_model_crc;
 	unsigned 	eyes_model_crc;
+
+	unsigned	protocol; //johnfitz
+	unsigned	protocolflags;
 } server_t;
 
 #define	NUM_PING_TIMES		16
