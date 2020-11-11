@@ -388,6 +388,7 @@
     <ResourceCompile Include="joequake.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="fmod.c" />
     <ClCompile Include="gl_decals.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>

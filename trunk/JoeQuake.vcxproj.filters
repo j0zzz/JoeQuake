@@ -399,6 +399,9 @@
     <ClCompile Include="gl_fog.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="fmod.c">
+      <Filter>Source Files\Sound</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="adivtab.h">

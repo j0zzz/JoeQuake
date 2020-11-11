@@ -1349,10 +1349,15 @@ void CL_ParseServerMessage (void)
 		case svc_cdtrack:
 			cl.cdtrack = MSG_ReadByte ();
 			cl.looptrack = MSG_ReadByte ();
-			if ((cls.demoplayback || cls.demorecording) && (cls.forcetrack != -1))
-				CDAudio_Play ((byte)cls.forcetrack, true);
+			if (fmod_loaded)
+				FMOD_PlayTrack(cl.cdtrack);
 			else
-				CDAudio_Play ((byte)cl.cdtrack, true);
+			{
+				if ((cls.demoplayback || cls.demorecording) && (cls.forcetrack != -1))
+					CDAudio_Play((byte)cls.forcetrack, true);
+				else
+					CDAudio_Play((byte)cl.cdtrack, true);
+			}
 			break;
 
 		case svc_intermission:

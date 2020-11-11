@@ -26,3 +26,14 @@ void CDAudio_Pause (void);
 void CDAudio_Resume (void);
 void CDAudio_Shutdown (void);
 void CDAudio_Update (void);
+
+// fmod related externals
+extern qboolean fmod_loaded;
+extern qboolean streamplaying;
+
+qboolean FMOD_LoadLibrary(void);
+void FMOD_Init(void);
+void FMOD_Stop_Stream_f(void);
+void FMOD_ChangeVolume(float value);
+void FMOD_Stop_Stream_f(void);
+void FMOD_PlayTrack(int track);

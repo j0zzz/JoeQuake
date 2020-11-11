@@ -172,9 +172,11 @@ void CL_Disconnect (void)
 // stop sounds (especially looping!)
 	S_StopAllSounds (true);
 	
+	if (streamplaying)
+		FMOD_Stop_Stream_f();
+
 #ifdef GLQUAKE
-	if (nehahra)
-		FMOD_Stop_f ();
+	FMOD_Stop_f ();
 #endif
 
 // if running a local server, shut it down

@@ -91,6 +91,9 @@ void CL_StopPlayback (void)
 #ifdef _WIN32
 	Movie_StopPlayback ();
 #endif
+
+	if (streamplaying)
+		FMOD_Stop_Stream_f();
 }
 
 /*

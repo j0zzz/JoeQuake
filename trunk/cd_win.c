@@ -387,6 +387,9 @@ LONG CDAudio_MessageHandler (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void CDAudio_Update (void)
 {
+	if (fmod_loaded)
+		FMOD_ChangeVolume(bgmvolume.value);
+
 	if (!enabled)
 		return;
 

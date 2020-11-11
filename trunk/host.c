@@ -1028,6 +1028,10 @@ void Host_Init (quakeparms_t *parms)
 		S_Init ();
 		CDAudio_Init ();
 		CL_Init ();
+
+		FMOD_LoadLibrary();
+		if (fmod_loaded)
+			FMOD_Init();
 	}
 
 #ifdef GLQUAKE

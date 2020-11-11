@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "winquake.h"
-#include "fmod.h"
-#include "fmod_errors.h"
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
@@ -66,147 +64,6 @@ cvar_t	cutscene = {"cutscene", "1"};
 
 int	num_sfxorig;
 void Neh_CheckMode (void);
-
-FMUSIC_MODULE	*mod = NULL;
-
-static signed char (F_API *qFSOUND_Init)(int, int, unsigned int);
-static signed char (F_API *qFSOUND_SetBufferSize)(int);
-static int (F_API *qFSOUND_GetMixer)(void);
-static signed char (F_API *qFSOUND_SetMixer)(int);
-static int (F_API *qFSOUND_GetError)(void);
-static void (F_API *qFSOUND_Close)(void);
-static FMUSIC_MODULE * (F_API *qFMUSIC_LoadSongEx)(const char *, int, int, unsigned int, const int *, int);
-static signed char (F_API *qFMUSIC_FreeSong)(FMUSIC_MODULE *);
-static signed char (F_API *qFMUSIC_PlaySong)(FMUSIC_MODULE *);
-
-#ifdef _WIN32
-static	HINSTANCE fmod_handle = NULL;
-#else
-static	void	*fmod_handle = NULL;
-#endif
-static qboolean fmod_loaded;
-
-#ifdef _WIN32
-#define FSOUND_GETFUNC(f, g) (qFSOUND_##f = (void *)GetProcAddress(fmod_handle, "_FSOUND_" #f #g))
-#define FMUSIC_GETFUNC(f, g) (qFMUSIC_##f = (void *)GetProcAddress(fmod_handle, "_FMUSIC_" #f #g))
-#else
-#define FSOUND_GETFUNC(f, g) (qFSOUND_##f = (void *)dlsym(fmod_handle, "FSOUND_" #f))
-#define FMUSIC_GETFUNC(f, g) (qFMUSIC_##f = (void *)dlsym(fmod_handle, "FMUSIC_" #f))
-#endif
-
-void FMOD_LoadLibrary (void)
-{
-	fmod_loaded = false;
-
-#ifdef _WIN32
-	if (!(fmod_handle = LoadLibrary("joequake/fmod.dll")))
-#else
-	if (!(fmod_handle = dlopen("libfmod-3.73.so", RTLD_NOW)))
-#endif
-	{
-		Con_Printf ("\x02" "FMOD module not found\n");
-		goto fail;
-	}
-
-	FSOUND_GETFUNC(Init, @12);
-	FSOUND_GETFUNC(SetBufferSize, @4);
-	FSOUND_GETFUNC(GetMixer, @0);
-	FSOUND_GETFUNC(SetMixer, @4);
-	FSOUND_GETFUNC(GetError, @0);
-	FSOUND_GETFUNC(Close, @0);
-	FMUSIC_GETFUNC(LoadSongEx, @24);
-	FMUSIC_GETFUNC(FreeSong, @4);
-	FMUSIC_GETFUNC(PlaySong, @4);
-
-	fmod_loaded = qFSOUND_Init && qFSOUND_SetBufferSize && qFSOUND_GetMixer && 
-			qFSOUND_SetMixer && qFSOUND_GetError && qFSOUND_Close && 
-			qFMUSIC_LoadSongEx && qFMUSIC_FreeSong && qFMUSIC_PlaySong;
-
-	if (!fmod_loaded)
-	{
-		Con_Printf ("\x02" "FMOD module not initialized\n");
-		goto fail;
-	}
-
-	Con_Printf ("FMOD module initialized\n");
-	return;
-
-fail:
-	if (fmod_handle)
-	{
-#ifdef _WIN32
-		FreeLibrary (fmod_handle);
-#else
-		dlclose (fmod_handle);
-#endif
-		fmod_handle = NULL;
-	}
-}
-
-void FMOD_Stop_f (void)
-{
-	if (modplaying)
-		qFMUSIC_FreeSong (mod);
-
-	modplaying = false;
-}
-
-void FMOD_Play_f (void)
-{
-	char	modname[256], *buffer;
-	int	mark;
-
-	Q_strncpyz (modname, Cmd_Argv(1), sizeof(modname));
-
-	if (modplaying)
-		FMOD_Stop_f ();
-
-	if (strlen(modname) < 3)
-	{
-		Con_Print ("Usage: playmod <filename.ext>");
-		return;
-	}
-
-	mark = Hunk_LowMark ();
-
-	if (!(buffer = (char *)COM_LoadHunkFile(modname)))
-	{
-		Con_Printf ("ERROR: Couldn't open %s\n", modname);
-		return;
-	}
-
-	mod = qFMUSIC_LoadSongEx (buffer, 0, com_filesize, FSOUND_LOADMEMORY, NULL, 0);
-
-	Hunk_FreeToLowMark (mark);
-
-	if (!mod)
-	{
-		Con_Printf ("%s\n", FMOD_ErrorString(qFSOUND_GetError()));
-		return;
-	}
-
-	modplaying = true;
-	qFMUSIC_PlaySong (mod);
-}
-
-void FMOD_Init (void)
-{
-//	qFSOUND_SetBufferSize (300);
-	if (!qFSOUND_Init(11025, 32, 0))
-	{
-		Con_Printf ("%s\n", FMOD_ErrorString(qFSOUND_GetError()));
-		return;
-	}
-
-	Cmd_AddCommand ("stopmod", FMOD_Stop_f);
-	Cmd_AddCommand ("playmod", FMOD_Play_f);
-}
-
-void FMOD_Close (void)
-{
-	if (fmod_loaded)
-		qFSOUND_Close ();
-}
 
 void Neh_DoBindings (void)
 {
@@ -269,10 +126,6 @@ void Neh_Init (void)
 
 	if (COM_CheckParm("-matrox"))
 		r_nospr32.value = 1;
-
-	FMOD_LoadLibrary ();
-	if (fmod_loaded)
-		FMOD_Init ();
 }
 
 void Neh_SetupFrame (void)
