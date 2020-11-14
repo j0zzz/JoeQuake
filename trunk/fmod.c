@@ -50,6 +50,17 @@ qboolean fmod_loaded;				//This means we found the .dll and it's loaded and init
 qboolean modplaying		= false;
 qboolean streamplaying	= false;
 
+typedef struct music_s
+{
+	char name[MAX_OSPATH];
+	char *data;
+	int size;
+} music_t;
+
+// joe: TODO put this into a linked list
+#define	MAX_MUSIC_TRACKS 64
+music_t *music_tracks[MAX_MUSIC_TRACKS];
+
 static qboolean OnChange_fmod_music(cvar_t *var, char *string);
 cvar_t	fmod_music = { "fmod_music", "1", 0, OnChange_fmod_music };	//This is a toggle for the end user to enable or disable the whole shabang.
 
@@ -192,7 +203,7 @@ void FMOD_Stop_Stream_f (void)
 	streamplaying = false;
 }
 
-void FMOD_Play_Stream_f (char *streamname, qboolean loadmemory)
+void FMOD_Play_Stream_f (char *streamname, int streamlength, qboolean loadmemory)
 {
 	unsigned int mode = FSOUND_NORMAL | FSOUND_LOOP_NORMAL;
 	int length = 0;
@@ -203,7 +214,7 @@ void FMOD_Play_Stream_f (char *streamname, qboolean loadmemory)
 	if (loadmemory)
 	{
 		mode |= FSOUND_LOADMEMORY;
-		length = com_filesize;
+		length = streamlength;
 	}
 
 	if (qFSOUND_Stream_Open)
@@ -248,12 +259,61 @@ void FMOD_Play_Sample_f (void)
 		return;
 	}
 
-	FMOD_Play_Stream_f (samplename, false);
+	FMOD_Play_Stream_f (samplename, 0, false);
+}
+
+music_t *FindAlreadyLoadedMusic(char *name)
+{
+	for (int i = 0; i < MAX_MUSIC_TRACKS; i++)
+	{
+		if (!music_tracks[i])
+			break;
+
+		if (!strcmp(music_tracks[i]->name, name))
+			return music_tracks[i];
+	}
+
+	return NULL;
+}
+
+music_t *LoadMusic(char *name)
+{
+	int i, mark;
+	char *buffer;
+	music_t *music;
+
+	mark = Hunk_LowMark();
+
+	if (!(buffer = (char *)COM_LoadHunkFile(name)))
+		return NULL;
+
+	music = Q_malloc(sizeof(music_t));
+	memcpy(music->name, name, sizeof(music->name));
+	music->data = Q_malloc(com_filesize);
+	memcpy(music->data, buffer, com_filesize);
+	music->size = com_filesize;
+
+	for (i = 0; i < MAX_MUSIC_TRACKS; i++)
+	{
+		if (!music_tracks[i])
+		{
+			music_tracks[i] = music;
+			break;
+		}
+	}
+
+	Hunk_FreeToLowMark(mark);
+
+	if (i == MAX_MUSIC_TRACKS)
+		Sys_Error("FMOD_PlayTrack: MAX_MUSIC_TRACKS limit exceeded");
+
+	return music;
 }
 
 void FMOD_PlayTrack (int track)
 {
-	char name[MAX_OSPATH], *buffer;
+	char name[MAX_OSPATH];
+	music_t *music = NULL;
 
 	if (cls.timedemo) //Do not play the external music when doing a timedemo.
 		return;
@@ -266,8 +326,11 @@ void FMOD_PlayTrack (int track)
 	if (!COM_FindFile(name))
 		Q_snprintfz (name, sizeof(name), "music/track%02d.ogg", track);
 
-	if (buffer = (char *)COM_LoadHunkFile(name))
-		FMOD_Play_Stream_f(buffer, true);
+	if (!(music = FindAlreadyLoadedMusic(name)))
+		if (!(music = LoadMusic(name)))
+			return;
+
+	FMOD_Play_Stream_f(music->data, music->size, true);
 }
 
 static qboolean OnChange_fmod_music(cvar_t *var, char *string)
