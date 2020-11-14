@@ -672,7 +672,15 @@ void M_Main_Draw (void)
 	else
 #endif
 	{
+		extern searchpath_t	*com_base_searchpaths;
+		searchpath_t *temp;
+
+		// temporarly exclude gamedir from searchpaths so that the joequake's custom mainmenu is always loaded from its preferred dir
+		temp = com_searchpaths;
+		com_searchpaths = com_base_searchpaths;
 		p = Draw_CachePic("gfx/mainmenu.lmp");
+		com_searchpaths = temp;
+
 		m_main_window.w = p->width;
 		m_main_window.h = p->height;
 		M_DrawTransPic_GetPoint(72, 32, &m_main_window.x, &m_main_window.y, p);

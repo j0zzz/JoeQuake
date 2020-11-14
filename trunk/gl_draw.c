@@ -366,8 +366,9 @@ mpic_t *Draw_CachePic (char *path)
 	pic->pic.width = dat->width;
 	pic->pic.height = dat->height;
 
-	if (gl_externaltextures_gfx.value && (pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
-		memcpy (&pic->pic.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
+	if (gl_externaltextures_gfx.value && (pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)) &&
+		(pic_24bit->width / pic_24bit->height) == (pic->pic.width / pic->pic.height))	// do not display hi-res images stretched, instead show the original lmp
+		memcpy(&pic->pic.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 	else
 		GL_LoadPicTexture (path, &pic->pic, dat->data);
 
