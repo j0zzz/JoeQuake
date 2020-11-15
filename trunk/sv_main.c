@@ -24,7 +24,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 server_t	sv;
 server_static_t	svs;
 
-char		localmodels[MAX_MODELS][5];	// inline model names for precache
+// Determine size of arrays for localmodels so that they can hold all the
+// strings given in SV_Init
+#define STRINGIFY(s) #s
+#define LOCALMODELS_STRING_SIZE (sizeof("*" STRINGIFY(MAX_MODELS)) / sizeof(char))
+char		localmodels[MAX_MODELS][LOCALMODELS_STRING_SIZE];	// inline model names for precache
 
 int			sv_protocol = PROTOCOL_NETQUAKE;
 
