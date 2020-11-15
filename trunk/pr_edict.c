@@ -350,7 +350,7 @@ Easier to parse than PR_ValueString
 */
 char *PR_UglyValueString (etype_t type, eval_t *val)
 {
-	static char	line[256];
+	static char	line[1024];
 	ddef_t		*def;
 	dfunction_t	*f;
 	
@@ -359,37 +359,37 @@ char *PR_UglyValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		sprintf (line, "%s", pr_strings + val->string);
+		Q_snprintfz (line, sizeof(line), "%s", pr_strings + val->string);
 		break;
 
 	case ev_entity:	
-		sprintf (line, "%i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
+		Q_snprintfz (line, sizeof(line), "%i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
 		break;
 
 	case ev_function:
 		f = pr_functions + val->function;
-		sprintf (line, "%s", pr_strings + f->s_name);
+		Q_snprintfz (line, sizeof(line), "%s", pr_strings + f->s_name);
 		break;
 
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		sprintf (line, "%s", pr_strings + def->s_name);
+		Q_snprintfz (line, sizeof(line), "%s", pr_strings + def->s_name);
 		break;
 
 	case ev_void:
-		sprintf (line, "void");
+		Q_snprintfz (line, sizeof(line), "void");
 		break;
 
 	case ev_float:
-		sprintf (line, "%f", val->_float);
+		Q_snprintfz (line, sizeof(line), "%f", val->_float);
 		break;
 
 	case ev_vector:
-		sprintf (line, "%f %f %f", val->vector[0], val->vector[1], val->vector[2]);
+		Q_snprintfz (line, sizeof(line), "%f %f %f", val->vector[0], val->vector[1], val->vector[2]);
 		break;
 
 	default:
-		sprintf (line, "bad type %i", type);
+		Q_snprintfz (line, sizeof(line), "bad type %i", type);
 		break;
 	}
 	
