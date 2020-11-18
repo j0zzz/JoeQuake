@@ -842,6 +842,9 @@ void SCR_BeginLoadingPlaque (void)
 {
 	S_StopAllSounds (true);
 
+	if (streamplaying)
+		FMOD_Stop_Stream_f();
+
 	if (cls.state != ca_connected || cls.signon != SIGNONS)
 		return;
 
