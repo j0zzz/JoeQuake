@@ -281,7 +281,7 @@ extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_confirmquit;
 
 #define	MAX_TEMP_ENTITIES	256		// lightning bolts, etc
-#define	MAX_STATIC_ENTITIES	512		// torches, etc
+#define	MAX_STATIC_ENTITIES	4096	//ericw -- was 512
 
 // FIXME, allocate dynamically
 extern	efrag_t			cl_efrags[MAX_EFRAGS];
@@ -310,7 +310,7 @@ void CL_Disconnect (void);
 void CL_Disconnect_f (void);
 int CL_NextDemo (void);
 
-#define			MAX_VISEDICTS	4096
+#define			MAX_VISEDICTS	4096	// larger, now we support BSP2 
 extern	int		cl_numvisedicts;
 extern	entity_t *cl_visedicts[MAX_VISEDICTS];
 
