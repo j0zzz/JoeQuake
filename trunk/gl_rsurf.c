@@ -1295,8 +1295,10 @@ R_MarkLeaves
 void R_MarkLeaves (void)
 {
 	int		i;
-	byte	*vis, solid[MAX_MAP_LEAFS/8];
+	byte	*vis;
 	mnode_t	*node;
+	static byte *solid;
+	static int solid_capacity;
 
 	if (!r_novis.value && r_oldviewleaf == r_viewleaf && r_oldviewleaf2 == r_viewleaf2)	// watervis hack
 		return;
@@ -1306,8 +1308,7 @@ void R_MarkLeaves (void)
 
 	if (r_novis.value)
 	{
-		vis = solid;
-		memset (solid, 0xff, (cl.worldmodel->numleafs + 7) >> 3);
+		vis = Mod_NoVisPVS(cl.worldmodel);
 	}
 	else
 	{
@@ -1316,10 +1317,17 @@ void R_MarkLeaves (void)
 		if (r_viewleaf2)
 		{
 			int		i, count;
-			unsigned	*src, *dest;
+			unsigned *src, *dest;
 
 			// merge visibility data for two leafs
-			count = (cl.worldmodel->numleafs+7)>>3;
+			count = (cl.worldmodel->numleafs + 7) >> 3;
+			if (solid == NULL || count > solid_capacity)
+			{
+				solid_capacity = count;
+				solid = (byte *)Q_realloc(solid, solid_capacity);
+				if (!solid)
+					Sys_Error("R_MarkLeaves: realloc() failed on %d bytes", solid_capacity);
+			}
 			memcpy (solid, vis, count);
 			src = (unsigned *)Mod_LeafPVS (r_viewleaf2, cl.worldmodel);
 			dest = (unsigned *)solid;

@@ -409,10 +409,11 @@ crosses a waterline.
 =============================================================================
 */
 
-int	fatbytes;
-byte	fatpvs[MAX_MAP_LEAFS/8];
+static int	fatbytes;
+static byte	*fatpvs;
+static int	fatpvs_capacity;
 
-void SV_AddToFatPVS (vec3_t org, mnode_t *node)
+void SV_AddToFatPVS (vec3_t org, mnode_t *node, model_t *worldmodel) //johnfitz -- added worldmodel as a parameter 
 {
 	int		i;
 	byte		*pvs;
@@ -426,7 +427,7 @@ void SV_AddToFatPVS (vec3_t org, mnode_t *node)
 		{
 			if (node->contents != CONTENTS_SOLID)
 			{
-				pvs = Mod_LeafPVS ((mleaf_t *)node, sv.worldmodel);
+				pvs = Mod_LeafPVS ((mleaf_t *)node, worldmodel); //johnfitz -- worldmodel as a parameter 
 				for (i=0 ; i<fatbytes ; i++)
 					fatpvs[i] |= pvs[i];
 			}
@@ -441,7 +442,7 @@ void SV_AddToFatPVS (vec3_t org, mnode_t *node)
 			node = node->children[1];
 		else
 		{	// go down both
-			SV_AddToFatPVS (org, node->children[0]);
+			SV_AddToFatPVS (org, node->children[0], worldmodel); //johnfitz -- worldmodel as a parameter 
 			node = node->children[1];
 		}
 	}
@@ -455,11 +456,19 @@ Calculates a PVS that is the inclusive or of all leafs within 8 pixels of the
 given point.
 =============
 */
-byte *SV_FatPVS (vec3_t org)
+byte *SV_FatPVS(vec3_t org, model_t *worldmodel) //johnfitz -- added worldmodel as a parameter
 {
-	fatbytes = (sv.worldmodel->numleafs+31)>>3;
-	memset (fatpvs, 0, fatbytes);
-	SV_AddToFatPVS (org, sv.worldmodel->nodes);
+	fatbytes = (worldmodel->numleafs + 7) >> 3; // ericw -- was +31, assumed to be a bug/typo
+	if (fatpvs == NULL || fatbytes > fatpvs_capacity)
+	{
+		fatpvs_capacity = fatbytes;
+		fatpvs = (byte *)Q_realloc(fatpvs, fatpvs_capacity);
+		if (!fatpvs)
+			Sys_Error("SV_FatPVS: realloc() failed on %d bytes", fatpvs_capacity);
+	}
+
+	memset(fatpvs, 0, fatbytes);
+	SV_AddToFatPVS(org, worldmodel->nodes, worldmodel); //johnfitz -- worldmodel as a parameter
 	return fatpvs;
 }
 
@@ -484,7 +493,7 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 
 // find the client's PVS
 	VectorAdd (clent->v.origin, clent->v.view_ofs, org);
-	pvs = SV_FatPVS (org);
+	pvs = SV_FatPVS (org, sv.worldmodel);
 
 // send over all entities (excpet the client) that touch the pvs
 	ent = NEXT_EDICT(sv.edicts);
@@ -520,9 +529,11 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 				continue;
 		}
 
-		if (msg->maxsize - msg->cursize < 16)
+		//johnfitz -- max size for protocol 15 is 18 bytes, not 16 as originally
+		//assumed here.  And, for protocol 85 the max size is actually 24 bytes.
+		if (msg->cursize + 24 > msg->maxsize)
 		{
-			Con_Printf("packet overflow\n");
+			Con_Printf("Packet overflow!\n");
 			return;
 		}
 
@@ -781,7 +792,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 	//johnfitz -- PROTOCOL_FITZQUAKE
 	if (sv.protocol != PROTOCOL_NETQUAKE)
 	{
-		if (bits & SU_WEAPON && SV_ModelIndex(pr_strings + ent->v.weaponmodel) & 0xFF00) 
+		if (bits & SU_WEAPON && SV_ModelIndex(pr_strings + ent->v.weaponmodel) & 0xFF00)
 			bits |= SU_WEAPON2;
 			
 		if ((int)ent->v.armorvalue & 0xFF00) 
@@ -850,7 +861,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 		MSG_WriteByte (msg, ent->v.armorvalue);
 	if (bits & SU_WEAPON)
 		MSG_WriteByte (msg, SV_ModelIndex(pr_strings + ent->v.weaponmodel));
-	
+
 	MSG_WriteShort (msg, ent->v.health);
 	MSG_WriteByte (msg, ent->v.currentammo);
 	MSG_WriteByte (msg, ent->v.ammo_shells);

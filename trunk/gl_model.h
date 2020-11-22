@@ -560,6 +560,7 @@ void Mod_TouchModel (char *name);
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model);
+byte *Mod_NoVisPVS(model_t *model);
 
 qboolean Mod_IsAnyKindOfPlayerModel(model_t *mod);
 

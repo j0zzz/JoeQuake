@@ -250,7 +250,14 @@ void PF_setmodel (void)
 	mod = sv.models[(int)e->v.modelindex];  // Mod_ForName (m, true);
 
 	if (mod)
-		SetMinMaxSize (e, mod->mins, mod->maxs, true);
+	//johnfitz -- correct physics cullboxes for bmodels
+	{
+		if (mod->type == mod_brush)
+			SetMinMaxSize(e, mod->clipmins, mod->clipmaxs, true);
+		else
+			SetMinMaxSize(e, mod->mins, mod->maxs, true);
+	}
+	//johnfitz
 	else
 		SetMinMaxSize (e, vec3_origin, vec3_origin, true);
 }
@@ -675,11 +682,12 @@ void PF_checkpos (void)
 
 //============================================================================
 
-byte	checkpvs[MAX_MAP_LEAFS/8];
+static byte	*checkpvs;	//ericw -- changed to malloc
+static int	checkpvs_capacity;
 
 int PF_newcheckclient (int check)
 {
-	int	i;
+	int		i, pvsbytes;
 	byte	*pvs;
 	edict_t	*ent;
 	mleaf_t	*leaf;
@@ -722,7 +730,16 @@ int PF_newcheckclient (int check)
 	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
 	leaf = Mod_PointInLeaf (org, sv.worldmodel);
 	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
-	memcpy (checkpvs, pvs, (sv.worldmodel->numleafs+7)>>3);
+	
+	pvsbytes = (sv.worldmodel->numleafs + 7) >> 3;
+	if (checkpvs == NULL || pvsbytes > checkpvs_capacity)
+	{
+		checkpvs_capacity = pvsbytes;
+		checkpvs = (byte *)Q_realloc(checkpvs, checkpvs_capacity);
+		if (!checkpvs)
+			Sys_Error("PF_newcheckclient: realloc() failed on %d bytes", checkpvs_capacity);
+	}
+	memcpy(checkpvs, pvs, pvsbytes);
 
 	return i;
 }

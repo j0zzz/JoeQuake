@@ -33,7 +33,11 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer);
 void Mod_LoadBrushModel (model_t *mod, void *buffer);
 model_t *Mod_LoadModel (model_t *mod, qboolean crash);
 
-byte	mod_novis[MAX_MAP_LEAFS/8];
+static byte	*mod_novis;
+static int	mod_novis_capacity;
+
+static byte	*mod_decompressed;
+static int	mod_decompressed_capacity;
 
 #define	MAX_MOD_KNOWN	2048 //johnfitz -- was 512
 model_t	mod_known[MAX_MOD_KNOWN];
@@ -87,7 +91,6 @@ Mod_Init
 void Mod_Init (void)
 {
 	Cvar_Register (&gl_subdivide_size);
-	memset (mod_novis, 0xff, sizeof(mod_novis));
 }
 
 /*
@@ -147,11 +150,18 @@ Mod_DecompressVis
 byte *Mod_DecompressVis (byte *in, model_t *model)
 {
 	int		c, row;
-	byte	*out;
-	static byte	decompressed[MAX_MAP_LEAFS/8];
+	byte	*out, *outend;
 
 	row = (model->numleafs + 7) >> 3;
-	out = decompressed;
+	if (mod_decompressed == NULL || row > mod_decompressed_capacity)
+	{
+		mod_decompressed_capacity = row;
+		mod_decompressed = (byte *)Q_realloc(mod_decompressed, mod_decompressed_capacity);
+		if (!mod_decompressed)
+			Sys_Error("Mod_DecompressVis: realloc() failed on %d bytes", mod_decompressed_capacity);
+	}
+	out = mod_decompressed;
+	outend = mod_decompressed + row;
 
 #if 0
 	memcpy (out, in, row);
@@ -163,7 +173,7 @@ byte *Mod_DecompressVis (byte *in, model_t *model)
 			*out++ = 0xff;
 			row--;
 		}
-		return decompressed;		
+		return mod_decompressed;
 	}
 
 	do
@@ -178,21 +188,41 @@ byte *Mod_DecompressVis (byte *in, model_t *model)
 		in += 2;
 		while (c)
 		{
+			if (out == outend)
+				return mod_decompressed;
+
 			*out++ = 0;
 			c--;
 		}
-	} while (out - decompressed < row);
+	} while (out - mod_decompressed < row);
 #endif
 	
-	return decompressed;
+	return mod_decompressed;
 }
 
 byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model)
 {
 	if (leaf == model->leafs)
-		return mod_novis;
+		return Mod_NoVisPVS(model);
 
 	return Mod_DecompressVis (leaf->compressed_vis, model);
+}
+
+byte *Mod_NoVisPVS(model_t *model)
+{
+	int pvsbytes;
+
+	pvsbytes = (model->numleafs + 7) >> 3;
+	if (mod_novis == NULL || pvsbytes > mod_novis_capacity)
+	{
+		mod_novis_capacity = pvsbytes;
+		mod_novis = (byte *)Q_realloc(mod_novis, mod_novis_capacity);
+		if (!mod_novis)
+			Sys_Error("Mod_NoVisPVS: realloc() failed on %d bytes", mod_novis_capacity);
+
+		memset(mod_novis, 0xff, mod_novis_capacity);
+	}
+	return mod_novis;
 }
 
 /*
@@ -1899,6 +1929,20 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 		VectorCopy (bm->mins, mod->mins);
 
 		mod->radius = RadiusFromBounds(mod->mins, mod->maxs);
+
+		//johnfitz -- correct physics cullboxes so that outlying clip brushes on doors and stuff are handled right
+		if (i > 0 || strcmp(mod->name, sv.modelname) != 0) //skip submodel 0 of sv.worldmodel, which is the actual world
+		{
+			// start with the hull0 bounds
+			VectorCopy(mod->maxs, mod->clipmaxs);
+			VectorCopy(mod->mins, mod->clipmins);
+
+			// process hull1 (we don't need to process hull2 becuase there's
+			// no such thing as a brush that appears in hull2 but not hull1)
+			//Mod_BoundsFromClipNode (mod, 1, mod->hulls[1].firstclipnode); // (disabled for now becuase it fucks up on rotating models)
+		}
+		//johnfitz
+
 		mod->numleafs = bm->visleafs;
 
 		if (i < mod->numsubmodels - 1)
