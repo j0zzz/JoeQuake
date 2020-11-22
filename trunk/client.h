@@ -285,12 +285,14 @@ extern	cvar_t	cl_confirmquit;
 
 // FIXME, allocate dynamically
 extern	efrag_t			cl_efrags[MAX_EFRAGS];
-extern	entity_t		cl_entities[MAX_EDICTS];
 extern	entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
 extern	lightstyle_t		cl_lightstyle[MAX_LIGHTSTYLES];
 extern	dlight_t		cl_dlights[MAX_DLIGHTS];
 extern	entity_t		cl_temp_entities[MAX_TEMP_ENTITIES];
 extern	beam_t			cl_beams[MAX_BEAMS];
+
+extern	entity_t		*cl_entities; //johnfitz -- was a static array, now on hunk
+extern	int				cl_max_edicts; //johnfitz -- only changes when new map loads
 
 //=============================================================================
 

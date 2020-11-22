@@ -73,7 +73,9 @@ void VID_UnlockBuffer (void);
 #define DATAGRAM_MTU	1400	// johnfitz -- actual limit for unreliable messages to nonlocal clients
 
 // per-level limits
-#define	MAX_EDICTS		32000
+#define	MIN_EDICTS		256		// johnfitz -- lowest allowed value for max_edicts cvar
+#define	MAX_EDICTS		32000	// johnfitz -- highest allowed value for max_edicts cvar
+								// ents past 8192 can't play sounds in the standard protocol 
 #define	MAX_LIGHTSTYLES	64
 #define	MAX_MODELS		2048		// these are sent over the net as bytes
 #define	MAX_SOUNDS		2048		// so they cannot be blindly increased
@@ -274,6 +276,7 @@ extern	cvar_t	sys_ticrate;
 extern	cvar_t	sys_inactivesleep;
 extern	cvar_t	sys_nostdout;
 extern	cvar_t	developer;
+extern	cvar_t	max_edicts; //johnfitz
 
 extern qboolean host_initialized;	// true if into command execution
 extern	double	host_frametime;

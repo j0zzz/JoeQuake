@@ -1350,10 +1350,9 @@ void SV_SpawnServer (char *server)
 // load progs to get entity field count
 	PR_LoadProgs ();
 
-// allocate server memory
-	sv.max_edicts = MAX_EDICTS;
-
-	sv.edicts = Hunk_AllocName (sv.max_edicts * pr_edict_size, "edicts");
+	// allocate server memory
+	sv.max_edicts = bound(MIN_EDICTS, (int)max_edicts.value, MAX_EDICTS); //johnfitz -- max_edicts cvar 
+	sv.edicts = (edict_t *)Q_malloc(sv.max_edicts * pr_edict_size); // ericw -- sv.edicts switched to use malloc() 
 
 	sv.datagram.maxsize = sizeof(sv.datagram_buf);
 	sv.datagram.cursize = 0;
@@ -1367,8 +1366,9 @@ void SV_SpawnServer (char *server)
 	sv.signon.cursize = 0;
 	sv.signon.data = sv.signon_buf;
 
-// leave slots at start for clients only
+	// leave slots at start for clients only
 	sv.num_edicts = svs.maxclients + 1;
+	memset(sv.edicts, 0, sv.num_edicts * pr_edict_size); // ericw -- sv.edicts switched to use malloc() 
 	for (i=0 ; i<svs.maxclients ; i++)
 	{
 		ent = EDICT_NUM(i+1);

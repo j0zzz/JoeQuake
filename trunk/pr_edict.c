@@ -139,13 +139,13 @@ edict_t *ED_Alloc (void)
 			return e;
 		}
 	}
-	
-	if (i == MAX_EDICTS)
-		Sys_Error ("ED_Alloc: no free edicts");
-		
+
+	if (i == sv.max_edicts) //johnfitz -- use sv.max_edicts instead of MAX_EDICTS
+		Host_Error("ED_Alloc: no free edicts (max_edicts is %i)", sv.max_edicts);
+
 	sv.num_edicts++;
 	e = EDICT_NUM(i);
-	ED_ClearEdict (e);
+	memset(e, 0, pr_edict_size); // ericw -- switched sv.edicts to malloc(), so we are accessing uninitialized memory and must fully zero it, not just ED_ClearEdict 
 
 	return e;
 }

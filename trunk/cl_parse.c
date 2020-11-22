@@ -169,9 +169,14 @@ This error checks and tracks the total number of entities
 */
 entity_t *CL_EntityNum (int num)
 {
+	//johnfitz -- check minimum number too
+	if (num < 0)
+		Host_Error("CL_EntityNum: %i is an invalid number", num);
+	//johnfitz
+	
 	if (num >= cl.num_entities)
 	{
-		if (num >= MAX_EDICTS)
+		if (num >= cl_max_edicts) //johnfitz -- no more MAX_EDICTS 
 			Host_Error ("CL_EntityNum: %i is an invalid number", num);
 
 		while (cl.num_entities <= num)
@@ -224,7 +229,7 @@ void CL_ParseStartSoundPacket (void)
 		Host_Error("CL_ParseStartSoundPacket: %i > MAX_SOUNDS", sound_num);
 	//johnfitz
 
-	if (ent > MAX_EDICTS)
+	if (ent > cl_max_edicts) //johnfitz -- no more MAX_EDICTS 
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
 
 	for (i=0 ; i<3 ; i++)

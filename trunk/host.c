@@ -71,6 +71,7 @@ cvar_t	host_speeds = {"host_speeds", "0"};		// set for running times
 cvar_t	sys_ticrate = {"sys_ticrate", "0.05"};
 cvar_t	sys_inactivesleep = {"sys_inactivesleep", "20"};  // msec to sleep when window not focused
 cvar_t	serverprofile = {"serverprofile", "0"};
+cvar_t	max_edicts = { "max_edicts", "8192" };	//johnfitz //ericw -- changed from 2048 to 8192, removed CVAR_ARCHIVE 
 
 cvar_t	fraglimit = {"fraglimit", "0", CVAR_SERVER};
 cvar_t	timelimit = {"timelimit", "0", CVAR_SERVER};
@@ -224,6 +225,7 @@ void Host_InitLocal (void)
 	Cvar_Register (&sys_ticrate);
 	Cvar_Register (&sys_inactivesleep);
 	Cvar_Register (&serverprofile);
+	Cvar_Register (&max_edicts); //johnfitz 
 
 	Cvar_Register (&fraglimit);
 	Cvar_Register (&timelimit);
