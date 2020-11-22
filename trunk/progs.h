@@ -79,13 +79,14 @@ void PR_Init (void);
 void PR_ExecuteProgram (func_t fnum);
 void PR_LoadProgs (void);
 
+char *PR_GetString(int num);
+int PR_SetEngineString(char *s);
+int PR_AllocString(int bufferlength, char **ptr);
+
 void PR_Profile_f (void);
 
 edict_t *ED_Alloc (void);
 void ED_Free (edict_t *ed);
-
-char *ED_NewString (char *string);
-// returns a copy of the string allocated from the server's string heap
 
 void ED_Print (edict_t *ed);
 void ED_Write (FILE *f, edict_t *ed);
@@ -114,13 +115,13 @@ int NUM_FOR_EDICT (edict_t *e);
 #define	G_EDICT(o)	((edict_t *)((byte *)sv.edicts+ *(int *)&pr_globals[o]))
 #define G_EDICTNUM(o)	NUM_FOR_EDICT(G_EDICT(o))
 #define	G_VECTOR(o)	(&pr_globals[o])
-#define	G_STRING(o)	(pr_strings + *(string_t *)&pr_globals[o])
+#define	G_STRING(o)	(PR_GetString(*(string_t *)&pr_globals[o]))
 #define	G_FUNCTION(o)	(*(func_t *)&pr_globals[o])
 
 #define	E_FLOAT(e,o)	(((float*)&e->v)[o])
 #define	E_INT(e,o)	(*(int *)&((float*)&e->v)[o])
 #define	E_VECTOR(e,o)	(&((float*)&e->v)[o])
-#define	E_STRING(e,o)	(pr_strings + *(string_t *)&((float*)&e->v)[o])
+#define	E_STRING(e,o)	(PR_GetString(*(string_t *)&((float*)&e->v)[o]))
 
 extern	int		type_size[8];
 

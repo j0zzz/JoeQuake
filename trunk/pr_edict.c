@@ -24,6 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 dprograms_t	*progs;
 dfunction_t	*pr_functions;
 char		*pr_strings;
+static	int		pr_stringssize;
+static	char	**pr_knownstrings;
+static	int		pr_maxknownstrings;
+static	int		pr_numknownstrings; 
 ddef_t		*pr_fielddefs;
 ddef_t		*pr_globaldefs;
 dstatement_t	*pr_statements;
@@ -139,10 +143,10 @@ edict_t *ED_Alloc (void)
 			return e;
 		}
 	}
-
+	
 	if (i == sv.max_edicts) //johnfitz -- use sv.max_edicts instead of MAX_EDICTS
 		Host_Error("ED_Alloc: no free edicts (max_edicts is %i)", sv.max_edicts);
-
+		
 	sv.num_edicts++;
 	e = EDICT_NUM(i);
 	memset(e, 0, pr_edict_size); // ericw -- switched sv.edicts to malloc(), so we are accessing uninitialized memory and must fully zero it, not just ED_ClearEdict 
@@ -233,7 +237,7 @@ ddef_t *ED_FindField (char *name)
 	for (i=0 ; i<progs->numfielddefs ; i++)
 	{
 		def = &pr_fielddefs[i];
-		if (!strcmp(pr_strings + def->s_name,name))
+		if (!strcmp(PR_GetString(def->s_name), name))
 			return def;
 	}
 
@@ -254,7 +258,7 @@ ddef_t *ED_FindGlobal (char *name)
 	for (i=0 ; i<progs->numglobaldefs ; i++)
 	{
 		def = &pr_globaldefs[i];
-		if (!strcmp(pr_strings + def->s_name,name))
+		if (!strcmp(PR_GetString(def->s_name), name))
 			return def;
 	}
 
@@ -274,7 +278,7 @@ dfunction_t *ED_FindFunction (char *name)
 	for (i=0 ; i<progs->numfunctions ; i++)
 	{
 		func = &pr_functions[i];
-		if (!strcmp(pr_strings + func->s_name,name))
+		if (!strcmp(PR_GetString(func->s_name), name))
 			return func;
 	}
 
@@ -299,7 +303,7 @@ char *PR_ValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		sprintf (line, "%s", pr_strings + val->string);
+		sprintf (line, "%s", PR_GetString(val->string));
 		break;
 
 	case ev_entity:	
@@ -308,12 +312,12 @@ char *PR_ValueString (etype_t type, eval_t *val)
 
 	case ev_function:
 		f = pr_functions + val->function;
-		sprintf (line, "%s()", pr_strings + f->s_name);
+		sprintf (line, "%s()", PR_GetString(f->s_name));
 		break;
 
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		sprintf (line, ".%s", pr_strings + def->s_name);
+		sprintf (line, ".%s", PR_GetString(def->s_name));
 		break;
 
 	case ev_void:
@@ -359,7 +363,7 @@ char *PR_UglyValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		Q_snprintfz (line, sizeof(line), "%s", pr_strings + val->string);
+		Q_snprintfz (line, sizeof(line), "%s", PR_GetString(val->string));
 		break;
 
 	case ev_entity:	
@@ -368,12 +372,12 @@ char *PR_UglyValueString (etype_t type, eval_t *val)
 
 	case ev_function:
 		f = pr_functions + val->function;
-		Q_snprintfz (line, sizeof(line), "%s", pr_strings + f->s_name);
+		Q_snprintfz (line, sizeof(line), "%s", PR_GetString(f->s_name));
 		break;
 
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		Q_snprintfz (line, sizeof(line), "%s", pr_strings + def->s_name);
+		Q_snprintfz (line, sizeof(line), "%s", PR_GetString(def->s_name));
 		break;
 
 	case ev_void:
@@ -420,7 +424,7 @@ char *PR_GlobalString (int ofs)
 	else
 	{
 		s = PR_ValueString (def->type, val);
-		sprintf (line, "%i(%s)%s", ofs, pr_strings + def->s_name, s);
+		sprintf (line, "%i(%s)%s", ofs, PR_GetString(def->s_name), s);
 	}
 	
 	i = strlen (line);
@@ -440,7 +444,7 @@ char *PR_GlobalStringNoContents (int ofs)
 	if (!(def = ED_GlobalAtOfs(ofs)))
 		sprintf (line, "%i(???)", ofs);
 	else
-		sprintf (line, "%i(%s)", ofs, pr_strings + def->s_name);
+		sprintf (line, "%i(%s)", ofs, PR_GetString(def->s_name));
 	
 	i = strlen (line);
 	for ( ; i<20 ; i++)
@@ -474,7 +478,7 @@ void ED_Print (edict_t *ed)
 	for (i=1 ; i<progs->numfielddefs ; i++)
 	{
 		d = &pr_fielddefs[i];
-		name = pr_strings + d->s_name;
+		name = PR_GetString(d->s_name);
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 
@@ -522,7 +526,7 @@ void ED_Write (FILE *f, edict_t *ed)
 	for (i=1 ; i<progs->numfielddefs ; i++)
 	{
 		d = &pr_fielddefs[i];
-		name = pr_strings + d->s_name;
+		name = PR_GetString(d->s_name);
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 			
@@ -656,7 +660,7 @@ void ED_WriteGlobals (FILE *f)
 		if (type != ev_string && type != ev_float && type != ev_entity)
 			continue;
 
-		name = pr_strings + def->s_name;
+		name = PR_GetString(def->s_name);
 		fprintf (f, "\"%s\" ", name);
 		fprintf (f, "\"%s\"\n", PR_UglyValueString(type, (eval_t *)&pr_globals[def->ofs]));
 	}
@@ -710,14 +714,14 @@ void ED_ParseGlobals (char *data)
 ED_NewString
 =============
 */
-char *ED_NewString (char *string)
+static string_t ED_NewString (char *string)
 {
-	char	*new, *new_p;
-	int	i, l;
+	char	*new_p;
+	int		i, l;
+	string_t num;
 	
 	l = strlen(string) + 1;
-	new = Hunk_Alloc (l);
-	new_p = new;
+	num = PR_AllocString(l, &new_p);
 
 	for (i=0 ; i<l ; i++)
 	{
@@ -730,7 +734,7 @@ char *ED_NewString (char *string)
 			*new_p++ = string[i];
 	}
 	
-	return new;
+	return num;
 }
 
 
@@ -747,7 +751,7 @@ qboolean ED_ParseEpair (void *base, ddef_t *key, char *s)
 	int		i;
 	char		string[128];
 	ddef_t		*def;
-	char		*v, *w;
+	char		*v, *w, *end;
 	void		*d;
 	dfunction_t	*func;
 	
@@ -756,7 +760,7 @@ qboolean ED_ParseEpair (void *base, ddef_t *key, char *s)
 	switch (key->type & ~DEF_SAVEGLOBAL)
 	{
 	case ev_string:
-		*(string_t *)d = ED_NewString (s) - pr_strings;
+		*(string_t *)d = ED_NewString (s);
 		break;
 		
 	case ev_float:
@@ -764,16 +768,26 @@ qboolean ED_ParseEpair (void *base, ddef_t *key, char *s)
 		break;
 		
 	case ev_vector:
-		strcpy (string, s);
+		Q_strncpyz (string, s, sizeof(string));
+		end = (char *)string + strlen(string);
 		v = string;
 		w = string;
-		for (i=0 ; i<3 ; i++)
+		for (i = 0; i < 3 && (w <= end); i++) // ericw -- added (w <= end) check
 		{
+			// set v to the next space (or 0 byte), and change that char to a 0 byte
 			while (*v && *v != ' ')
 				v++;
 			*v = 0;
-			((float *)d)[i] = atof (w);
-			w = v = v+1;
+			((float *)d)[i] = atof(w);
+			w = v = v + 1;
+		}
+		// ericw -- fill remaining elements to 0 in case we hit the end of string
+		// before reading 3 floats.
+		if (i < 3)
+		{
+			Con_DPrintf("Avoided reading garbage for \"%s\" \"%s\"\n", PR_GetString(key->s_name), s);
+			for (; i < 3; i++)
+				((float *)d)[i] = 0.0f;
 		}
 		break;
 		
@@ -978,7 +992,7 @@ void ED_LoadFromFile (char *data)
 		}
 
 	// look for the spawn function
-		func = ED_FindFunction (pr_strings + ent->v.classname);
+		func = ED_FindFunction (PR_GetString(ent->v.classname));
 
 		if (!func)
 		{
@@ -1028,14 +1042,24 @@ void PR_LoadProgs (void)
 
 	pr_functions = (dfunction_t *)((byte *)progs + progs->ofs_functions);
 	pr_strings = (char *)progs + progs->ofs_strings;
+	if (progs->ofs_strings + progs->numstrings >= com_filesize)
+		Host_Error("progs.dat strings go past end of file\n");
+
+	// initialize the strings
+	pr_numknownstrings = 0;
+	pr_maxknownstrings = 0;
+	pr_stringssize = progs->numstrings;
+	if (pr_knownstrings)
+		Z_Free((void *)pr_knownstrings);
+	pr_knownstrings = NULL;
+	PR_SetEngineString("");
+
 	pr_globaldefs = (ddef_t *)((byte *)progs + progs->ofs_globaldefs);
 	pr_fielddefs = (ddef_t *)((byte *)progs + progs->ofs_fielddefs);
 	pr_statements = (dstatement_t *)((byte *)progs + progs->ofs_statements);
 
 	pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
 	pr_globals = (float *)pr_global_struct;
-	
-	pr_edict_size = progs->entityfields * 4 + sizeof(edict_t) - sizeof(entvars_t);
 	
 // byte swap the lumps
 	for (i=0 ; i<progs->numstatements ; i++)
@@ -1083,6 +1107,13 @@ void PR_LoadProgs (void)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 
 	FindEdictFieldOffsets ();
+
+	pr_edict_size = progs->entityfields * 4 + sizeof(edict_t) - sizeof(entvars_t);
+	// round off to next highest whole word address (esp for Alpha)
+	// this ensures that pointers in the engine data area are always
+	// properly aligned
+	pr_edict_size += sizeof(void *) - 1;
+	pr_edict_size &= ~(sizeof(void *) - 1);
 }
 
 
@@ -1130,4 +1161,96 @@ int NUM_FOR_EDICT (edict_t *e)
 		Sys_Error ("NUM_FOR_EDICT: bad pointer");
 
 	return b;
+}
+
+//===========================================================================
+
+
+#define	PR_STRING_ALLOCSLOTS	256
+
+static void PR_AllocStringSlots(void)
+{
+	pr_maxknownstrings += PR_STRING_ALLOCSLOTS;
+	Con_DPrintf("PR_AllocStringSlots: realloc'ing for %d slots\n", pr_maxknownstrings);
+	pr_knownstrings = (char **)Z_Realloc((void *)pr_knownstrings, pr_maxknownstrings * sizeof(char *));
+}
+
+char *PR_GetString(int num)
+{
+	if (num >= 0 && num < pr_stringssize)
+		return pr_strings + num;
+	else if (num < 0 && num >= -pr_numknownstrings)
+	{
+		if (!pr_knownstrings[-1 - num])
+		{
+			Host_Error("PR_GetString: attempt to get a non-existant string %d\n", num);
+			return "";
+		}
+		return pr_knownstrings[-1 - num];
+	}
+	else
+	{
+		Host_Error("PR_GetString: invalid string offset %d\n", num);
+		return "";
+	}
+}
+
+int PR_SetEngineString(char *s)
+{
+	int		i;
+
+	if (!s)
+		return 0;
+#if 0	/* can't: sv.model_precache & sv.sound_precache points to pr_strings */
+	if (s >= pr_strings && s <= pr_strings + pr_stringssize)
+		Host_Error("PR_SetEngineString: \"%s\" in pr_strings area\n", s);
+#else
+	if (s >= pr_strings && s <= pr_strings + pr_stringssize - 2)
+		return (int)(s - pr_strings);
+#endif
+	for (i = 0; i < pr_numknownstrings; i++)
+	{
+		if (pr_knownstrings[i] == s)
+			return -1 - i;
+	}
+	// new unknown engine string
+	//Con_DPrintf ("PR_SetEngineString: new engine string %p\n", s);
+#if 0
+	for (i = 0; i < pr_numknownstrings; i++)
+	{
+		if (!pr_knownstrings[i])
+			break;
+	}
+#endif
+	//	if (i >= pr_numknownstrings)
+	//	{
+	if (i >= pr_maxknownstrings)
+		PR_AllocStringSlots();
+	pr_numknownstrings++;
+	//	}
+	pr_knownstrings[i] = s;
+	return -1 - i;
+}
+
+int PR_AllocString(int size, char **ptr)
+{
+	int		i;
+
+	if (!size)
+		return 0;
+	for (i = 0; i < pr_numknownstrings; i++)
+	{
+		if (!pr_knownstrings[i])
+			break;
+	}
+	//	if (i >= pr_numknownstrings)
+	//	{
+	if (i >= pr_maxknownstrings)
+		PR_AllocStringSlots();
+	pr_numknownstrings++;
+	//	}
+	pr_knownstrings[i] = (char *)Hunk_AllocName(size, "string");
+	if (ptr)
+		*ptr = (char *)pr_knownstrings[i];
+	return -1 - i;
 }

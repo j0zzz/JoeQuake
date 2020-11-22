@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#define	ZONE_DEFAULT_SIZE	0x100000	// 1Mb
+#define	ZONE_DEFAULT_SIZE	(4 * 1024 * 1024)
 
 #define	ZONEID		0x1d4a11
 #define MINFRAGMENT	64
@@ -262,6 +262,43 @@ void *Z_TagMalloc (int size, int tag)
 
 /*
 ========================
+Z_Realloc
+========================
+*/
+void *Z_Realloc(void *ptr, int size)
+{
+	int old_size;
+	void *old_ptr;
+	memblock_t *block;
+
+	if (!ptr)
+		return Z_Malloc(size);
+
+	block = (memblock_t *)((byte *)ptr - sizeof(memblock_t));
+	if (block->id != ZONEID)
+		Sys_Error("Z_Realloc: realloced a pointer without ZONEID");
+	if (block->tag == 0)
+		Sys_Error("Z_Realloc: realloced a freed pointer");
+
+	old_size = block->size;
+	old_size -= (4 + (int)sizeof(memblock_t));	/* see Z_TagMalloc() */
+	old_ptr = ptr;
+
+	Z_Free(ptr);
+	ptr = Z_TagMalloc(size, 1);
+	if (!ptr)
+		Sys_Error("Z_Realloc: failed on allocation of %i bytes", size);
+
+	if (ptr != old_ptr)
+		memmove(ptr, old_ptr, min(old_size, size));
+	if (old_size < size)
+		memset((byte *)ptr + old_size, 0, size - old_size);
+
+	return ptr;
+}
+
+/*
+========================
 Z_Print
 ========================
 */
@@ -291,11 +328,12 @@ void Z_Print (memzone_t *zone)
 
 #define	HUNK_SENTINAL	0x1df001ed
 
+#define HUNKNAME_LEN	24 
 typedef struct
 {
 	int	sentinal;
 	int	size;		// including sizeof(hunk_t), -1 = not allocated
-	char	name[8];
+	char	name[HUNKNAME_LEN];
 } hunk_t;
 
 byte		*hunk_base;
@@ -344,9 +382,8 @@ void Hunk_Print (qboolean all)
 {
 	hunk_t	*h, *next, *endlow, *starthigh, *endhigh;
 	int	count, sum, totalblocks;
-	char	name[9];
+	char	name[HUNKNAME_LEN];
 
-	name[8] = 0;
 	count = 0;
 	sum = 0;
 	totalblocks = 0;
@@ -387,12 +424,12 @@ void Hunk_Print (qboolean all)
 		sum += h->size;
 
 	// print the single block
-		memcpy (name, h->name, 8);
+		memcpy (name, h->name, HUNKNAME_LEN);
 		if (all)
 			Con_Printf ("%8p :%8i %8s\n", h, h->size, name);
 
 	// print the total
-		if (next == endlow || next == endhigh || strncmp (h->name, next->name, 8))
+		if (next == endlow || next == endhigh || strncmp (h->name, next->name, HUNKNAME_LEN - 1))
 		{
 			if (!all)
 				Con_Printf ("          :%8i %8s (TOTAL)\n",sum, name);
@@ -437,7 +474,7 @@ void *Hunk_AllocName (int size, char *name)
 
 	h->size = size;
 	h->sentinal = HUNK_SENTINAL;
-	strncpy (h->name, name, 8);
+	strncpy (h->name, name, HUNKNAME_LEN);
 
 	return (void *)(h + 1);
 }
@@ -524,7 +561,7 @@ void *Hunk_HighAllocName (int size, char *name)
 	memset (h, 0, size);
 	h->size = size;
 	h->sentinal = HUNK_SENTINAL;
-	strncpy (h->name, name, 8);
+	strncpy (h->name, name, HUNKNAME_LEN);
 
 	return (void *)(h + 1);
 }
