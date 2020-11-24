@@ -479,7 +479,7 @@ SV_WriteEntitiesToClient
 */
 void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 {
-	int	e, i, bits;
+	int		e, i, bits;
 	float	miss;
 	byte	*pvs;
 	vec3_t	org;
