@@ -1151,6 +1151,9 @@ void CL_CalcCrouch (void)
 	static	vec3_t	oldorigin = {0, 0, 0};
 	static	float	oldz = 0, extracrouch = 0, crouchspeed = 100;
 	
+	if (!cl.num_entities)
+		return;
+
 	ent = &cl_entities[cl.viewentity];
 
 	teleported = !VectorL2Compare(ent->origin, oldorigin, 48);

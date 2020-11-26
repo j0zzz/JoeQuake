@@ -352,8 +352,7 @@ void CL_ParseServerInfo (void)
 	cl.maxclients = MSG_ReadByte ();
 	if (cl.maxclients < 1 || cl.maxclients > MAX_SCOREBOARD)
 	{
-		Con_Printf ("Bad maxclients (%u) from server\n", cl.maxclients);
-		return;
+		Host_Error("Bad maxclients (%u) from server", cl.maxclients);
 	}
 	cl.scores = Hunk_AllocName (cl.maxclients * sizeof(*cl.scores), "scores");
 
