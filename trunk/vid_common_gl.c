@@ -124,7 +124,7 @@ void GL_Init (void)
 	if (!Q_strncasecmp((char *)gl_renderer, "PowerVR", 7))
 		fullsbardraw = true;
 
-	glClearColor(0.15, 0.15, 0.15, 0); //johnfitz -- originally 1,0,0,0
+	glClearColor (0, 0, 0, 0);
 	glCullFace (GL_FRONT);
 	glEnable (GL_TEXTURE_2D);
 
