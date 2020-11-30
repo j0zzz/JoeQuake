@@ -65,6 +65,7 @@ int unreliableMessagesReceived = 0;
 cvar_t	net_messagetimeout = {"net_messagetimeout", "300"};
 cvar_t	net_connectsearch = {"net_connectsearch", "1"};
 cvar_t	net_connecttimeout = {"net_connecttimeout", "10"};	// joe: qkick/qflood protection from ProQuake
+cvar_t	net_getdomainname = {"net_getdomainname", "0"};
 cvar_t	hostname = {"hostname", "UNNAMED"};
 cvar_t	cl_password = {"cl_password", ""};		// joe: password protection from ProQuake
 cvar_t	rcon_password = {"rcon_password", ""};		// joe: rcon password from ProQuake
@@ -914,6 +915,7 @@ void NET_Init (void)
 	Cvar_Register (&net_messagetimeout);
 	Cvar_Register (&net_connectsearch);
 	Cvar_Register (&net_connecttimeout);	// joe: qkick/qflood protection from ProQuake
+	Cvar_Register (&net_getdomainname);
 	Cvar_Register (&hostname);
 	Cvar_Register (&cl_password);		// joe: password protection from ProQuake
 	Cvar_Register (&rcon_password);		// joe: rcon password from ProQuake
