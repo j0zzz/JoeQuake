@@ -23,9 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern	model_t	*loadmodel;
 
-extern	msurface_t *skychain;
-extern	msurface_t **skychain_tail;
-
 static	int	solidskytexture, alphaskytexture;
 static	int	gl_filter_minmax_sky = GL_LINEAR;
 static	float	speedscale, speedscale2;	// for top sky and bottom sky
@@ -33,12 +30,53 @@ static	float	speedscale, speedscale2;	// for top sky and bottom sky
 static	msurface_t *warpface;
 
 qboolean	r_skyboxloaded;
+int			skybox_image_width, skybox_image_height;
 float		skyfog; // ericw 
 
 extern	cvar_t	gl_subdivide_size;
 extern	cvar_t	r_skyfog;
 
 extern	byte *StringToRGB (char *s);
+
+static	int		skytexorder[6] = { 0, 2, 1, 3, 4, 5 };
+static	char	*skybox_ext[6] = { "rt", "bk", "lf", "ft", "up", "dn" };
+
+#define	MAX_CLIP_VERTS	64
+
+static	vec3_t	skyclip[6] = {
+	{ 1, 1, 0 },
+	{ 1, -1, 0 },
+	{ 0, -1, 1 },
+	{ 0, 1, 1 },
+	{ 1, 0, 1 },
+	{ -1, 0, 1 }
+};
+
+// 1 = s, 2 = t, 3 = 2048
+static	int	st_to_vec[6][3] = {
+	{ 3,-1, 2 },
+	{ -3, 1, 2 },
+
+	{ 1, 3, 2 },
+	{ -1,-3, 2 },
+
+	{ -2,-1, 3 },		// 0 degrees yaw, look straight up
+	{ 2,-1,-3 }		// look straight down
+};
+
+// s = [0]/[2], t = [1]/[2]
+static	int	vec_to_st[6][3] = {
+	{ -2, 3, 1 },
+	{ 2, 3,-1 },
+
+	{ 1, 3, 2 },
+	{ -1, 3,-2 },
+
+	{ -2,-1, 3 },
+	{ -2, 1,-3 }
+};
+
+static	float	skymins[2][6], skymaxs[2][6];
 
 void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs)
 {
@@ -272,167 +310,43 @@ void EmitTurbulentPolys (msurface_t *fa)
 	}
 }
 
-/*
-=============
-EmitSkyPolys
-=============
-*/
-void EmitSkyPolys (msurface_t *fa, qboolean mtex)
+void EmitCausticsPolys(void)
 {
 	glpoly_t	*p;
-	float		*v, s, t, ss, tt, length;
-	int			i;
-	vec3_t		dir;
+	int		i;
+	float		*v, s, t, os, ot;
+	extern glpoly_t	*caustics_polys;
 
-	for (p = fa->polys ; p ; p = p->next)
+	GL_Bind(underwatertexture);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+
+	for (p = caustics_polys; p; p = p->caustics_chain)
 	{
-		glBegin (GL_POLYGON);
-		for (i = 0, v = p->verts[0] ; i < p->numverts ; i++, v += VERTEXSIZE)
+		glBegin(GL_POLYGON);
+		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
 		{
-			VectorSubtract (v, r_origin, dir);
-			dir[2] *= 3;	// flatten the sphere
+			os = v[3];
+			ot = v[4];
 
-			length = VectorLength (dir);
-			length = 6 * 63 / length;
+			s = os + SINTABLE_APPROX(0.465 * (cl.time + ot));
+			s *= -3 * (0.5 / 64);
 
-			dir[0] *= length;
-			dir[1] *= length;
+			t = ot + SINTABLE_APPROX(0.465 * (cl.time + os));
+			t *= -3 * (0.5 / 64);
 
-			if (mtex)
-			{
-				s = (speedscale + dir[0]) * (1.0 / 128);
-				t = (speedscale + dir[1]) * (1.0 / 128);
-
-				ss = (speedscale2 + dir[0]) * (1.0 / 128);
-				tt = (speedscale2 + dir[1]) * (1.0 / 128);
-			}
-			else
-			{
-				s = (speedscale + dir[0]) * (1.0 / 128);
-				t = (speedscale + dir[1]) * (1.0 / 128);
-			}
-
-			if (mtex)
-			{
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, s, t);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, ss, tt);
-			}
-			else
-			{
-				glTexCoord2f (s, t);
-			}
-
-			glVertex3fv (v);
+			glTexCoord2f(s, t);
+			glVertex3fv(v);
 		}
-		glEnd ();
-	}
-}
-
-/*
-=================
-R_DrawSkyChain
-=================
-*/
-void R_DrawSkyChain (void)
-{
-	msurface_t	*fa;
-	byte		*col;
-
-	if (!skychain)
-		return;
-
-	GL_DisableMultitexture ();
-
-	if (r_fastsky.value)
-	{
-		glDisable (GL_TEXTURE_2D);
-
-		if (Fog_GetDensity() > 0)
-			glColor3fv(Fog_GetColor());
-		else
-		{
-			col = StringToRGB(r_skycolor.string);
-			glColor3ubv(col);
-		}
-
-		for (fa = skychain ; fa ; fa = fa->texturechain)
-			EmitFlatPoly (fa);
-
-		glEnable (GL_TEXTURE_2D);
-		glColor3ubv (color_white);
-	}
-	else
-	{
-		if (gl_mtexable)
-		{
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			GL_Bind (solidskytexture);
-
-			GL_EnableMultitexture ();
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-			GL_Bind (alphaskytexture);
-
-			speedscale = cl.time * 8;
-			speedscale -= (int)speedscale & ~127;
-			speedscale2 = cl.time * 16;
-			speedscale2 -= (int)speedscale2 & ~127;
-
-			for (fa = skychain ; fa ; fa = fa->texturechain)
-				EmitSkyPolys (fa, true);
-
-			GL_DisableMultitexture ();
-		}
-		else
-		{
-			GL_Bind (solidskytexture);
-			speedscale = cl.time * 8;
-			speedscale -= (int)speedscale & ~127;
-
-			for (fa = skychain ; fa ; fa = fa->texturechain)
-				EmitSkyPolys (fa, false);
-
-			glEnable (GL_BLEND);
-			GL_Bind (alphaskytexture);
-			speedscale = cl.time * 16;
-			speedscale -= (int)speedscale & ~127;
-
-			for (fa = skychain ; fa ; fa = fa->texturechain)
-				EmitSkyPolys (fa, false);
-
-			glDisable (GL_BLEND);
-		}
-
-		if (Fog_GetDensity() > 0 && skyfog > 0)
-		{
-			glpoly_t	*p;
-			float		*v, *c;
-			int			i;
-
-			c = Fog_GetColor();
-			glEnable(GL_BLEND);
-			glDisable(GL_TEXTURE_2D);
-			glColor4f(c[0], c[1], c[2], bound(0.0, skyfog, 1.0));
-
-			speedscale = cl.time * 8;
-			speedscale -= (int)speedscale & ~127;
-
-			for (fa = skychain; fa; fa = fa->texturechain)
-				for (p = fa->polys; p; p = p->next)
-				{
-					glBegin(GL_POLYGON);
-					for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
-						glVertex3fv(v);
-					glEnd();
-				}
-
-			glColor3f(1, 1, 1);
-			glEnable(GL_TEXTURE_2D);
-			glDisable(GL_BLEND);
-		}
+		glEnd();
 	}
 
-	skychain = NULL;
-	skychain_tail = &skychain;
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_BLEND);
+
+	caustics_polys = NULL;
 }
 
 //===============================================================
@@ -519,50 +433,6 @@ qboolean OnChange_gl_texturemode_sky (cvar_t *var, char *string)
 	return false;
 }
 
-static	char	*skybox_ext[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
-
-/*
-==================
-R_SetSky
-==================
-*/
-int R_SetSky (char *skyname)
-{
-	int	i, error = 0;
-	byte	*data[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-
-	for (i=0 ; i<6 ; i++)
-	{
-		if (!(data[i] = GL_LoadImagePixels(va("env/%s%s", skyname, skybox_ext[i]), 0, 0, 0)) && 
-		    !(data[i] = GL_LoadImagePixels(va("gfx/env/%s%s", skyname, skybox_ext[i]), 0, 0, 0)) && 
-		    !(data[i] = GL_LoadImagePixels(va("env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0)) && 
-		    !(data[i] = GL_LoadImagePixels(va("gfx/env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0)))
-		{
-			Con_Printf ("Couldn't load skybox \"%s\"\n", skyname);
-			error = 1;
-
-			goto cleanup;
-		}
-	}
-	for (i=0 ; i<6 ; i++)
-	{
-		GL_Bind (skyboxtextures + i);
-		GL_Upload32 ((unsigned int *)data[i], image_width, image_height, 0);
-	}
-	r_skyboxloaded = true;
-
-cleanup:
-	for (i=0 ; i<6 ; i++)
-	{
-		if (data[i])
-			free (data[i]);
-		else
-			break;
-	}
-
-	return error;
-}
-
 qboolean OnChange_r_skybox (cvar_t *var, char *string)
 {
 	if (!string[0])
@@ -580,40 +450,16 @@ qboolean OnChange_r_skybox (cvar_t *var, char *string)
 	return R_SetSky (string);
 }
 
-static	vec3_t	skyclip[6] = {
-	{1, 1, 0},
-	{1, -1, 0},
-	{0, -1, 1},
-	{0, 1, 1},
-	{1, 0, 1},
-	{-1, 0, 1} 
-};
+qboolean OnChange_r_skyfog(cvar_t *var, char *string)
+{
+	if (!string[0])
+		return true;
 
-// 1 = s, 2 = t, 3 = 2048
-static	int	st_to_vec[6][3] = {
-	{ 3,-1, 2},
-	{-3, 1, 2},
+	// clear any skyfog setting from worldspawn
+	skyfog = Q_atof(string);
 
-	{ 1, 3, 2},
-	{-1,-3, 2},
-
-	{-2,-1, 3},		// 0 degrees yaw, look straight up
-	{ 2,-1,-3}		// look straight down
-};
-
-// s = [0]/[2], t = [1]/[2]
-static	int	vec_to_st[6][3] = {
-	{-2, 3, 1},
-	{ 2, 3,-1},
-
-	{ 1, 3, 2},
-	{-1, 3,-2},
-
-	{-2,-1, 3},
-	{-2, 1,-3}
-};
-
-static	float	skymins[2][6], skymaxs[2][6];
+	return false;
+}
 
 void DrawSkyPolygon (int nump, vec3_t vecs)
 {
@@ -658,13 +504,11 @@ void DrawSkyPolygon (int nump, vec3_t vecs)
 	}
 }
 
-#define	MAX_CLIP_VERTS	64
-
 void ClipSkyPolygon (int nump, vec3_t vecs, int stage)
 {
 	float		*norm, *v, d, e, dists[MAX_CLIP_VERTS];
 	qboolean	front, back;
-	int		sides[MAX_CLIP_VERTS], newc[2], i, j;
+	int			sides[MAX_CLIP_VERTS], newc[2], i, j;
 	vec3_t		newv[2][MAX_CLIP_VERTS];
 
 	if (nump > MAX_CLIP_VERTS-2)
@@ -750,23 +594,184 @@ void ClipSkyPolygon (int nump, vec3_t vecs, int stage)
 }
 
 /*
-=================
-R_AddSkyBoxSurface
-=================
+================
+Sky_ProcessPoly
+================
 */
-void R_AddSkyBoxSurface (msurface_t *fa)
+void Sky_ProcessPoly(glpoly_t *p)
 {
-	int		i;
+	int			i;
 	vec3_t		verts[MAX_CLIP_VERTS];
-	glpoly_t	*p;
 
-	// calculate vertex values for sky box
-	for (p = fa->polys ; p ; p = p->next)
+	// draw it
+	DrawGLPoly(p);
+
+	// update sky bounds
+	if (!r_fastsky.value)
 	{
-		for (i=0 ; i<p->numverts ; i++)
-			VectorSubtract (p->verts[i], r_origin, verts[i]);
-		ClipSkyPolygon (p->numverts, verts[0], 0);
+		for (i = 0; i<p->numverts; i++)
+			VectorSubtract(p->verts[i], r_origin, verts[i]);
+		ClipSkyPolygon(p->numverts, verts[0], 0);
 	}
+}
+
+/*
+================
+Sky_ProcessTextureChains -- handles sky polys in world model
+================
+*/
+void Sky_ProcessTextureChains(void)
+{
+	int			i, waterline;
+	msurface_t	*s;
+	texture_t	*t;
+
+	for (i = 0; i < cl.worldmodel->numtextures; i++)
+	{
+		for (waterline = 0; waterline < 2; waterline++)
+		{
+			t = cl.worldmodel->textures[i];
+
+			if (!t || !t->texturechain[waterline] || !(t->texturechain[waterline]->flags & SURF_DRAWSKY))
+				continue;
+
+			for (s = t->texturechain[waterline]; s; s = s->texturechain)
+				Sky_ProcessPoly(s->polys);
+		}
+	}
+}
+
+/*
+================
+Sky_ProcessEntities -- handles sky polys on brush models
+================
+*/
+void Sky_ProcessEntities(void)
+{
+	entity_t	*ent;
+	msurface_t	*s;
+	glpoly_t	*p;
+	int			i, j, k, mark;
+	float		dot;
+	qboolean	rotated;
+	vec3_t		temp, forward, right, up;
+
+	if (!r_drawentities.value)
+		return;
+
+	for (i = 0; i < cl_numvisedicts; i++)
+	{
+		ent = cl_visedicts[i];
+
+		if (ent->model->type != mod_brush)
+			continue;
+
+		//if (R_CullModelForEntity(ent))
+		//	continue;
+
+		if (ent->transparency == 0)
+			continue;
+
+		VectorSubtract(r_refdef.vieworg, ent->origin, modelorg);
+		if (ent->angles[0] || ent->angles[1] || ent->angles[2])
+		{
+			rotated = true;
+			AngleVectors(ent->angles, forward, right, up);
+			VectorCopy(modelorg, temp);
+			modelorg[0] = DotProduct(temp, forward);
+			modelorg[1] = -DotProduct(temp, right);
+			modelorg[2] = DotProduct(temp, up);
+		}
+		else
+			rotated = false;
+
+		s = &ent->model->surfaces[ent->model->firstmodelsurface];
+
+		for (j = 0; j<ent->model->nummodelsurfaces; j++, s++)
+		{
+			if (s->flags & SURF_DRAWSKY)
+			{
+				dot = DotProduct(modelorg, s->plane->normal) - s->plane->dist;
+				if (((s->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
+					(!(s->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
+				{
+					//copy the polygon and translate manually, since Sky_ProcessPoly needs it to be in world space
+					mark = Hunk_LowMark();
+					p = (glpoly_t *)Hunk_Alloc(sizeof(*s->polys)); //FIXME: don't allocate for each poly
+					p->numverts = s->polys->numverts;
+					for (k = 0; k<p->numverts; k++)
+					{
+						if (rotated)
+						{
+							p->verts[k][0] = ent->origin[0] + s->polys->verts[k][0] * forward[0]
+								- s->polys->verts[k][1] * right[0]
+								+ s->polys->verts[k][2] * up[0];
+							p->verts[k][1] = ent->origin[1] + s->polys->verts[k][0] * forward[1]
+								- s->polys->verts[k][1] * right[1]
+								+ s->polys->verts[k][2] * up[1];
+							p->verts[k][2] = ent->origin[2] + s->polys->verts[k][0] * forward[2]
+								- s->polys->verts[k][1] * right[2]
+								+ s->polys->verts[k][2] * up[2];
+						}
+						else
+							VectorAdd(s->polys->verts[k], ent->origin, p->verts[k]);
+					}
+					Sky_ProcessPoly(p);
+					Hunk_FreeToLowMark(mark);
+				}
+			}
+		}
+	}
+}
+
+//==============================================================================
+//
+//  RENDER SKYBOX
+//
+//==============================================================================
+
+/*
+==================
+R_SetSky
+==================
+*/
+int R_SetSky(char *skyname)
+{
+	int		i, error = 0;
+	byte	*data[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+
+	for (i = 0; i<6; i++)
+	{
+		if (!(data[i] = GL_LoadImagePixels(va("env/%s%s", skyname, skybox_ext[i]), 0, 0, 0)) &&
+			!(data[i] = GL_LoadImagePixels(va("gfx/env/%s%s", skyname, skybox_ext[i]), 0, 0, 0)) &&
+			!(data[i] = GL_LoadImagePixels(va("env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0)) &&
+			!(data[i] = GL_LoadImagePixels(va("gfx/env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0)))
+		{
+			Con_Printf("Couldn't load skybox \"%s\"\n", skyname);
+			error = 1;
+
+			goto cleanup;
+		}
+	}
+	for (i = 0; i<6; i++)
+	{
+		GL_Bind(skyboxtextures + i);
+		GL_Upload32((unsigned int *)data[i], image_width, image_height, 0);
+	}
+	skybox_image_width = image_width;
+	skybox_image_height = image_height;
+	r_skyboxloaded = true;
+
+cleanup:
+	for (i = 0; i<6; i++)
+	{
+		if (data[i])
+			free(data[i]);
+		else
+			break;
+	}
+
+	return error;
 }
 
 /*
@@ -785,42 +790,55 @@ void R_ClearSkyBox (void)
 	}
 }
 
-void MakeSkyVec (float s, float t, int axis)
+/*
+==============
+Sky_SetBoxVert
+==============
+*/
+void Sky_SetBoxVert(float s, float t, int axis, vec3_t v)
 {
-	int	j, k, farclip;
-	vec3_t	v, b;
+	vec3_t		b;
+	int			j, k, farclip;
 
 	farclip = max((int)r_farclip.value, 4096);
-	b[0] = s * (farclip >> 1);
-	b[1] = t * (farclip >> 1);
-	b[2] = (farclip >> 1);
+	b[0] = s * farclip / sqrt(3.0);
+	b[1] = t * farclip / sqrt(3.0);
+	b[2] = farclip / sqrt(3.0);
 
-	for (j=0 ; j<3 ; j++)
+	for (j = 0; j<3; j++)
 	{
 		k = st_to_vec[axis][j];
-		v[j] = (k < 0) ? -b[-k-1] : b[k-1];
+		v[j] = (k < 0) ? -b[-k - 1] : b[k - 1];
 		v[j] += r_origin[j];
 	}
-
-	// avoid bilerp seam
-	s = (s+1) * 0.5;
-	t = (t+1) * 0.5;
-
-	if (s < 1.0/512)
-		s = 1.0 / 512;
-	else if (s > 511.0/512)
-		s = 511.0 / 512;
-	if (t < 1.0/512)
-		t = 1.0 / 512;
-	else if (t > 511.0/512)
-		t = 511.0 / 512;
-
-	t = 1.0 - t;
-	glTexCoord2f (s, t);
-	glVertex3fv (v);
 }
 
-static	int	skytexorder[6] = {0, 2, 1, 3, 4, 5};
+/*
+==============
+Sky_EmitSkyBoxVertex
+==============
+*/
+void Sky_EmitSkyBoxVertex(float s, float t, int axis)
+{
+	vec3_t	v;
+	float	w, h;
+
+	Sky_SetBoxVert(s, t, axis, v);
+
+	// convert from range [-1,1] to [0,1]
+	s = (s + 1)*0.5;
+	t = (t + 1)*0.5;
+
+	// avoid bilerp seam
+	w = skybox_image_width;
+	h = skybox_image_height;
+	s = s * (w - 1) / w + 0.5 / w;
+	t = t * (h - 1) / h + 0.5 / h;
+
+	t = 1.0 - t;
+	glTexCoord2f(s, t);
+	glVertex3fv(v);
+}
 
 /*
 ==============
@@ -830,16 +848,6 @@ R_DrawSkyBox
 void R_DrawSkyBox (void)
 {
 	int		i;
-	msurface_t	*fa;
-
-	if (!skychain)
-		return;
-	
-	R_ClearSkyBox ();
-	for (fa = skychain ; fa ; fa = fa->texturechain)
-		R_AddSkyBoxSurface (fa);
-
-	GL_DisableMultitexture ();
 
 	for (i=0 ; i<6 ; i++)
 	{
@@ -849,10 +857,10 @@ void R_DrawSkyBox (void)
 		GL_Bind (skyboxtextures + skytexorder[i]);
 
 		glBegin (GL_QUADS);
-		MakeSkyVec (skymins[0][i], skymins[1][i], i);
-		MakeSkyVec (skymins[0][i], skymaxs[1][i], i);
-		MakeSkyVec (skymaxs[0][i], skymaxs[1][i], i);
-		MakeSkyVec (skymaxs[0][i], skymins[1][i], i);
+		Sky_EmitSkyBoxVertex(skymins[0][i], skymins[1][i], i);
+		Sky_EmitSkyBoxVertex(skymins[0][i], skymaxs[1][i], i);
+		Sky_EmitSkyBoxVertex(skymaxs[0][i], skymaxs[1][i], i);
+		Sky_EmitSkyBoxVertex(skymaxs[0][i], skymins[1][i], i);
 		glEnd ();
 
 		if (Fog_GetDensity() > 0 && skyfog > 0)
@@ -865,10 +873,10 @@ void R_DrawSkyBox (void)
 			glColor4f(c[0], c[1], c[2], bound(0.0, skyfog, 1.0));
 
 			glBegin(GL_QUADS);
-			MakeSkyVec(skymins[0][i], skymins[1][i], i);
-			MakeSkyVec(skymins[0][i], skymaxs[1][i], i);
-			MakeSkyVec(skymaxs[0][i], skymaxs[1][i], i);
-			MakeSkyVec(skymaxs[0][i], skymins[1][i], i);
+			Sky_EmitSkyBoxVertex(skymins[0][i], skymins[1][i], i);
+			Sky_EmitSkyBoxVertex(skymins[0][i], skymaxs[1][i], i);
+			Sky_EmitSkyBoxVertex(skymaxs[0][i], skymaxs[1][i], i);
+			Sky_EmitSkyBoxVertex(skymaxs[0][i], skymins[1][i], i);
 			glEnd();
 
 			glColor3f(1, 1, 1);
@@ -876,35 +884,197 @@ void R_DrawSkyBox (void)
 			glDisable(GL_BLEND);
 		}
 	}
-
-	glDisable (GL_TEXTURE_2D);
-	glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	glEnable (GL_BLEND);
-	glBlendFunc (GL_ZERO, GL_ONE);
-
-	for (fa = skychain ; fa ; fa = fa->texturechain)
-		EmitFlatPoly (fa);
-
-	glEnable (GL_TEXTURE_2D);
-	glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	glDisable (GL_BLEND);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	skychain = NULL;
-	skychain_tail = &skychain;
 }
 
-qboolean OnChange_r_skyfog(cvar_t *var, char *string)
+//==============================================================================
+//
+//  RENDER CLOUDS
+//
+//==============================================================================
+
+/*
+=============
+Sky_GetTexCoord
+=============
+*/
+void Sky_GetTexCoord(vec3_t v, float speed, float *s, float *t)
 {
-	if (!string[0])
-		return true;
+	vec3_t	dir;
+	float	length, scroll;
 
-	// clear any skyfog setting from worldspawn
-	skyfog = Q_atof(string);
+	VectorSubtract(v, r_origin, dir);
+	dir[2] *= 3;	// flatten the sphere
 
-	return false;
+	length = dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2];
+	length = sqrt(length);
+	length = 6 * 63 / length;
+
+	scroll = cl.time*speed;
+	scroll -= (int)scroll & ~127;
+
+	*s = (scroll + dir[0] * length) * (1.0 / 128);
+	*t = (scroll + dir[1] * length) * (1.0 / 128);
 }
 
+/*
+=================
+Sky_DrawFaceQuad
+=================
+*/
+void Sky_DrawFaceQuad(glpoly_t *p)
+{
+	float	s, t;
+	float	*v;
+	int		i;
+
+	if (gl_mtexable)
+	{
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_Bind(solidskytexture);
+
+		GL_EnableMultitexture();
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+		GL_Bind(alphaskytexture);
+
+		glBegin(GL_QUADS);
+		for (i = 0, v = p->verts[0]; i<4; i++, v += VERTEXSIZE)
+		{
+			Sky_GetTexCoord(v, 8, &s, &t);
+			qglMultiTexCoord2f(GL_TEXTURE0_ARB, s, t);
+			Sky_GetTexCoord(v, 16, &s, &t);
+			qglMultiTexCoord2f(GL_TEXTURE1_ARB, s, t);
+			glVertex3fv(v);
+		}
+		glEnd();
+
+		GL_DisableMultitexture();
+	}
+	else
+	{
+		GL_Bind(solidskytexture);
+
+		glBegin(GL_QUADS);
+		for (i = 0, v = p->verts[0]; i<4; i++, v += VERTEXSIZE)
+		{
+			Sky_GetTexCoord(v, 8, &s, &t);
+			glTexCoord2f(s, t);
+			glVertex3fv(v);
+		}
+		glEnd();
+
+		glEnable(GL_BLEND);
+		GL_Bind(alphaskytexture);
+
+		glBegin(GL_QUADS);
+		for (i = 0, v = p->verts[0]; i<4; i++, v += VERTEXSIZE)
+		{
+			Sky_GetTexCoord(v, 16, &s, &t);
+			glTexCoord2f(s, t);
+			glVertex3fv(v);
+		}
+		glEnd();
+
+		glDisable(GL_BLEND);
+	}
+
+	if (Fog_GetDensity() > 0 && skyfog > 0)
+	{
+		float	*c;
+
+		c = Fog_GetColor();
+		glEnable(GL_BLEND);
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(c[0], c[1], c[2], bound(0.0, skyfog, 1.0));
+
+		glBegin(GL_QUADS);
+		for (i = 0, v = p->verts[0]; i<4; i++, v += VERTEXSIZE)
+			glVertex3fv(v);
+		glEnd();
+
+		glColor3f(1, 1, 1);
+		glEnable(GL_TEXTURE_2D);
+		glDisable(GL_BLEND);
+	}
+}
+
+/*
+=================
+Sky_DrawFace
+=================
+*/
+void Sky_DrawFace(int axis)
+{
+	glpoly_t	*p;
+	vec3_t		verts[4];
+	int			i, j, start;
+	float		di, qi, dj, qj;
+	vec3_t		vup, vright, temp, temp2;
+
+	Sky_SetBoxVert(-1.0, -1.0, axis, verts[0]);
+	Sky_SetBoxVert(-1.0, 1.0, axis, verts[1]);
+	Sky_SetBoxVert(1.0, 1.0, axis, verts[2]);
+	Sky_SetBoxVert(1.0, -1.0, axis, verts[3]);
+
+	start = Hunk_LowMark();
+	p = (glpoly_t *)Hunk_Alloc(sizeof(glpoly_t));
+
+	VectorSubtract(verts[2], verts[3], vup);
+	VectorSubtract(verts[2], verts[1], vright);
+
+	di = 12;
+	qi = 1.0 / di;
+	dj = (axis < 4) ? di * 2 : di; //subdivide vertically more than horizontally on skybox sides
+	qj = 1.0 / dj;
+
+	for (i = 0; i<di; i++)
+	{
+		for (j = 0; j<dj; j++)
+		{
+			if (i*qi < skymins[0][axis] / 2 + 0.5 - qi || i*qi > skymaxs[0][axis] / 2 + 0.5 ||
+				j*qj < skymins[1][axis] / 2 + 0.5 - qj || j*qj > skymaxs[1][axis] / 2 + 0.5)
+				continue;
+
+			//if (i&1 ^ j&1) continue; //checkerboard test
+			VectorScale(vright, qi*i, temp);
+			VectorScale(vup, qj*j, temp2);
+			VectorAdd(temp, temp2, temp);
+			VectorAdd(verts[0], temp, p->verts[0]);
+
+			VectorScale(vup, qj, temp);
+			VectorAdd(p->verts[0], temp, p->verts[1]);
+
+			VectorScale(vright, qi, temp);
+			VectorAdd(p->verts[1], temp, p->verts[2]);
+
+			VectorAdd(p->verts[0], temp, p->verts[3]);
+
+			Sky_DrawFaceQuad(p);
+		}
+	}
+	Hunk_FreeToLowMark(start);
+}
+
+/*
+==============
+R_DrawSkyLayers
+
+draws the old-style scrolling cloud layers
+==============
+*/
+void R_DrawSkyLayers(void)
+{
+	int i;
+
+	for (i = 0; i<6; i++)
+		if (skymins[0][i] < skymaxs[0][i] && skymins[1][i] < skymaxs[1][i])
+			Sky_DrawFace(i);
+}
+
+/*
+==============
+Sky_NewMap
+==============
+*/
 void Sky_NewMap(void)
 {
 	char	key[128], value[4096], *data;
@@ -950,53 +1120,53 @@ void Sky_NewMap(void)
 	}
 }
 
-void EmitCausticsPolys (void)
-{
-	glpoly_t	*p;
-	int		i;
-	float		*v, s, t, os, ot;
-	extern glpoly_t	*caustics_polys;
+/*
+==============
+R_DrawSky
 
-	GL_Bind (underwatertexture);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-	glEnable (GL_BLEND);
-	glBlendFunc (GL_DST_COLOR, GL_SRC_COLOR);
-
-	for (p = caustics_polys ; p ; p = p->caustics_chain)
-	{
-		glBegin (GL_POLYGON);
-		for (i = 0, v = p->verts[0] ; i < p->numverts ; i++, v += VERTEXSIZE)
-		{
-			os = v[3];
-			ot = v[4];
-
-			s = os + SINTABLE_APPROX(0.465 * (cl.time + ot));
-			s *= -3 * (0.5 / 64);
-
-			t = ot + SINTABLE_APPROX(0.465 * (cl.time + os));
-			t *= -3 * (0.5 / 64);
-
-			glTexCoord2f (s, t);
-			glVertex3fv (v);
-		}
-		glEnd ();
-	}
-
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable (GL_BLEND);
-
-	caustics_polys = NULL;
-}
-
+called once per frame before drawing anything else
+==============
+*/
 void R_DrawSky(void)
 {
+	byte	*col;
+	
+	// reset sky bounds
+	R_ClearSkyBox();
+
+	// process world and bmodels: draw flat-shaded sky surfs, and update skybounds
 	Fog_DisableGFog();
 
-	if (r_skyboxloaded)
-		R_DrawSkyBox();
+	// r_fastsky drawing - this is drawn by default
+	glDisable(GL_TEXTURE_2D);
+	if (Fog_GetDensity() > 0)
+		glColor3fv(Fog_GetColor());
 	else
-		R_DrawSkyChain();
+	{
+		col = StringToRGB(r_skycolor.string);
+		glColor3ubv(col);
+	}
+
+	Sky_ProcessTextureChains();
+	Sky_ProcessEntities();
+
+	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
+
+	// render slow sky: cloud layers or skybox
+	if (!r_fastsky.value && !(Fog_GetDensity() > 0 && skyfog >= 1))
+	{
+		glDepthFunc(GL_GEQUAL);
+		glDepthMask(GL_FALSE);
+
+		if (r_skyboxloaded)
+			R_DrawSkyBox();
+		else
+			R_DrawSkyLayers();
+
+		glDepthMask(GL_TRUE);
+		glDepthFunc(GL_LEQUAL);
+	}
 
 	Fog_EnableGFog();
 }

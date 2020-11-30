@@ -288,10 +288,7 @@ extern qboolean	gl_add_ext, gl_allow_ztrick;
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);
 void EmitTurbulentPolys (msurface_t *fa);
-void EmitSkyPolys (msurface_t *fa, qboolean mtex);
 void EmitCausticsPolys (void);
-void R_DrawSkyChain (void);
-void R_AddSkyBoxSurface (msurface_t *fa);
 void R_ClearSkyBox (void);
 void R_DrawSkyBox (void);
 extern qboolean	r_skyboxloaded;
@@ -346,6 +343,7 @@ void R_StoreEfrags (efrag_t **ppefrag);
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
 
 // gl_rsurf.c
+void DrawGLPoly(glpoly_t *p);
 void EmitDetailPolys (void);
 void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);

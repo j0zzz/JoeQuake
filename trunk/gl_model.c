@@ -1038,7 +1038,7 @@ void Mod_PolyForUnlitSurface(msurface_t *fa)
 		numverts++;
 	}
 
-	//create the poly
+	// create the poly
 	poly = (glpoly_t *)Hunk_Alloc(sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float));
 	poly->next = NULL;
 	fa->polys = poly;
@@ -1175,8 +1175,7 @@ void Mod_LoadFaces (lump_t *l, qboolean bsp2)
 		if (ISSKYTEX(out->texinfo->texture->name)) // sky surface //also note -- was Q_strncmp, changed to match qbsp
 		{
 			out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
-			//Mod_PolyForUnlitSurface(out); //no more subdivision 
-			GL_SubdivideSurface(out);
+			Mod_PolyForUnlitSurface(out); //no more subdivision 
 		}
 		else if (ISTURBTEX(out->texinfo->texture->name)) // warp surface
 		{

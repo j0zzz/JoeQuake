@@ -46,9 +46,6 @@ static	int	allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
 // main memory so texsubimage can update properly
 byte		lightmaps[3*MAX_LIGHTMAPS*BLOCK_WIDTH*BLOCK_HEIGHT];
 
-msurface_t  *skychain = NULL;
-msurface_t	**skychain_tail = &skychain;
-
 msurface_t  *waterchain = NULL;
 msurface_t	**waterchain_tail = &waterchain;
 
@@ -782,8 +779,6 @@ static void R_ClearTextureChains (model_t *clmodel)
 	r_notexture_mip->texturechain[1] = NULL;
 	r_notexture_mip->texturechain_tail[1] = &r_notexture_mip->texturechain[1];
 
-	skychain = NULL;
-	skychain_tail = &skychain;
 	if (clmodel == cl.worldmodel)
 	{
 		waterchain = NULL;
@@ -912,7 +907,7 @@ void DrawTextureChains (model_t *model)
 
 		for (waterline = 0 ; waterline < 2 ; waterline++)
 		{
-			if (!(s = model->textures[i]->texturechain[waterline]))
+			if (!(s = model->textures[i]->texturechain[waterline]) || s->flags & SURF_DRAWSKY)
 				continue;
 
 			for ( ; s ; s = s->texturechain)
@@ -1110,11 +1105,7 @@ void R_DrawBrushModel (entity_t *ent)
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
 			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
 		{
-			if (psurf->flags & SURF_DRAWSKY)
-			{
-				CHAIN_SURF_B2F(psurf, skychain);
-			}
-			else if (psurf->flags & SURF_DRAWTURB)
+			if (psurf->flags & SURF_DRAWTURB)
 			{
 				EmitTurbulentPolys (psurf);
 			}
@@ -1127,7 +1118,6 @@ void R_DrawBrushModel (entity_t *ent)
 	}
 
 	DrawTextureChains (clmodel);
-	R_DrawSkyChain ();
 	R_DrawAlphaChain ();
 
 	glPopMatrix ();
@@ -1229,11 +1219,7 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 				continue;		// wrong side
 
 			// if sorting by texture, just store it out
-			if (surf->flags & SURF_DRAWSKY)
-			{
-				CHAIN_SURF_F2B(surf, skychain_tail);
-			}
-			else if (surf->flags & SURF_DRAWTURB)
+			if (surf->flags & SURF_DRAWTURB)
 			{
 				if (!strcmp(surf->texinfo->texture->name, "*teleport"))
 				{
