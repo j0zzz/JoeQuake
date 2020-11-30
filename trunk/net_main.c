@@ -376,6 +376,26 @@ hostcache_t	hostcache[HOSTCACHESIZE];
 
 /*
 ===================
+NET_IsSameConnectionAddress
+===================
+*/
+static qboolean NET_IsSameConnectionAddress(char *addressString,
+                                            hostcache_t *cachedHost)
+{
+	struct qsockaddr address1;
+	struct qsockaddr address2;
+	const net_landriver_t *landriver = &net_landrivers[cachedHost->ldriver];
+
+	if (landriver->StringToAddr(addressString, &address1) != 0)
+		return false;
+	address2 = cachedHost->addr;
+	landriver->SetSocketPort(&address1, 0);
+	landriver->SetSocketPort(&address2, 0);
+	return (landriver->AddrCompare(&address1, &address2) == 0);
+}
+
+/*
+===================
 NET_Connect
 ===================
 */
@@ -400,7 +420,8 @@ qsocket_t *NET_Connect (char *host)
 		if (hostCacheCount)
 		{
 			for (n=0 ; n<hostCacheCount ; n++)
-				if (!Q_strcasecmp(host, hostcache[n].name))
+				if (!Q_strcasecmp(host, hostcache[n].name) ||
+				    NET_IsSameConnectionAddress(host, &hostcache[n]))
 				{
 					host = hostcache[n].cname;
 					break;
