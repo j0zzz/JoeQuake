@@ -525,6 +525,14 @@ default.
 Set texture filtering mode for sky textures. Valid modes: `GL_LINEAR` and
 `GL_NEAREST`, `GL_LINEAR` by default.
 
+### `net_connectsearch`
+
+Allows to enable or disable the search for hosts on use of the `connect`
+command. It allows connecting by the server's hostname instead of by IP address.
+However, the search takes a significant amount of time. So disabling it can
+greatly speedup the time it takes to connect to a server by IP address.
+"1" by default. Set to "0" to try to speedup connecting by IP address.
+
 ## New commands
 
 ### `cmdlist`

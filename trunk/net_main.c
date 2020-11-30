@@ -63,6 +63,7 @@ int unreliableMessagesSent = 0;
 int unreliableMessagesReceived = 0;
 
 cvar_t	net_messagetimeout = {"net_messagetimeout", "300"};
+cvar_t	net_connectsearch = {"net_connectsearch", "1"};
 cvar_t	net_connecttimeout = {"net_connecttimeout", "10"};	// joe: qkick/qflood protection from ProQuake
 cvar_t	hostname = {"hostname", "UNNAMED"};
 cvar_t	cl_password = {"cl_password", ""};		// joe: password protection from ProQuake
@@ -409,11 +410,14 @@ qsocket_t *NET_Connect (char *host)
 		}
 	}
 
-	slistSilent = host ? true : false;
-	NET_Slist_f ();
+	if (net_connectsearch.value || !host)
+	{
+		slistSilent = host ? true : false;
+		NET_Slist_f ();
 
-	while (slistInProgress)
-		NET_Poll ();
+		while (slistInProgress)
+			NET_Poll ();
+	}
 
 	if (!host)
 	{
@@ -887,6 +891,7 @@ void NET_Init (void)
 	SZ_Alloc (&net_message, NET_MAXMESSAGE);
 
 	Cvar_Register (&net_messagetimeout);
+	Cvar_Register (&net_connectsearch);
 	Cvar_Register (&net_connecttimeout);	// joe: qkick/qflood protection from ProQuake
 	Cvar_Register (&hostname);
 	Cvar_Register (&cl_password);		// joe: password protection from ProQuake
