@@ -92,7 +92,7 @@ cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_skycolor = {"r_skycolor", "4"};
 cvar_t	r_drawflame = {"r_drawflame", "1"};
 
-cvar_t	r_farclip = {"r_farclip", "4096"};
+cvar_t	r_farclip = {"r_farclip", "16384"};
 qboolean OnChange_r_skybox (cvar_t *var, char *string);
 cvar_t	r_skybox = {"r_skybox", "", 0, OnChange_r_skybox};
 qboolean OnChange_r_skyfog(cvar_t *var, char *string);
@@ -2650,7 +2650,8 @@ void R_Init (void)
 	Cvar_Register (&gl_decal_sparks);
 	Cvar_Register (&gl_decal_explosions);
 
-	Cmd_AddLegacyCommand ("loadsky", "r_skybox");
+	Cmd_AddLegacyCommand("loadsky", "r_skybox");
+	Cmd_AddLegacyCommand("sky", "r_skybox");	// most mods use this command (Quakespasm) to set sky, so let's support them
 
 	// this minigl driver seems to slow us down if the particles are drawn WITHOUT Z buffer bits
 	if (!strcmp(gl_vendor, "METABYTE/WICKED3D"))
