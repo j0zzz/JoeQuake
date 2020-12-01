@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 
 extern cvar_t hostname;
+extern cvar_t net_getdomainname;
 
 #define MAXHOSTNAMELEN	256
 
@@ -494,11 +495,13 @@ int WINS_GetNameFromAddr (struct qsockaddr *addr, char *name)
 {
 	struct	hostent	*hostentry;
 
-	hostentry = pgethostbyaddr ((char *)&((struct sockaddr_in *)addr)->sin_addr, sizeof(struct in_addr), AF_INET);
-	if (hostentry)
-	{
-		Q_strncpy (name, (char *)hostentry->h_name, NET_NAMELEN - 1);
-		return 0;
+	if (net_getdomainname.value) {
+		hostentry = pgethostbyaddr ((char *)&((struct sockaddr_in *)addr)->sin_addr, sizeof(struct in_addr), AF_INET);
+		if (hostentry)
+		{
+			Q_strncpy (name, (char *)hostentry->h_name, NET_NAMELEN - 1);
+			return 0;
+		}
 	}
 
 	Q_strcpy (name, WINS_AddrToString (addr));

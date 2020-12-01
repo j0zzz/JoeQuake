@@ -525,6 +525,23 @@ default.
 Set texture filtering mode for sky textures. Valid modes: `GL_LINEAR` and
 `GL_NEAREST`, `GL_LINEAR` by default.
 
+### `net_connectsearch`
+
+Allows to enable or disable the search for hosts on use of the `connect`
+command. It allows connecting by the server's hostname instead of by IP address.
+However, the search takes a significant amount of time. So disabling it can
+greatly speedup the time it takes to connect to a server by IP address.
+"1" by default. Set to "0" to try to speedup connecting by IP address.
+
+### `net_getdomainname`
+
+Allows to enable or disable trying to find domain names for IP addresses using
+DNS lookups. These can find domain names like nl2.badplace.eu from its IP
+address. However, on Windows this lookup seems to take a long time. Disabling it
+can therefore speed up connecting to a server significantly. As there will
+barely be any usecase for the domain names, it is "0" by default. Set to "1" to
+restore the original Quake behaviour with the lookups enabled.
+
 ## New commands
 
 ### `cmdlist`

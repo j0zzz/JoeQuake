@@ -63,7 +63,9 @@ int unreliableMessagesSent = 0;
 int unreliableMessagesReceived = 0;
 
 cvar_t	net_messagetimeout = {"net_messagetimeout", "300"};
+cvar_t	net_connectsearch = {"net_connectsearch", "1"};
 cvar_t	net_connecttimeout = {"net_connecttimeout", "10"};	// joe: qkick/qflood protection from ProQuake
+cvar_t	net_getdomainname = {"net_getdomainname", "0"};
 cvar_t	hostname = {"hostname", "UNNAMED"};
 cvar_t	cl_password = {"cl_password", ""};		// joe: password protection from ProQuake
 cvar_t	rcon_password = {"rcon_password", ""};		// joe: rcon password from ProQuake
@@ -375,6 +377,26 @@ hostcache_t	hostcache[HOSTCACHESIZE];
 
 /*
 ===================
+NET_IsSameConnectionAddress
+===================
+*/
+static qboolean NET_IsSameConnectionAddress(char *addressString,
+                                            hostcache_t *cachedHost)
+{
+	struct qsockaddr address1;
+	struct qsockaddr address2;
+	const net_landriver_t *landriver = &net_landrivers[cachedHost->ldriver];
+
+	if (landriver->StringToAddr(addressString, &address1) != 0)
+		return false;
+	address2 = cachedHost->addr;
+	landriver->SetSocketPort(&address1, 0);
+	landriver->SetSocketPort(&address2, 0);
+	return (landriver->AddrCompare(&address1, &address2) == 0);
+}
+
+/*
+===================
 NET_Connect
 ===================
 */
@@ -399,7 +421,8 @@ qsocket_t *NET_Connect (char *host)
 		if (hostCacheCount)
 		{
 			for (n=0 ; n<hostCacheCount ; n++)
-				if (!Q_strcasecmp(host, hostcache[n].name))
+				if (!Q_strcasecmp(host, hostcache[n].name) ||
+				    NET_IsSameConnectionAddress(host, &hostcache[n]))
 				{
 					host = hostcache[n].cname;
 					break;
@@ -409,11 +432,14 @@ qsocket_t *NET_Connect (char *host)
 		}
 	}
 
-	slistSilent = host ? true : false;
-	NET_Slist_f ();
+	if (net_connectsearch.value || !host)
+	{
+		slistSilent = host ? true : false;
+		NET_Slist_f ();
 
-	while (slistInProgress)
-		NET_Poll ();
+		while (slistInProgress)
+			NET_Poll ();
+	}
 
 	if (!host)
 	{
@@ -887,7 +913,9 @@ void NET_Init (void)
 	SZ_Alloc (&net_message, NET_MAXMESSAGE);
 
 	Cvar_Register (&net_messagetimeout);
+	Cvar_Register (&net_connectsearch);
 	Cvar_Register (&net_connecttimeout);	// joe: qkick/qflood protection from ProQuake
+	Cvar_Register (&net_getdomainname);
 	Cvar_Register (&hostname);
 	Cvar_Register (&cl_password);		// joe: password protection from ProQuake
 	Cvar_Register (&rcon_password);		// joe: rcon password from ProQuake
