@@ -849,7 +849,7 @@ void DrawTextureChains (model_t *model)
 	msurface_t	*s;
 	texture_t	*t;
 	qboolean	mtex_lightmaps, mtex_fbs, doMtex1, doMtex2, render_lightmaps = false;
-	qboolean	draw_fbs, draw_mtex_fbs, can_mtex_lightmaps, can_mtex_fbs, doAlphaTest;
+	qboolean	draw_fbs, draw_mtex_fbs, can_mtex_lightmaps, can_mtex_fbs;
 
 	// ericw -- the mh dynamic lightmap speedup: make a first pass through all
 	// surfaces we are going to draw, and rebuild any lightmaps that need it.
@@ -883,14 +883,6 @@ void DrawTextureChains (model_t *model)
 		// bind the world texture
 		GL_SelectTexture (GL_TEXTURE0_ARB);
 		GL_Bind (t->gl_texturenum);
-
-		doAlphaTest = false;
-		if ((t->texturechain[0] && t->texturechain[0]->flags & SURF_DRAWFENCE) ||
-			(t->texturechain[1] && t->texturechain[1]->flags & SURF_DRAWFENCE))
-		{
-			glEnable(GL_ALPHA_TEST);
-			doAlphaTest = true;
-		}
 
 		draw_fbs = t->isLumaTexture || gl_fb_bmodels.value;
 		draw_mtex_fbs = draw_fbs && can_mtex_fbs;
@@ -1028,9 +1020,6 @@ void DrawTextureChains (model_t *model)
 			GL_DisableTMU (GL_TEXTURE1_ARB);
 		if (doMtex2)
 			GL_DisableTMU (GL_TEXTURE2_ARB);
-
-		if (doAlphaTest)
-			glDisable(GL_ALPHA_TEST);
 	}
 
 	if (gl_mtexable)
@@ -1150,6 +1139,10 @@ void R_DrawBrushModel (entity_t *ent)
 			if (psurf->flags & SURF_DRAWTURB)
 			{
 				EmitTurbulentPolys (psurf);
+			}
+			else if (psurf->flags & SURF_DRAWALPHA) 
+			{
+				CHAIN_SURF_B2F(psurf, alphachain);
 			}
 			else
 			{
@@ -1271,6 +1264,10 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 				{
 					CHAIN_SURF_F2B(surf, waterchain_tail);
 				}
+			}
+			else if (surf->flags & SURF_DRAWALPHA) 
+			{
+				CHAIN_SURF_B2F(surf, alphachain);
 			}
 			else
 			{

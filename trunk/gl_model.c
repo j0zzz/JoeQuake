@@ -393,6 +393,7 @@ qboolean Img_HasFullbrights (byte *pixels, int size)
 
 #define	ISTURBTEX(name)	((name)[0] == '*')
 #define	ISSKYTEX(name)	(!Q_strncasecmp(name, "sky", 3)) //((name)[0] == 's' && (name)[1] == 'k' && (name)[2] == 'y')
+#define ISALPHATEX(name) ((name)[0] == '{')
 
 byte	*mod_base;
 
@@ -1199,9 +1200,9 @@ void Mod_LoadFaces (lump_t *l, qboolean bsp2)
 			//Mod_PolyForUnlitSurface(out);
 			GL_SubdivideSurface(out);
 		}
-		else if (out->texinfo->texture->name[0] == '{') // ericw -- fence textures
+		else if (ISALPHATEX(out->texinfo->texture->name))
 		{
-			out->flags |= SURF_DRAWFENCE;
+			out->flags |= SURF_DRAWALPHA;
 		}
 		else if (out->texinfo->flags & TEX_MISSING) // texture is missing from bsp
 		{
