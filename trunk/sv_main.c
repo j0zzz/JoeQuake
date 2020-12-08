@@ -46,6 +46,8 @@ void SV_Init (void)
 	int	i;
 	const char *p;
 
+	sv.edicts = NULL; // ericw -- sv.edicts switched to use malloc() 
+
 	Cvar_Register (&sv_maxvelocity);
 	Cvar_Register (&sv_gravity);
 	Cvar_Register (&sv_friction);
