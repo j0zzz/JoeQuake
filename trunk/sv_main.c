@@ -1335,9 +1335,7 @@ void SV_SpawnServer (char *server)
 // set up the new server
 	Host_ClearMemory ();
 
-	memset (&sv, 0, sizeof(sv));
-
-	strcpy (sv.name, server);
+	Q_strncpyz (sv.name, server, sizeof(sv.name));
 
 	sv.protocol = sv_protocol; // johnfitz 
 

@@ -505,7 +505,6 @@ void Host_ShutdownServer (qboolean crash)
 			SV_DropClient (crash);
 
 // clear structures
-	memset (&sv, 0, sizeof(sv));
 	memset (svs.clients, 0, svs.maxclientslimit * sizeof(client_t));
 }
 
