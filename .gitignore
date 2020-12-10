@@ -1,0 +1,17 @@
+*.db
+*.db-shm
+*.db-wal
+*.opendb
+trunk/.vs/*
+*.obj
+*.pdb
+*.exe
+*.recipe
+*.log
+*.res
+*.tlog
+*.asm
+*.txt
+*.user
+*.ipch
+_shelve_*
