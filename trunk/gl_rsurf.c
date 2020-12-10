@@ -70,8 +70,6 @@ msurface_t	**alphachain_tail = &alphachain;
 		(chain) = (surf);				\
 	}
 
-void R_RenderDynamicLightmaps (msurface_t *fa);
-
 glpoly_t	*fullbright_polys[MAX_GLTEXTURES];
 glpoly_t	*luma_polys[MAX_GLTEXTURES];
 qboolean	drawfullbrights = false, drawlumas = false;
@@ -731,7 +729,6 @@ void R_DrawAlphaChain (void)
 	for (s = alphachain ; s ; s = s->texturechain)
 	{
 		t = s->texinfo->texture;
-		R_RenderDynamicLightmaps (s);
 
 		// bind the world texture
 		GL_DisableMultitexture ();
@@ -743,11 +740,6 @@ void R_DrawAlphaChain (void)
 			GL_EnableMultitexture ();
 			GL_Bind (lightmap_textures + s->lightmaptexturenum);
 			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
-
-			// update lightmap if its modified by dynamic lights
-			k = s->lightmaptexturenum;
-			if (lightmap_modified[k])
-				R_UploadLightMap (k);
 		}
 
 		glBegin (GL_POLYGON);
@@ -811,6 +803,14 @@ static void R_ClearTextureChains (model_t *clmodel)
 	alphachain_tail = &alphachain;
 }
 
+/*
+================
+R_BuildLightmapChains -- johnfitz -- used for r_lightmap 1
+
+ericw -- now always used at the start of R_DrawTextureChains for the
+mh dynamic lighting speedup
+================
+*/
 void R_BuildLightmapChains(model_t *model)
 {
 	texture_t *t;
