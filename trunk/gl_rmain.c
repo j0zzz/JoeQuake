@@ -91,10 +91,12 @@ cvar_t	r_fullbrightskins = {"r_fullbrightskins", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_skycolor = {"r_skycolor", "4"};
 cvar_t	r_drawflame = {"r_drawflame", "1"};
+qboolean OnChange_r_noshadow_list(cvar_t *var, char *string);
+cvar_t	r_noshadow_list = { "r_noshadow_list", "", 0, OnChange_r_noshadow_list };
 
 cvar_t	r_farclip = {"r_farclip", "16384"};
 qboolean OnChange_r_skybox (cvar_t *var, char *string);
-cvar_t	r_skybox = {"r_skybox", "", 0, OnChange_r_skybox};
+cvar_t	r_skybox = {"r_skybox", "", 0, OnChange_r_skybox };
 qboolean OnChange_r_skyfog(cvar_t *var, char *string);
 cvar_t	r_skyfog = { "r_skyfog", "0.5", 0, OnChange_r_skyfog };
 
@@ -698,7 +700,7 @@ void R_SetupLighting (entity_t *ent)
 	// normal lighting
 	ambientlight = shadelight = R_LightPoint (ent->origin);
  	full_light = false;
-	ent->noshadow = false;
+	ent->noshadow = (clmodel->flags & EF_NOSHADOW);
 
 	for (lnum = 0 ; lnum < MAX_DLIGHTS ; lnum++)
 	{
@@ -2602,9 +2604,10 @@ void R_Init (void)
 	Cvar_Register (&r_fastsky);
 	Cvar_Register (&r_skycolor);
 	Cvar_Register (&r_drawflame);
+	Cvar_Register (&r_noshadow_list);
 	Cvar_Register (&r_skybox);
 	Cvar_Register (&r_farclip);
-	Cvar_Register(&r_skyfog);
+	Cvar_Register (&r_skyfog);
 
 	Cvar_Register (&gl_finish);
 	Cvar_Register (&gl_clear);

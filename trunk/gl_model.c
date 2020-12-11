@@ -2293,6 +2293,66 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 	return (void *)pskintype;
 }
 
+static qboolean nameInList(const char *list, const char *name)
+{
+	const char *s;
+	char tmp[MAX_QPATH];
+	int i;
+
+	s = list;
+
+	while (*s)
+	{
+		// make a copy until the next comma or end of string
+		i = 0;
+		while (*s && *s != ',')
+		{
+			if (i < MAX_QPATH - 1)
+				tmp[i++] = *s;
+			s++;
+		}
+		tmp[i] = '\0';
+		//compare it to the model name
+		if (!strcmp(name, tmp))
+		{
+			return true;
+		}
+		//search forwards to the next comma or end of string
+		while (*s && *s == ',')
+			s++;
+	}
+	return false;
+}
+
+/*
+=================
+Mod_SetExtraFlags -- johnfitz -- set up extra flags that aren't in the mdl
+=================
+*/
+void Mod_SetExtraFlags(model_t *mod)
+{
+	extern cvar_t r_noshadow_list;
+
+	if (!mod || mod->type != mod_alias)
+		return;
+
+	mod->flags &= (0xFF | EF_Q3TRANS); //only preserve first byte, plus EF_Q3TRANS
+
+	// noshadow flag
+	if (nameInList(r_noshadow_list.string, mod->name))
+		mod->flags |= EF_NOSHADOW;
+}
+
+qboolean OnChange_r_noshadow_list(cvar_t *var, char *string)
+{
+	int i;
+	
+	for (i = 0; i < MAX_MODELS; i++)
+		Mod_SetExtraFlags(cl.model_precache[i]);
+
+	return false;
+}
+
 /*
 =================
 Mod_LoadAliasModel
@@ -2460,6 +2520,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	pheader->numposes = posenum;
 
 	mod->type = mod_alias;
+
+	Mod_SetExtraFlags(mod); //johnfitz
 
 	for (i = 0 ; i < 3 ; i++)
 	{

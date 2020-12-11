@@ -477,6 +477,7 @@ typedef enum
 #define	EF_TRACER2	64		// orange split trail + rotate
 #define	EF_TRACER3	128		// purple trail
 #define	EF_Q3TRANS	256		// Q3 model containing transparent surface(s)
+#define EF_NOSHADOW 512		// don't cast a shadow
 
 typedef struct model_s
 {
