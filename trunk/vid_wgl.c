@@ -1629,7 +1629,10 @@ void VID_Init (unsigned char *palette)
 	if (COM_CheckParm("-window"))
 		windowed = true;
 	if (COM_CheckParm("-borderless"))
+	{
+		windowed = true;	//joe: borderless mode only makes sense if windowed too, so the user don't have to use -window also all the time
 		borderless = true;
+	}
 
 	memset (&devmode, 0, sizeof(devmode));
 
