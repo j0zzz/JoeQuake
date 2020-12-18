@@ -159,6 +159,7 @@ float Q_atof (char *str);
 void Q_strncpyz (char *dest, char *src, size_t size);
 void Q_snprintfz (char *dest, size_t size, char *fmt, ...);
 size_t Q_strlcat(char *dst, const char *src, size_t siz);
+size_t Q_strlcpy(char *dst, const char *src, size_t siz);
 
 //============================================================================
 
@@ -180,7 +181,7 @@ void COM_Init (char *path);
 char *COM_SkipPath (char *pathname);
 void COM_StripExtension (char *in, char *out);
 char *COM_FileExtension (char *in);
-void COM_FileBase (char *in, char *out);
+void COM_FileBase(const char *in, char *out, size_t outsize);
 void COM_DefaultExtension (char *path, char *extension);
 
 char *va (char *format, ...);
