@@ -924,6 +924,26 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 	return data;
 }
 
+void SwitchToHigherProtocolVersionIfNeeded(edict_t *ent)
+{
+	if (sv.protocol == PROTOCOL_NETQUAKE &&
+		(
+		(int)ent->v.modelindex & 0xFF00 ||
+		(int)ent->v.frame & 0xFF00 ||
+		ent->sendinterval ||
+		SV_ModelIndex(PR_GetString(ent->v.weaponmodel)) & 0xFF00 ||
+		(int)ent->v.armorvalue & 0xFF00 ||
+		(int)ent->v.currentammo & 0xFF00 ||
+		(int)ent->v.ammo_shells & 0xFF00 ||
+		(int)ent->v.ammo_nails & 0xFF00 ||
+		(int)ent->v.ammo_rockets & 0xFF00 ||
+		(int)ent->v.ammo_cells & 0xFF00 ||
+		(int)ent->v.weaponframe & 0xFF00
+		))
+	{
+		sv.protocol = PROTOCOL_FITZQUAKE;
+	}
+}
 
 /*
 ================
@@ -1004,11 +1024,12 @@ void ED_LoadFromFile (char *data)
 
 		pr_global_struct->self = EDICT_TO_PROG(ent);
 		PR_ExecuteProgram (func - pr_functions);
+
+		SwitchToHigherProtocolVersionIfNeeded(ent);
 	}	
 
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
 }
-
 
 /*
 ===============

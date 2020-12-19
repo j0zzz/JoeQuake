@@ -541,9 +541,8 @@ void PF_ambientsound (void)
 	if (soundnum > 255)
 	{
 		if (sv.protocol == PROTOCOL_NETQUAKE)
-			return; //don't send any info protocol can't support
-		else
-			large = true;
+			sv.protocol = PROTOCOL_FITZQUAKE; //joe: force protocol switch from this point
+		large = true;
 	}
 	//johnfitz 
 
@@ -1072,6 +1071,7 @@ void PF_precache_sound (void)
 		if (!sv.sound_precache[i])
 		{
 			sv.sound_precache[i] = s;
+			sv.num_sound_precaches = i + 1;
 			return;
 		}
 		if (!strcmp(sv.sound_precache[i], s))
@@ -1098,6 +1098,7 @@ void PF_precache_model (void)
 		{
 			sv.model_precache[i] = s;
 			sv.models[i] = Mod_ForName (s, true);
+			sv.num_model_precaches = i + 1;
 			return;
 		}
 		if (!strcmp(sv.model_precache[i], s))
@@ -1607,22 +1608,15 @@ void PF_makestatic (void)
 
 	//johnfitz -- PROTOCOL_FITZQUAKE
 	if (sv.protocol == PROTOCOL_NETQUAKE)
-	{
 		if (SV_ModelIndex(PR_GetString(ent->v.model)) & 0xFF00 || (int)(ent->v.frame) & 0xFF00)
-		{
-			ED_Free(ent);
-			return; //can't display the correct model & frame, so don't show it at all
-		}
-	}
-	else
-	{
-		if (SV_ModelIndex(PR_GetString(ent->v.model)) & 0xFF00)
-			bits |= B_LARGEMODEL;
-		if ((int)(ent->v.frame) & 0xFF00)
-			bits |= B_LARGEFRAME;
-		if (ent->alpha != ENTALPHA_DEFAULT)
-			bits |= B_ALPHA;
-	}
+			sv.protocol = PROTOCOL_FITZQUAKE; //joe: force protocol switch from this point
+
+	if (SV_ModelIndex(PR_GetString(ent->v.model)) & 0xFF00)
+		bits |= B_LARGEMODEL;
+	if ((int)(ent->v.frame) & 0xFF00)
+		bits |= B_LARGEFRAME;
+	if (ent->alpha != ENTALPHA_DEFAULT)
+		bits |= B_ALPHA;
 
 	if (bits)
 	{

@@ -167,7 +167,7 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 
 	if (sound_num == MAX_SOUNDS || !sv.sound_precache[sound_num])
 	{
-		Con_Printf ("SV_StartSound: %s not precacheed\n", sample);
+		Con_Printf ("SV_StartSound: %s not precached\n", sample);
 		return;
 	}
 
@@ -1432,6 +1432,16 @@ void SV_SpawnServer (char *server)
 	pr_global_struct->serverflags = svs.serverflags;
 
 	ED_LoadFromFile (sv.worldmodel->entities);
+
+	if (sv.protocol == PROTOCOL_NETQUAKE &&
+		(
+		sv.num_edicts >= 8192 ||
+		sv.num_sound_precaches >= 256 ||
+		sv.num_model_precaches >= 256
+		))
+	{
+		sv.protocol = PROTOCOL_FITZQUAKE;
+	}
 
 	sv.active = true;
 
