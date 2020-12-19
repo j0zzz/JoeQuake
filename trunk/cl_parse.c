@@ -1131,6 +1131,27 @@ void CL_ParseString (char *string)
 	if (show_stats.value == 3 || show_stats.value == 4)	\
 		(drawstats_limit = cl.time + show_stats_length.value)
 
+extern cvar_t con_completedtime;
+
+void PrintFinishTime()
+{
+	int mins;
+	float secs;
+	char time[16];
+
+	if (con_completedtime.value)
+	{
+		mins = cl.completed_time / 60;
+		secs = cl.completed_time - (mins * 60);
+		if (mins > 0)
+			Q_snprintfz(time, sizeof(time), "%i:%08.5lf", mins, secs);
+		else
+			Q_snprintfz(time, sizeof(time), "%.5lf", secs);
+
+		Con_Printf("\nExact time was %s\n\n", time);
+	}
+}
+
 /*
 =====================
 CL_ParseServerMessage
@@ -1371,12 +1392,14 @@ void CL_ParseServerMessage (void)
 			// intermission bugfix -- by joe
 			cl.completed_time = cl.mtime[0];
 			vid.recalc_refdef = true;	// go to full screen
+			PrintFinishTime();
 			break;
 
 		case svc_finale:
 			cl.intermission = 2;
 			cl.completed_time = cl.time;
 			vid.recalc_refdef = true;	// go to full screen
+			PrintFinishTime();
 			SCR_CenterPrint (MSG_ReadString());
 			break;
 
@@ -1384,6 +1407,7 @@ void CL_ParseServerMessage (void)
 			cl.intermission = 3;
 			cl.completed_time = cl.time;
 			vid.recalc_refdef = true;	// go to full screen
+			PrintFinishTime();
 			SCR_CenterPrint (MSG_ReadString());
 			break;
 
