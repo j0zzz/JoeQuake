@@ -403,6 +403,18 @@ void SortIntArrayAscending(int *elements, int num_elem)
 	qsort(elements, num_elem, sizeof(int), compare_int);
 }
 
+/*
+===================
+NextMultipleOfFour
+
+Returns the multiple of 4 that is greater or equal to the given integer value.
+====================
+*/
+int NextMultipleOfFour(int value)
+{
+	return ((value + 3) / 4) * 4;
+}
+
 #if !id386
 
 /*
