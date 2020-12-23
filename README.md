@@ -233,13 +233,13 @@ Values < 1 mean slow motion, while > 1 result fast forward.
 
 Turns on automatic demo recording.
 If cl_autodemo is 1 and cl_autodemo_name is empty, a new .dem file is recorded at
-every level start. the file naming format is <map_name>_<date_of_recording>_<time_of_recording>.dem
-If cl_autodemo is 1 and cl_autodemo_name is not empty, the <cl_autodemo_name>.dem file is recorded
+every level start. the file naming format is `<map_name>_<date_of_recording>_<time_of_recording>.dem`
+If cl_autodemo is 1 and cl_autodemo_name is not empty, the `<cl_autodemo_name>.dem` file is recorded
 at every level start. To save the current recording session, use the 'keepdemo' command.
 This command is only valid on the intermission/finale screen and renames the temporary recording using the
-following naming format: <cl_autodemo_name>_<finished_time>_<skill>_<player_name>.dem
+following naming format: `<cl_autodemo_name>_<finished_time>_<skill>_<player_name>.dem`
 If cl_autodemo is 2, the naming format changes to the following:
-<mapname>_<finished_time>_<skill>_<player_name>.dem
+`<mapname>_<finished_time>_<skill>_<player_name>.dem`
 If cl_autodemo is 0, there is no automatic recording.
 
 ### `cl_maxfps`
@@ -291,7 +291,7 @@ Default value is "1".
 
 Toggles between old and new style weapon bobbing, "0" by default.
 
-### `con_notify_intermission''
+### `con_notify_intermission`
 
 Console notify messages are shown on the intermission screen, "0" by default.
 
@@ -671,11 +671,11 @@ Changes all `gl_decals_*` vars' values to their opposite.
 
 Applies fog to the map. Used implicitly by newer maps.
 Usage:
-fog <density>
-fog <red> <green> <blue>
-fog <density> <red> <green> <blue>
-<density> defines the thickness of the fog.
-<red> <green> <blue> values define the color of the fog.
+`fog <density>`
+`fog <red> <green> <blue>`
+`fog <density> <red> <green> <blue>`
+`<density>` defines the thickness of the fog.
+`<red> <green> <blue>` values define the color of the fog.
 
 ## Other features
 
@@ -710,7 +710,7 @@ including inside pak files as well.
 The Demos menu gives you a shell about all the Quake subdirectories, and you
 may browse between these dirs and watch demos in any folder.
 The Mods menu also shows all the Quake subdirectories, and choosing any of them
-reloads the specific mod immediately (as if you have started Quake -game <moddir>)
+reloads the specific mod immediately (as if you have started Quake `-game <moddir>`)
 
 ### 32bit textures support (GL only)
 
