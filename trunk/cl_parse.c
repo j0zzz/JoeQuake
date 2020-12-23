@@ -370,7 +370,8 @@ void CL_ParseServerInfo (void)
 	Con_Printf ("%c%s\n", 2, str);
 
 //johnfitz -- tell user which protocol this is
-	Con_Printf("Using protocol %i\n", i);
+	if (cl.protocol != PROTOCOL_NETQUAKE)	//joe: only print to console if not vanilla protocol
+		Con_Printf("Using protocol %i\n", cl.protocol);
 
 // first we go through and touch all of the precache data that still
 // happens to be in the cache, so precaching something else doesn't
@@ -785,7 +786,7 @@ void CL_ParseClientdata ()
 {
 	int	i, j, bits; //johnfitz 
 
-	bits = (unsigned short)MSG_ReadShort(); //johnfitz -- read bits here isntead of in CL_ParseServerMessage() 
+	bits = (unsigned short)MSG_ReadShort(); //johnfitz -- read bits here instead of in CL_ParseServerMessage() 
 
 	//johnfitz -- PROTOCOL_FITZQUAKE
 	if (bits & SU_EXTEND1)
@@ -1131,24 +1132,42 @@ void CL_ParseString (char *string)
 	if (show_stats.value == 3 || show_stats.value == 4)	\
 		(drawstats_limit = cl.time + show_stats_length.value)
 
-extern cvar_t con_completedtime;
+char *GetPrintedTime(double time)
+{
+	int			mins;
+	double		secs;
+	static char timestring[16];
+	
+	mins = time / 60;
+	secs = time - (mins * 60);
+	if (mins > 0)
+		Q_snprintfz(timestring, sizeof(timestring), "%i:%08.5lf", mins, secs);
+	else
+		Q_snprintfz(timestring, sizeof(timestring), "%.5lf", secs);
+
+	return timestring;
+}
 
 void PrintFinishTime()
 {
-	int mins;
-	float secs;
-	char time[16];
+	char *timestring;
 
-	if (con_completedtime.value)
+	cls.marathon_time += cl.completed_time;
+	cls.marathon_level++;
+
+	if (!pr_qdqstats)
 	{
-		mins = cl.completed_time / 60;
-		secs = cl.completed_time - (mins * 60);
-		if (mins > 0)
-			Q_snprintfz(time, sizeof(time), "%i:%08.5lf", mins, secs);
-		else
-			Q_snprintfz(time, sizeof(time), "%.5lf", secs);
+		timestring = GetPrintedTime(cl.completed_time);
+		Con_Printf("\nexact time was %s\n", timestring);
 
-		Con_Printf("\nExact time was %s\n\n", time);
+		if (cls.marathon_level > 1)
+		{
+			Con_Printf("level %i in the sequence\n", cls.marathon_level);
+			timestring = GetPrintedTime(cls.marathon_time);
+			Con_Printf("total time is %s\n", timestring);
+		}
+
+		Con_Printf("\n");
 	}
 }
 
@@ -1389,25 +1408,30 @@ void CL_ParseServerMessage (void)
 
 		case svc_intermission:
 			cl.intermission = 1;
-			// intermission bugfix -- by joe
-			cl.completed_time = cl.mtime[0];
+			cl.completed_time = cl.mtime[0];	//joe: intermission bugfix
 			vid.recalc_refdef = true;	// go to full screen
 			PrintFinishTime();
 			break;
 
 		case svc_finale:
+			if (!cl.intermission)	//joe: only save cl.completed_time if there was no intermission overlay shown already
+			{
+				cl.completed_time = cl.mtime[0];	//joe: intermission bugfix
+				PrintFinishTime();
+			}
 			cl.intermission = 2;
-			cl.completed_time = cl.time;
 			vid.recalc_refdef = true;	// go to full screen
-			PrintFinishTime();
 			SCR_CenterPrint (MSG_ReadString());
 			break;
 
 		case svc_cutscene:
+			if (!cl.intermission)	//joe: only save cl.completed_time if there was no intermission overlay shown already
+			{
+				cl.completed_time = cl.mtime[0];	//joe: intermission bugfix
+				PrintFinishTime();
+			}
 			cl.intermission = 3;
-			cl.completed_time = cl.time;
 			vid.recalc_refdef = true;	// go to full screen
-			PrintFinishTime();
 			SCR_CenterPrint (MSG_ReadString());
 			break;
 

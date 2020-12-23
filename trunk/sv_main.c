@@ -1317,6 +1317,12 @@ void SV_SpawnServer (char *server)
 		Cvar_Set (&hostname, "UNNAMED");
 	scr_centertime_off = 0;
 
+	if (!svs.changelevel_issued)	//joe: reset marathon time and counter if not a changelevel call from progs.dat
+	{
+		cls.marathon_time = 0;
+		cls.marathon_level = 0;
+	}
+
 	Con_DPrintf ("SpawnServer: %s\n", server);
 	svs.changelevel_issued = false;		// now safe to issue another
 

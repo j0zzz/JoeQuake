@@ -69,8 +69,8 @@ extern	ddef_t		*pr_fielddefs;
 extern	dstatement_t	*pr_statements;
 extern	globalvars_t	*pr_global_struct;
 extern	float		*pr_globals;		// same as pr_global_struct
-
 extern	int		pr_edict_size;		// in bytes
+extern qboolean	pr_qdqstats;
 
 //============================================================================
 

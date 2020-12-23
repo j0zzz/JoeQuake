@@ -839,6 +839,7 @@ CL_KeepDemo_f
 void CL_KeepDemo_f(void)
 {
 	int		mins, secs, millisecs, fname_counter = 1;
+	double	finishtime;
 	char	oldname[MAX_OSPATH*2], newname[MAX_OSPATH*2], *demoname_prefix, cleared_playername[16];
 	extern cvar_t cl_autodemo, cl_autodemo_name;
 
@@ -869,9 +870,10 @@ void CL_KeepDemo_f(void)
 
 	Q_snprintfz(oldname, sizeof(oldname), "%s/%s.%s", com_gamedir, cl_autodemo_name.string, "dem");
 	demoname_prefix = cl_autodemo.value == 2 ? CL_MapName() : cl_autodemo_name.string;
-	mins = cl.completed_time / 60;
-	secs = cl.completed_time - (mins * 60);
-	millisecs = (cl.completed_time - secs) * 1000;
+	finishtime = cls.marathon_level > 1 ? cls.marathon_time : cl.completed_time;
+	mins = finishtime / 60;
+	secs = finishtime - (mins * 60);
+	millisecs = (finishtime - secs) * 1000;
 	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%02i%03i_%i_%s", com_gamedir, demoname_prefix, mins, secs, millisecs, (int)skill.value, cleared_playername);
 
 	// try with a different name if this file already exists

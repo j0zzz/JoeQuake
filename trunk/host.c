@@ -82,6 +82,13 @@ cvar_t	noexit = {"noexit", "0", CVAR_SERVER};
 
 cvar_t	developer = {"developer", "0"};
 
+char *skill_modes[] =
+{
+	"Easy",
+	"Normal",
+	"Hard",
+	"Nightmare"
+};
 cvar_t	skill = {"skill", "1"};			// 0 - 3
 cvar_t	deathmatch = {"deathmatch", "0"};	// 0, 1, or 2
 cvar_t	coop = {"coop", "0"};			// 0 or 1

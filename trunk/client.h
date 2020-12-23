@@ -128,7 +128,7 @@ typedef struct
 	char		spawnparms[MAX_MAPSTRING];	// to restart a level
 
 // demo loop control
-	int		demonum;			// -1 = don't play demos
+	int			demonum;			// -1 = don't play demos
 	char		demos[MAX_DEMOS][MAX_DEMONAME];	// when not playing
 
 // demo recording info must be here, because record is started before
@@ -148,6 +148,8 @@ typedef struct
 	sizebuf_t	message;			// writing buffer to send to server
 	
 	qboolean	capturedemo;
+	double		marathon_time;		// joe: adds cl.completed_time at level changes
+	int			marathon_level;
 } client_static_t;
 
 extern	client_static_t	cls;
@@ -157,9 +159,9 @@ extern	client_static_t	cls;
 typedef struct
 {
 	int		movemessages;		// since connecting to this server
-						// throw out the first couple, so the player
-						// doesn't accidentally do something the 
-						// first frame
+								// throw out the first couple, so the player
+								// doesn't accidentally do something the 
+								// first frame
 	usercmd_t	cmd;			// last command sent to the server
 
 // information for local display
@@ -199,13 +201,13 @@ typedef struct
 	
 	int		intermission;		// don't change view angle, full screen, etc
 	double	completed_time;		// latched at intermission start
-	
+
 	double		mtime[2];		// the timestamp of last two messages	
 	double		time;			// clients view of time, should be between
-						// servertime and oldservertime to generate
-						// a lerp point for other data
+								// servertime and oldservertime to generate
+								// a lerp point for other data
 	double		oldtime;		// previous cl.time, time-oldtime is used
-						// to decay light values and smooth step ups
+								// to decay light values and smooth step ups
 	double		ctime;			// joe: copy of cl.time, to avoid incidents caused by rewind
 
 

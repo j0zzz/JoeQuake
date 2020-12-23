@@ -85,6 +85,7 @@ qboolean		r_loadq3player = false;
 
 extern qboolean physframe;
 extern double physframetime;
+extern char *skill_modes[];
 
 unsigned CheckModel (char *mdl);
 
@@ -339,6 +340,11 @@ void CL_SignonReply (void)
 				Cmd_ExecuteString(va("record %s\n", cl_autodemo_name.string), src_command);
 			else
 				Cmd_ExecuteString("record\n", src_command);
+		}
+		if (!pr_qdqstats)
+		{
+			int current_skill = bound(0, skill.value, 3);
+			Con_Printf("Playing on %s skill\n", skill_modes[current_skill]);
 		}
 		break;
 	}

@@ -35,6 +35,7 @@ globalvars_t	*pr_global_struct;
 float		*pr_globals;			// same as pr_global_struct
 int			pr_edict_size;			// in bytes
 qboolean	pr_alpha_supported; //johnfitz
+qboolean	pr_qdqstats;	//joe: is it a qdqstats progs?
 
 unsigned short	pr_crc;
 
@@ -1031,6 +1032,21 @@ void ED_LoadFromFile (char *data)
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
 }
 
+qboolean CheckIfQdQStats(void)
+{
+	char	*def;
+	int		i;
+
+	for (i = 0; i < pr_stringssize; i++)
+	{
+		def = pr_strings + i;
+		if (strstr(def, "This is the QdQ stats patch") == def)
+			return true;
+	}
+
+	return false;
+}
+
 /*
 ===============
 PR_LoadProgs
@@ -1128,6 +1144,8 @@ void PR_LoadProgs (void)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 
 	FindEdictFieldOffsets ();
+
+	pr_qdqstats = CheckIfQdQStats();
 
 	pr_edict_size = progs->entityfields * 4 + sizeof(edict_t) - sizeof(entvars_t);
 	// round off to next highest whole word address (esp for Alpha)
