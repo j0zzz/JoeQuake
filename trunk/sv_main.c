@@ -283,6 +283,10 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteByte (&client->message, svc_setview);
 	MSG_WriteShort (&client->message, NUM_FOR_EDICT(client->edict));
 
+// Sphere -- if server is paused we also have to inform the client about that
+	MSG_WriteByte (&client->message, svc_setpause);
+	MSG_WriteByte (&client->message, sv.paused);
+
 	MSG_WriteByte (&client->message, svc_signonnum);
 	MSG_WriteByte (&client->message, 1);
 
