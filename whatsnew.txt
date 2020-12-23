@@ -1,3 +1,181 @@
+
+ version 0.17.0 build 6688
+ -----------------------
+
+loading of lightmaps is done much faster
+fixed rendering alpha textures w/o multitexturing
+fixed memory leak during level changes (which was caused by a previous change in the BETA version)
+added r_noshadow_list cvar from QS to support mods (e.g. AD)
+fixed occasional 'bad usehunk' error when starting the game
+server protocol version is switched to 666 automatically for required maps
+	IMPORTANT: there is no need to explicitly specify -protocol <version> in the command line anymore
+added QdQStats printed messages
+	- Playing on X skill
+	- Exact time was [12:]34.56789
+	- summed time for marathon runs
+	these messages are only shown if there is no qdqstats progs.dat loaded
+	(more qdqstats options are expected in the future)
+fixed the timing in the name of marathon runs recorded by cl_autodemo
+
+ version 0.17.0 BETA build 6665
+ -----------------------
+
+raised default limit of r_farclip to 2020 standards
+added "sky" legacy command to support skybox loading in mods which are designed for QuakeSpasm
+fixed bug when old style sky were still drawn on some maps even when skybox was used
+fixed size of buffer for KeepaliveMessage (Sphere)
+fixed crash due to NULL cl_entities reference when joining to a server w/o spawning a local server before (e.g. starting a map)
+fixed bug when the game crashed due to memory corruption when strings longer than 255 were printed (came from progs.dat)
+
+ version 0.17.0 BETA build 6658
+ -----------------------
+
+dynamically allocating memory for string fields coming from progs.dat
+dynamically allocating sv.edicts, cl_entities moved to hunk instead of a static array
+dynamically allocating vis and pvs data (support for huge maps solved - ad_sepulcher, ad_tears)
+music playback is stopped when loading plaque is displayed
+raised limit of max number of static entities
+fixed size of in-memory list of model names (Sphere)
+
+ version 0.17.0 BETA build 6649
+ -----------------------
+
+added BSP2/2PSB support (loading of large maps)
+skyboxes get loaded properly from progs.dat at map load
+seperate water/lava/slime alphas are applied from progs.dat at map load
+fog and skyfog is applied from progs.dat at map load
+added protocol 666 (fitzquake) and 999 (RMQ) support, entirely
+	the default protocol is 15 (netquake)
+	in order to use other protocols you need to start Quake with -protocol <number> (e.g. -protocol 666)
+added mp3 and ogg music playback using fmod, from QRack
+	the music files must be placed in a subfolder called 'music' in your game directory
+not displaying hi-res menu images if they have different aspect ratio than the lump files (look bad as stretched)
+always showing joequake's own mainmenu image/lump regardless of any overrides from the gamedir
+
+====================================================================================
+
+ version 0.16.3 build 6626
+ -----------------------
+
+added Mods menu in place of Help/Ordering
+	choosing a mod folder automatically switches gamedir as if Quake was started with -game <modname>
+added cvar 'con_notify_intermission' which enables console messages to be seen during intermission/finale
+added new cl_autodemo mode '2', when calling keepdemo will rename the demo prefix to mapname
+	Also bugfixes:
+	local values in seconds and milliseconds are properly printed, in case of zero values also (like 0:07.095)
+	quake playername is properly converted to windows compatible characters
+Optional nearest texture filtering for HUD and sky (gl_texturemode_hud, gl_texturemode_sky) (Sphere)
+	Available options are only GL_NEAREST and GL_LINEAR for hud
+eliminated Host_Error when 'NULL area link' occurs in SV_TouchLinks (the well know e2m2 gate bug on easy skill)
+Fix cl_smartjump 1 crashing clients in coop (Sphere)
+modified the QMB style rocket trail to start 10 units farther than the middle of the rocket 
+	(it looked pretty wrong that the orange trailpart covered a portion of the missile)
+added borderless windowed mode from NeaQuake
+fixed intermission camera's bad angle during demoplayback (thx to Chambers who got it from MarkV)
+
+====================================================================================
+
+ version 0.16.2 build 6454 (hotfix #2)
+ -----------------------
+
+Fix long restart times in coop play (Sphere)
+Add documentation for AVI splitting feature (Sphere)
+Add splitting of AVI files at certain size (Sphere)
+raised server/client limits to overcome 'packet overflow' issues
+removed 'compatibility fix when loading 2PSB maps' as it prevented loading a map (menk.bsp) which was proved to be safe
+Use markdown for readme (Sphere)
+Allow setting sleeptime when window not in focus (Sphere)
+corrected search path of q3 player legs model when adding MOD_PLAYER flags
+fixed bug when transparent entities were hidden by opaque water (they were drawn before water gets drawn)
+Add cvar r_coloredpowerupglow (Sphere)
+optimized lerping issue to work by actual fps instead of max fps
+fixed bug when unnecessary lerping on some temp entities makes them look jerky if cl_maxfps is <= 72
+
+====================================================================================
+
+ version 0.16.2 build 6320 (hotfix)
+ -----------------------
+
+-fixed wrong behaviour of host_framerate and cl_demospeed variables with independent physics.
+
+-fixed choppy fps if cl_maxfps was not set as a multiple of 72 (when using ind. phys.)
+
+-fixed order of available refresh rates in the video options menu (they are in ascending order now).
+
+-added show_speed_interval setting from NeaQuake.
+
+-added a 6th built-in crosshair option (circle). Use "crosshair 7" to enable it.
+
+-fixed bug when splitting marathon demos with demarathon.exe resulted faulty .dem files
+ (error message: Demo message > MAX_MSGLEN).
+
+-fixed bug when custom crosshair images were drawn incorrectly at specific sizes.
+
+-fixed bug when starting with Quake with the command line params -width/-height did not
+ create a proper fullscreen mode.
+
+-fixed bug with ambient sound playback in case of cl_maxfps > 72 (when using ind. phys.)
+
+-added command line switch -norawinput to provide option for discarding raw mouse input.
+
+-fixed model animations in case of independpent physics and cl_maxfps > 72
+
+====================================================================================
+
+ version 0.16.2 build 6300
+ -----------------------
+
+-changed independent physics to be the default option from this version.
+ unfortunately it was not possible to flawlessly implement this feature. it turned out
+ that it is problematic to cap the server's fps at exactly 72.0, and let the client use
+ unlimited fps as this behavior resulted misaligned server - client frames which lead to
+ anomalies/malfunctions in the game's physics. so a slightly modified solution was done
+ which kept the computation method of server fps (entirely) and so client frames are
+ aligned to the server frames. the downside of this solution is that fps feels pretty
+ choppy/bad if it is not a multiple of 72 (the server's fps). so you'll have bad
+ experience with cl_maxfps like 85, 100 or 120, but it'll work pretty well with values
+ like 72, 144, 216 and so on.
+ the default value of cl_maxfps is remained at 72, so if you don't want to take advantage
+ of the higher fps, you shouldn't notice any change.
+ if you want to disable independent physics, use the -noindphys command line paramater.
+
+-added raw mouse input from NeaQuake
+
+-added automatic demo recording
+ there are 2 new cvars: cl_autodemo and cl_autodemo_name.
+ automatic demo recording works along the following algorithm:
+ -if cl_autodemo is 0, there is no recording
+ -if cl_autodemo is 1 and cl_autodemo_name is empty, a new .dem file is recorded at
+  every level start. the file naming format is <map_name>_<date_of_recording>_<time_of_recording>.dem
+ -if cl_autodemo is 1 and cl_autodemo_name is not empty, the <cl_autodemo_name>.dem file
+  is recorded at every level start - yes, it is the same file every time. if you want to
+  keep the recording, you can use the new 'keepdemo' command. this command is only valid
+  on the intermission/finale screen and renames your temporary recording using the
+  following naming format: <cl_autodemo_name>_<finished_time>_<skill>_<player_name>.dem
+
+-added on-the-fly vid_bpp (color depth) change
+ after setting this cvar's value in the console, the game automatically tries to switch
+ to the desired color depth mode. you can also find this option in the video menu.
+ setting vid_bpp to 0 will force the override to switch off, meaning the game will use
+ the default (desktop) color depth at the next startup.
+
+-video options menu now shows a confirmation message after a video mode change, where
+ the user can confirm or revert the changed resolution.
+
+-renamed cl_oldbob to cl_newbob and changed its role: from now it enables the new Q3
+ style weapon bobbing instead of enabling the old style bobbing. also restored the view
+ weapon's original viewsize-dependant height in case of old bobbing.
+
+-added fix from NeaQuake, when in coop demos, stats could show incorrect values from
+ pr_global_struct.
+
+-bugfix: video modes are properly queried again, thanks to the tip from R00k.
+
+-bugfix: intermission text was not positioned properly if scr_sbarscale_amount was higher
+ than 1.
+
+====================================================================================
+
  version 0.16.1 build 6258
  -----------------------
 
@@ -26,11 +204,12 @@
  there's also no need to use "+set vid_displayfrequency <xy>" during startup.
  after setting this cvar's value in the console, the game automatically tries to switch
  to the desired video mode. you can also find this option in the video menu.
- setting vid_displayfrequency to 0 will force the override to switch off, meaning the game will
- use the default (desktop) display frequency at the next startup.
+ setting vid_displayfrequency to 0 will force the override to switch off, meaning the game
+ will use the default (desktop) display frequency at the next startup.
 
--got rid of vid.conwidth, vid.conheight stuff completely (removed -conwidth, -conheight options too)
- from now ONLY scr_sbarscale_amount can be used to specify the scaling (from 1.0 to 4.0)
+-got rid of vid.conwidth, vid.conheight stuff completely (removed -conwidth, -conheight
+ options too) from now ONLY scr_sbarscale_amount can be used to specify the scaling
+ (from 1.0 to 4.0)-
 
 -added gl_externaltextures_gfx cvar to support switching off hi-res menu and sbar images.
  since Quake loads these images right at the startup, you need to specify the value of
@@ -38,10 +217,12 @@
 
 -bugfix: capturedemo crashed if absolute path was set using '/' characters instead of '\'
 
--bugfix: removed adding svc_stufftext "reconnect" at SV_Reconnect, so it won't fuck up multilevel demos anymore
+-bugfix: removed adding svc_stufftext "reconnect" at SV_Reconnect, so it won't fuck up
+ multilevel demos anymore.
 
--bugfix: when navigating in the demos/maps menu was working wrong: in case of not in the beginning of the 
- list and going up via UPARROW, the cursor mistakenly was set to the end of the list
+-bugfix: when navigating in the demos/maps menu was working wrong: in case of not in the
+ beginning of the list and going up via UPARROW, the cursor mistakenly was set to the end
+ of the list.
 
 ====================================================================================
 
