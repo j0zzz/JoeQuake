@@ -210,7 +210,7 @@ void V_DriftPitch (void)
 	{
 		if (fabs(cl.cmd.forwardmove) < cl_forwardspeed.value)
 			cl.driftmove = 0;
-		else
+		else if (!cl.paused)
 			cl.driftmove += host_frametime;
 
 		if (cl.driftmove > v_centermove.value)
@@ -228,7 +228,8 @@ void V_DriftPitch (void)
 	}
 
 	move = host_frametime * cl.pitchvel;
-	cl.pitchvel += host_frametime * v_centerspeed.value;
+	if (!cl.paused)
+		cl.pitchvel += host_frametime * v_centerspeed.value;
 
 //Con_Printf ("move: %f (%f)\n", move, host_frametime);
 
@@ -1050,7 +1051,8 @@ void V_CalcViewRoll (void)
 	{
 		r_refdef.viewangles[ROLL] += v_dmg_time / v_kicktime.value * v_dmg_roll;
 		r_refdef.viewangles[PITCH] += v_dmg_time / v_kicktime.value * v_dmg_pitch;
-		v_dmg_time -= host_frametime;
+		if (!cl.paused)
+			v_dmg_time -= host_frametime;
 	}
 }
 
@@ -1557,8 +1559,7 @@ void V_RenderView (void)
 	}
 	else
 	{
-		if (!cl.paused)
-			V_CalcRefdef ();
+		V_CalcRefdef ();
 	}
 
 	R_PushDlights ();
