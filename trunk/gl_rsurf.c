@@ -1348,7 +1348,11 @@ void R_MarkLeaves (void)
 			count = (cl.worldmodel->numleafs + 7) >> 3;
 			if (solid == NULL || count > solid_capacity)
 			{
-				solid_capacity = count;
+				// Sphere -- we have to allocate in multiples of four bytes,
+				// because a few lines below we will iterate over this in
+				// increments of sizeof(unsigned) which is 4 on the platforms
+				// that are targeted.
+				solid_capacity = NextMultipleOfFour(count);
 				solid = (byte *)Q_realloc(solid, solid_capacity);
 				if (!solid)
 					Sys_Error("R_MarkLeaves: realloc() failed on %d bytes", solid_capacity);

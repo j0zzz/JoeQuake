@@ -155,7 +155,11 @@ byte *Mod_DecompressVis (byte *in, model_t *model)
 	row = (model->numleafs + 7) >> 3;
 	if (mod_decompressed == NULL || row > mod_decompressed_capacity)
 	{
-		mod_decompressed_capacity = row;
+		// Sphere -- we have to allocate in multiples of four bytes, because in
+		// R_MarkLeaves, the result of this function will be iterated over in
+		// increments of sizeof(unsigned) which is 4 on the platforms that
+		// are targeted.
+		mod_decompressed_capacity = NextMultipleOfFour(row);
 		mod_decompressed = (byte *)Q_realloc(mod_decompressed, mod_decompressed_capacity);
 		if (!mod_decompressed)
 			Sys_Error("Mod_DecompressVis: realloc() failed on %d bytes", mod_decompressed_capacity);
