@@ -219,7 +219,7 @@ byte *Mod_NoVisPVS(model_t *model)
 	pvsbytes = (model->numleafs + 7) >> 3;
 	if (mod_novis == NULL || pvsbytes > mod_novis_capacity)
 	{
-		mod_novis_capacity = pvsbytes;
+		mod_novis_capacity = NextMultipleOfFour(pvsbytes);
 		mod_novis = (byte *)Q_realloc(mod_novis, mod_novis_capacity);
 		if (!mod_novis)
 			Sys_Error("Mod_NoVisPVS: realloc() failed on %d bytes", mod_novis_capacity);
