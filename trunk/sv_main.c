@@ -585,7 +585,7 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 				ent->alpha = ENTALPHA_ENCODE(val->_float);
 		}
 		else
-			alpha = 1;
+			alpha = ENTALPHA_DECODE(ent->alpha);
 
 		//don't send invisible entities unless they have effects
 		if (ent->alpha == ENTALPHA_ZERO && !ent->v.effects)
