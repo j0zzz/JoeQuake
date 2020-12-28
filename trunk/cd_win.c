@@ -389,23 +389,25 @@ void CDAudio_Update (void)
 {
 	if (fmod_loaded)
 		FMOD_ChangeVolume(bgmvolume.value);
-
-	if (!enabled)
-		return;
-
-	if (bgmvolume.value != cdvolume)
+	else
 	{
-		if (cdvolume)
+		if (!enabled)
+			return;
+
+		if (bgmvolume.value != cdvolume)
 		{
-			Cvar_SetValue (&bgmvolume, 0.0);
-			cdvolume = bgmvolume.value;
-			CDAudio_Pause ();
-		}
-		else
-		{
-			Cvar_SetValue (&bgmvolume, 1.0);
-			cdvolume = bgmvolume.value;
-			CDAudio_Resume ();
+			if (cdvolume)
+			{
+				Cvar_SetValue(&bgmvolume, 0.0);
+				cdvolume = bgmvolume.value;
+				CDAudio_Pause();
+			}
+			else
+			{
+				Cvar_SetValue(&bgmvolume, 1.0);
+				cdvolume = bgmvolume.value;
+				CDAudio_Resume();
+			}
 		}
 	}
 }
