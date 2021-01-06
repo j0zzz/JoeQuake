@@ -341,7 +341,7 @@ void CL_SignonReply (void)
 			else
 				Cmd_ExecuteString("record\n", src_command);
 		}
-		if (!pr_qdqstats)
+		if (!pr_qdqstats && !cls.demoplayback)
 		{
 			int current_skill = bound(0, skill.value, 3);
 			Con_Printf("Playing on %s skill\n", skill_modes[current_skill]);

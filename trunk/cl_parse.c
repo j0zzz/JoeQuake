@@ -1155,7 +1155,7 @@ void PrintFinishTime()
 	cls.marathon_time += cl.completed_time;
 	cls.marathon_level++;
 
-	if (!pr_qdqstats)
+	if (!pr_qdqstats && !cls.demoplayback)
 	{
 		timestring = GetPrintedTime(cl.completed_time);
 		Con_Printf("\nexact time was %s\n", timestring);

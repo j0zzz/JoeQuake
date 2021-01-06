@@ -1040,7 +1040,7 @@ qboolean CheckIfQdQStats(void)
 	for (i = 0; i < pr_stringssize; i++)
 	{
 		def = pr_strings + i;
-		if (strstr(def, "This is the QdQ stats patch") == def)
+		if (strstr(def, "This is the QdQ stats patch") == def || strstr(def, "QdQ Stats patch") == def)
 			return true;
 	}
 
