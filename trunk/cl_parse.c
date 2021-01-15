@@ -259,6 +259,13 @@ void CL_KeepaliveMessage (void)
 		return;		// no need if server is local
 	if (cls.demoplayback)
 		return;
+	if (!NET_CanSendMessage(cls.netcon))
+		// Sphere -- if we cannot send another message yet, calling
+		// NET_SendMessage below is not allowed and would break things. So we
+		// skip sending a keepalive message for now. Maybe on the next call we
+		// will be allowed to send one again, or maybe we are just loading stuff
+		// so quickly that we dont need a keepalive message.
+		return;
 
 // read messages from server, should just be nops
 	olddata = net_olddata;
