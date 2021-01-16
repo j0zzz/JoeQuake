@@ -642,7 +642,7 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 			MSG_WriteByte(msg, bits >> 8);
 
 		//johnfitz -- PROTOCOL_FITZQUAKE
-		if (cl.protocol != PROTOCOL_NETQUAKE)
+		if (sv.protocol != PROTOCOL_NETQUAKE)
 		{
 			if (bits & U_EXTEND1)
 				MSG_WriteByte(msg, bits >> 16);
