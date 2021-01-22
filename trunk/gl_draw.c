@@ -2184,7 +2184,7 @@ int GL_LoadCharsetImage (char *filename, char *identifier)
 	return texnum;
 }
 
-static	GLenum	oldtarget = GL_TEXTURE0_ARB;
+static	GLenum	oldtarget = GL_TEXTURE0;
 static	int	cnttextures[4] = {-1, -1, -1, -1};     // cached
 static qboolean	mtexenabled = false;
 
@@ -2195,8 +2195,8 @@ void GL_SelectTexture (GLenum target)
 
 	qglActiveTexture (target);
 
-	cnttextures[oldtarget-GL_TEXTURE0_ARB] = currenttexture;
-	currenttexture = cnttextures[target-GL_TEXTURE0_ARB];
+	cnttextures[oldtarget-GL_TEXTURE0] = currenttexture;
+	currenttexture = cnttextures[target-GL_TEXTURE0];
 	oldtarget = target;
 }
 
@@ -2205,7 +2205,7 @@ void GL_DisableMultitexture (void)
 	if (mtexenabled)
 	{
 		glDisable (GL_TEXTURE_2D);
-		GL_SelectTexture (GL_TEXTURE0_ARB);
+		GL_SelectTexture (GL_TEXTURE0);
 		mtexenabled = false;
 	}
 }
@@ -2214,7 +2214,7 @@ void GL_EnableMultitexture (void)
 {
 	if (gl_mtexable)
 	{
-		GL_SelectTexture (GL_TEXTURE1_ARB);
+		GL_SelectTexture (GL_TEXTURE1);
 		glEnable (GL_TEXTURE_2D);
 		mtexenabled = true;
 	}

@@ -30,13 +30,46 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 const	char	*gl_vendor;
 const	char	*gl_renderer;
 const	char	*gl_version;
+static	int		gl_version_major;
+static	int		gl_version_minor;
 const	char	*gl_extensions;
 
 qboolean	gl_mtexable = false;
 int			gl_textureunits = 1;
+qboolean	gl_vbo_able = false;
+qboolean	gl_glsl_able = false;
 
 lpMTexFUNC	qglMultiTexCoord2f = NULL;
 lpSelTexFUNC qglActiveTexture = NULL;
+lpBindBufFUNC qglBindBuffer = NULL;
+lpBufferDataFUNC qglBufferData = NULL;
+lpBufferSubDataFUNC qglBufferSubData = NULL;
+lpDeleteBuffersFUNC qglDeleteBuffers = NULL;
+lpGenBuffersFUNC qglGenBuffers = NULL;
+
+lpCreateShaderFUNC qglCreateShader = NULL; //ericw
+lpDeleteShaderFUNC qglDeleteShader = NULL; //ericw
+lpDeleteProgramFUNC qglDeleteProgram = NULL; //ericw
+lpShaderSourceFUNC qglShaderSource = NULL; //ericw
+lpCompileShaderFUNC qglCompileShader = NULL; //ericw
+lpGetShaderivFUNC qglGetShaderiv = NULL; //ericw
+lpGetShaderInfoLogFUNC qglGetShaderInfoLog = NULL; //ericw
+lpGetProgramivFUNC qglGetProgramiv = NULL; //ericw
+lpGetProgramInfoLogFUNC qglGetProgramInfoLog = NULL; //ericw
+lpCreateProgramFUNC qglCreateProgram = NULL; //ericw
+lpAttachShaderFUNC qglAttachShader = NULL; //ericw
+lpLinkProgramFUNC qglLinkProgram = NULL; //ericw
+lpBindAttribLocationFUNC qglBindAttribLocation = NULL; //ericw
+lpUseProgramFUNC qglUseProgram = NULL; //ericw
+lpGetAttribLocationFUNC qglGetAttribLocation = NULL; //ericw
+lpVertexAttribPointerFUNC qglVertexAttribPointer = NULL; //ericw
+lpEnableVertexAttribArrayFUNC qglEnableVertexAttribArray = NULL; //ericw
+lpDisableVertexAttribArrayFUNC qglDisableVertexAttribArray = NULL; //ericw
+lpGetUniformLocationFUNC qglGetUniformLocation = NULL; //ericw
+lpUniform1iFUNC qglUniform1i = NULL; //ericw
+lpUniform1fFUNC qglUniform1f = NULL; //ericw
+lpUniform3fFUNC qglUniform3f = NULL; //ericw
+lpUniform4fFUNC qglUniform4f = NULL; //ericw
 
 qboolean	gl_add_ext = false;
 
@@ -89,7 +122,7 @@ void CheckMultiTextureExtensions (void)
 		gl_mtexable = true;
 	}
 
-	glGetIntegerv (GL_MAX_TEXTURE_UNITS_ARB, &gl_textureunits);
+	glGetIntegerv (GL_MAX_TEXTURE_UNITS, &gl_textureunits);
 	gl_textureunits = min(gl_textureunits, 4);
 
 	if (COM_CheckParm("-maxtmu2") || !strcmp(gl_vendor, "ATI Technologies Inc."))
@@ -104,6 +137,80 @@ void CheckMultiTextureExtensions (void)
 		Con_Printf ("Enabled %i texture units on hardware\n", gl_textureunits);
 }
 
+void CheckVertexBufferExtensions(void)
+{
+	if (!COM_CheckParm("-novbo") && gl_version_major >= 1 && gl_version_minor >= 5)
+	{
+		qglBindBuffer = (void *)qglGetProcAddress("glBindBufferARB");
+		qglBufferData = (void *)qglGetProcAddress("glBufferDataARB");
+		qglBufferSubData = (void *)qglGetProcAddress("glBufferSubDataARB");
+		qglDeleteBuffers = (void *)qglGetProcAddress("glDeleteBuffersARB");
+		qglGenBuffers = (void *)qglGetProcAddress("glGenBuffersARB");
+		if (!qglBindBuffer || !qglBufferData || !qglBufferSubData || !qglDeleteBuffers || !qglGenBuffers)
+			return;
+		Con_Printf("Vertex buffer extensions found\n");
+		gl_vbo_able = true;
+	}
+}
+
+void CheckGLSLExtensions(void)
+{
+	if (!COM_CheckParm("-noglsl") && gl_version_major >= 2)
+	{
+		qglCreateShader = (void *)qglGetProcAddress("glCreateShader");
+		qglDeleteShader = (void *)qglGetProcAddress("glDeleteShader");
+		qglDeleteProgram = (void *)qglGetProcAddress("glDeleteProgram");
+		qglShaderSource = (void *)qglGetProcAddress("glShaderSource");
+		qglCompileShader = (void *)qglGetProcAddress("glCompileShader");
+		qglGetShaderiv = (void *)qglGetProcAddress("glGetShaderiv");
+		qglGetShaderInfoLog = (void *)qglGetProcAddress("glGetShaderInfoLog");
+		qglGetProgramiv = (void *)qglGetProcAddress("glGetProgramiv");
+		qglGetProgramInfoLog = (void *)qglGetProcAddress("glGetProgramInfoLog");
+		qglCreateProgram = (void *)qglGetProcAddress("glCreateProgram");
+		qglAttachShader = (void *)qglGetProcAddress("glAttachShader");
+		qglLinkProgram = (void *)qglGetProcAddress("glLinkProgram");
+		qglBindAttribLocation = (void *)qglGetProcAddress("glBindAttribLocation");
+		qglUseProgram = (void *)qglGetProcAddress("glUseProgram");
+		qglGetAttribLocation = (void *)qglGetProcAddress("glGetAttribLocation");
+		qglVertexAttribPointer = (void *)qglGetProcAddress("glVertexAttribPointer");
+		qglEnableVertexAttribArray = (void *)qglGetProcAddress("glEnableVertexAttribArray");
+		qglDisableVertexAttribArray = (void *)qglGetProcAddress("glDisableVertexAttribArray");
+		qglGetUniformLocation = (void *)qglGetProcAddress("glGetUniformLocation");
+		qglUniform1i = (void *)qglGetProcAddress("glUniform1i");
+		qglUniform1f = (void *)qglGetProcAddress("glUniform1f");
+		qglUniform3f = (void *)qglGetProcAddress("glUniform3f");
+		qglUniform4f = (void *)qglGetProcAddress("glUniform4f");
+
+		if (qglCreateShader &&
+			qglDeleteShader &&
+			qglDeleteProgram &&
+			qglShaderSource &&
+			qglCompileShader &&
+			qglGetShaderiv &&
+			qglGetShaderInfoLog &&
+			qglGetProgramiv &&
+			qglGetProgramInfoLog &&
+			qglCreateProgram &&
+			qglAttachShader &&
+			qglLinkProgram &&
+			qglBindAttribLocation &&
+			qglUseProgram &&
+			qglGetAttribLocation &&
+			qglVertexAttribPointer &&
+			qglEnableVertexAttribArray &&
+			qglDisableVertexAttribArray &&
+			qglGetUniformLocation &&
+			qglUniform1i &&
+			qglUniform1f &&
+			qglUniform3f &&
+			qglUniform4f)
+		{
+			Con_Printf("GLSL extensions found\n");
+			gl_glsl_able = true;
+		}
+	}
+}
+
 /*
 ===============
 GL_Init
@@ -112,12 +219,18 @@ GL_Init
 void GL_Init (void)
 {
 	gl_vendor = glGetString (GL_VENDOR);
-	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
 	gl_renderer = glGetString (GL_RENDERER);
-	Con_Printf ("GL_RENDERER: %s\n", gl_renderer);
 	gl_version = glGetString (GL_VERSION);
-	Con_Printf ("GL_VERSION: %s\n", gl_version);
 	gl_extensions = glGetString (GL_EXTENSIONS);
+
+	Con_Printf("GL_VENDOR: %s\n", gl_vendor);
+	Con_Printf("GL_RENDERER: %s\n", gl_renderer);
+	Con_Printf("GL_VERSION: %s\n", gl_version);
+	if (gl_version == NULL || sscanf(gl_version, "%d.%d", &gl_version_major, &gl_version_minor) < 2)
+	{
+		gl_version_major = 0;
+		gl_version_minor = 0;
+	}
 	if (COM_CheckParm("-gl_ext"))
 		Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
 
@@ -148,9 +261,14 @@ void GL_Init (void)
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
+	gl_add_ext = CheckExtension("GL_ARB_texture_env_add");
 	CheckMultiTextureExtensions ();
+	CheckVertexBufferExtensions();
+	CheckGLSLExtensions();
 
-	gl_add_ext = CheckExtension ("GL_ARB_texture_env_add");
+	GLAlias_CreateShaders();
+	GLWorld_CreateShaders();
+	GL_ClearBufferBindings();
 }
 
 void Check_Gamma (unsigned char *pal)

@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // FAKEGL - switch include files
 #ifndef USEFAKEGL
 #include <GL/gl.h>
+#include <GL/glext.h>
 #else
 #include "fakegl.h"
 #endif
@@ -261,20 +262,82 @@ extern	const	char	*gl_extensions;
 void GL_Bind (int texnum);
 
 // Multitexture
-#define	GL_TEXTURE0_ARB 		0x84C0
-#define	GL_TEXTURE1_ARB 		0x84C1
-#define	GL_TEXTURE2_ARB 		0x84C2
-#define	GL_TEXTURE3_ARB 		0x84C3
-#define GL_MAX_TEXTURE_UNITS_ARB 0x84E2
-
 typedef void (APIENTRY *lpMTexFUNC)(GLenum, GLfloat, GLfloat);
 typedef void (APIENTRY *lpSelTexFUNC)(GLenum);
 
+// VBO
+typedef void (APIENTRY *lpBindBufFUNC)(GLenum, GLuint);
+typedef void (APIENTRY *lpBufferDataFUNC) (GLenum, GLsizeiptrARB, const GLvoid *, GLenum);
+typedef void (APIENTRY *lpBufferSubDataFUNC) (GLenum, GLintptrARB, GLsizeiptrARB, const GLvoid *);
+typedef void (APIENTRY *lpDeleteBuffersFUNC) (GLsizei, const GLuint *);
+typedef void (APIENTRY *lpGenBuffersFUNC) (GLsizei, GLuint *);
+
+// GLSL
+typedef GLuint(APIENTRY *lpCreateShaderFUNC) (GLenum type);
+typedef void (APIENTRY *lpDeleteShaderFUNC) (GLuint shader);
+typedef void (APIENTRY *lpDeleteProgramFUNC) (GLuint program);
+typedef void (APIENTRY *lpShaderSourceFUNC) (GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
+typedef void (APIENTRY *lpCompileShaderFUNC) (GLuint shader);
+typedef void (APIENTRY *lpGetShaderivFUNC) (GLuint shader, GLenum pname, GLint *params);
+typedef void (APIENTRY *lpGetShaderInfoLogFUNC) (GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+typedef void (APIENTRY *lpGetProgramivFUNC) (GLuint program, GLenum pname, GLint *params);
+typedef void (APIENTRY *lpGetProgramInfoLogFUNC) (GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+typedef GLuint(APIENTRY *lpCreateProgramFUNC) (void);
+typedef void (APIENTRY *lpAttachShaderFUNC) (GLuint program, GLuint shader);
+typedef void (APIENTRY *lpLinkProgramFUNC) (GLuint program);
+typedef void (APIENTRY *lpBindAttribLocationFUNC) (GLuint program, GLuint index, const GLchar *name);
+typedef void (APIENTRY *lpUseProgramFUNC) (GLuint program);
+typedef GLint(APIENTRY *lpGetAttribLocationFUNC) (GLuint program, const GLchar *name);
+typedef void (APIENTRY *lpVertexAttribPointerFUNC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
+typedef void (APIENTRY *lpEnableVertexAttribArrayFUNC) (GLuint index);
+typedef void (APIENTRY *lpDisableVertexAttribArrayFUNC) (GLuint index);
+typedef GLint(APIENTRY *lpGetUniformLocationFUNC) (GLuint program, const GLchar *name);
+typedef void (APIENTRY *lpUniform1iFUNC) (GLint location, GLint v0);
+typedef void (APIENTRY *lpUniform1fFUNC) (GLint location, GLfloat v0);
+typedef void (APIENTRY *lpUniform3fFUNC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
+typedef void (APIENTRY *lpUniform4fFUNC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+
 extern lpMTexFUNC qglMultiTexCoord2f;
 extern lpSelTexFUNC qglActiveTexture;
+extern lpBindBufFUNC qglBindBuffer;
+extern lpBufferDataFUNC qglBufferData;
+extern lpBufferSubDataFUNC qglBufferSubData;
+extern lpDeleteBuffersFUNC qglDeleteBuffers;
+extern lpGenBuffersFUNC qglGenBuffers;
+
+extern lpCreateShaderFUNC qglCreateShader;
+extern lpDeleteShaderFUNC qglDeleteShader;
+extern lpDeleteProgramFUNC qglDeleteProgram;
+extern lpShaderSourceFUNC qglShaderSource;
+extern lpCompileShaderFUNC qglCompileShader;
+extern lpGetShaderivFUNC qglGetShaderiv;
+extern lpGetShaderInfoLogFUNC qglGetShaderInfoLog;
+extern lpGetProgramivFUNC qglGetProgramiv;
+extern lpGetProgramInfoLogFUNC qglGetProgramInfoLog;
+extern lpCreateProgramFUNC qglCreateProgram;
+extern lpAttachShaderFUNC qglAttachShader;
+extern lpLinkProgramFUNC qglLinkProgram;
+extern lpBindAttribLocationFUNC qglBindAttribLocation;
+extern lpUseProgramFUNC qglUseProgram;
+extern lpGetAttribLocationFUNC qglGetAttribLocation;
+extern lpVertexAttribPointerFUNC qglVertexAttribPointer;
+extern lpEnableVertexAttribArrayFUNC qglEnableVertexAttribArray;
+extern lpDisableVertexAttribArrayFUNC qglDisableVertexAttribArray;
+extern lpGetUniformLocationFUNC qglGetUniformLocation;
+extern lpUniform1iFUNC qglUniform1i;
+extern lpUniform1fFUNC qglUniform1f;
+extern lpUniform3fFUNC qglUniform3f;
+extern lpUniform4fFUNC qglUniform4f;
 
 extern qboolean gl_mtexable;
 extern int gl_textureunits;
+extern qboolean	gl_vbo_able;
+extern qboolean	gl_glsl_able;
+
+typedef struct glsl_attrib_binding_s {
+	const char *name;
+	GLuint attrib;
+} glsl_attrib_binding_t;
 
 void GL_DisableMultitexture (void);
 void GL_EnableMultitexture (void);
@@ -307,6 +370,8 @@ qboolean R_CullSphere (vec3_t centre, float radius);
 void R_PolyBlend (void);
 void R_BrightenScreen (void);
 void R_Q3DamageDraw (void);
+void GLAlias_CreateShaders(void);
+
 #define NUMVERTEXNORMALS	162
 extern	float	r_avertexnormals[NUMVERTEXNORMALS][3];
 
@@ -348,9 +413,16 @@ void EmitDetailPolys (void);
 void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);
 void GL_BuildLightmaps (void);
+void GL_DeleteBModelVertexBuffer(void);
+void GL_BuildBModelVertexBuffer(void);
+void GLWorld_CreateShaders(void);
 
 // gl_rmisc.c
 void R_InitOtherTextures (void);
+void GL_BindBuffer(GLenum target, GLuint buffer);
+void GL_ClearBufferBindings();
+GLint GL_GetUniformLocation(GLuint *programPtr, const char *name);
+GLuint GL_CreateProgram(const GLchar *vertSource, const GLchar *fragSource, int numbindings, const glsl_attrib_binding_t *bindings);
 
 // gl_rpart.c
 typedef	enum
