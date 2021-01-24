@@ -27,7 +27,7 @@ float	map_wateralpha, map_lavaalpha, map_slimealpha;
 
 void R_InitOtherTextures (void)
 {
-	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN);
+	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  TEX_ALPHA | TEX_COMPLAIN);
 	detailtexture = GL_LoadTextureImage ("textures/detail", NULL, 0, 0, TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN);
 	damagetexture = GL_LoadTextureImage ("textures/particles/blood_screen", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN);
 }
