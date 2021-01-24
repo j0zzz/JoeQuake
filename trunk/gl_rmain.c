@@ -585,7 +585,7 @@ void GLAlias_CreateShaders(void)
 		"\n"
 		"uniform sampler2D Tex;\n"
 		"uniform sampler2D FullbrightTex;\n"
-		"uniform bool UseFullbrightTex;\n"
+		"uniform int UseFullbrightTex;\n"
 		"uniform bool UseAlphaTest;\n"
 		"\n"
 		"varying float FogFragCoord;\n"
@@ -597,8 +597,10 @@ void GLAlias_CreateShaders(void)
 		"		discard;\n"
 		"	result *= gl_Color;\n"
 		"	vec4 fb = texture2D(FullbrightTex, gl_TexCoord[0].xy);\n"
-		"	if (UseFullbrightTex)\n"
+		"	if (UseFullbrightTex == 1)\n"
 		"		result = mix(result, fb, fb.a);\n"
+		"	else if (UseFullbrightTex == 2)\n"
+		"		result += fb;\n"
 		"	result = clamp(result, 0.0, 1.0);\n"
 		"	float fog = exp(-gl_Fog.density * gl_Fog.density * FogFragCoord * FogFragCoord);\n"
 		"	fog = clamp(fog, 0.0, 1.0);\n"
@@ -607,7 +609,7 @@ void GLAlias_CreateShaders(void)
 		"	gl_FragColor = result;\n"
 		"}\n";
 
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 3))
+	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
 		return;
 
 	r_alias_program = GL_CreateProgram(vertSource, fragSource, sizeof(bindings) / sizeof(bindings[0]), bindings);
@@ -643,7 +645,7 @@ Supports optional overbright, optional fullbright pixels.
 Based on code by MH from RMQEngine
 =============
 */
-void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int distance, int gl_texture, int fb_texture)
+void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int distance, int gl_texture, int fb_texture, qboolean islumaskin)
 {
 	int			pose, numposes;
 
@@ -700,9 +702,6 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglVertexAttribPointer(pose1NormalAttrIndex, 4, GL_BYTE, GL_TRUE, sizeof(meshxyz_t), GLARB_GetNormalOffset(paliashdr, ent->pose1));
 	qglVertexAttribPointer(pose2NormalAttrIndex, 4, GL_BYTE, GL_TRUE, sizeof(meshxyz_t), GLARB_GetNormalOffset(paliashdr, ent->pose2));
 
-	//if (ent->modelindex == cl_modelindex[mi_player])
-	//	Con_Printf("%f %f\n", ambientlight, shadelight);
-
 	// set uniforms
 	qglUniform1f(blendLoc, ent->framelerp);
 	qglUniform1f(lerpDistLoc, distance);
@@ -713,7 +712,7 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1f(ambientLightLoc, ambientlight);
 	qglUniform1i(texLoc, 0);
 	qglUniform1i(fullbrightTexLoc, 1);
-	qglUniform1i(useFullbrightTexLoc, (fb_texture != 0) ? 1 : 0);
+	qglUniform1i(useFullbrightTexLoc, (fb_texture != 0) ? (islumaskin ? 2 : 1) : 0);
 	qglUniform1i(useAlphaTestLoc, 0);	//joe: not used
 
 	// set textures
@@ -1256,7 +1255,7 @@ void R_DrawAliasModel (entity_t *ent)
 
 	if (r_alias_program != 0)
 	{
-		R_DrawAliasFrame_GLSL(ent->frame, paliashdr, ent, distance, texture, fb_texture);
+		R_DrawAliasFrame_GLSL(ent->frame, paliashdr, ent, distance, texture, fb_texture, islumaskin);
 	}
 	else if (fb_texture && gl_mtexable)
 	{

@@ -849,7 +849,7 @@ GLuint gl_bmodel_vbo = 0;
 
 void GL_DeleteBModelVertexBuffer(void)
 {
-	if (!(gl_vbo_able && gl_mtexable && gl_textureunits >= 3))
+	if (!(gl_vbo_able && gl_mtexable && gl_textureunits >= 4))
 		return;
 
 	qglDeleteBuffers(1, &gl_bmodel_vbo);
@@ -873,7 +873,7 @@ void GL_BuildBModelVertexBuffer(void)
 	model_t	*m;
 	float	*varray;
 
-	if (!(gl_vbo_able && gl_mtexable && gl_textureunits >= 3))
+	if (!(gl_vbo_able && gl_mtexable && gl_textureunits >= 4))
 		return;
 
 	// ask GL for a name for our VBO
@@ -1007,13 +1007,19 @@ static GLuint r_world_program;
 static GLuint texLoc;
 static GLuint LMTexLoc;
 static GLuint fullbrightTexLoc;
+static GLuint detailTexLoc;
+static GLuint causticsTexLoc;
 static GLuint useFullbrightTexLoc;
+static GLuint useDetailTexLoc;
+static GLuint useCausticsTexLoc;
 static GLuint useAlphaTestLoc;
 static GLuint alphaLoc;
+static GLuint clTimeLoc;
 
 #define vertAttrIndex 0
 #define texCoordsAttrIndex 1
 #define LMCoordsAttrIndex 2
+#define detailCoordsAttrIndex 3
 
 /*
 =============
@@ -1025,15 +1031,17 @@ void GLWorld_CreateShaders(void)
 	const glsl_attrib_binding_t bindings[] = {
 		{ "Vert", vertAttrIndex },
 		{ "TexCoords", texCoordsAttrIndex },
-		{ "LMCoords", LMCoordsAttrIndex }
+		{ "LMCoords", LMCoordsAttrIndex },
+		{ "DetailCoords", detailCoordsAttrIndex }
 	};
 
 	const GLchar *vertSource = \
-		"#version 110\n"
+		"#version 130\n"
 		"\n"
 		"attribute vec3 Vert;\n"
 		"attribute vec2 TexCoords;\n"
 		"attribute vec2 LMCoords;\n"
+		"attribute vec2 DetailCoords;\n"
 		"\n"
 		"varying float FogFragCoord;\n"
 		"\n"
@@ -1041,22 +1049,50 @@ void GLWorld_CreateShaders(void)
 		"{\n"
 		"	gl_TexCoord[0] = vec4(TexCoords, 0.0, 0.0);\n"
 		"	gl_TexCoord[1] = vec4(LMCoords, 0.0, 0.0);\n"
+		"	gl_TexCoord[2] = vec4(DetailCoords.xy, 0.0, 0.0);\n"
 		"	gl_Position = gl_ModelViewProjectionMatrix * vec4(Vert, 1.0);\n"
 		"	FogFragCoord = gl_Position.w;\n"
 		"}\n";
 
 	const GLchar *fragSource = \
-		"#version 110\n"
+		"#version 130\n"	// required for bitwise operators
+		"\n"
+		"#define M_PI			3.1415926535897932384626433832795\n"
+		"#define TURBSINSIZE	128\n"
+		"#define TURBSCALE		(float(TURBSINSIZE) / (2.0 * M_PI))\n"
 		"\n"
 		"uniform sampler2D Tex;\n"
 		"uniform sampler2D LMTex;\n"
 		"uniform sampler2D FullbrightTex;\n"
-		"uniform bool UseFullbrightTex;\n"
+		"uniform sampler2D DetailTex;\n"
+		"uniform sampler2D CausticsTex;\n"
+		"uniform int UseFullbrightTex;\n"
+		"uniform bool UseDetailTex;\n"
+		"uniform bool UseCausticsTex;\n"
 		"uniform bool UseAlphaTest;\n"
 		"uniform float Alpha;\n"
+		"uniform float ClTime;\n"
 		"\n"
 		"varying float FogFragCoord;\n"
 		"\n"
+		"int turbsin(int index)\n"
+		"{\n"
+		"	return (TURBSINSIZE - 1) + int(sin((2.0 * M_PI) / TURBSINSIZE * index) * TURBSINSIZE);\n"
+		"}\n"
+		"\n"
+		"float SINTABLE_APPROX(float time)\n"	// caustics effect generation
+		"{\n"
+		"	float sinlerpf, lerptime, lerp;\n"
+		"	int	sinlerp1, sinlerp2;\n"
+		"\n"
+		"	sinlerpf = time * TURBSCALE;\n"
+		"	sinlerp1 = int(floor(sinlerpf));\n"
+		"	sinlerp2 = sinlerp1 + 1;\n"
+		"	lerptime = sinlerpf - sinlerp1;\n"
+		"\n"
+		"	lerp = turbsin(sinlerp1 & (TURBSINSIZE - 1)) * (1 - lerptime) + turbsin(sinlerp2 & (TURBSINSIZE - 1)) * lerptime;\n"
+		"	return -8.0 + 16.0 * lerp / 255.0;\n"
+		"}\n"
 		"void main()\n"
 		"{\n"
 		"	vec4 result = texture2D(Tex, gl_TexCoord[0].xy);\n"
@@ -1064,8 +1100,20 @@ void GLWorld_CreateShaders(void)
 		"		discard;\n"
 		"	result *= 1.0 - texture2D(LMTex, gl_TexCoord[1].xy);\n"
 		"	vec4 fb = texture2D(FullbrightTex, gl_TexCoord[0].xy);\n"
-		"	if (UseFullbrightTex)\n"
+		"	if (UseFullbrightTex == 1)\n"
 		"		result = mix(result, fb, fb.a);\n"
+		"	else if (UseFullbrightTex == 2)\n"
+		"		result += fb;\n"
+		"	float s = gl_TexCoord[0].x + SINTABLE_APPROX(0.465 * (ClTime + gl_TexCoord[0].y));\n"
+		"	s *= -3.0 * (0.5 / 64.0);"
+		"	float t = gl_TexCoord[0].y + SINTABLE_APPROX(0.465 * (ClTime + gl_TexCoord[0].x));\n"
+		"	t *= -3.0 * (0.5 / 64.0);"
+		"	vec4 caustics = texture2D(CausticsTex, vec2(s, t));\n"
+		"	if (UseCausticsTex)"
+		"		result = caustics * result + result * caustics;\n"
+		"	vec4 detail = texture2D(DetailTex, vec2(gl_TexCoord[2].x * 18.0, gl_TexCoord[2].y * 18.0));\n"
+		"	if (UseDetailTex)"
+		"		result = detail * result + result * detail;\n"
 		"	result = clamp(result, 0.0, 1.0);\n"
 		"	float fog = exp(-gl_Fog.density * gl_Fog.density * FogFragCoord * FogFragCoord);\n"
 		"	fog = clamp(fog, 0.0, 1.0);\n"
@@ -1074,7 +1122,7 @@ void GLWorld_CreateShaders(void)
 		"	gl_FragColor = result;\n"
 		"}\n";
 
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 3))
+	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
 		return;
 
 	r_world_program = GL_CreateProgram(vertSource, fragSource, sizeof(bindings) / sizeof(bindings[0]), bindings);
@@ -1085,9 +1133,14 @@ void GLWorld_CreateShaders(void)
 		texLoc = GL_GetUniformLocation(&r_world_program, "Tex");
 		LMTexLoc = GL_GetUniformLocation(&r_world_program, "LMTex");
 		fullbrightTexLoc = GL_GetUniformLocation(&r_world_program, "FullbrightTex");
+		detailTexLoc = GL_GetUniformLocation(&r_world_program, "DetailTex");
+		causticsTexLoc = GL_GetUniformLocation(&r_world_program, "CausticsTex");
 		useFullbrightTexLoc = GL_GetUniformLocation(&r_world_program, "UseFullbrightTex");
+		useDetailTexLoc = GL_GetUniformLocation(&r_world_program, "UseDetailTex");
+		useCausticsTexLoc = GL_GetUniformLocation(&r_world_program, "UseCausticsTex");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_world_program, "UseAlphaTest");
 		alphaLoc = GL_GetUniformLocation(&r_world_program, "Alpha");
+		clTimeLoc = GL_GetUniformLocation(&r_world_program, "ClTime");
 	}
 }
 
@@ -1115,18 +1168,25 @@ void DrawTextureChains_GLSL(model_t *model)
 	qglEnableVertexAttribArray(vertAttrIndex);
 	qglEnableVertexAttribArray(texCoordsAttrIndex);
 	qglEnableVertexAttribArray(LMCoordsAttrIndex);
+	qglEnableVertexAttribArray(detailCoordsAttrIndex);
 
 	qglVertexAttribPointer(vertAttrIndex, 3, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0));
 	qglVertexAttribPointer(texCoordsAttrIndex, 2, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0) + 3);
 	qglVertexAttribPointer(LMCoordsAttrIndex, 2, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0) + 5);
+	qglVertexAttribPointer(detailCoordsAttrIndex, 2, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0) + 7);
 
 	// set uniforms
 	qglUniform1i(texLoc, 0);
 	qglUniform1i(LMTexLoc, 1);
 	qglUniform1i(fullbrightTexLoc, 2);
+	qglUniform1i(detailTexLoc, 3);
+	qglUniform1i(causticsTexLoc, 3);
 	qglUniform1i(useFullbrightTexLoc, 0);
+	qglUniform1i(useDetailTexLoc, 0);
+	qglUniform1i(useCausticsTexLoc, 0);
 	qglUniform1i(useAlphaTestLoc, 0);
 	qglUniform1f(alphaLoc, ent->transparency);
+	qglUniform1f(clTimeLoc, cl.time);
 
 	for (i = 0 ; i < model->numtextures ; i++)
 	{
@@ -1144,7 +1204,7 @@ void DrawTextureChains_GLSL(model_t *model)
 		{
 			GL_SelectTexture(GL_TEXTURE2);
 			GL_Bind(fullbright);
-			qglUniform1i(useFullbrightTexLoc, 1);
+			qglUniform1i(useFullbrightTexLoc, at->isLumaTexture ? 2 : 1);
 		}
 		else
 			qglUniform1i(useFullbrightTexLoc, 0);
@@ -1182,6 +1242,25 @@ void DrawTextureChains_GLSL(model_t *model)
 				GL_SelectTexture(GL_TEXTURE1);
 				GL_Bind(lightmap_textures + s->lightmaptexturenum);
 				lastlightmap = s->lightmaptexturenum;
+
+				if (waterline && gl_caustics.value && underwatertexture)
+				{
+					GL_SelectTexture(GL_TEXTURE3);
+					GL_Bind(underwatertexture);
+					qglUniform1i(useCausticsTexLoc, 1);
+				}
+				else
+					qglUniform1i(useCausticsTexLoc, 0);
+
+				if (!waterline && gl_detail.value && detailtexture)
+				{
+					GL_SelectTexture(GL_TEXTURE3);
+					GL_Bind(detailtexture);
+					qglUniform1i(useDetailTexLoc, 1);
+				}
+				else
+					qglUniform1i(useDetailTexLoc, 0);
+
 				R_BatchSurface(s);
 			}
 		}
@@ -1196,12 +1275,10 @@ void DrawTextureChains_GLSL(model_t *model)
 	qglDisableVertexAttribArray(vertAttrIndex);
 	qglDisableVertexAttribArray(texCoordsAttrIndex);
 	qglDisableVertexAttribArray(LMCoordsAttrIndex);
+	qglDisableVertexAttribArray(detailCoordsAttrIndex);
 
 	qglUseProgram(0);
 	GL_SelectTexture(GL_TEXTURE0);
-
-	EmitCausticsPolys();
-	EmitDetailPolys();
 }
 
 /*
