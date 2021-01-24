@@ -1162,19 +1162,23 @@ void PrintFinishTime()
 	cls.marathon_time += cl.completed_time;
 	cls.marathon_level++;
 
-	if (!pr_qdqstats && !cls.demoplayback)
+	if (!pr_qdqstats && !cls.demoplayback && sv.active)
 	{
+		// Sphere --- calling SV_ from CL_ here is probably not the best, but at
+		// least we check for sv.active. We need the broadcast so that the time
+		// messages appear in recorded demos and also get sent to clients
+		// during coop play.
 		timestring = GetPrintedTime(cl.completed_time);
-		Con_Printf("\nexact time was %s\n", timestring);
+		SV_BroadcastPrintf("\nexact time was %s\n", timestring);
 
 		if (cls.marathon_level > 1)
 		{
-			Con_Printf("level %i in the sequence\n", cls.marathon_level);
+			SV_BroadcastPrintf("level %i in the sequence\n", cls.marathon_level);
 			timestring = GetPrintedTime(cls.marathon_time);
-			Con_Printf("total time is %s\n", timestring);
+			SV_BroadcastPrintf("total time is %s\n", timestring);
 		}
 
-		Con_Printf("\n");
+		SV_BroadcastPrintf("\n");
 	}
 }
 

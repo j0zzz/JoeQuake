@@ -341,10 +341,14 @@ void CL_SignonReply (void)
 			else
 				Cmd_ExecuteString("record\n", src_command);
 		}
-		if (!pr_qdqstats && !cls.demoplayback)
+		if (!pr_qdqstats && !cls.demoplayback && sv.active)
 		{
+			// Sphere --- calling SV_ from CL_ here is probably not the best,
+			// but at least we check for sv.active. We need the broadcast so
+			// that the message appears in recorded demos and also gets sent to
+			// clients during coop play.
 			int current_skill = bound(0, skill.value, 3);
-			Con_Printf("Playing on %s skill\n", skill_modes[current_skill]);
+			SV_BroadcastPrintf("Playing on %s skill\n", skill_modes[current_skill]);
 		}
 		break;
 	}
