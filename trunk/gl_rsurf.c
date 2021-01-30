@@ -1013,6 +1013,7 @@ static GLuint useFullbrightTexLoc;
 static GLuint useDetailTexLoc;
 static GLuint useCausticsTexLoc;
 static GLuint useAlphaTestLoc;
+static GLuint useWaterFogLoc;
 static GLuint alphaLoc;
 static GLuint clTimeLoc;
 
@@ -1070,6 +1071,7 @@ void GLWorld_CreateShaders(void)
 		"uniform bool UseDetailTex;\n"
 		"uniform bool UseCausticsTex;\n"
 		"uniform bool UseAlphaTest;\n"
+		"uniform int UseWaterFog;\n"
 		"uniform float Alpha;\n"
 		"uniform float ClTime;\n"
 		"\n"
@@ -1115,7 +1117,13 @@ void GLWorld_CreateShaders(void)
 		"	if (UseDetailTex)"
 		"		result = detail * result + result * detail;\n"
 		"	result = clamp(result, 0.0, 1.0);\n"
-		"	float fog = exp(-gl_Fog.density * gl_Fog.density * FogFragCoord * FogFragCoord);\n"
+		"	float fog = 0.0;\n"
+		"	if (UseWaterFog == 1)\n"
+		"		fog = (gl_Fog.end - FogFragCoord) / (gl_Fog.end - gl_Fog.start);\n"
+		"	else if (UseWaterFog == 2)\n"
+		"		fog = exp(-gl_Fog.density * FogFragCoord);\n"
+		"	else\n"
+		"		fog = exp(-gl_Fog.density * gl_Fog.density * FogFragCoord * FogFragCoord);\n"
 		"	fog = clamp(fog, 0.0, 1.0);\n"
 		"	result = mix(gl_Fog.color, result, fog);\n"
 		"	result.a = Alpha;\n" // FIXME: This will make almost transparent things cut holes though heavy fog
@@ -1139,6 +1147,7 @@ void GLWorld_CreateShaders(void)
 		useDetailTexLoc = GL_GetUniformLocation(&r_world_program, "UseDetailTex");
 		useCausticsTexLoc = GL_GetUniformLocation(&r_world_program, "UseCausticsTex");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_world_program, "UseAlphaTest");
+		useWaterFogLoc = GL_GetUniformLocation(&r_world_program, "UseWaterFog");
 		alphaLoc = GL_GetUniformLocation(&r_world_program, "Alpha");
 		clTimeLoc = GL_GetUniformLocation(&r_world_program, "ClTime");
 	}
@@ -1185,6 +1194,7 @@ void DrawTextureChains_GLSL(model_t *model)
 	qglUniform1i(useDetailTexLoc, 0);
 	qglUniform1i(useCausticsTexLoc, 0);
 	qglUniform1i(useAlphaTestLoc, 0);
+	qglUniform1i(useWaterFogLoc, (r_viewleaf->contents != CONTENTS_EMPTY && r_viewleaf->contents != CONTENTS_SOLID) ? (int)gl_waterfog.value : 0);
 	qglUniform1f(alphaLoc, ent->transparency);
 	qglUniform1f(clTimeLoc, cl.time);
 

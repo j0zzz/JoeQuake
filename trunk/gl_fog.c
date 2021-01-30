@@ -223,6 +223,22 @@ void Fog_ParseWorldspawn (void)
 
 /*
 =============
+Fog_IsWaterFog
+
+returns true if waterfog needs to be drawn
+=============
+*/
+qboolean Fog_IsWaterFog(void)
+{
+	return gl_waterfog.value && r_viewleaf->contents != CONTENTS_EMPTY && r_viewleaf->contents != CONTENTS_SOLID;
+}
+
+static float lava[4] = { 1.0f, 0.314f, 0.0f, 0.5f };
+static float slime[4] = { 0.039f, 0.738f, 0.333f, 0.5f };
+static float water[4] = { 0.039f, 0.584f, 0.888f, 0.5f };
+
+/*
+=============
 Fog_GetColor
 
 calculates fog color for this frame, taking into account fade times
@@ -231,30 +247,47 @@ calculates fog color for this frame, taking into account fade times
 float *Fog_GetColor (void)
 {
 	static float c[4];
-	float f;
-	int i;
+	float	f;
+	int		i;
 
-	if (fade_done > cl.time)
+	if (Fog_IsWaterFog())
 	{
-		f = (fade_done - cl.time) / fade_time;
-		c[0] = f * old_red + (1.0 - f) * fog_red;
-		c[1] = f * old_green + (1.0 - f) * fog_green;
-		c[2] = f * old_blue + (1.0 - f) * fog_blue;
-		c[3] = 1.0;
+		switch (r_viewleaf->contents)
+		{
+		case CONTENTS_LAVA:
+			return lava;
+
+		case CONTENTS_SLIME:
+			return slime;
+
+		default:
+			return water;
+		}
 	}
 	else
 	{
-		c[0] = fog_red;
-		c[1] = fog_green;
-		c[2] = fog_blue;
-		c[3] = 1.0;
+		if (fade_done > cl.time)
+		{
+			f = (fade_done - cl.time) / fade_time;
+			c[0] = f * old_red + (1.0 - f) * fog_red;
+			c[1] = f * old_green + (1.0 - f) * fog_green;
+			c[2] = f * old_blue + (1.0 - f) * fog_blue;
+			c[3] = 1.0;
+		}
+		else
+		{
+			c[0] = fog_red;
+			c[1] = fog_green;
+			c[2] = fog_blue;
+			c[3] = 1.0;
+		}
+
+		//find closest 24-bit RGB value, so solid-colored sky can match the fog perfectly
+		for (i = 0; i < 3; i++)
+			c[i] = (float)(Q_rint(c[i] * 255)) / 255.0f;
+
+		return c;
 	}
-
-	//find closest 24-bit RGB value, so solid-colored sky can match the fog perfectly
-	for (i=0;i<3;i++)
-		c[i] = (float)(Q_rint(c[i] * 255)) / 255.0f;
-
-	return c;
 }
 
 /*
@@ -268,7 +301,9 @@ float Fog_GetDensity (void)
 {
 	float f;
 
-	if (fade_done > cl.time)
+	if (Fog_IsWaterFog())
+		return 1.0;		// joe: this is a hack to force all the Fog_GetDensity > 0 conditions to be true
+	else if (fade_done > cl.time)
 	{
 		f = (fade_done - cl.time) / fade_time;
 		return f * old_density + (1.0 - f) * fog_density;
@@ -282,12 +317,32 @@ float Fog_GetDensity (void)
 Fog_SetupFrame
 
 called at the beginning of each frame
+
+joe: moved waterfog handling code here. Fog in liquids, from FuhQuake
 =============
 */
 void Fog_SetupFrame (void)
 {
 	glFogfv(GL_FOG_COLOR, Fog_GetColor());
-	glFogf(GL_FOG_DENSITY, Fog_GetDensity() / 64.0);
+	if (Fog_IsWaterFog())
+	{
+		if (((int)gl_waterfog.value) == 2)
+		{
+			glFogi(GL_FOG_MODE, GL_EXP);
+			glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
+		}
+		else
+		{
+			glFogi(GL_FOG_MODE, GL_LINEAR);
+			glFogf(GL_FOG_START, 150.0f);
+			glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
+		}
+	}
+	else
+	{
+		glFogi(GL_FOG_MODE, GL_EXP2);
+		glFogf(GL_FOG_DENSITY, Fog_GetDensity() / 64.0);
+	}
 }
 
 /*
@@ -297,7 +352,7 @@ Fog_EnableGFog
 called before drawing stuff that should be fogged
 =============
 */
-void Fog_EnableGFog (void)
+void Fog_EnableGFog ()
 {
 	if (Fog_GetDensity() > 0)
 		glEnable(GL_FOG);
@@ -310,7 +365,7 @@ Fog_DisableGFog
 called after drawing stuff that should be fogged
 =============
 */
-void Fog_DisableGFog (void)
+void Fog_DisableGFog ()
 {
 	if (Fog_GetDensity() > 0)
 		glDisable(GL_FOG);

@@ -488,58 +488,6 @@ void V_SetContentsColor (int contents)
 
 /*
 =============
-V_AddWaterFog
-
-Fog in liquids, from FuhQuake
-=============
-*/
-#ifdef GLQUAKE
-void V_AddWaterfog (int contents)
-{
-	float	*colors;
-	float	lava[4] = {1.0f, 0.314f, 0.0f, 0.5f};
-	float	slime[4] = {0.039f, 0.738f, 0.333f, 0.5f};
-	float	water[4] = {0.039f, 0.584f, 0.888f, 0.5f};
-
-	if (!gl_waterfog.value || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID)
-	{
-		glDisable (GL_FOG);
-		return;
-	}
-
-	switch (contents)
-	{
-	case CONTENTS_LAVA:
-		colors = lava;
-		break;
-
-	case CONTENTS_SLIME:
-		colors = slime;
-		break;
-
-	default:
-		colors = water;
-		break;
-	}
-
-	glFogfv (GL_FOG_COLOR, colors);
-	if (((int)gl_waterfog.value) == 2)
-	{
-		glFogf (GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
-		glFogi (GL_FOG_MODE, GL_EXP);
-	}
-	else
-	{
-		glFogi (GL_FOG_MODE, GL_LINEAR);
-		glFogf (GL_FOG_START, 150.0f);	
-		glFogf (GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
-	}
-	glEnable(GL_FOG);
-}
-#endif
-
-/*
-=============
 V_CalcPowerupCshift
 =============
 */

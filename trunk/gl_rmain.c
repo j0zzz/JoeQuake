@@ -684,6 +684,9 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	if (cl.paused || ent->framelerp > 1)
 		ent->framelerp = 1;
 
+	if (ISTRANSPARENT(ent))
+		glEnable(GL_BLEND);
+
 	qglUseProgram(r_alias_program);
 
 	GL_BindBuffer(GL_ARRAY_BUFFER, currententity->model->meshvbo);
@@ -737,6 +740,9 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 
 	qglUseProgram(0);
 	GL_SelectTexture(GL_TEXTURE0);
+
+	if (ISTRANSPARENT(ent))
+		glDisable(GL_BLEND);
 }
 
 /*
@@ -2748,8 +2754,6 @@ void R_SetupFrame (void)
 
 	r_framecount++;
 
-	Fog_SetupFrame(); //johnfitz
-
 // build the transformation matrix for the given view angles
 	VectorCopy (r_refdef.vieworg, r_origin);
 	AngleVectors (r_refdef.viewangles, vpn, vright, vup);
@@ -2781,8 +2785,9 @@ void R_SetupFrame (void)
 			r_viewleaf2 = leaf;
 	}
 
+	Fog_SetupFrame(); //johnfitz
+
 	V_SetContentsColor (r_viewleaf->contents);
-	V_AddWaterfog (r_viewleaf->contents);	
 	if (nehahra)
 		Neh_SetupFrame ();
 	V_CalcBlend ();
