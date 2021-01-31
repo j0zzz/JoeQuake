@@ -962,6 +962,9 @@ static void R_ClearBatch()
 	num_vbo_indices = 0;
 }
 
+static GLuint useDetailTexLoc;
+static GLuint useCausticsTexLoc;
+
 /*
 ================
 R_FlushBatch
@@ -969,10 +972,28 @@ R_FlushBatch
 Draw the current batch if non-empty and clears it, ready for more R_BatchSurface calls.
 ================
 */
-static void R_FlushBatch()
+static void R_FlushBatch(int waterline)
 {
 	if (num_vbo_indices > 0)
 	{
+		if (waterline && gl_caustics.value && underwatertexture)
+		{
+			GL_SelectTexture(GL_TEXTURE3);
+			GL_Bind(underwatertexture);
+			qglUniform1i(useCausticsTexLoc, 1);
+		}
+		else
+			qglUniform1i(useCausticsTexLoc, 0);
+
+		if (!waterline && gl_detail.value && detailtexture)
+		{
+			GL_SelectTexture(GL_TEXTURE3);
+			GL_Bind(detailtexture);
+			qglUniform1i(useDetailTexLoc, 1);
+		}
+		else
+			qglUniform1i(useDetailTexLoc, 0);
+
 		glDrawElements(GL_TRIANGLES, num_vbo_indices, GL_UNSIGNED_INT, vbo_indices);
 		num_vbo_indices = 0;
 	}
@@ -986,14 +1007,14 @@ Add the surface to the current batch, or just draw it immediately if we're not
 using VBOs.
 ================
 */
-static void R_BatchSurface(msurface_t *s)
+static void R_BatchSurface(msurface_t *s, int waterline)
 {
 	int num_surf_indices;
 
 	num_surf_indices = R_NumTriangleIndicesForSurf(s);
 
 	if (num_vbo_indices + num_surf_indices > MAX_BATCH_SIZE)
-		R_FlushBatch();
+		R_FlushBatch(waterline);
 
 	R_TriangleIndicesForSurf(s, &vbo_indices[num_vbo_indices]);
 	num_vbo_indices += num_surf_indices;
@@ -1010,8 +1031,6 @@ static GLuint fullbrightTexLoc;
 static GLuint detailTexLoc;
 static GLuint causticsTexLoc;
 static GLuint useFullbrightTexLoc;
-static GLuint useDetailTexLoc;
-static GLuint useCausticsTexLoc;
 static GLuint useAlphaTestLoc;
 static GLuint useWaterFogLoc;
 static GLuint alphaLoc;
@@ -1106,16 +1125,20 @@ void GLWorld_CreateShaders(void)
 		"		result = mix(result, fb, fb.a);\n"
 		"	else if (UseFullbrightTex == 2)\n"
 		"		result += fb;\n"
-		"	float s = gl_TexCoord[0].x + SINTABLE_APPROX(0.465 * (ClTime + gl_TexCoord[0].y));\n"
-		"	s *= -3.0 * (0.5 / 64.0);"
-		"	float t = gl_TexCoord[0].y + SINTABLE_APPROX(0.465 * (ClTime + gl_TexCoord[0].x));\n"
-		"	t *= -3.0 * (0.5 / 64.0);"
-		"	vec4 caustics = texture2D(CausticsTex, vec2(s, t));\n"
-		"	if (UseCausticsTex)"
+		"	if (UseCausticsTex)\n"
+		"	{\n"
+		"		float s = gl_TexCoord[0].x + SINTABLE_APPROX(0.465 * (ClTime + gl_TexCoord[0].y));\n"
+		"		s *= -3.0 * (0.5 / 64.0);"
+		"		float t = gl_TexCoord[0].y + SINTABLE_APPROX(0.465 * (ClTime + gl_TexCoord[0].x));\n"
+		"		t *= -3.0 * (0.5 / 64.0);"
+		"		vec4 caustics = texture2D(CausticsTex, vec2(s, t));\n"
 		"		result = caustics * result + result * caustics;\n"
-		"	vec4 detail = texture2D(DetailTex, vec2(gl_TexCoord[2].x * 18.0, gl_TexCoord[2].y * 18.0));\n"
-		"	if (UseDetailTex)"
+		"	}\n"
+		"	if (UseDetailTex)\n"
+		"	{\n"
+		"		vec4 detail = texture2D(DetailTex, vec2(gl_TexCoord[2].x * 18.0, gl_TexCoord[2].y * 18.0));\n"
 		"		result = detail * result + result * detail;\n"
+		"	}\n"
 		"	result = clamp(result, 0.0, 1.0);\n"
 		"	float fog = 0.0;\n"
 		"	if (UseWaterFog == 1)\n"
@@ -1247,35 +1270,18 @@ void DrawTextureChains_GLSL(model_t *model)
 				}
 
 				if (s->lightmaptexturenum != lastlightmap)
-					R_FlushBatch();
+					R_FlushBatch(waterline);
 
 				GL_SelectTexture(GL_TEXTURE1);
 				GL_Bind(lightmap_textures + s->lightmaptexturenum);
 				lastlightmap = s->lightmaptexturenum;
 
-				if (waterline && gl_caustics.value && underwatertexture)
-				{
-					GL_SelectTexture(GL_TEXTURE3);
-					GL_Bind(underwatertexture);
-					qglUniform1i(useCausticsTexLoc, 1);
-				}
-				else
-					qglUniform1i(useCausticsTexLoc, 0);
-
-				if (!waterline && gl_detail.value && detailtexture)
-				{
-					GL_SelectTexture(GL_TEXTURE3);
-					GL_Bind(detailtexture);
-					qglUniform1i(useDetailTexLoc, 1);
-				}
-				else
-					qglUniform1i(useDetailTexLoc, 0);
-
-				R_BatchSurface(s);
+				R_BatchSurface(s, waterline);
 			}
-		}
 
-		R_FlushBatch();
+			// joe: we need to draw surfaces per waterline because of the caustics (only in-water) and detail (only out-water) textures
+			R_FlushBatch(waterline);
+		}
 
 		if (bound && alphaused)
 			qglUniform1i(useAlphaTestLoc, 0); // Flip alpha test back off
