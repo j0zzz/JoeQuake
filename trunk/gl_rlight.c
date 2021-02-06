@@ -463,6 +463,8 @@ float	vlight_lowcut = 60;
 
 byte	anorm_pitch[NUMVERTEXNORMALS];
 byte	anorm_yaw[NUMVERTEXNORMALS];
+int		anorm_pitch_GLSL[NUMVERTEXNORMALS];
+int		anorm_yaw_GLSL[NUMVERTEXNORMALS];
 
 byte	vlighttable[256][256];
 
@@ -501,7 +503,7 @@ float R_LerpVertexLight (byte ppitch1, byte pyaw1, byte ppitch2, byte pyaw2, flo
 
 void R_ResetAnormTable (void)
 {
-	int	i, j;
+	int		i, j;
 	float	angle, sp, sy, cp, cy, precut;
 	vec3_t	normal, lightvec, ang;
 
@@ -523,8 +525,8 @@ void R_ResetAnormTable (void)
 	for (i=0 ; i<NUMVERTEXNORMALS ; i++)
 	{
 		vectoangles (r_avertexnormals[i], ang);
-		anorm_pitch[i] = ang[0] * 256 / 360;
-		anorm_yaw[i] = ang[1] * 256 / 360;
+		anorm_pitch_GLSL[i] = anorm_pitch[i] = ang[0] * 256 / 360;
+		anorm_yaw_GLSL[i] = anorm_yaw[i] = ang[1] * 256 / 360;
 	}
 
 	// Next, a light value table must be constructed for pitch/yaw offsets
@@ -556,7 +558,63 @@ void R_ResetAnormTable (void)
 	}
 }
 
+GLuint	tbo, tbo_tex;
+GLuint	ubo;
+
+/*
+==================
+GL_BuildTextureBufferWithLightData
+
+joe: vlighttable is a huge array to use in GLSL
+uniform arrays and uniform buffers don't enable that much data to be sent
+the best solution I found is to load it to the texture buffer
+==================
+*/
+void GL_BuildTextureBufferWithLightData(void)
+{
+	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+		return;
+
+	qglGenBuffers(1, &tbo);
+	qglBindBuffer(GL_TEXTURE_BUFFER, tbo);
+	qglBufferData(GL_TEXTURE_BUFFER, sizeof(vlighttable), vlighttable, GL_STATIC_DRAW);
+	qglBindBuffer(GL_TEXTURE_BUFFER, 0);
+
+	glGenTextures(1, &tbo_tex);
+	glBindTexture(GL_TEXTURE_BUFFER, tbo_tex);
+	qglTexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, tbo);
+}
+
+/*
+==================
+GL_BuildUniformBufferWithAnormData
+
+joe: anorm_pitch and anorm_yaw arrays only set at startup
+so let's load them to a uniform buffer instead of sending it to the shader every frame
+==================
+*/
+void GL_BuildUniformBufferWithAnormData(void)
+{
+	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+		return;
+
+	qglGenBuffers(1, &ubo);
+	qglBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	qglBufferData(GL_UNIFORM_BUFFER, sizeof(anorm_pitch_GLSL) + sizeof(anorm_yaw_GLSL), NULL, GL_STATIC_DRAW);
+	//qglBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	qglBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo);
+
+	//qglBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	qglBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(anorm_pitch_GLSL), anorm_pitch_GLSL);
+	qglBufferSubData(GL_UNIFORM_BUFFER, sizeof(anorm_pitch_GLSL), sizeof(anorm_yaw_GLSL), anorm_yaw_GLSL);
+	qglBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 void R_InitVertexLights (void)
 {
 	R_ResetAnormTable ();
+	
+	GL_BuildTextureBufferWithLightData();
+	GL_BuildUniformBufferWithAnormData();
 }

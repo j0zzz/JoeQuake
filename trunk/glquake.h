@@ -296,6 +296,10 @@ typedef void (APIENTRY *lpUniform1iFUNC) (GLint location, GLint v0);
 typedef void (APIENTRY *lpUniform1fFUNC) (GLint location, GLfloat v0);
 typedef void (APIENTRY *lpUniform3fFUNC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
 typedef void (APIENTRY *lpUniform4fFUNC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+typedef void (APIENTRY *lpTexBufferFUNC) (GLenum target, GLenum internalformat, GLuint buffer);
+typedef void (APIENTRY *lpBindBufferBaseFUNC) (GLenum target, GLuint index, GLuint buffer);
+typedef GLuint(APIENTRY *lpGetUniformBlockIndexFUNC) (GLuint program, const GLchar *uniformBlockName);
+typedef void (APIENTRY *lpUniformBlockBindingFUNC) (GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding);
 
 extern lpMTexFUNC qglMultiTexCoord2f;
 extern lpSelTexFUNC qglActiveTexture;
@@ -328,6 +332,10 @@ extern lpUniform1iFUNC qglUniform1i;
 extern lpUniform1fFUNC qglUniform1f;
 extern lpUniform3fFUNC qglUniform3f;
 extern lpUniform4fFUNC qglUniform4f;
+extern lpTexBufferFUNC qglTexBuffer;
+extern lpBindBufferBaseFUNC qglBindBufferBase;
+extern lpGetUniformBlockIndexFUNC qglGetUniformBlockIndex;
+extern lpUniformBlockBindingFUNC qglUniformBlockBinding;
 
 extern qboolean gl_mtexable;
 extern int gl_textureunits;

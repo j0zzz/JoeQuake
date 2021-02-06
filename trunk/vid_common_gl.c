@@ -70,6 +70,10 @@ lpUniform1iFUNC qglUniform1i = NULL; //ericw
 lpUniform1fFUNC qglUniform1f = NULL; //ericw
 lpUniform3fFUNC qglUniform3f = NULL; //ericw
 lpUniform4fFUNC qglUniform4f = NULL; //ericw
+lpTexBufferFUNC qglTexBuffer = NULL;
+lpBindBufferBaseFUNC qglBindBufferBase = NULL;
+lpGetUniformBlockIndexFUNC qglGetUniformBlockIndex = NULL;
+lpUniformBlockBindingFUNC qglUniformBlockBinding = NULL;
 
 qboolean	gl_add_ext = false;
 
@@ -180,6 +184,10 @@ void CheckGLSLExtensions(void)
 		qglUniform1f = (void *)qglGetProcAddress("glUniform1f");
 		qglUniform3f = (void *)qglGetProcAddress("glUniform3f");
 		qglUniform4f = (void *)qglGetProcAddress("glUniform4f");
+		qglTexBuffer = (void *)qglGetProcAddress("glTexBuffer");
+		qglBindBufferBase = (void *)qglGetProcAddress("glBindBufferBase");
+		qglGetUniformBlockIndex = (void *)qglGetProcAddress("glGetUniformBlockIndex");
+		qglUniformBlockBinding = (void *)qglGetProcAddress("glUniformBlockBinding");
 
 		if (qglCreateShader &&
 			qglDeleteShader &&
@@ -203,7 +211,11 @@ void CheckGLSLExtensions(void)
 			qglUniform1i &&
 			qglUniform1f &&
 			qglUniform3f &&
-			qglUniform4f)
+			qglUniform4f &&
+			qglTexBuffer &&
+			qglBindBufferBase &&
+			qglGetUniformBlockIndex &&
+			qglUniformBlockBinding)
 		{
 			Con_Printf("GLSL extensions found\n");
 			gl_glsl_able = true;

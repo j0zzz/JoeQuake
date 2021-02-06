@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (C) 1996-1997 Id Software, Inc.
 
 This program is free software; you can redistribute it and/or
@@ -473,6 +473,8 @@ static GLuint lightColorLoc;
 static GLuint useVertexLightingLoc;
 static GLuint shadeLightLoc;
 static GLuint ambientLightLoc;
+static GLuint aPitchLoc;
+static GLuint aYawLoc;
 
 // uniforms used in frag shader
 static GLuint texLoc;
@@ -530,7 +532,9 @@ void GLAlias_CreateShaders(void)
 	};
 
 	const GLchar *vertSource = \
-		"#version 110\n"
+		"#version 150 compatibility\n"
+		"\n"
+		"#define NUMVERTEXNORMALS	162\n"
 		"\n"
 		"uniform float Blend;\n"
 		"uniform float LerpDist;\n"
@@ -539,6 +543,14 @@ void GLAlias_CreateShaders(void)
 		"uniform bool UseVertexLighting;\n"
 		"uniform float ShadeLight;\n"
 		"uniform float AmbientLight;\n"
+		"uniform float APitch;\n"
+		"uniform float AYaw;\n"
+		"uniform VlightData\n"
+		"{\n"
+		"	int AnormPitch[NUMVERTEXNORMALS];\n"
+		"	int AnormYaw[NUMVERTEXNORMALS];\n"
+		"};\n"
+		"uniform usamplerBuffer VlightTable;\n"
 		"attribute vec4 TexCoords; // only xy are used \n"
 		"attribute vec4 Pose1Vert;\n"
 		"attribute vec3 Pose1Normal;\n"
@@ -556,23 +568,60 @@ void GLAlias_CreateShaders(void)
 		"        else\n"
 		"            return 1.0 + dot;\n"
 		"}\n"
+		"float R_GetVertexLightValue(int ppitch, int pyaw, float apitch, float ayaw)\n"
+		"{\n"
+		"	int	pitchofs, yawofs, idx;\n"
+		"	float	retval;\n"
+		"\n"
+		"	pitchofs = ppitch + int(apitch * 256 / 360);\n"
+		"	yawofs = pyaw + int(ayaw * 256 / 360);\n"
+		"	while (pitchofs > 255)\n"
+		"		pitchofs -= 256;\n"
+		"	while (yawofs > 255)\n"
+		"		yawofs -= 256;\n"
+		"	while (pitchofs < 0)\n"
+		"		pitchofs += 256;\n"
+		"	while (yawofs < 0)\n"
+		"		yawofs += 256;\n"
+		"\n"
+		"	retval = texelFetch(VlightTable, pitchofs * 256 + yawofs).r;\n"
+		"\n"
+		"	return retval / 256;\n"
+		"}\n"
+		"float R_LerpVertexLight(int ppitch1, int pyaw1, int ppitch2, int pyaw2, float ilerp, float apitch, float ayaw)\n"
+		"{\n"
+		"	float	lightval1, lightval2, val;\n"
+		"\n"
+		"	lightval1 = R_GetVertexLightValue(ppitch1, pyaw1, apitch, ayaw);\n"
+		"	lightval2 = R_GetVertexLightValue(ppitch2, pyaw2, apitch, ayaw);\n"
+		"\n"
+		"	val = (lightval2 * ilerp) + (lightval1 * (1 - ilerp));\n"
+		"\n"
+		"	return val;\n"
+		"}\n"
 		"void main()\n"
 		"{\n"
 		"	gl_TexCoord[0] = TexCoords;\n"
 		"	float lerpfrac;"
-		"	if (distance(Pose1Vert, Pose2Vert) < LerpDist)\n"
+		"	if (distance(Pose1Vert.xyz, Pose2Vert.xyz) < LerpDist)\n"
 		"		lerpfrac = Blend;\n"
 		"	else\n"
 		"		lerpfrac = 1.0;\n"
 		"	vec4 lerpedVert = mix(vec4(Pose1Vert.xyz, 1.0), vec4(Pose2Vert.xyz, 1.0), lerpfrac);\n"
 		"	gl_Position = gl_ModelViewProjectionMatrix * lerpedVert;\n"
 		"	FogFragCoord = gl_Position.w;\n"
-		"	float dot1 = r_avertexnormal_dot(Pose1Normal);\n"
-		"	float dot2 = r_avertexnormal_dot(Pose2Normal);\n"
 		"	if (UseVertexLighting)\n"
-		"		gl_FrontColor = LightColor * vec4(vec3(mix(dot1, dot2, Blend)), 1.0);\n"
+		"	{\n"
+		"		int pose1_lni = int(Pose1Vert.w);\n"
+		"		int pose2_lni = int(Pose2Vert.w);\n"
+		"		float l = R_LerpVertexLight(AnormPitch[pose1_lni], AnormYaw[pose1_lni], AnormPitch[pose2_lni], AnormYaw[pose2_lni], Blend, APitch, AYaw);\n"
+		"		l = min(l, 1.0);\n"
+		"		gl_FrontColor = vec4(vec3(LightColor.xyz / 256.0 + l), LightColor.w);\n"
+		"	}\n"
 		"	else\n"
 		"	{\n"
+		"		float dot1 = r_avertexnormal_dot(Pose1Normal.xyz);\n"
+		"		float dot2 = r_avertexnormal_dot(Pose2Normal.xyz);\n"
 		"		float l = mix(dot1, dot2, Blend);\n"
 		"		l = (l * ShadeLight + AmbientLight) / 256.0;\n"
 		"		l = min(l, 1.0);\n"
@@ -581,7 +630,7 @@ void GLAlias_CreateShaders(void)
 		"}\n";
 
 	const GLchar *fragSource = \
-		"#version 110\n"
+		"#version 150 compatibility\n"
 		"\n"
 		"uniform sampler2D Tex;\n"
 		"uniform sampler2D FullbrightTex;\n"
@@ -624,10 +673,16 @@ void GLAlias_CreateShaders(void)
 		useVertexLightingLoc = GL_GetUniformLocation(&r_alias_program, "UseVertexLighting");
 		shadeLightLoc = GL_GetUniformLocation(&r_alias_program, "ShadeLight");
 		ambientLightLoc = GL_GetUniformLocation(&r_alias_program, "AmbientLight");
+		aPitchLoc = GL_GetUniformLocation(&r_alias_program, "APitch");
+		aYawLoc = GL_GetUniformLocation(&r_alias_program, "AYaw");
 		texLoc = GL_GetUniformLocation(&r_alias_program, "Tex");
 		fullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "FullbrightTex");
 		useFullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "UseFullbrightTex");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_alias_program, "UseAlphaTest");
+
+		// joe: bind uniform buffer here, only once
+		GLuint vlightDataLoc = qglGetUniformBlockIndex(r_alias_program, "VlightData");
+		qglUniformBlockBinding(r_alias_program, vlightDataLoc, 0);
 	}
 }
 
@@ -713,6 +768,8 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1i(useVertexLightingLoc, (gl_vertexlights.value && !full_light) ? 1 : 0);
 	qglUniform1f(shadeLightLoc, shadelight);
 	qglUniform1f(ambientLightLoc, ambientlight);
+	qglUniform1f(aPitchLoc, apitch);
+	qglUniform1f(aYawLoc, ayaw);
 	qglUniform1i(texLoc, 0);
 	qglUniform1i(fullbrightTexLoc, 1);
 	qglUniform1i(useFullbrightTexLoc, (fb_texture != 0) ? (islumaskin ? 2 : 1) : 0);
