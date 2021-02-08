@@ -1861,7 +1861,7 @@ void VID_Init (unsigned char *palette)
 // Video menu stuff
 //========================================================
 
-#define	VIDEO_ITEMS	7
+#define	VIDEO_ITEMS	8
 
 int	video_cursor_row = 0;
 int	video_cursor_column = 0;
@@ -1874,6 +1874,7 @@ extern	void M_DrawCharacter (int cx, int line, int num);
 extern	void M_DrawTransPic (int x, int y, mpic_t *pic);
 extern	void M_DrawPic (int x, int y, mpic_t *pic);
 extern	void M_DrawCheckbox(int x, int y, int on);
+extern	void M_DrawSliderFloat2(int x, int y, float range, float value);
 
 static	int	vid_line, vid_wmodes;
 
@@ -1896,6 +1897,23 @@ typedef struct
 
 static	modedesc_t	modedescs[MAX_MODEDESCS];
 
+void VID_AdjustSliders(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (video_cursor_row)
+	{
+	case 4:	// resolution scale
+		r_scale.value += dir * 0.05;
+		r_scale.value = bound(0.25, r_scale.value, 1);
+		Cvar_SetValue(&r_scale, r_scale.value);
+		break;
+
+	default:
+		break;
+	}
+}
+
 /*
 ================
 VID_MenuDraw
@@ -1906,6 +1924,7 @@ void VID_MenuDraw (void)
 	mpic_t	*p;
 	char	*ptr, bpp[10], display_freq[10];
 	int		lnummodes, i, k, column, row;
+	float	r;
 	vmode_t	*pv;
 
 	p = Draw_CachePic ("gfx/vidmodes.lmp");
@@ -1945,7 +1964,11 @@ void VID_MenuDraw (void)
 	M_Print(16, 56, "     Vertical sync");
 	M_DrawCheckbox(188, 56, menu_vsync);
 
-	M_PrintWhite(16, 72, "     Apply changes");
+	M_Print(16, 64, "  Resolution scale");
+	r = (r_scale.value - 0.25) / 0.75;
+	M_DrawSliderFloat2(188, 64, r, r_scale.value);
+
+	M_PrintWhite(16, 80, "     Apply changes");
 
 	column = 0;
 	row = 32 + VIDEO_ITEMS * 8;
@@ -2037,7 +2060,12 @@ void VID_MenuKey (int key)
 		S_LocalSound("misc/menu1.wav");
 		video_cursor_row--;
 		if (video_cursor_row < 0)
+		{
 			video_cursor_row = (VIDEO_ITEMS + video_mode_rows) - 1;
+			// if we cycle from the top to the bottom row, check if we have an item in the appropriate column
+			if (vid_wmodes % VID_ROW_SIZE == 1 || (vid_wmodes % VID_ROW_SIZE == 2 && video_cursor_column == 2))
+				video_cursor_column = 0;
+		}
 		break;
 
 	case K_DOWNARROW:
@@ -2045,6 +2073,11 @@ void VID_MenuKey (int key)
 		video_cursor_row++;
 		if (video_cursor_row >= (VIDEO_ITEMS + video_mode_rows))
 			video_cursor_row = 0;
+		else if (video_cursor_row >= ((VIDEO_ITEMS + video_mode_rows) - 1)) // if we step down to the last row, check if we have an item below in the appropriate column
+		{
+			if (vid_wmodes % VID_ROW_SIZE == 1 || (vid_wmodes % VID_ROW_SIZE == 2 && video_cursor_column == 2))
+				video_cursor_column = 0;
+		}
 		break;
 
 	case K_HOME:
@@ -2080,6 +2113,8 @@ void VID_MenuKey (int key)
 				}
 			}
 		}
+		else
+			VID_AdjustSliders(-1);
 		break;
 
 	case K_RIGHTARROW:
@@ -2089,6 +2124,8 @@ void VID_MenuKey (int key)
 			if (video_cursor_column >= VID_ROW_SIZE || ((video_cursor_row - VIDEO_ITEMS) * VID_ROW_SIZE + (video_cursor_column + 1)) > vid_wmodes)
 				video_cursor_column = 0;
 		}
+		else
+			VID_AdjustSliders(1);
 		break;
 
 	case K_ENTER:
@@ -2133,7 +2170,7 @@ void VID_MenuKey (int key)
 			menu_vsync = !menu_vsync;
 			break;
 
-		case 5:
+		case 6:
 			//TODO add support to change between windowed/fullscreen modes
 			Cvar_SetValue(&vid_bpp, menu_bpp);
 			Cvar_SetValue(&vid_displayfrequency, menu_display_freq);
@@ -2160,8 +2197,8 @@ void VID_MenuKey (int key)
 		break;
 	}
 
-	if (key == K_UPARROW && (video_cursor_row == 4 || video_cursor_row == 6))
+	if (key == K_UPARROW && (video_cursor_row == 5 || video_cursor_row == 7))
 		video_cursor_row--;
-	else if (key == K_DOWNARROW && (video_cursor_row == 4 || video_cursor_row == 6))
+	else if (key == K_DOWNARROW && (video_cursor_row == 5 || video_cursor_row == 7))
 		video_cursor_row++;
 }

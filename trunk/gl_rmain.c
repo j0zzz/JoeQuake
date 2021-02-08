@@ -99,6 +99,7 @@ qboolean OnChange_r_skybox (cvar_t *var, char *string);
 cvar_t	r_skybox = {"r_skybox", "", 0, OnChange_r_skybox };
 qboolean OnChange_r_skyfog(cvar_t *var, char *string);
 cvar_t	r_skyfog = { "r_skyfog", "0.5", 0, OnChange_r_skyfog };
+cvar_t	r_scale = { "r_scale", "1" };
 
 cvar_t	gl_clear = {"gl_clear", "0"};
 cvar_t	gl_cull = {"gl_cull", "1"};
@@ -2872,12 +2873,13 @@ R_SetupGL
 */
 void R_SetupGL (void)
 {
-	float	screenaspect;
-	int	x, x2, y2, y, w, h, farclip;
+	float	screenaspect, scale;
+	int		x, x2, y2, y, w, h, farclip;
 
 	// set up viewpoint
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
+	scale = bound(0.25, r_scale.value, 1);
 	x = r_refdef.vrect.x * glwidth/vid.width;
 	x2 = (r_refdef.vrect.x + r_refdef.vrect.width) * glwidth/vid.width;
 	y = (vid.height - r_refdef.vrect.y) * glheight/vid.height;
@@ -2886,7 +2888,7 @@ void R_SetupGL (void)
 	w = x2 - x;
 	h = y - y2;
 
-	glViewport (glx + x, gly + y2, w, h);
+	glViewport (glx + x, gly + y2, w * scale, h * scale);
 
 	screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
 	farclip = max((int)r_farclip.value, 4096);
@@ -2950,6 +2952,7 @@ void R_Init (void)
 	Cvar_Register (&r_skybox);
 	Cvar_Register (&r_farclip);
 	Cvar_Register (&r_skyfog);
+	Cvar_Register (&r_scale);
 
 	Cvar_Register (&gl_finish);
 	Cvar_Register (&gl_clear);
@@ -3113,6 +3116,91 @@ void R_Clear (void)
 	}
 }
 
+static GLuint r_scaleview_texture;
+static int r_scaleview_texture_width, r_scaleview_texture_height;
+
+/*
+================
+R_ScaleView
+
+The r_scale cvar allows rendering the 3D view at 1/2, 1/3, or 1/4 resolution.
+This function scales the reduced resolution 3D view back up to fill
+r_refdef.vrect. This is for emulating a low-resolution pixellated look,
+or possibly as a perforance boost on slow graphics cards.
+================
+*/
+void R_ScaleView(void)
+{
+	float	smax, tmax, scale;
+	int		srcx, srcy, srcw, srch;
+
+	// copied from R_SetupGL()
+	scale = bound(0.25, r_scale.value, 1);
+	srcx = glx + r_refdef.vrect.x;
+	srcy = gly + glheight - r_refdef.vrect.y - r_refdef.vrect.height;
+	srcw = r_refdef.vrect.width * scale;
+	srch = r_refdef.vrect.height * scale;
+
+	if (scale == 1)
+		return;
+
+	// make sure texture unit 0 is selected
+	GL_DisableMultitexture();
+
+	// create (if needed) and bind the render-to-texture texture
+	if (!r_scaleview_texture)
+	{
+		glGenTextures(1, &r_scaleview_texture);
+
+		r_scaleview_texture_width = 0;
+		r_scaleview_texture_height = 0;
+	}
+	glBindTexture(GL_TEXTURE_2D, r_scaleview_texture);
+
+	// resize render-to-texture texture if needed
+	if (r_scaleview_texture_width < srcw || r_scaleview_texture_height < srch)
+	{
+		r_scaleview_texture_width = srcw;
+		r_scaleview_texture_height = srch;
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, r_scaleview_texture_width, r_scaleview_texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	}
+
+	// copy the framebuffer to the texture
+	glBindTexture(GL_TEXTURE_2D, r_scaleview_texture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcx, srcy, srcw, srch);
+
+	// draw the texture back to the framebuffer
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
+
+	glViewport(srcx, srcy, r_refdef.vrect.width, r_refdef.vrect.height);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	// correction factor if we lack NPOT textures, normally these are 1.0f
+	smax = srcw / (float)r_scaleview_texture_width;
+	tmax = srch / (float)r_scaleview_texture_height;
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0);
+	glVertex2f(-1, -1);
+	glTexCoord2f(smax, 0);
+	glVertex2f(1, -1);
+	glTexCoord2f(smax, tmax);
+	glVertex2f(1, 1);
+	glTexCoord2f(0, tmax);
+	glVertex2f(-1, 1);
+	glEnd();
+}
+
 /*
 ================
 R_RenderView
@@ -3146,6 +3234,8 @@ void R_RenderView (void)
 	R_DrawParticles ();
 	Fog_DisableGFog(); //johnfitz
 	R_DrawViewModel ();
+
+	R_ScaleView();
 
 	if (r_speeds.value)
 	{
