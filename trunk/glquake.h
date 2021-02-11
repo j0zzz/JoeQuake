@@ -342,6 +342,7 @@ extern qboolean gl_mtexable;
 extern int gl_textureunits;
 extern qboolean	gl_vbo_able;
 extern qboolean	gl_glsl_able;
+extern qboolean gl_glsl_gamma_able;
 
 typedef struct glsl_attrib_binding_s {
 	const char *name;
@@ -380,6 +381,7 @@ void R_PolyBlend (void);
 void R_BrightenScreen (void);
 void R_Q3DamageDraw (void);
 void GLAlias_CreateShaders(void);
+void GLSLGamma_GammaCorrect(void);
 
 #define NUMVERTEXNORMALS	162
 extern	float	r_avertexnormals[NUMVERTEXNORMALS][3];

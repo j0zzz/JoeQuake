@@ -157,6 +157,133 @@ float	q3legs_rot;
 void R_MarkLeaves (void);
 void R_InitBubble (void);
 
+//==============================================================================
+//
+// GLSL GAMMA CORRECTION
+//
+//==============================================================================
+
+static GLuint r_gamma_texture;
+static GLuint r_gamma_program;
+static int r_gamma_texture_width, r_gamma_texture_height;
+
+// uniforms used in gamma shader
+static GLuint gammaLoc;
+static GLuint contrastLoc;
+static GLuint textureLoc;
+
+/*
+=============
+GLSLGamma_CreateShaders
+=============
+*/
+static void GLSLGamma_CreateShaders(void)
+{
+	const GLchar *vertSource = \
+		"#version 110\n"
+		"\n"
+		"void main(void) {\n"
+		"	gl_Position = vec4(gl_Vertex.xy, 0.0, 1.0);\n"
+		"	gl_TexCoord[0] = gl_MultiTexCoord0;\n"
+		"}\n";
+
+	const GLchar *fragSource = \
+		"#version 110\n"
+		"\n"
+		"uniform sampler2D GammaTexture;\n"
+		"uniform float GammaValue;\n"
+		"uniform float ContrastValue;\n"
+		"\n"
+		"void main(void) {\n"
+		"	  vec4 frag = texture2D(GammaTexture, gl_TexCoord[0].xy);\n"
+		"	  frag.rgb = frag.rgb * ContrastValue;\n"
+		"	  gl_FragColor = vec4(pow(frag.rgb, vec3(GammaValue)), 1.0);\n"
+		"}\n";
+
+	if (!gl_glsl_gamma_able)
+		return;
+
+	r_gamma_program = GL_CreateProgram(vertSource, fragSource, 0, NULL);
+
+	// get uniform locations
+	gammaLoc = GL_GetUniformLocation(&r_gamma_program, "GammaValue");
+	contrastLoc = GL_GetUniformLocation(&r_gamma_program, "ContrastValue");
+	textureLoc = GL_GetUniformLocation(&r_gamma_program, "GammaTexture");
+}
+
+/*
+=============
+GLSLGamma_GammaCorrect
+=============
+*/
+void GLSLGamma_GammaCorrect(void)
+{
+	float smax, tmax;
+
+	if (!gl_glsl_gamma_able)
+		return;
+
+	if (v_gamma.value == 1 && v_contrast.value == 1)
+		return;
+
+	// create render-to-texture texture if needed
+	if (!r_gamma_texture)
+	{
+		r_gamma_texture = texture_extension_number++;
+		glBindTexture(GL_TEXTURE_2D, r_gamma_texture);
+
+		r_gamma_texture_width = glwidth;
+		r_gamma_texture_height = glheight;
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, r_gamma_texture_width, r_gamma_texture_height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	}
+
+	// create shader if needed
+	if (!r_gamma_program)
+	{
+		GLSLGamma_CreateShaders();
+		if (!r_gamma_program)
+			Sys_Error("GLSLGamma_CreateShaders failed");
+	}
+
+	// copy the framebuffer to the texture
+	GL_DisableMultitexture();
+	glBindTexture(GL_TEXTURE_2D, r_gamma_texture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, glx, gly, glwidth, glheight);
+
+	// draw the texture back to the framebuffer with a fragment shader
+	qglUseProgram(r_gamma_program);
+	qglUniform1f(gammaLoc, v_gamma.value);
+	qglUniform1f(contrastLoc, bound(1.0, v_contrast.value, 3.0));
+	qglUniform1i(textureLoc, 0); // use texture unit 0
+
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_DEPTH_TEST);
+
+	glViewport(glx, gly, glwidth, glheight);
+
+	smax = glwidth / (float)r_gamma_texture_width;
+	tmax = glheight / (float)r_gamma_texture_height;
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0);
+	glVertex2f(-1, -1);
+	glTexCoord2f(smax, 0);
+	glVertex2f(1, -1);
+	glTexCoord2f(smax, tmax);
+	glVertex2f(1, 1);
+	glTexCoord2f(0, tmax);
+	glVertex2f(-1, 1);
+	glEnd();
+
+	qglUseProgram(0);
+
+	// clear cached binding
+	currenttexture = -1;
+}
+
 /*
 =================
 R_CullBox
@@ -3199,6 +3326,9 @@ void R_ScaleView(void)
 	glTexCoord2f(0, tmax);
 	glVertex2f(-1, 1);
 	glEnd();
+
+	// clear cached binding
+	currenttexture = -1;
 }
 
 /*

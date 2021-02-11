@@ -38,6 +38,7 @@ qboolean	gl_mtexable = false;
 int			gl_textureunits = 1;
 qboolean	gl_vbo_able = false;
 qboolean	gl_glsl_able = false;
+qboolean	gl_glsl_gamma_able = false;
 
 lpMTexFUNC	qglMultiTexCoord2f = NULL;
 lpSelTexFUNC qglActiveTexture = NULL;
@@ -221,6 +222,10 @@ void CheckGLSLExtensions(void)
 			gl_glsl_able = true;
 		}
 	}
+
+	// GLSL gamma
+	if (!COM_CheckParm("-noglslgamma") && gl_glsl_able)
+		gl_glsl_gamma_able = true;
 }
 
 /*

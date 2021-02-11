@@ -720,7 +720,7 @@ void VID_SetDeviceGammaRamp (unsigned short *ramps)
 
 void InitHWGamma (void)
 {
-	if (COM_CheckParm("-nohwgamma"))
+	if (COM_CheckParm("-nohwgamma") || gl_glsl_gamma_able)
 		return;
 
 	vid_gammaworks = GetDeviceGammaRamp (maindc, systemgammaramp);
@@ -1639,8 +1639,6 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register(&vid_mode);
 	Cvar_Register(&vid_bpp);
 	Cvar_Register(&vid_displayfrequency);
-	Cvar_Register(&vid_hwgammacontrol);
-
 	Cvar_Register(&_windowed_mouse);
 
 	Cmd_AddCommand ("vid_nummodes", VID_NumModes_f);
@@ -1835,8 +1833,6 @@ void VID_Init (unsigned char *palette)
 	if (!bSetupPixelFormat(maindc))
 		Sys_Error ("bSetupPixelFormat failed");
 
-	InitHWGamma ();
-
 	if (!(baseRC = wglCreateContext(maindc)))
 		Sys_Error ("Could not initialize GL (wglCreateContext failed).\n\nMake sure you in are 65535 color mode, and try running -window.");
 
@@ -1846,6 +1842,10 @@ void VID_Init (unsigned char *palette)
 	GL_Init ();
 	GL_Init_Win();
 	Fog_SetupState();
+
+	InitHWGamma();
+	if (vid_gammaworks)
+		Cvar_Register(&vid_hwgammacontrol);
 
 	vid_menudrawfn = VID_MenuDraw;
 	vid_menukeyfn = VID_MenuKey;

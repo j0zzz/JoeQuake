@@ -1146,9 +1146,13 @@ void SCR_UpdateScreen (void)
 		SCR_DrawCursor();
 	}
 
-	R_BrightenScreen ();
+	if (vid_hwgamma_enabled)
+	{
+		R_BrightenScreen();
+		V_UpdatePalette();
+	}
 
-	V_UpdatePalette ();
+	GLSLGamma_GammaCorrect();
 
 #ifdef _WIN32
 	Movie_UpdateScreen ();
