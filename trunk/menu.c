@@ -2551,7 +2551,7 @@ void M_Mouse_Key(int k)
 //=============================================================================
 /* MISC OPTIONS MENU */
 
-#define	MISC_ITEMS	6
+#define	MISC_ITEMS	7
 
 int	misc_cursor = 0;
 
@@ -2589,39 +2589,42 @@ void M_Misc_Draw(void)
 	p = Draw_CachePic("gfx/ttl_cstm.lmp");
 	M_DrawPic((320 - p->width) >> 1, 4, p);
 
-	M_Print (16, 32, "            Always Run");
+	M_Print(16, 32, "            Always Run");
 	M_DrawCheckbox (220, 32, cl_forwardspeed.value > 200);
 
-	M_Print(16, 40, "   Demo playback speed");
+	M_Print(16, 40, "    Power Bunnyhopping");
+	M_DrawCheckbox(220, 40, cl_forwardspeed.value == 200 && (in_speed.state & 1));
+
+	M_Print(16, 48, "   Demo playback speed");
 	//r = (cl_demospeed.value - demo_speed_values[0]) / (demo_speed_values[DEMO_SPEED_ITEMS-1] - demo_speed_values[0]);
 	r = (float)FindSliderItemIndex(demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed) / (DEMO_SPEED_ITEMS - 1);
-	M_DrawSliderFloat2(220, 40, r, cl_demospeed.value);
+	M_DrawSliderFloat2(220, 48, r, cl_demospeed.value);
 
-	M_Print(-24, 56, "Advanced command completion");
-	M_DrawCheckbox(220, 56, cl_advancedcompletion.value);
+	M_Print(-24, 64, "Advanced command completion");
+	M_DrawCheckbox(220, 64, cl_advancedcompletion.value);
 
-	M_Print(16, 64, "      Cvar saving mode");
-	M_Print(220, 64, !cvar_savevars.value ? "default" : cvar_savevars.value == 2 ? "save all" : "save modified");
+	M_Print(16, 72, "      Cvar saving mode");
+	M_Print(220, 72, !cvar_savevars.value ? "default" : cvar_savevars.value == 2 ? "save all" : "save modified");
 
-	M_Print(16, 72, "     Confirm when quit");
-	M_DrawCheckbox(220, 72, cl_confirmquit.value);
+	M_Print(16, 80, "     Confirm when quit");
+	M_DrawCheckbox(220, 80, cl_confirmquit.value);
 
 	// cursor
 	M_DrawCharacter(200, 32 + misc_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	if (misc_cursor == 3)
+	if (misc_cursor == 4)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Shows a list of relevant commands when");
 		M_Print(2 * 8, 176 + 8 * 4, "pressing the TAB key for completion");
 	}
-	else if (misc_cursor == 4)
+	else if (misc_cursor == 5)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Defines which console variables");
 		M_Print(2 * 8, 176 + 8 * 4, "are saved when exiting the game");
 	}
-	else if (misc_cursor == 5)
+	else if (misc_cursor == 6)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Shows a confirmation screen");
@@ -2656,18 +2659,31 @@ void M_Misc_Key(int k)
 			}
 			break;
 
-		case 3:
-			Cvar_SetValue(&cl_advancedcompletion, !cl_advancedcompletion.value);
+		case 1:	// power bunnyhopping
+			if (!(cl_forwardspeed.value == 200 && (in_speed.state & 1)))
+			{
+				Cvar_SetValue(&cl_forwardspeed, 200);
+				Cvar_SetValue(&cl_backspeed, 200);
+				Cmd_ExecuteString("+speed", src_command);
+			}
+			else
+			{
+				Cmd_ExecuteString("-speed", src_command);
+			}
 			break;
 
 		case 4:
+			Cvar_SetValue(&cl_advancedcompletion, !cl_advancedcompletion.value);
+			break;
+
+		case 5:
 			newvalue = cvar_savevars.value + 1;
 			if (newvalue > 2)
 				newvalue = 0;
 			Cvar_SetValue(&cvar_savevars, newvalue);
 			break;
 
-		case 5:
+		case 6:
 			Cvar_SetValue(&cl_confirmquit, !cl_confirmquit.value);
 			break;
 
@@ -2711,9 +2727,9 @@ void M_Misc_Key(int k)
 		break;
 	}
 
-	if (k == K_UPARROW && misc_cursor == 2)
+	if (k == K_UPARROW && misc_cursor == 3)
 		misc_cursor--;
-	else if (k == K_DOWNARROW && misc_cursor == 2)
+	else if (k == K_DOWNARROW && misc_cursor == 3)
 		misc_cursor++;
 }
 
@@ -4105,15 +4121,20 @@ void M_OpenGL_Key(int k)
 //=============================================================================
 /* TEXTURES MENU */
 
-#define	TEXTURES_ITEMS	10
+#define	TEXTURES_ITEMS	12
 
 int textures_cursor = 0;
 
-char *popular_filters[] = {
-	"GL_NEAREST",
+char *texture_filters[] = {
+	"GL_NEAREST_MIPMAP_NEAREST",
 	"GL_NEAREST_MIPMAP_LINEAR",
 	"GL_LINEAR_MIPMAP_NEAREST",
 	"GL_LINEAR_MIPMAP_LINEAR"
+};
+
+char *sky_hud_texture_filters[] = {
+	"GL_NEAREST",
+	"GL_LINEAR"
 };
 
 void M_Menu_Textures_f(void)
@@ -4132,13 +4153,13 @@ void M_AdjustTexturesSliders(int dir)
 
 	switch (textures_cursor)
 	{
-	case 1:
+	case 3:
 		gl_picmip.value -= dir;
 		gl_picmip.value = bound(0, gl_picmip.value, 4);
 		Cvar_SetValue(&gl_picmip, gl_picmip.value);
 		break;
 
-	case 3:
+	case 5:
 		AdjustSliderBasedOnArrayOfValues(dir, max_size_values, MAX_SIZE_ITEMS, &gl_max_size);
 		break;
 	}
@@ -4153,48 +4174,56 @@ void M_Textures_Draw(void)
 	p = Draw_CachePic("gfx/ttl_cstm.lmp");
 	M_DrawPic((320 - p->width) >> 1, 4, p);
 
-	M_Print(16, 32, "        Texture filter");
-	M_Print(220, 32, !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST") ? "bilinear" :
-		!Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_LINEAR") ? "trilinear" :
-		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST") ? "off w/o mipmap" : 
-		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_LINEAR") ? "off with mipmap" : gl_texturemode.string);
+	M_Print(16, 32, "  World texture filter");
+	M_Print(220, 32, !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST") ? "linear (mipmap off)" :
+		!Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_LINEAR") ? "linear (mipmap on)" :
+		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_NEAREST") ? "nearest (mipmap off)" : 
+		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_LINEAR") ? "nearest (mipmap on)" : gl_texturemode.string);
 
-	M_Print(16, 40, "       Texture quality");
+	M_Print(8, 40, "Menu/Hud texture filter");
+	M_Print(220, 40, !Q_strcasecmp(gl_texturemode_hud.string, "GL_LINEAR") ? "linear" :
+		!Q_strcasecmp(gl_texturemode_hud.string, "GL_NEAREST") ? "nearest" : gl_texturemode_hud.string);
+
+	M_Print(16, 48, "    Sky texture filter");
+	M_Print(220, 48, !Q_strcasecmp(gl_texturemode_sky.string, "GL_LINEAR") ? "linear" :
+		!Q_strcasecmp(gl_texturemode_sky.string, "GL_NEAREST") ? "nearest" : gl_texturemode_sky.string);
+
+	M_Print(16, 56, "       Texture quality");
 	r = (4 - gl_picmip.value) * 0.25;
-	M_DrawSlider(220, 40, r);
+	M_DrawSlider(220, 56, r);
 
-	M_Print(16, 48, "     Detailed textures");
-	M_DrawCheckbox(220, 48, gl_detail.value);
+	M_Print(16, 64, "     Detailed textures");
+	M_DrawCheckbox(220, 64, gl_detail.value);
 
-	M_Print(16, 56, "      Max texture size");
+	M_Print(16, 72, "      Max texture size");
 	//r = (gl_max_size.value - max_size_values[0]) / (max_size_values[MAX_SIZE_ITEMS-1] - max_size_values[0]);
 	r = (float)FindSliderItemIndex(max_size_values, MAX_SIZE_ITEMS, &gl_max_size) / (MAX_SIZE_ITEMS - 1);
-	M_DrawSliderInt(220, 56, r, gl_max_size.value);
+	M_DrawSliderInt(220, 72, r, gl_max_size.value);
 
-	M_Print(-40, 72, "Enable external textures for:");
+	M_Print(-40, 88, "Enable external textures for:");
 
-	M_Print(16, 80, "                 World");
-	M_DrawCheckbox(220, 80, gl_externaltextures_world.value);
+	M_Print(16, 96, "                 World");
+	M_DrawCheckbox(220, 96, gl_externaltextures_world.value);
 
-	M_Print(16, 88, "        Static objects");
-	M_DrawCheckbox(220, 88, gl_externaltextures_bmodels.value);
+	M_Print(16, 104, "        Static objects");
+	M_DrawCheckbox(220, 104, gl_externaltextures_bmodels.value);
 
-	M_Print(16, 96, "       Dynamic objects");
-	M_DrawCheckbox(220, 96, gl_externaltextures_models.value);
+	M_Print(16, 112, "       Dynamic objects");
+	M_DrawCheckbox(220, 112, gl_externaltextures_models.value);
 
-	M_Print(16, 104, "          Menu and HUD");
-	M_DrawCheckbox(220, 104, gl_externaltextures_gfx.value);
+	M_Print(16, 120, "              Menu/Hud");
+	M_DrawCheckbox(220, 120, gl_externaltextures_gfx.value);
 
 	// cursor
 	M_DrawCharacter(200, 32 + textures_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	if (textures_cursor == 7)
+	if (textures_cursor == 9)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Static objects are health boxes,");
 		M_Print(2 * 8, 176 + 8 * 4, "ammo boxes and explosion barrels");
 	}
-	else if (textures_cursor == 8)
+	else if (textures_cursor == 10)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Dynamic objects are players, monsters,");
@@ -4253,30 +4282,48 @@ void M_Textures_Key(int k)
 		{
 		case 0:
 			for (i = 0; i < 4; i++)
-				if (!Q_strcasecmp(popular_filters[i], gl_texturemode.string))
+				if (!Q_strcasecmp(texture_filters[i], gl_texturemode.string))
 					break;
 			if (i >= 3)
 				i = -1;
-			Cvar_Set(&gl_texturemode, popular_filters[i + 1]);
+			Cvar_Set(&gl_texturemode, texture_filters[i + 1]);
+			break;
+
+		case 1:
+			for (i = 0; i < 2; i++)
+				if (!Q_strcasecmp(sky_hud_texture_filters[i], gl_texturemode_hud.string))
+					break;
+			if (i >= 1)
+				i = -1;
+			Cvar_Set(&gl_texturemode_hud, sky_hud_texture_filters[i + 1]);
 			break;
 
 		case 2:
+			for (i = 0; i < 2; i++)
+				if (!Q_strcasecmp(sky_hud_texture_filters[i], gl_texturemode_sky.string))
+					break;
+			if (i >= 1)
+				i = -1;
+			Cvar_Set(&gl_texturemode_sky, sky_hud_texture_filters[i + 1]);
+			break;
+
+		case 4:
 			Cvar_SetValue(&gl_detail, !gl_detail.value);
 			break;
 
-		case 6:
+		case 8:
 			Cvar_SetValue(&gl_externaltextures_world, !gl_externaltextures_world.value);
 			break;
 
-		case 7:
+		case 9:
 			Cvar_SetValue(&gl_externaltextures_bmodels, !gl_externaltextures_bmodels.value);
 			break;
 
-		case 8:
+		case 10:
 			Cvar_SetValue(&gl_externaltextures_models, !gl_externaltextures_models.value);
 			break;
 
-		case 9:
+		case 11:
 			Cvar_SetValue(&gl_externaltextures_gfx, !gl_externaltextures_gfx.value);
 			break;
 
@@ -4286,9 +4333,9 @@ void M_Textures_Key(int k)
 		}
 	}
 
-	if (k == K_UPARROW && (textures_cursor == 4 || textures_cursor == 5))
+	if (k == K_UPARROW && (textures_cursor == 6 || textures_cursor == 7))
 		textures_cursor -= 2;
-	else if (k == K_DOWNARROW && (textures_cursor == 4 || textures_cursor == 5))
+	else if (k == K_DOWNARROW && (textures_cursor == 6 || textures_cursor == 7))
 		textures_cursor += 2;
 }
 

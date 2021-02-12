@@ -371,6 +371,8 @@ void R_DrawSky(void);
 
 // gl_draw.c
 extern	cvar_t	gl_texturemode;
+extern	cvar_t	gl_texturemode_hud;
+extern	cvar_t	gl_texturemode_sky;
 void GL_Set2D (void);
 byte *StringToRGB(char *s);
 void Draw_LoadPics(void);
