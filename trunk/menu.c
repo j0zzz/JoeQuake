@@ -2153,24 +2153,24 @@ qboolean M_Options_Mouse_Event(const mouse_state_t *ms)
 char *bindnames[][2] =
 {
 {"+attack", 		"attack"},
-{"+jump", 		"jump"},
+{"+jump", 			"jump"},
 {"+forward", 		"move forward"},
-{"+back", 		"move back"},
+{"+back", 			"move back"},
 {"+moveleft", 		"move left"},
 {"+moveright", 		"move right"},
-{"+moveup",		"swim up"},
+{"+moveup",			"swim up"},
 {"+movedown",		"swim down"},
 {"impulse 12", 		"previous weapon"},
 {"impulse 10", 		"next weapon"},
-{"+speed", 		"run"},
-{"+left", 		"turn left"},
-{"+right", 		"turn right"},
+{"+speed", 			"run"},
+{"+left", 			"turn left"},
+{"+right", 			"turn right"},
 {"+strafe", 		"sidestep"},
 {"+lookup", 		"look up"},
 {"+lookdown", 		"look down"},
 {"centerview", 		"center view"},
 // RuneQuake specific
-{"+hook",		"grappling hook"},
+{"+hook",			"grappling hook"},
 {"rune-use",		"rune-use"},
 {"rune-delete",		"rune-delete"},
 {"rune-tell",		"rune-tell"},
@@ -4201,13 +4201,6 @@ void M_Textures_Draw(void)
 		M_Print(2 * 8, 176 + 8 * 4, "weapons, armors, keys, gibs, backpack,");
 		M_Print(2 * 8, 176 + 8 * 5, "rocket, grenade and torches");
 	}
-	else if (textures_cursor == 9)
-	{
-		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 176 + 8 * 3, "This option must be set from the");
-		M_Print(2 * 8, 176 + 8 * 4, "command line with");
-		M_Print(2 * 8, 176 + 8 * 5, "+set gl_externaltextures_gfx <0 or 1>");
-	}
 }
 
 void M_Textures_Key(int k)
@@ -4284,6 +4277,7 @@ void M_Textures_Key(int k)
 			break;
 
 		case 9:
+			Cvar_SetValue(&gl_externaltextures_gfx, !gl_externaltextures_gfx.value);
 			break;
 
 		default:

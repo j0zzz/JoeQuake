@@ -40,11 +40,11 @@ cvar_t	gl_texturemode = {"gl_texturemode", "GL_LINEAR_MIPMAP_NEAREST", 0, OnChan
 cvar_t	gl_texturemode_hud = {"gl_texturemode_hud", "GL_LINEAR", 0, OnChange_gl_texturemode_hud};
 cvar_t	gl_texturemode_sky = {"gl_texturemode_sky", "GL_LINEAR", 0, OnChange_gl_texturemode_sky};
 
-cvar_t	gl_externaltextures_world = {"gl_externaltextures_world", "1"};
-cvar_t	gl_externaltextures_bmodels = {"gl_externaltextures_bmodels", "1"};
-cvar_t	gl_externaltextures_models = {"gl_externaltextures_models", "1"};
+cvar_t	gl_externaltextures_world = {"gl_externaltextures_world", "0"};
+cvar_t	gl_externaltextures_bmodels = {"gl_externaltextures_bmodels", "0"};
+cvar_t	gl_externaltextures_models = {"gl_externaltextures_models", "0"};
 extern qboolean OnChange_gl_externaltextures_gfx(cvar_t *var, char *string);
-cvar_t	gl_externaltextures_gfx = { "gl_externaltextures_gfx", "1", 0, OnChange_gl_externaltextures_gfx };
+cvar_t	gl_externaltextures_gfx = { "gl_externaltextures_gfx", "0", 0, OnChange_gl_externaltextures_gfx };
 
 qboolean OnChange_gl_crosshairimage (cvar_t *var, char *string);
 cvar_t	gl_crosshairimage = {"crosshairimage", "", 0, OnChange_gl_crosshairimage};
@@ -282,7 +282,7 @@ int		pic_texels;
 int		pic_count;
 
 // joe: this need to be in sync with the default value of gl_externaltextures_gfx cvar
-qboolean load_external_gfx_textures = true;
+qboolean load_external_gfx_textures = false;
 
 void Draw_ReloadPics(void)
 {
