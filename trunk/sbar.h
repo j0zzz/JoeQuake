@@ -32,6 +32,7 @@ int Sbar_GetScaledCharacterSize(void);
 void Sbar_Init (void);
 void Sbar_Hipnotic_Init (void);
 void Sbar_Rogue_Init (void);
+void Sbar_LoadPics(void);
 
 void Sbar_Changed (void);
 // call whenever any of the client stats represented on the sbar changes

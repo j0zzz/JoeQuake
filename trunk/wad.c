@@ -67,10 +67,13 @@ void W_LoadWadFile (char *filename)
 	lumpinfo_t	*lump_p;
 	wadinfo_t	*header;
 	unsigned	i;
-	int		infotableofs;
+	int			infotableofs;
 
-	if (!(wad_base = COM_LoadHunkFile(filename)))
-		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
+	if (wad_base)
+		free(wad_base);
+	wad_base = COM_LoadMallocFile(filename);
+	if (!wad_base)
+		Sys_Error("W_LoadWadFile: couldn't load %s", filename);
 
 	header = (wadinfo_t *)wad_base;
 

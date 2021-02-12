@@ -373,6 +373,7 @@ void R_DrawSky(void);
 extern	cvar_t	gl_texturemode;
 void GL_Set2D (void);
 byte *StringToRGB(char *s);
+void Draw_LoadPics(void);
 
 // gl_rmain.c
 qboolean R_CullBox (vec3_t mins, vec3_t maxs);
@@ -453,3 +454,6 @@ void R_DrawDecals (void);
 void R_SpawnDecal (vec3_t center, vec3_t normal, vec3_t tangent, int tex, int size);
 void R_SpawnDecalStatic (vec3_t org, int tex, int size);
 extern	int		decal_blood1, decal_blood2, decal_blood3, decal_q3blood, decal_burn, decal_mark, decal_glow;
+
+// gl_screen.c
+void SCR_LoadPics(void);

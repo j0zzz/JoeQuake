@@ -1577,6 +1577,7 @@ Always appends a 0 byte.
 #define	LOADFILE_TEMPHUNK	2
 #define	LOADFILE_CACHE		3
 #define	LOADFILE_STACK		4
+#define	LOADFILE_MALLOC		5
 
 cache_user_t 	*loadcache;
 byte    	*loadbuf;
@@ -1619,6 +1620,9 @@ byte *COM_LoadFile (char *path, int usehunk)
 		else
 			buf = (byte *)Hunk_TempAlloc(len + 1);
 		break;
+	case LOADFILE_MALLOC:
+		buf = (byte *)Q_malloc(len + 1);
+		break;
 	default:
 		Sys_Error("COM_LoadFile: bad usehunk");
 	}
@@ -1638,18 +1642,18 @@ byte *COM_LoadFile (char *path, int usehunk)
 
 byte *COM_LoadHunkFile (char *path)
 {
-	return COM_LoadFile (path, 1);
+	return COM_LoadFile (path, LOADFILE_HUNK);
 }
 
 byte *COM_LoadTempFile (char *path)
 {
-	return COM_LoadFile (path, 2);
+	return COM_LoadFile (path, LOADFILE_TEMPHUNK);
 }
 
 void COM_LoadCacheFile (char *path, struct cache_user_s *cu)
 {
 	loadcache = cu;
-	COM_LoadFile (path, 3);
+	COM_LoadFile (path, LOADFILE_CACHE);
 }
 
 // uses temp hunk if larger than bufsize
@@ -1659,9 +1663,15 @@ byte *COM_LoadStackFile (char *path, void *buffer, int bufsize)
 	
 	loadbuf = (byte *)buffer;
 	loadsize = bufsize;
-	buf = COM_LoadFile (path, 4);
+	buf = COM_LoadFile (path, LOADFILE_STACK);
 	
 	return buf;
+}
+
+// returns malloc'd memory
+byte *COM_LoadMallocFile(char *path)
+{
+	return COM_LoadFile(path, LOADFILE_MALLOC);
 }
 
 /*

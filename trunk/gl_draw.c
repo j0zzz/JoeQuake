@@ -43,7 +43,8 @@ cvar_t	gl_texturemode_sky = {"gl_texturemode_sky", "GL_LINEAR", 0, OnChange_gl_t
 cvar_t	gl_externaltextures_world = {"gl_externaltextures_world", "1"};
 cvar_t	gl_externaltextures_bmodels = {"gl_externaltextures_bmodels", "1"};
 cvar_t	gl_externaltextures_models = {"gl_externaltextures_models", "1"};
-cvar_t	gl_externaltextures_gfx = { "gl_externaltextures_gfx", "1", CVAR_INIT };
+extern qboolean OnChange_gl_externaltextures_gfx(cvar_t *var, char *string);
+cvar_t	gl_externaltextures_gfx = { "gl_externaltextures_gfx", "1", 0, OnChange_gl_externaltextures_gfx };
 
 qboolean OnChange_gl_crosshairimage (cvar_t *var, char *string);
 cvar_t	gl_crosshairimage = {"crosshairimage", "", 0, OnChange_gl_crosshairimage};
@@ -280,6 +281,50 @@ byte	menuplyr_pixels[4096];
 int		pic_texels;
 int		pic_count;
 
+// joe: this need to be in sync with the default value of gl_externaltextures_gfx cvar
+qboolean load_external_gfx_textures = true;
+
+void Draw_ReloadPics(void)
+{
+	int			i;
+	cachepic_t	*pic;
+
+	// empty scrap and reallocate gltextures
+	memset(scrap_allocated, 0, sizeof(scrap_allocated));
+	memset(scrap_texels, 255, sizeof(scrap_texels));
+
+	//creates 2 empty gltextures
+	Scrap_Upload();
+
+	// reload wad pics
+	W_LoadWadFile("gfx.wad");
+	Draw_LoadPics();
+	SCR_LoadPics();
+	Sbar_LoadPics();
+
+	// empty lmp cache
+	for (pic = cachepics, i = 0; i < numcachepics; pic++, i++)
+		pic->name[0] = 0;
+	numcachepics = 0;
+}
+
+qboolean OnChange_gl_externaltextures_gfx(cvar_t *var, char *string)
+{
+	int	newval;
+
+	newval = Q_atoi(string);
+	if (newval == var->value)
+	{
+		Con_Printf("gl_externaltextures_gfx is already set to \"%i\"\n", newval);
+		return true;
+	}
+
+	load_external_gfx_textures = newval;
+	Draw_ReloadPics();
+
+	return false;
+}
+
 mpic_t *Draw_PicFromWad (char *name)
 {
 	qpic_t	*p;
@@ -288,7 +333,7 @@ mpic_t *Draw_PicFromWad (char *name)
 	p = W_GetLumpName (name);
 	pic = (mpic_t *)p;
 
-	if (gl_externaltextures_gfx.value &&
+	if (load_external_gfx_textures &&
 		((pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) || 
 	     (pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA))))
 	{
@@ -366,7 +411,7 @@ mpic_t *Draw_CachePic (char *path)
 	pic->pic.width = dat->width;
 	pic->pic.height = dat->height;
 
-	if (gl_externaltextures_gfx.value && (pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)) &&
+	if (load_external_gfx_textures && (pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)) &&
 		(pic_24bit->width / pic_24bit->height) == (pic->pic.width / pic->pic.height))	// do not display hi-res images stretched, instead show the original lmp
 		memcpy(&pic->pic.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 	else
@@ -655,6 +700,12 @@ qboolean OnChange_gl_crosshairimage (cvar_t *var, char *string)
 	return false;
 }
 
+void Draw_LoadPics(void)
+{
+	draw_disc = Draw_PicFromWad("disc");
+	draw_backtile = Draw_PicFromWad("backtile");
+}
+
 /*
 ===============
 Draw_Init
@@ -709,8 +760,7 @@ void Draw_Init (void)
 	}
 
 	// get the other pics we need
-	draw_disc = Draw_PicFromWad ("disc");
-	draw_backtile = Draw_PicFromWad ("backtile");
+	Draw_LoadPics();
 }
 
 /*
