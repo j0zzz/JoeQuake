@@ -72,6 +72,8 @@ mpic_t	crosshairpic;
 static qboolean	crosshairimage_loaded = false;
 
 int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data);
+void Draw_InitConback(void);
+void Draw_InitCharset(void);
 
 mpic_t	conback_data;
 mpic_t	*conback = &conback_data;
@@ -298,6 +300,8 @@ void Draw_ReloadPics(void)
 
 	// reload wad pics
 	W_LoadWadFile("gfx.wad");
+	Draw_InitConback();
+	Draw_InitCharset();
 	Draw_LoadPics();
 	SCR_LoadPics();
 	Sbar_LoadPics();
@@ -442,7 +446,8 @@ void Draw_InitConback (void)
 	if (cb->width != 320 || cb->height != 200)
 		Sys_Error ("Draw_InitConback: conback.lmp size is not 320x200");
 
-	if ((pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0)))
+	if (load_external_gfx_textures && 
+		(pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0)))
 	{
 		memcpy (&conback->texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 	}
@@ -606,6 +611,11 @@ done:
 	{
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else
+	{
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
 	return false;
