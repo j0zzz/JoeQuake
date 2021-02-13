@@ -720,7 +720,7 @@ void VID_SetDeviceGammaRamp (unsigned short *ramps)
 
 void InitHWGamma (void)
 {
-	if (COM_CheckParm("-nohwgamma") || gl_glsl_gamma_able)
+	if (gl_glsl_gamma_able || COM_CheckParm("-nohwgamma"))
 		return;
 
 	vid_gammaworks = GetDeviceGammaRamp (maindc, systemgammaramp);

@@ -1150,7 +1150,7 @@ void SCR_UpdateScreen (void)
 		SCR_DrawCursor();
 	}
 
-	if (vid_hwgamma_enabled)
+	if (!gl_glsl_gamma_able)
 	{
 		R_BrightenScreen();
 		V_UpdatePalette();
