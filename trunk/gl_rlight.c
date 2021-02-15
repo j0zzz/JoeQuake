@@ -580,7 +580,7 @@ void GL_BuildTextureBufferWithLightData(void)
 	qglBufferData(GL_TEXTURE_BUFFER, sizeof(vlighttable), vlighttable, GL_STATIC_DRAW);
 	qglBindBuffer(GL_TEXTURE_BUFFER, 0);
 
-	glGenTextures(1, &tbo_tex);
+	tbo_tex = texture_extension_number++;
 	glBindTexture(GL_TEXTURE_BUFFER, tbo_tex);
 	qglTexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, tbo);
 }

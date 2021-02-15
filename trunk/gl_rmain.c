@@ -3277,7 +3277,7 @@ void R_ScaleView(void)
 	// create (if needed) and bind the render-to-texture texture
 	if (!r_scaleview_texture)
 	{
-		glGenTextures(1, &r_scaleview_texture);
+		r_scaleview_texture = texture_extension_number++;
 
 		r_scaleview_texture_width = 0;
 		r_scaleview_texture_height = 0;
