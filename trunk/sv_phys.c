@@ -1114,7 +1114,7 @@ SV_Physics
 */
 void SV_Physics (void)
 {
-	int	i;
+	int		i, entity_cap;
 	edict_t	*ent;
 
 // let the progs know that a new frame has started
@@ -1127,7 +1127,8 @@ void SV_Physics (void)
 
 // treat each object in turn
 	ent = sv.edicts;
-	for (i = 0 ; i < sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
+	entity_cap = sv.num_edicts;
+	for (i = 0 ; i < entity_cap; i++, ent = NEXT_EDICT(ent))
 	{
 		if (ent->free)
 			continue;
