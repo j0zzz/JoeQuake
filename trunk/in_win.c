@@ -1069,46 +1069,59 @@ void IN_MouseMove (usercmd_t *cmd)
 		}
 	}
 
-	//
-	// Do not move the player if we're in menu mode. 
-	// And don't apply ingame sensitivity, since that will make movements jerky.
-	//
-	if (key_dest == key_menu || key_dest == key_console)
+	// Chambers: Fixed mouse input in menus and players being able to update their viewangles after leaving the console
+	if (m_filter.value)
 	{
-		old_mouse_x = mouse_x = mx * cursor_sensitivity.value;
-		old_mouse_y = mouse_y = my * cursor_sensitivity.value;
+		mouse_x = (mx + old_mouse_x) * 0.5;
+		mouse_y = (my + old_mouse_y) * 0.5;
 	}
 	else
 	{
-		if (m_filter.value)
+		mouse_x = mx;
+		mouse_y = my;
+	}
+
+	mx_accum = my_accum = 0;
+
+	old_mouse_x = mx;
+	old_mouse_y = my;
+
+	if (m_accel.value)
+	{
+		float mousespeed = sqrt(mx * mx + my * my);
+		float m_accel_factor = m_accel.value * 0.1;
+
+		if (key_dest == key_menu || key_dest == key_console)
 		{
-			mouse_x = (mx + old_mouse_x) * 0.5;
-			mouse_y = (my + old_mouse_y) * 0.5;
+			mouse_x *= ((mousespeed * m_accel_factor) + cursor_sensitivity.value);
+			mouse_y *= ((mousespeed * m_accel_factor) + cursor_sensitivity.value);
 		}
 		else
 		{
-			mouse_x = mx;
-			mouse_y = my;
-		}
-
-		mx_accum = my_accum = 0;
-
-		old_mouse_x = mx;
-		old_mouse_y = my;
-
-		if (m_accel.value)
-		{
-			float mousespeed = sqrt(mx * mx + my * my);
-			float m_accel_factor = m_accel.value * 0.1;
 			mouse_x *= ((mousespeed * m_accel_factor) + sensitivity.value);
 			mouse_y *= ((mousespeed * m_accel_factor) + sensitivity.value);
+		}
+	}
+	else
+	{
+		if (key_dest == key_menu || key_dest == key_console)
+		{
+			mouse_x *= cursor_sensitivity.value;
+			mouse_y *= cursor_sensitivity.value;
 		}
 		else
 		{
 			mouse_x *= sensitivity.value;
 			mouse_y *= sensitivity.value;
 		}
+	}
 
+	//
+	// Do not move the player if we're in menu mode. 
+	// And don't apply ingame sensitivity, since that will make movements jerky.
+	//
+	if (key_dest != key_menu && key_dest != key_console)
+	{
 		// add mouse X/Y movement to cmd
 		if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
 			cmd->sidemove += m_side.value * mouse_x;
