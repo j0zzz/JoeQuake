@@ -892,7 +892,7 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1f(blendLoc, ent->framelerp);
 	qglUniform1f(lerpDistLoc, distance);
 	qglUniform3f(shadevectorLoc, shadevector[0], shadevector[1], shadevector[2]);
-	qglUniform4f(lightColorLoc, lightcolor[0], lightcolor[1], lightcolor[2], ent->transparency);
+	qglUniform4f(lightColorLoc, lightcolor[0], lightcolor[1], lightcolor[2], ent->transparency == 0 ? 1 : ent->transparency);
 	qglUniform1i(useVertexLightingLoc, (gl_vertexlights.value && !full_light) ? 1 : 0);
 	qglUniform1f(shadeLightLoc, shadelight);
 	qglUniform1f(ambientLightLoc, ambientlight);
@@ -1372,7 +1372,7 @@ void R_DrawAliasModel (entity_t *ent)
 
 	glPushMatrix ();
 
-	if (ent == &cl.viewent)
+	if (ent == &cl.viewent || clmodel->modhint == MOD_FLAME)
 		R_RotateForViewEntity (ent);
 	else
 		R_RotateForEntity (ent, false);
