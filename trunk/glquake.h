@@ -368,6 +368,7 @@ extern qboolean	r_skyboxloaded;
 int R_SetSky (char *skyname);
 void Sky_NewMap(void);
 void R_DrawSky(void);
+void R_InitSky(texture_t *mt);		// called at level load
 
 // gl_draw.c
 extern	cvar_t	gl_texturemode;

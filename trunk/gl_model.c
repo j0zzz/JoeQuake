@@ -463,9 +463,9 @@ Mod_LoadTextures
 */
 void Mod_LoadTextures (lump_t *l)
 {
-	int			i, j, num, max, altmax, texture_flag, brighten_flag;
+	int			i, j, pixels, num, max, altmax, texture_flag, brighten_flag;
 	miptex_t	*mt;
-	texture_t	*tx, *tx2, *txblock, *anims[10], *altanims[10];
+	texture_t	*tx, *tx2, *anims[10], *altanims[10];
 	dmiptexlump_t *m;
 	byte		*data;
 
@@ -477,10 +477,9 @@ void Mod_LoadTextures (lump_t *l)
 
 	m = (dmiptexlump_t *)(mod_base + l->fileofs);
 	m->nummiptex = LittleLong (m->nummiptex);
+	
 	loadmodel->numtextures = m->nummiptex;
-	loadmodel->textures = Hunk_AllocName (m->nummiptex * sizeof(*loadmodel->textures), loadname);
-
-	txblock = Hunk_AllocName (m->nummiptex * sizeof(**loadmodel->textures), loadname);
+	loadmodel->textures = Hunk_AllocName (loadmodel->numtextures * sizeof(*loadmodel->textures), loadname);
 
 	brighten_flag = (lightmode == 2) ? TEX_BRIGHTEN : 0;
 	texture_flag = TEX_MIPMAP;
@@ -492,7 +491,18 @@ void Mod_LoadTextures (lump_t *l)
 			continue;
 
 		mt = (miptex_t *)((byte *)m + m->dataofs[i]);
-		loadmodel->textures[i] = tx = txblock + i;
+
+		mt->width = LittleLong(mt->width);
+		mt->height = LittleLong(mt->height);
+		for (j = 0; j < MIPLEVELS; j++)
+			mt->offsets[j] = LittleLong(mt->offsets[j]);
+
+		if ((mt->width & 15) || (mt->height & 15))
+			Sys_Error("Mod_LoadTextures: Texture %s is not 16 aligned", mt->name);
+
+		pixels = mt->width * mt->height / 64 * 85;	// joe: I don't get this multiplication, copied from QuakeSpasm
+		tx = (texture_t *)Hunk_AllocName(sizeof(texture_t) + pixels, loadname);
+		loadmodel->textures[i] = tx;
 
 		memcpy (tx->name, mt->name, sizeof(tx->name));
 		if (!tx->name[0])
@@ -505,13 +515,12 @@ void Mod_LoadTextures (lump_t *l)
 		if (tx->name[0] == '{')
 			texture_flag |= TEX_ALPHA;
 
-		tx->width = mt->width = LittleLong (mt->width);
-		tx->height = mt->height = LittleLong (mt->height);
-		if ((mt->width & 15) || (mt->height & 15))
-			Sys_Error ("Mod_LoadTextures: Texture %s is not 16 aligned", mt->name);
+		tx->width = mt->width;
+		tx->height = mt->height;
 
-		for (j = 0 ; j < MIPLEVELS ; j++)
-			mt->offsets[j] = LittleLong (mt->offsets[j]);
+		for (j = 0; j<MIPLEVELS; j++)
+			tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
+		// the pixels immediately follow the structures
 
 		// HACK HACK HACK
 		if (!strcmp(mt->name, "shot1sid") && mt->width == 32 && mt->height == 32 && 
@@ -522,9 +531,20 @@ void Mod_LoadTextures (lump_t *l)
 			memcpy (mt + 1, (byte *)(mt + 1) + 32*31, 32);
 		}
 
+		// ericw -- check for pixels extending past the end of the lump.
+		// appears in the wild; e.g. jam2_tronyn.bsp (func_mapjam2),
+		// kellbase1.bsp (quoth), and can lead to a segfault if we read past
+		// the end of the .bsp file buffer
+		if (((byte*)(mt + 1) + pixels) > (mod_base + l->fileofs + l->filelen))
+		{
+			Con_DPrintf("Texture %s extends past end of lump\n", mt->name);
+			pixels = max(0, (mod_base + l->fileofs + l->filelen) - (byte*)(mt + 1));
+		}
+		memcpy(tx + 1, mt + 1, pixels);
+
 		if (loadmodel->isworldmodel && ISSKYTEX(tx->name))
 		{
-			R_InitSky (mt);
+			R_InitSky (tx);
 			continue;
 		}
 
@@ -533,7 +553,7 @@ void Mod_LoadTextures (lump_t *l)
 
 		if (mt->offsets[0])
 		{
-			data = (byte *)mt + mt->offsets[0];
+			data = (byte *)tx + tx->offsets[0];
 			tx2 = tx;
 		}
 		else

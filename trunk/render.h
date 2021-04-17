@@ -143,7 +143,6 @@ void R_InitTextures (void);
 void R_InitEfrags (void);
 void R_RenderView (void);		// must set r_refdef first
 void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect); // called whenever r_refdef or vid change
-void R_InitSky(miptex_t *mt);		// called at level load
 
 void R_AddEfrags (entity_t *ent);
 void R_RemoveEfrags (entity_t *ent);
