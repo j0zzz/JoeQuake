@@ -737,41 +737,40 @@ R_SetSky
 */
 int R_SetSky(char *skyname)
 {
-	int		i, error = 0;
+	int		i, texnum;
 	byte	*data[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+	char	*identifier;
 
-	for (i = 0; i<6; i++)
+	if (!Q_strcasecmp(r_skybox.string, skyname))
+		return 0;
+
+	if (!skyname[0])
 	{
-		if (!(data[i] = GL_LoadImagePixels(va("env/%s%s", skyname, skybox_ext[i]), 0, 0, 0)) &&
-			!(data[i] = GL_LoadImagePixels(va("gfx/env/%s%s", skyname, skybox_ext[i]), 0, 0, 0)) &&
-			!(data[i] = GL_LoadImagePixels(va("env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0)) &&
-			!(data[i] = GL_LoadImagePixels(va("gfx/env/%s_%s", skyname, skybox_ext[i]), 0, 0, 0)))
+		r_skyboxloaded = false;
+		return 0;
+	}
+
+	for (i = 0; i < 6; i++)
+	{
+		identifier = va("skybox:%s%s", skyname, skybox_ext[i]);
+
+		if (!(texnum = GL_LoadTextureImage(va("env/%s%s", skyname, skybox_ext[i]), identifier, 0, 0, 0)) &&
+			!(texnum = GL_LoadTextureImage(va("gfx/env/%s%s", skyname, skybox_ext[i]), identifier, 0, 0, 0)) &&
+			!(texnum = GL_LoadTextureImage(va("env/%s_%s", skyname, skybox_ext[i]), identifier, 0, 0, 0)) &&
+			!(texnum = GL_LoadTextureImage(va("gfx/env/%s_%s", skyname, skybox_ext[i]), identifier, 0, 0, 0)))
 		{
 			Con_Printf("Couldn't load skybox \"%s\"\n", skyname);
-			error = 1;
-
-			goto cleanup;
+			return 1;
 		}
-	}
-	for (i = 0; i<6; i++)
-	{
-		GL_Bind(skyboxtextures + i);
-		GL_Upload32((unsigned int *)data[i], image_width, image_height, 0);
+
+		if (i == 0)
+			skyboxtextures = texnum;
 	}
 	skybox_image_width = image_width;
 	skybox_image_height = image_height;
 	r_skyboxloaded = true;
 
-cleanup:
-	for (i = 0; i<6; i++)
-	{
-		if (data[i])
-			free(data[i]);
-		else
-			break;
-	}
-
-	return error;
+	return 0;
 }
 
 /*

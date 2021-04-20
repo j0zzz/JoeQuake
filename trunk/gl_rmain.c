@@ -3149,9 +3149,6 @@ void R_Init (void)
 
 	// fullbright skins
 	texture_extension_number += 16;
-
-	skyboxtextures = texture_extension_number;
-	texture_extension_number += 6;
 }
 
 /*
