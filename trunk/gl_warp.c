@@ -744,7 +744,7 @@ int R_SetSky(char *skyname)
 	if (!Q_strcasecmp(r_skybox.string, skyname))
 		return 0;
 
-	if (!skyname[0])
+	if (draw_no24bit || !skyname[0])
 	{
 		r_skyboxloaded = false;
 		return 0;
