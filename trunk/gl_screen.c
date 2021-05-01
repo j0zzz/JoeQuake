@@ -689,7 +689,7 @@ void SCR_SetupAutoID (void)
 
 	autoid_count = 0;
 
-	if (!scr_autoid.value || cls.state != ca_connected || !cls.demoplayback)
+	if (!scr_autoid.value || cls.state != ca_connected || (cl.gametype == GAME_DEATHMATCH && !cls.demoplayback))
 		return;
 
 	glGetFloatv (GL_MODELVIEW_MATRIX, model);
@@ -724,7 +724,7 @@ void SCR_DrawAutoID (void)
 {
 	int	i, x, y, size, half_size;
 
-	if (!scr_autoid.value || !cls.demoplayback)
+	if (!scr_autoid.value || (cl.gametype == GAME_DEATHMATCH && !cls.demoplayback))
 		return;
 
 	size = Sbar_GetScaledCharacterSize();
