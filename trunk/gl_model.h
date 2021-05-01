@@ -508,6 +508,7 @@ typedef enum
 #define	EF_TRACER3	128		// purple trail
 #define	EF_Q3TRANS	256		// Q3 model containing transparent surface(s)
 #define EF_NOSHADOW 512		// don't cast a shadow
+#define	MF_HOLEY	(1u<<14)		// MarkV/QSS -- make index 255 transparent on mdl's
 
 typedef struct model_s
 {

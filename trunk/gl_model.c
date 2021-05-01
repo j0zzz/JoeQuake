@@ -512,7 +512,7 @@ void Mod_LoadTextures (lump_t *l)
 		}
 
 		// ericw -- fence textures
-		if (tx->name[0] == '{')
+		if (ISALPHATEX(tx->name))
 			texture_flag |= TEX_ALPHA;
 
 		tx->width = mt->width;
@@ -2212,6 +2212,8 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 	COM_StripExtension (COM_SkipPath(loadmodel->name), basename);
 
 	texture_flag = TEX_MIPMAP;
+	if (loadmodel->flags & MF_HOLEY)
+		texture_flag |= TEX_ALPHA;
 
 	for (i = 0 ; i < numskins ; i++)
 	{
@@ -2360,7 +2362,7 @@ void Mod_SetExtraFlags(model_t *mod)
 	if (!mod || mod->type != mod_alias)
 		return;
 
-	mod->flags &= (0xFF | EF_Q3TRANS); //only preserve first byte, plus EF_Q3TRANS
+	mod->flags &= (0xFF | EF_Q3TRANS | MF_HOLEY); //only preserve first byte, plus EF_Q3TRANS and MF_HOLEY
 
 	// noshadow flag
 	if (nameInList(r_noshadow_list.string, mod->name))

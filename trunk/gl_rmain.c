@@ -901,7 +901,7 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1i(texLoc, 0);
 	qglUniform1i(fullbrightTexLoc, 1);
 	qglUniform1i(useFullbrightTexLoc, (fb_texture != 0) ? (islumaskin ? 2 : 1) : 0);
-	qglUniform1i(useAlphaTestLoc, 0);	//joe: not used
+	qglUniform1i(useAlphaTestLoc, (currententity->model->flags & MF_HOLEY) ? 1 : 0);
 
 	// set textures
 	GL_SelectTexture(GL_TEXTURE0);
@@ -1337,7 +1337,7 @@ void R_DrawAliasModel (entity_t *ent)
 	vec3_t		mins, maxs;
 	aliashdr_t	*paliashdr;
 	model_t		*clmodel = ent->model;
-	qboolean	islumaskin;
+	qboolean	islumaskin, alphatest = !!(ent->model->flags & MF_HOLEY);
 
 	VectorAdd (ent->origin, clmodel->mins, mins);
 	VectorAdd (ent->origin, clmodel->maxs, maxs);
@@ -1438,6 +1438,9 @@ void R_DrawAliasModel (entity_t *ent)
 	if (full_light || !gl_fb_models.value)
 		fb_texture = 0;
 
+	if (alphatest)
+		glEnable(GL_ALPHA_TEST);
+
 	if (gl_smoothmodels.value)
 		glShadeModel (GL_SMOOTH);
 
@@ -1531,6 +1534,9 @@ void R_DrawAliasModel (entity_t *ent)
 			glDepthMask (GL_TRUE);
 		}
 	}
+	
+	if (alphatest)
+		glDisable(GL_ALPHA_TEST);
 
 	glShadeModel (GL_FLAT);
 	if (gl_affinemodels.value)
