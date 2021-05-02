@@ -408,7 +408,7 @@ Mod_LoadBrushModelTexture
 */
 int Mod_LoadBrushModelTexture (texture_t *tx, int flags)
 {
-	char	*name, *mapname;
+	char	*name, *mapname, *identifier, *fb_identifier, bspname[64];
 
 	if (loadmodel->isworldmodel)
 	{
@@ -423,30 +423,34 @@ int Mod_LoadBrushModelTexture (texture_t *tx, int flags)
 
 	name = tx->name;
 	mapname = CL_MapName ();
+	
+	COM_FileBase(loadmodel->name, bspname, sizeof(bspname));
+	identifier = va("%s:%s", bspname, name);
+	fb_identifier = va("%s:@fb_%s", bspname, name);
 
 	if (loadmodel->isworldmodel)
 	{
-		if ((tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s/%s", mapname, name), name, 0, 0, flags)))
+		if ((tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s/%s", mapname, name), identifier, 0, 0, flags)))
 		{
 			if (!ISTURBTEX(name))
-				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s/%s_luma", mapname, name), va("@fb_%s", name), 0, 0, flags | TEX_LUMA);
+				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s/%s_luma", mapname, name), fb_identifier, 0, 0, flags | TEX_LUMA);
 		}
 	}
 	else
 	{
-		if ((tx->gl_texturenum = GL_LoadTextureImage(va("textures/bmodels/%s", name), name, 0, 0, flags)))
+		if ((tx->gl_texturenum = GL_LoadTextureImage(va("textures/bmodels/%s", name), identifier, 0, 0, flags)))
 		{
 			if (!ISTURBTEX(name))
-				tx->fb_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, flags | TEX_LUMA);
+				tx->fb_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s_luma", name), fb_identifier, 0, 0, flags | TEX_LUMA);
 		}
 	}
 
 	if (!tx->gl_texturenum)
 	{
-		if ((tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s", name), name, 0, 0, flags)))
+		if ((tx->gl_texturenum = GL_LoadTextureImage(va("textures/%s", name), identifier, 0, 0, flags)))
 		{
 			if (!ISTURBTEX(name))
-				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s_luma", name), va("@fb_%s", name), 0, 0, flags | TEX_LUMA);
+				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s_luma", name), fb_identifier, 0, 0, flags | TEX_LUMA);
 		}
 	}
 
@@ -468,6 +472,7 @@ void Mod_LoadTextures (lump_t *l)
 	texture_t	*tx, *tx2, *anims[10], *altanims[10];
 	dmiptexlump_t *m;
 	byte		*data;
+	char		bspname[64];
 
 	if (!l->filelen)
 	{
@@ -562,9 +567,11 @@ void Mod_LoadTextures (lump_t *l)
 			tx2 = r_notexture_mip;
 		}
 
-		tx->gl_texturenum = GL_LoadTexture (tx2->name, tx2->width, tx2->height, data, texture_flag | brighten_flag, 1);
+		COM_FileBase(loadmodel->name, bspname, sizeof(bspname));
+
+		tx->gl_texturenum = GL_LoadTexture (va("%s:%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | brighten_flag, 1);
 		if (!ISTURBTEX(tx->name) && Img_HasFullbrights(data, tx2->width * tx2->height))
-			tx->fb_texturenum = GL_LoadTexture (va("@fb_%s", tx2->name), tx2->width, tx2->height, data, texture_flag | TEX_FULLBRIGHT, 1);
+			tx->fb_texturenum = GL_LoadTexture (va("%s:@fb_%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | TEX_FULLBRIGHT, 1);
 	}
 
 // sequence the animations
