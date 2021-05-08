@@ -1547,6 +1547,35 @@ void DrawTextureChains(model_t *model)
 }
 
 /*
+=============
+R_BeginTransparentDrawing -- ericw
+=============
+*/
+void R_BeginTransparentDrawing(float transparency)
+{
+	if (transparency < 1.0f)
+	{
+		glEnable(GL_BLEND);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glColor4f(1, 1, 1, transparency);
+	}
+}
+
+/*
+=============
+R_EndTransparentDrawing -- ericw
+=============
+*/
+void R_EndTransparentDrawing(float transparency)
+{
+	if (transparency < 1.0f)
+	{
+		glDisable(GL_BLEND);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glColor3f(1, 1, 1);
+	}
+}
+/*
 =================
 R_DrawBrushModel
 =================
@@ -1582,12 +1611,10 @@ void R_DrawBrushModel (entity_t *ent)
 
 	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
 
-	if (ISTRANSPARENT(ent) || psurf->flags & (SURF_DRAWLAVA | SURF_DRAWSLIME | SURF_DRAWWATER))
+	if (ISTRANSPARENT(ent))
 	{
-		transparency = GL_WaterAlphaForEntitySurface(ent, psurf);
-		glEnable (GL_BLEND);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glColor4f (1, 1, 1, transparency);
+		transparency = ent->transparency;
+		R_BeginTransparentDrawing(transparency);
 	}
 
 	VectorSubtract (r_refdef.vieworg, ent->origin, modelorg);
@@ -1626,6 +1653,13 @@ void R_DrawBrushModel (entity_t *ent)
 	// draw texture
 	for (i = 0 ; i < clmodel->nummodelsurfaces ; i++, psurf++)
 	{
+		if (psurf->flags & (SURF_DRAWLAVA | SURF_DRAWSLIME | SURF_DRAWWATER))
+		{
+			glDepthMask(GL_FALSE);
+			transparency = GL_WaterAlphaForEntitySurface(ent, psurf);
+			R_BeginTransparentDrawing(transparency);
+		}
+		
 		// find which side of the node we are on
 		pplane = psurf->plane;
 		dot = PlaneDiff(modelorg, pplane);
@@ -1654,11 +1688,8 @@ void R_DrawBrushModel (entity_t *ent)
 
 	glPopMatrix ();
 
-	if (ISTRANSPARENT(ent))
-	{
-		glColor3ubv (color_white);
-		glDisable (GL_BLEND);
-	}
+	glDepthMask(GL_TRUE);
+	R_EndTransparentDrawing(transparency);
 }
 
 /*

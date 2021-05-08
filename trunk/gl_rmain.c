@@ -84,7 +84,8 @@ cvar_t	r_speeds = {"r_speeds", "0"};
 cvar_t	r_fullbright = {"r_fullbright", "0"};
 cvar_t	r_lightmap = {"r_lightmap", "0"};
 cvar_t	r_shadows = {"r_shadows", "2"};		// probably a bit rough...
-cvar_t	r_wateralpha = {"r_wateralpha", "1"};
+qboolean OnChange_r_wateralpha(cvar_t *var, char *string);
+cvar_t	r_wateralpha = {"r_wateralpha", "1", 0, OnChange_r_wateralpha };
 cvar_t	r_dynamic = {"r_dynamic", "1"};
 cvar_t	r_novis = {"r_novis", "0"};
 cvar_t	r_fullbrightskins = {"r_fullbrightskins", "0"};

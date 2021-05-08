@@ -219,9 +219,24 @@ void R_PreMapLoad (char *mapname)
 	lightmode = 2;
 }
 
+qboolean OnChange_r_wateralpha(cvar_t *var, char *string)
+{
+	float	newval;
+
+	newval = Q_atof(string);
+	if (newval == r_wateralpha.value)
+		return false;
+	
+	map_wateralpha =
+	map_lavaalpha = 
+	map_slimealpha = newval;
+
+	return false;
+}
+
 /*
 ====================
-GL_WaterAlphaForSurfface -- ericw
+GL_WaterAlphaForSurface -- ericw
 ====================
 */
 float GL_WaterAlphaForSurface(msurface_t *fa)
