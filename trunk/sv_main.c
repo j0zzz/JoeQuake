@@ -180,14 +180,14 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 		field_mask |= SND_ATTENUATION;
 
 	//johnfitz -- PROTOCOL_FITZQUAKE
-	if (ent >= 8192)
+	if (ent >= 8192 || channel >= 8)
 	{
 		if (sv.protocol == PROTOCOL_NETQUAKE)
 			return; //don't send any info protocol can't support
 		else
 			field_mask |= SND_LARGEENTITY;
 	}
-	if (sound_num >= 256 || channel >= 8)
+	if (sound_num >= 256)
 	{
 		if (sv.protocol == PROTOCOL_NETQUAKE)
 			return; //don't send any info protocol can't support
