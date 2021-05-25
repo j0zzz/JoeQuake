@@ -145,7 +145,7 @@ void R_RenderView (void);		// must set r_refdef first
 void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect); // called whenever r_refdef or vid change
 
 void R_AddEfrags (entity_t *ent);
-void R_RemoveEfrags (entity_t *ent);
+void R_CheckEfrags(void); //johnfitz
 
 void R_NewMap(void);
 

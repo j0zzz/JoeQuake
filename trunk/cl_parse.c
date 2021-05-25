@@ -1373,6 +1373,14 @@ void CL_ParseServerMessage (void)
 			if (i <= cls.signon)
 				Host_Error ("Received signon %i when at %i", i, cls.signon);
 			cls.signon = i;
+			//johnfitz -- if signonnum==2, signon packet has been fully parsed, so check for excessive static ents and efrags
+			if (i == 2)
+			{
+				if (cl.num_statics > 128)
+					Con_DPrintf("%i static entities exceeds standard limit of 128 (max = %d).\n", cl.num_statics, MAX_STATIC_ENTITIES);
+				R_CheckEfrags();
+			}
+			//johnfitz
 			CL_SignonReply ();
 			break;
 

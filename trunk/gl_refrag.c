@@ -27,57 +27,59 @@ mnode_t	*r_pefragtopnode;
 /*
 ===============================================================================
 
-			ENTITY FRAGMENT FUNCTIONS
+ENTITY FRAGMENT FUNCTIONS
+
+ericw -- GLQuake only uses efrags for static entities, and they're never
+removed, so I trimmed out unused functionality and fields in efrag_t.
+
+Now, efrags are just a linked list for each leaf of the static
+entities that touch that leaf. The efrags are hunk-allocated so there is no
+fixed limit.
+
+This is inspired by MH's tutorial, and code from RMQEngine.
+http://forums.insideqc.com/viewtopic.php?t=1930
 
 ===============================================================================
 */
-
-efrag_t		**lastlink;
 
 vec3_t		r_emins, r_emaxs;
 
 entity_t	*r_addent;
 
 
-/*
-================
-R_RemoveEfrags
+#define EXTRA_EFRAGS	128
 
-Call when removing an object from the world or moving it to another position
-================
-*/
-void R_RemoveEfrags (entity_t *ent)
+// based on RMQEngine
+static efrag_t *R_GetEfrag(void)
 {
-	efrag_t		*ef, *old, *walk, **prev;
+	// we could just Hunk_Alloc a single efrag_t and return it, but since
+	// the struct is so small (2 pointers) allocate groups of them
+	// to avoid wasting too much space on the hunk allocation headers.
 
-	ef = ent->efrag;
-
-	while (ef)
+	if (cl.free_efrags)
 	{
-		prev = &ef->leaf->efrags;
-		while (1)
-		{
-			walk = *prev;
-			if (!walk)
-				break;
-			if (walk == ef)
-			{	// remove this fragment
-				*prev = ef->leafnext;
-				break;
-			}
-			else
-				prev = &walk->leafnext;
-		}
+		efrag_t *ef = cl.free_efrags;
+		cl.free_efrags = ef->leafnext;
+		ef->leafnext = NULL;
 
-		old = ef;
-		ef = ef->entnext;
+		cl.num_efrags++;
 
-	// put it on the free list
-		old->entnext = cl.free_efrags;
-		cl.free_efrags = old;
+		return ef;
 	}
+	else
+	{
+		int i;
 
-	ent->efrag = NULL; 
+		cl.free_efrags = (efrag_t *)Hunk_AllocName(EXTRA_EFRAGS * sizeof(efrag_t), "efrags");
+
+		for (i = 0; i < EXTRA_EFRAGS - 1; i++)
+			cl.free_efrags[i].leafnext = &cl.free_efrags[i + 1];
+
+		cl.free_efrags[i].leafnext = NULL;
+
+		// call recursively to get a newly allocated free efrag
+		return R_GetEfrag();
+	}
 }
 
 /*
@@ -85,68 +87,71 @@ void R_RemoveEfrags (entity_t *ent)
 R_SplitEntityOnNode
 ===================
 */
-void R_SplitEntityOnNode (mnode_t *node)
+void R_SplitEntityOnNode(mnode_t *node)
 {
-	int		sides;
 	efrag_t		*ef;
 	mplane_t	*splitplane;
 	mleaf_t		*leaf;
+	int			sides;
 
 	if (node->contents == CONTENTS_SOLID)
+	{
 		return;
+	}
 
-// add an efrag if the node is a leaf
+	// add an efrag if the node is a leaf
 
-	if ( node->contents < 0)
+	if (node->contents < 0)
 	{
 		if (!r_pefragtopnode)
 			r_pefragtopnode = node;
 
 		leaf = (mleaf_t *)node;
 
-// grab an efrag off the free list
-		ef = cl.free_efrags;
-		if (!ef)
-		{
-			Con_Printf ("Too many efrags!\n");
-			return;		// no free fragments...
-		}
-		cl.free_efrags = cl.free_efrags->entnext;
-
+		// grab an efrag off the free list
+		ef = R_GetEfrag();
 		ef->entity = r_addent;
 
-// add the entity link	
-		*lastlink = ef;
-		lastlink = &ef->entnext;
-		ef->entnext = NULL;
-
-// set the leaf links
-		ef->leaf = leaf;
+		// set the leaf links
 		ef->leafnext = leaf->efrags;
 		leaf->efrags = ef;
 
 		return;
 	}
 
-// NODE_MIXED
+	// NODE_MIXED
 
 	splitplane = node->plane;
 	sides = BOX_ON_PLANE_SIDE(r_emins, r_emaxs, splitplane);
 
 	if (sides == 3)
 	{
-	// split on this plane
-	// if this is the first splitter of this bmodel, remember it
+		// split on this plane
+		// if this is the first splitter of this bmodel, remember it
 		if (!r_pefragtopnode)
 			r_pefragtopnode = node;
 	}
 
-// recurse down the contacted sides
+	// recurse down the contacted sides
 	if (sides & 1)
-		R_SplitEntityOnNode (node->children[0]);
+		R_SplitEntityOnNode(node->children[0]);
 
 	if (sides & 2)
-		R_SplitEntityOnNode (node->children[1]);
+		R_SplitEntityOnNode(node->children[1]);
+}
+
+/*
+===========
+R_CheckEfrags -- johnfitz -- check for excessive efrag count
+===========
+*/
+void R_CheckEfrags(void)
+{
+	if (cls.signon < 2)
+		return; //don't spam when still parsing signon packet full of static ents
+
+	if (cl.num_efrags > 640)
+		Con_DPrintf("%i efrags exceeds standard limit of 640.\n", cl.num_efrags);
 }
 
 /*
@@ -154,72 +159,54 @@ void R_SplitEntityOnNode (mnode_t *node)
 R_AddEfrags
 ===========
 */
-void R_AddEfrags (entity_t *ent)
+void R_AddEfrags(entity_t *ent)
 {
-	int	i;
 	model_t	*entmodel;
+	int		i;
 
 	if (!ent->model)
 		return;
 
 	r_addent = ent;
 
-	lastlink = &ent->efrag;
 	r_pefragtopnode = NULL;
 
 	entmodel = ent->model;
 
-	for (i=0 ; i<3 ; i++)
+	for (i = 0; i<3; i++)
 	{
 		r_emins[i] = ent->origin[i] + entmodel->mins[i];
 		r_emaxs[i] = ent->origin[i] + entmodel->maxs[i];
 	}
 
-	R_SplitEntityOnNode (cl.worldmodel->nodes);
+	R_SplitEntityOnNode(cl.worldmodel->nodes);
 
 	ent->topnode = r_pefragtopnode;
+
+	R_CheckEfrags(); //johnfitz
 }
+
 
 /*
 ================
-R_StoreEfrags
-
-// FIXME: a lot of this goes away with edge-based
+R_StoreEfrags -- johnfitz -- pointless switch statement removed.
 ================
 */
-void R_StoreEfrags (efrag_t **ppefrag)
+void R_StoreEfrags(efrag_t **ppefrag)
 {
 	entity_t	*pent;
-	model_t		*model;
 	efrag_t		*pefrag;
 
-	for (pefrag = *ppefrag ; pefrag ; pefrag = pefrag->leafnext)
+	while ((pefrag = *ppefrag) != NULL)
 	{
 		pent = pefrag->entity;
-		model = pent->model;
 
-		if (model->modhint == MOD_FLAME && !r_drawflame.value)
-			continue;
-
-		switch (model->type)
+		if ((pent->visframe != r_framecount) && (cl_numvisedicts < MAX_VISEDICTS))
 		{
-		case mod_alias:
-		case mod_md3:
-		case mod_brush:
-		case mod_sprite:
-		case mod_spr32:
-			if (pent->visframe != r_framecount)
-			{
-				if (cl_numvisedicts < MAX_VISEDICTS)
-					cl_visedicts[cl_numvisedicts++] = pent;
-
-			// mark that we've recorded this entity for this frame
-				pent->visframe = r_framecount;
-			}
-			break;
-
-		default:	
-			Sys_Error ("R_StoreEfrags: Bad entity type %d\n", model->type);
+			cl_visedicts[cl_numvisedicts++] = pent;
+			pent->visframe = r_framecount;
 		}
+
+		ppefrag = &pefrag->leafnext;
 	}
 }

@@ -734,8 +734,10 @@ void CL_RelinkEntities (void)
 	{
 		if (!ent->model)
 		{	// empty slot
-			if (ent->forcelink)
-				R_RemoveEfrags (ent);	// just became empty
+			// ericw -- efrags are only used for static entities in GLQuake
+			// ent can't be static, so this is a no-op.
+			//if (ent->forcelink)
+			//	R_RemoveEfrags (ent);	// just became empty
 			continue;
 		}
 

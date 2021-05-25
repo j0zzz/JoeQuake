@@ -225,11 +225,12 @@ typedef struct
 // refresh related state
 	struct model_s	*worldmodel;		// cl_entities[0].model
 	struct efrag_s	*free_efrags;
-	int		num_entities;		// held in cl_entities array
-	int		num_statics;		// held in cl_staticentities array
+	int			num_efrags;
+	int			num_entities;		// held in cl_entities array
+	int			num_statics;		// held in cl_staticentities array
 	entity_t	viewent;		// the gun model
 
-	int		cdtrack, looptrack;	// cd audio
+	int			cdtrack, looptrack;	// cd audio
 
 // frag scoreboard
 	scoreboard_t	*scores;		// [cl.maxclients]
