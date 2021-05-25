@@ -443,9 +443,6 @@ void Draw_InitConback (void)
 		Sys_Error ("Couldn't load gfx/conback.lmp");
 	SwapPic (cb);
 
-	if (cb->width != 320 || cb->height != 200)
-		Sys_Error ("Draw_InitConback: conback.lmp size is not 320x200");
-
 	if (load_external_gfx_textures && 
 		(pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0)))
 	{
