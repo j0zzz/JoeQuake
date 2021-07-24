@@ -1655,7 +1655,8 @@ void R_DrawBrushModel (entity_t *ent)
 	{
 		if (psurf->flags & (SURF_DRAWLAVA | SURF_DRAWSLIME | SURF_DRAWWATER))
 		{
-			glDepthMask(GL_FALSE);
+			glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
+			glPolygonOffset(-1, -1);			//
 			transparency = GL_WaterAlphaForEntitySurface(ent, psurf);
 			R_BeginTransparentDrawing(transparency);
 		}
@@ -1688,7 +1689,7 @@ void R_DrawBrushModel (entity_t *ent)
 
 	glPopMatrix ();
 
-	glDepthMask(GL_TRUE);
+	glDisable(GL_POLYGON_OFFSET_FILL);
 	R_EndTransparentDrawing(transparency);
 }
 
