@@ -1198,6 +1198,13 @@ void DrawTextureChains_GLSL(model_t *model)
 	qboolean	bound, alphaused;
 	entity_t	*ent = currententity;
 
+	// enable blending / disable depth writes
+	if (ISTRANSPARENT(ent))
+	{
+		glDepthMask(GL_FALSE);
+		glEnable(GL_BLEND);
+	}
+
 	qglUseProgram(r_world_program);
 
 	// Bind the buffers
@@ -1225,7 +1232,7 @@ void DrawTextureChains_GLSL(model_t *model)
 	qglUniform1i(useCausticsTexLoc, 0);
 	qglUniform1i(useAlphaTestLoc, 0);
 	qglUniform1i(useWaterFogLoc, (r_viewleaf->contents != CONTENTS_EMPTY && r_viewleaf->contents != CONTENTS_SOLID) ? (int)gl_waterfog.value : 0);
-	qglUniform1f(alphaLoc, ent->transparency);
+	qglUniform1f(alphaLoc, ent->transparency == 0 ? 1 : ent->transparency);
 	qglUniform1f(clTimeLoc, cl.time);
 
 	for (i = 0 ; i < model->numtextures ; i++)
@@ -1302,6 +1309,12 @@ void DrawTextureChains_GLSL(model_t *model)
 
 	qglUseProgram(0);
 	GL_SelectTexture(GL_TEXTURE0);
+
+	if (ISTRANSPARENT(ent))
+	{
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+	}
 }
 
 /*
@@ -1523,11 +1536,43 @@ void DrawTextureChains_Multitexture (model_t *model)
 }
 
 /*
+=============
+R_BeginTransparentDrawing -- ericw
+=============
+*/
+void R_BeginTransparentDrawing(float transparency)
+{
+	if (transparency > 0 && transparency < 1)
+	{
+		glDepthMask(GL_FALSE);
+		glEnable(GL_BLEND);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glColor4f(1, 1, 1, transparency);
+	}
+}
+
+/*
+=============
+R_EndTransparentDrawing -- ericw
+=============
+*/
+void R_EndTransparentDrawing(float transparency)
+{
+	if (transparency > 0 && transparency < 1)
+	{
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glColor3f(1, 1, 1);
+	}
+}
+
+/*
 ================
 DrawTextureChains
 ================
 */
-void DrawTextureChains(model_t *model)
+void DrawTextureChains(model_t *model, entity_t *ent)
 {
 	// ericw -- the mh dynamic lightmap speedup: make a first pass through all
 	// surfaces we are going to draw, and rebuild any lightmaps that need it.
@@ -1543,38 +1588,13 @@ void DrawTextureChains(model_t *model)
 		return;
 	}
 
+	R_BeginTransparentDrawing(ent->transparency);
+
 	DrawTextureChains_Multitexture(model);
+
+	R_EndTransparentDrawing(ent->transparency);
 }
 
-/*
-=============
-R_BeginTransparentDrawing -- ericw
-=============
-*/
-void R_BeginTransparentDrawing(float transparency)
-{
-	if (transparency < 1.0f)
-	{
-		glEnable(GL_BLEND);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glColor4f(1, 1, 1, transparency);
-	}
-}
-
-/*
-=============
-R_EndTransparentDrawing -- ericw
-=============
-*/
-void R_EndTransparentDrawing(float transparency)
-{
-	if (transparency < 1.0f)
-	{
-		glDisable(GL_BLEND);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		glColor3f(1, 1, 1);
-	}
-}
 /*
 =================
 R_DrawBrushModel
@@ -1610,12 +1630,6 @@ void R_DrawBrushModel (entity_t *ent)
 	}
 
 	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
-
-	if (ISTRANSPARENT(ent))
-	{
-		transparency = ent->transparency;
-		R_BeginTransparentDrawing(transparency);
-	}
 
 	VectorSubtract (r_refdef.vieworg, ent->origin, modelorg);
 	if (rotated)
@@ -1653,14 +1667,6 @@ void R_DrawBrushModel (entity_t *ent)
 	// draw texture
 	for (i = 0 ; i < clmodel->nummodelsurfaces ; i++, psurf++)
 	{
-		if (psurf->flags & (SURF_DRAWLAVA | SURF_DRAWSLIME | SURF_DRAWWATER))
-		{
-			glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
-			glPolygonOffset(-1, -1);			//
-			transparency = GL_WaterAlphaForEntitySurface(ent, psurf);
-			R_BeginTransparentDrawing(transparency);
-		}
-		
 		// find which side of the node we are on
 		pplane = psurf->plane;
 		dot = PlaneDiff(modelorg, pplane);
@@ -1671,7 +1677,15 @@ void R_DrawBrushModel (entity_t *ent)
 		{
 			if (psurf->flags & SURF_DRAWTURB)
 			{
+				glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
+				glPolygonOffset(-1, -1);			//
+				transparency = GL_WaterAlphaForEntitySurface(ent, psurf);
+				R_BeginTransparentDrawing(transparency);
+
 				EmitTurbulentPolys (psurf);
+
+				R_EndTransparentDrawing(transparency);
+				glDisable(GL_POLYGON_OFFSET_FILL);
 			}
 			else if (!r_world_program && psurf->flags & SURF_DRAWALPHA) 
 			{
@@ -1685,12 +1699,9 @@ void R_DrawBrushModel (entity_t *ent)
 		}
 	}
 
-	DrawTextureChains (clmodel);
+	DrawTextureChains (clmodel, ent);
 
-	glPopMatrix ();
-
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	R_EndTransparentDrawing(transparency);
+	glPopMatrix();
 }
 
 /*
@@ -1835,7 +1846,7 @@ void R_DrawWorld (void)
 	R_DrawSky();
 
 	// draw the world
-	DrawTextureChains (cl.worldmodel);
+	DrawTextureChains (cl.worldmodel, currententity);
 }
 
 /*
