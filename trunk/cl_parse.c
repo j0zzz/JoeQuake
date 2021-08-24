@@ -1496,6 +1496,12 @@ void CL_ParseServerMessage (void)
 			CL_ParseStaticSound(2);
 			break;
 			//johnfitz
+
+		case svc_achievement:
+			// Sphere -- The achievements from Quake Remaster (2021) seem to be just strings.
+			// We don't really care about them, so let's just ignore them.
+			(void)MSG_ReadString();
+			break;
 		}
 	}
 }

@@ -206,6 +206,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	svc_spawnstaticsound2	44	// [coord3] [short] samp [byte] vol [byte] aten
 //johnfitz
 
+//Sphere -- new server message for Quake Remaster (2021)
+#define svc_achievement	52
+
 // client to server
 #define	clc_bad			0
 #define	clc_nop 		1
