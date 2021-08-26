@@ -1697,6 +1697,15 @@ void PF_changelevel (void)
 	Cbuf_AddText (va("changelevel %s\n",s));
 }
 
+/*
+==============
+PF_finalefinished -- used by 2021 release.
+==============
+*/
+void PF_finalefinished(void)
+{
+}
+
 void PF_sin (void)
 {
 	G_FLOAT(OFS_RETURN) = sin(G_FLOAT(OFS_PARM0));
@@ -1805,7 +1814,10 @@ PF_precache_model,
 PF_precache_sound,		// precache_sound2 is different only for qcc
 PF_precache_file,
 
-PF_setspawnparms
+PF_setspawnparms,
+
+// 2021 release
+PF_finalefinished	// void() finaleFinished = #79
 };
 
 builtin_t	*pr_builtins = pr_builtin;

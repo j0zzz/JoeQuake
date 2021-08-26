@@ -97,6 +97,8 @@ cvar_t	pausable = {"pausable", "1"};
 
 cvar_t	temp1 = {"temp1", "0"};
 
+cvar_t campaign = { "campaign", "0" }; // for the 2021 rerelease
+
 extern cvar_t cl_independentphysics;
 
 void Host_WriteConfig_f (void);
@@ -247,6 +249,8 @@ void Host_InitLocal (void)
 	Cvar_Register (&pausable);
 
 	Cvar_Register (&temp1);
+
+	Cvar_Register(&campaign);
 
 	Cmd_AddCommand ("writeconfig", Host_WriteConfig_f);
 

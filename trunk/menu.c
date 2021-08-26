@@ -7332,6 +7332,13 @@ void M_Help_Key (int key)
 }
 
 //=============================================================================
+/* Credits menu -- used by the 2021 re-release */
+
+void M_Menu_Credits_f(void)
+{
+}
+
+//=============================================================================
 /* Menu Subsystem */
 
 void M_Init (void)
@@ -7371,6 +7378,7 @@ void M_Init (void)
 	Cmd_AddCommand("menu_mods", M_Menu_Mods_f);
 	Cmd_AddCommand ("menu_demos", M_Menu_Demos_f);
 	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
+	Cmd_AddCommand("menu_credits", M_Menu_Credits_f); // needed by the 2021 re-release
 }
 
 void M_Draw (void)

@@ -206,6 +206,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	svc_spawnstaticsound2	44	// [coord3] [short] samp [byte] vol [byte] aten
 //johnfitz
 
+//used by the 2021 rerelease
+//Note: same value as svcdp_effect!
+#define svc_achievement			52		// [string] id
+
 // client to server
 #define	clc_bad			0
 #define	clc_nop 		1
