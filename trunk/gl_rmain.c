@@ -87,7 +87,8 @@ cvar_t	r_shadows = {"r_shadows", "2"};		// probably a bit rough...
 qboolean OnChange_r_wateralpha(cvar_t *var, char *string);
 cvar_t	r_wateralpha = {"r_wateralpha", "1", 0, OnChange_r_wateralpha };
 cvar_t	r_dynamic = {"r_dynamic", "1"};
-cvar_t	r_novis = {"r_novis", "0"};
+qboolean OnChange_r_novis(cvar_t *var, char *string);
+cvar_t	r_novis = {"r_novis", "0", 0, OnChange_r_novis };
 cvar_t	r_fullbrightskins = {"r_fullbrightskins", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_skycolor = {"r_skycolor", "4"};
@@ -155,7 +156,8 @@ float	pitch_rot;
 float	q3legs_rot;
 #endif
 
-void R_MarkLeaves (void);
+void R_MarkSurfaces(void);
+void R_CullSurfaces(void);
 void R_InitBubble (void);
 
 //==============================================================================
@@ -3173,15 +3175,15 @@ void R_RenderScene (void)
 
 	R_SetupGL ();
 
-	R_MarkLeaves ();	// done here so we know if we're in water
+	R_MarkSurfaces(); //johnfitz -- create texture chains from PVS
+
+	R_CullSurfaces(); //johnfitz -- do after R_SetFrustum and R_MarkSurfaces
 
 	Fog_EnableGFog();	//johnfitz 
 
 	R_DrawWorld ();		// adds static entities to the list
 
 	S_ExtraUpdate ();	// don't let sound get messed up if going slow
-
-	R_DrawTeleport ();
 
 	R_DrawDecals ();
 

@@ -650,6 +650,7 @@
     <ClInclude Include="gl_model.h" />
     <ClInclude Include="glquake.h" />
     <ClInclude Include="cdaudio.h" />
+    <ClInclude Include="gl_warp_sin.h" />
     <ClInclude Include="progdefs.h" />
     <ClInclude Include="progs.h" />
     <ClInclude Include="sound.h" />

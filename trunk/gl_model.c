@@ -867,6 +867,13 @@ void Mod_LoadSubmodels (lump_t *l)
 		out->firstface = LittleLong (in->firstface);
 		out->numfaces = LittleLong (in->numfaces);
 	}
+
+	// johnfitz -- check world visleafs -- adapted from bjp
+	out = loadmodel->submodels;
+
+	if (out->visleafs > 8192)
+		Con_DPrintf("%i visleafs exceeds standard limit of 8192.\n", out->visleafs);
+	//johnfitz
 }
 
 /*
@@ -982,7 +989,7 @@ void CalcSurfaceExtents (msurface_t *s)
 	mtexinfo_t	*tex;
 
 	mins[0] = mins[1] = 999999;
-	maxs[0] = maxs[1] = -99999;
+	maxs[0] = maxs[1] = -999999;
 
 	tex = s->texinfo;
 
@@ -1222,13 +1229,7 @@ void Mod_LoadFaces (lump_t *l, qboolean bsp2)
 				out->flags |= SURF_DRAWTELE;
 			else out->flags |= SURF_DRAWWATER;
 
-			for (i = 0; i<2; i++)
-			{
-				out->extents[i] = 16384;
-				out->texturemins[i] = -8192;
-			}
-
-			//Mod_PolyForUnlitSurface(out);
+			Mod_PolyForUnlitSurface(out);
 			GL_SubdivideSurface(out);
 		}
 		else if (ISALPHATEX(out->texinfo->texture->name))
@@ -1244,8 +1245,7 @@ void Mod_LoadFaces (lump_t *l, qboolean bsp2)
 			else // not lightmapped
 			{
 				out->flags |= (SURF_NOTEXTURE | SURF_DRAWTILED);
-				//Mod_PolyForUnlitSurface(out);
-				GL_SubdivideSurface(out);
+				Mod_PolyForUnlitSurface(out);
 			}
 		}
 	}
@@ -1481,7 +1481,7 @@ void Mod_ProcessLeafs_S(dsleaf_t *in, int filelen)
 		for (j = 0; j<4; j++)
 			out->ambient_sound_level[j] = in->ambient_level[j];
 
-		if (out->contents != CONTENTS_EMPTY)
+		if (out->contents == CONTENTS_WATER || out->contents == CONTENTS_SLIME || out->contents == CONTENTS_LAVA)
 		{
 			for (j = 0; j<out->nummarksurfaces; j++)
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
@@ -1525,7 +1525,7 @@ void Mod_ProcessLeafs_L1(dl1leaf_t *in, int filelen)
 		for (j = 0; j<4; j++)
 			out->ambient_sound_level[j] = in->ambient_level[j];
 
-		if (out->contents != CONTENTS_EMPTY)
+		if (out->contents == CONTENTS_WATER || out->contents == CONTENTS_SLIME || out->contents == CONTENTS_LAVA)
 		{
 			for (j = 0; j<out->nummarksurfaces; j++)
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
@@ -1569,7 +1569,7 @@ void Mod_ProcessLeafs_L2(dl2leaf_t *in, int filelen)
 		for (j = 0; j<4; j++)
 			out->ambient_sound_level[j] = in->ambient_level[j];
 
-		if (out->contents != CONTENTS_EMPTY)
+		if (out->contents == CONTENTS_WATER || out->contents == CONTENTS_SLIME || out->contents == CONTENTS_LAVA)
 		{
 			for (j = 0; j<out->nummarksurfaces; j++)
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;

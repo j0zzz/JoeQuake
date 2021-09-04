@@ -258,7 +258,7 @@ Returns the water alpha to use for the entity and surface combination.
 */
 float GL_WaterAlphaForEntitySurface(entity_t *ent, msurface_t *s)
 {
-	return (ISTRANSPARENT(ent)) ? ent->transparency : GL_WaterAlphaForSurface(s);
+	return (ent == NULL || !ISTRANSPARENT(ent)) ? GL_WaterAlphaForSurface(s) : ent->transparency;
 }
 
 /*
@@ -317,7 +317,7 @@ R_NewMap
 */
 void R_NewMap(void)
 {
-	int	i, waterline;
+	int	i;
 
 	for (i = 0; i < 256; i++)
 		d_lightstylevalue[i] = 264;		// normal light value
@@ -337,18 +337,9 @@ void R_NewMap(void)
 	GL_BuildLightmaps();
 	GL_BuildBModelVertexBuffer();
 
-	// identify sky texture
-	for (i = 0; i < cl.worldmodel->numtextures; i++)
-	{
-		if (!cl.worldmodel->textures[i])
-			continue;
+	r_framecount = 0; //johnfitz -- paranoid?
+	r_visframecount = 0; //johnfitz -- paranoid?
 
-		for (waterline = 0; waterline < 2; waterline++)
-		{
-			cl.worldmodel->textures[i]->texturechain[waterline] = NULL;
-			cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
-		}
-	}
 	Sky_NewMap(); //johnfitz -- skybox in worldspawn 
 	Fog_NewMap(); //johnfitz -- global fog in worldspawn 
 	R_ParseWorldspawn(); //ericw -- wateralpha, lavaalpha, telealpha, slimealpha in worldspawn 

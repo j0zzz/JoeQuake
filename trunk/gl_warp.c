@@ -38,6 +38,14 @@ extern	cvar_t	r_skyfog;
 
 extern	byte *StringToRGB (char *s);
 
+float	turbsin_water[] =
+{
+#include "gl_warp_sin.h"
+};
+
+#define WARPCALC(s,t) ((s + turbsin_water[(int)((t*2)+(cl.time*(128.0/M_PI))) & 255]) * (1.0/64)) //johnfitz -- correct warp
+#define WARPCALC2(s,t) ((s + turbsin_water[(int)((t*0.125+cl.time)*(128.0/M_PI)) & 255]) * (1.0/64)) //johnfitz -- old warp
+
 static	int		skytexorder[6] = { 0, 2, 1, 3, 4, 5 };
 static	char	*skybox_ext[6] = { "rt", "bk", "lf", "ft", "up", "dn" };
 
@@ -83,8 +91,8 @@ void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs)
 	int	i, j;
 	float	*v;
 
-	mins[0] = mins[1] = mins[2] = 9999;
-	maxs[0] = maxs[1] = maxs[2] = -9999;
+	mins[0] = mins[1] = mins[2] = 999999999;
+	maxs[0] = maxs[1] = maxs[2] = -999999999;
 	v = verts;
 	for (i=0 ; i<numverts ; i++)
 	{
@@ -162,9 +170,9 @@ void SubdividePolygon (int numverts, float *verts)
 		return;
 	}
 
-	poly = Hunk_Alloc (sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float));
-	poly->next = warpface->polys;
-	warpface->polys = poly;
+	poly = (glpoly_t *)Hunk_Alloc(sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float));
+	poly->next = warpface->polys->next;
+	warpface->polys->next = poly;
 	poly->numverts = numverts;
 	for (i = 0 ; i < numverts ; i++, verts += 3)
 	{
@@ -185,7 +193,6 @@ boundaries so that turbulent and sky warps
 can be done reasonably.
 ================
 */
-#if 0
 void GL_SubdivideSurface(msurface_t *fa)
 {
 	vec3_t	verts[64];
@@ -200,32 +207,6 @@ void GL_SubdivideSurface(msurface_t *fa)
 
 	SubdividePolygon(fa->polys->numverts, verts[0]);
 }
-#else
-void GL_SubdivideSurface (msurface_t *fa)
-{
-	vec3_t		verts[64];
-	int		numverts, i, lindex;
-	float		*vec;
-
-	warpface = fa;
-
-	// convert edges back to a normal polygon
-	numverts = 0;
-	for (i=0 ; i<fa->numedges ; i++)
-	{
-		lindex = loadmodel->surfedges[fa->firstedge + i];
-
-		if (lindex > 0)
-			vec = loadmodel->vertexes[loadmodel->edges[lindex].v[0]].position;
-		else
-			vec = loadmodel->vertexes[loadmodel->edges[-lindex].v[1]].position;
-		VectorCopy (vec, verts[numverts]);
-		numverts++;
-	}
-
-	SubdividePolygon (numverts, verts[0]);
-}
-#endif
 
 //=========================================================
 
@@ -273,43 +254,6 @@ void EmitFlatPoly (msurface_t *fa)
 	}
 }
 
-/*
-=============
-EmitTurbulentPolys
-
-Does a water warp on the pre-fragmented glpoly_t chain
-=============
-*/
-void EmitTurbulentPolys (msurface_t *fa)
-{
-	glpoly_t	*p;
-	float		*v, s, t, os, ot;
-	int			i;
-
-	GL_DisableMultitexture ();
-
-	GL_Bind (fa->texinfo->texture->gl_texturenum);
-	for (p = fa->polys ; p ; p = p->next)
-	{
-		glBegin (GL_POLYGON);
-		for (i = 0, v = p->verts[0] ; i < p->numverts ; i++, v += VERTEXSIZE)
-		{
-			os = v[3];
-			ot = v[4];
-
-			s = os + SINTABLE_APPROX(ot * 0.125 + cl.time);
-			s *= (1.0 / 64);
-
-			t = ot + SINTABLE_APPROX(os * 0.125 + cl.time);
-			t *= (1.0 / 64);
-
-			glTexCoord2f (s, t);
-			glVertex3fv (v);
-		}
-		glEnd ();
-	}
-}
-
 void EmitCausticsPolys(void)
 {
 	glpoly_t	*p;
@@ -347,6 +291,40 @@ void EmitCausticsPolys(void)
 	glDisable(GL_BLEND);
 
 	caustics_polys = NULL;
+}
+
+/*
+================
+DrawWaterPoly -- johnfitz
+================
+*/
+void DrawWaterPoly(glpoly_t *p)
+{
+	float	*v;
+	int		i;
+
+	if (gl_subdivide_size.value > 48)
+	{
+		glBegin(GL_POLYGON);
+		v = p->verts[0];
+		for (i = 0; i<p->numverts; i++, v += VERTEXSIZE)
+		{
+			glTexCoord2f(WARPCALC2(v[3], v[4]), WARPCALC2(v[4], v[3]));
+			glVertex3fv(v);
+		}
+		glEnd();
+	}
+	else
+	{
+		glBegin(GL_POLYGON);
+		v = p->verts[0];
+		for (i = 0; i<p->numverts; i++, v += VERTEXSIZE)
+		{
+			glTexCoord2f(WARPCALC(v[3], v[4]), WARPCALC(v[4], v[3]));
+			glVertex3fv(v);
+		}
+		glEnd();
+	}
 }
 
 //===============================================================
@@ -622,22 +600,20 @@ Sky_ProcessTextureChains -- handles sky polys in world model
 */
 void Sky_ProcessTextureChains(void)
 {
-	int			i, waterline;
+	int			i;
 	msurface_t	*s;
 	texture_t	*t;
 
 	for (i = 0; i < cl.worldmodel->numtextures; i++)
 	{
-		for (waterline = 0; waterline < 2; waterline++)
-		{
-			t = cl.worldmodel->textures[i];
+		t = cl.worldmodel->textures[i];
 
-			if (!t || !t->texturechain[waterline] || !(t->texturechain[waterline]->flags & SURF_DRAWSKY))
-				continue;
+		if (!t || !t->texturechains[chain_world] || !(t->texturechains[chain_world]->flags & SURF_DRAWSKY))
+			continue;
 
-			for (s = t->texturechain[waterline]; s; s = s->texturechain)
+		for (s = t->texturechains[chain_world]; s; s = s->texturechain)
+			if (!s->culled)
 				Sky_ProcessPoly(s->polys);
-		}
 	}
 }
 

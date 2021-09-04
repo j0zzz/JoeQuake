@@ -61,14 +61,20 @@ typedef struct mplane_s
 	byte		pad[2];
 } mplane_t;
 
+// ericw -- each texture has two chains, so we can clear the model chains
+//          without affecting the world
+typedef enum {
+	chain_world = 0,
+	chain_model = 1
+} texchain_t;
+
 typedef struct texture_s
 {
 	char		name[16];
 	unsigned	width, height;
 	int			gl_texturenum;
 	int			fb_texturenum;			// index of fullbright mask or 0
-	struct msurface_s *texturechain[2];
-	struct msurface_s **texturechain_tail[2];
+	struct msurface_s *texturechains[2];
 	int			anim_total;				// total tenths in sequence (0 = no)
 	int			anim_min, anim_max;		// time for this frame min <=time< max
 	struct texture_s *anim_next;		// in the animation sequence

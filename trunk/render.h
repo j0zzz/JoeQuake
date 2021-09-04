@@ -173,7 +173,6 @@ void R_InitParticles (void);
 void R_ClearParticles (void);
 void R_DrawParticles (void);
 void R_DrawWaterSurfaces (void);
-void R_DrawTeleport (void);
 
 // surface cache related
 extern qboolean	r_cache_thrash;	// set if thrashing the surface cache

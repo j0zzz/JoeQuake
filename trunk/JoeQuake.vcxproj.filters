@@ -578,6 +578,9 @@
     <ClInclude Include="progs.h">
       <Filter>Header Files\VM_h</Filter>
     </ClInclude>
+    <ClInclude Include="gl_warp_sin.h">
+      <Filter>Header Files\OpenGL_h</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="joequake.bmp">
