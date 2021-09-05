@@ -58,8 +58,6 @@ float GL_WaterAlphaForEntitySurface(entity_t *ent, msurface_t *s);
 void DrawWaterPoly(glpoly_t *p);
 byte *SV_FatPVS(vec3_t org, model_t *worldmodel);
 
-int vis_changed; //if true, force pvs to be refreshed
-
 /*
 ================
 DrawGLPoly
@@ -655,15 +653,22 @@ void R_ChainSurface(msurface_t *surf, texchain_t chain)
 	surf->texinfo->texture->texturechains[chain] = surf;
 }
 
-qboolean OnChange_r_novis(cvar_t *var, char *string)
+/*
+================
+R_BackFaceCull -- johnfitz -- returns true if the surface is facing away from vieworg
+================
+*/
+qboolean R_BackFaceCull(msurface_t *surf)
 {
-	float	newval;
+	double dot;
 
-	newval = Q_atof(string);
-	if (newval == r_novis.value)
-		return false;
+	if (surf->plane->type < 3)
+		dot = r_refdef.vieworg[surf->plane->type] - surf->plane->dist;
+	else
+		dot = DotProduct(r_refdef.vieworg, surf->plane->normal) - surf->plane->dist;
 
-	vis_changed = true;
+	if ((dot < 0) ^ !!(surf->flags & SURF_PLANEBACK))
+		return true;
 
 	return false;
 }
@@ -677,7 +682,6 @@ void R_MarkSurfaces(void)
 {
 	byte		*vis;
 	mleaf_t		*leaf;
-	mnode_t		*node;
 	msurface_t	*surf, **mark;
 	int			i, j;
 	qboolean	nearwaterportal;
@@ -700,20 +704,12 @@ void R_MarkSurfaces(void)
 	else
 		vis = Mod_LeafPVS(r_viewleaf, cl.worldmodel);
 
-	// if surface chains don't need regenerating, just add static entities and return
-	if (r_oldviewleaf == r_viewleaf && !vis_changed && !nearwaterportal)
-	{
-		leaf = &cl.worldmodel->leafs[1];
-		for (i = 0; i<cl.worldmodel->numleafs; i++, leaf++)
-			if (vis[i >> 3] & (1 << (i & 7)))
-				if (leaf->efrags)
-					R_StoreEfrags(&leaf->efrags);
-		return;
-	}
-
-	vis_changed = false;
 	r_visframecount++;
-	r_oldviewleaf = r_viewleaf;
+
+	// set all chains to null
+	for (i = 0; i<cl.worldmodel->numtextures; i++)
+		if (cl.worldmodel->textures[i])
+			cl.worldmodel->textures[i]->texturechains[chain_world] = NULL;
 
 	// iterate through leaves, marking surfaces
 	leaf = &cl.worldmodel->leafs[1];
@@ -721,141 +717,31 @@ void R_MarkSurfaces(void)
 	{
 		if (vis[i >> 3] & (1 << (i & 7)))
 		{
+			if (R_CullBox(leaf->minmaxs, leaf->minmaxs + 3))
+				continue;
+
 			if (leaf->contents != CONTENTS_SKY)
 				for (j = 0, mark = leaf->firstmarksurface; j<leaf->nummarksurfaces; j++, mark++)
-					(*mark)->visframe = r_visframecount;
+				{
+					surf = *mark;
+					if (surf->visframe != r_visframecount)
+					{
+						surf->visframe = r_visframecount;
+						if (!R_CullBox(surf->mins, surf->maxs) && !R_BackFaceCull(surf))
+						{
+							R_ChainSurface(surf, chain_world);
+							R_RenderDynamicLightmaps(surf);
+							//joe-FIXME
+							//if (surf->texinfo->texture->warpimage)
+							//	surf->texinfo->texture->update_warp = true;
+						}
+					}
+				}
 
 			// add static models
 			if (leaf->efrags)
 				R_StoreEfrags(&leaf->efrags);
 		}
-	}
-
-	// set all chains to null
-	for (i = 0; i<cl.worldmodel->numtextures; i++)
-		if (cl.worldmodel->textures[i])
-			cl.worldmodel->textures[i]->texturechains[chain_world] = NULL;
-
-	// rebuild chains
-
-#if 1
-	//iterate through surfaces one node at a time to rebuild chains
-	//need to do it this way if we want to work with tyrann's skip removal tool
-	//because his tool doesn't actually remove the surfaces from the bsp surfaces lump
-	//nor does it remove references to them in each leaf's marksurfaces list
-	for (i = 0, node = cl.worldmodel->nodes; i<cl.worldmodel->numnodes; i++, node++)
-		for (j = 0, surf = &cl.worldmodel->surfaces[node->firstsurface]; j<node->numsurfaces; j++, surf++)
-			if (surf->visframe == r_visframecount)
-			{
-				R_ChainSurface(surf, chain_world);
-			}
-#else
-	//the old way
-	surf = &cl.worldmodel->surfaces[cl.worldmodel->firstmodelsurface];
-	for (i = 0; i<cl.worldmodel->nummodelsurfaces; i++, surf++)
-	{
-		if (surf->visframe == r_visframecount)
-		{
-			R_ChainSurface(surf, chain_world);
-		}
-	}
-#endif
-}
-
-/*
-================
-R_BackFaceCull -- johnfitz -- returns true if the surface is facing away from vieworg
-================
-*/
-qboolean R_BackFaceCull(msurface_t *surf)
-{
-	double dot;
-
-	switch (surf->plane->type)
-	{
-	case PLANE_X:
-		dot = r_refdef.vieworg[0] - surf->plane->dist;
-		break;
-	case PLANE_Y:
-		dot = r_refdef.vieworg[1] - surf->plane->dist;
-		break;
-	case PLANE_Z:
-		dot = r_refdef.vieworg[2] - surf->plane->dist;
-		break;
-	default:
-		dot = DotProduct(r_refdef.vieworg, surf->plane->normal) - surf->plane->dist;
-		break;
-	}
-
-	if ((dot < 0) ^ !!(surf->flags & SURF_PLANEBACK))
-		return true;
-
-	return false;
-}
-
-/*
-================
-R_CullSurfaces -- johnfitz
-================
-*/
-void R_CullSurfaces(void)
-{
-	msurface_t *s;
-	int i;
-	texture_t *t;
-
-	// ericw -- instead of testing (s->visframe == r_visframecount) on all world
-	// surfaces, use the chained surfaces, which is exactly the same set of sufaces
-	for (i = 0; i<cl.worldmodel->numtextures; i++)
-	{
-		t = cl.worldmodel->textures[i];
-
-		if (!t || !t->texturechains[chain_world])
-			continue;
-
-		for (s = t->texturechains[chain_world]; s; s = s->texturechain)
-		{
-			if (R_CullBox(s->mins, s->maxs) || R_BackFaceCull(s))
-				s->culled = true;
-			else
-			{
-				s->culled = false;
-				//joe-FIXME
-				//if (s->texinfo->texture->warpimage)
-				//	s->texinfo->texture->update_warp = true;
-			}
-		}
-	}
-}
-
-/*
-================
-R_BuildLightmapChains -- johnfitz -- used for r_lightmap 1
-
-ericw -- now always used at the start of R_DrawTextureChains for the
-mh dynamic lighting speedup
-================
-*/
-void R_BuildLightmapChains(model_t *model, texchain_t chain)
-{
-	texture_t *t;
-	msurface_t *s;
-	int i;
-
-	// clear lightmap chains (already done in r_marksurfaces, but clearing them here to be safe becuase of r_stereo)
-	memset(lightmap_polys, 0, sizeof(lightmap_polys));
-
-	// now rebuild them
-	for (i = 0; i<model->numtextures; i++)
-	{
-		t = model->textures[i];
-
-		if (!t || !t->texturechains[chain])
-			continue;
-
-		for (s = t->texturechains[chain]; s; s = s->texturechain)
-			if (!s->culled)
-				R_RenderDynamicLightmaps(s);
 	}
 }
 
@@ -1285,7 +1171,8 @@ void R_DrawTextureChains_GLSL(model_t *model, texchain_t chain)
 		for (underwater = 0; underwater < 2; underwater++)
 		{
 			for (s = t->texturechains[chain]; s; s = s->texturechain)
-				if (!s->culled && ((!underwater && !(s->flags & SURF_UNDERWATER)) || (underwater && (s->flags & SURF_UNDERWATER))))
+			{
+				if ((!underwater && !(s->flags & SURF_UNDERWATER)) || (underwater && (s->flags & SURF_UNDERWATER)))
 				{
 					if (!bound) //only bind once we are sure we need this texture
 					{
@@ -1310,6 +1197,7 @@ void R_DrawTextureChains_GLSL(model_t *model, texchain_t chain)
 					lastlightmap = s->lightmaptexturenum;
 					R_BatchSurface(s, underwater);
 				}
+			}
 
 			// joe: we need to draw surfaces per waterline because of the caustics (only in-water) and detail (only out-water) textures
 			R_FlushBatch(underwater);
@@ -1445,70 +1333,69 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 		}
 
 		for (s = t->texturechains[chain]; s; s = s->texturechain)
-			if (!s->culled)
+		{
+			alphaused = false;
+			if (!alphaused && s->flags & SURF_DRAWALPHA)
 			{
-				alphaused = false;
-				if (!alphaused && s->flags & SURF_DRAWALPHA)
-				{
-					glEnable(GL_ALPHA_TEST);
-					alphaused = true;
-				}
+				glEnable(GL_ALPHA_TEST);
+				alphaused = true;
+			}
 
-				if (mtex_lightmaps)
-				{
-					// bind the lightmap texture
-					GL_SelectTexture(GL_LIGHTMAP_TEXTURE);
-					GL_Bind(lightmap_textures + s->lightmaptexturenum);
-				}
+			if (mtex_lightmaps)
+			{
+				// bind the lightmap texture
+				GL_SelectTexture(GL_LIGHTMAP_TEXTURE);
+				GL_Bind(lightmap_textures + s->lightmaptexturenum);
+			}
 
-				glBegin(GL_POLYGON);
-				v = s->polys->verts[0];
-				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE)
+			glBegin(GL_POLYGON);
+			v = s->polys->verts[0];
+			for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE)
+			{
+				if (doMtex1)
 				{
-					if (doMtex1)
-					{
-						qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
+					qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
 
-						if (mtex_lightmaps)
-							qglMultiTexCoord2f(GL_LIGHTMAP_TEXTURE, v[5], v[6]);
+					if (mtex_lightmaps)
+						qglMultiTexCoord2f(GL_LIGHTMAP_TEXTURE, v[5], v[6]);
 
-						if (mtex_fbs)
-							qglMultiTexCoord2f(GL_FB_TEXTURE, v[3], v[4]);
-					}
-					else
-					{
-						glTexCoord2f(v[3], v[4]);
-					}
-					glVertex3fv(v);
+					if (mtex_fbs)
+						qglMultiTexCoord2f(GL_FB_TEXTURE, v[3], v[4]);
 				}
-				glEnd();
+				else
+				{
+					glTexCoord2f(v[3], v[4]);
+				}
+				glVertex3fv(v);
+			}
+			glEnd();
 
-				if ((s->flags & SURF_UNDERWATER) && gl_caustics.value && underwatertexture)
+			if ((s->flags & SURF_UNDERWATER) && gl_caustics.value && underwatertexture)
+			{
+				s->polys->caustics_chain = caustics_polys;
+				caustics_polys = s->polys;
+			}
+			if (!(s->flags & SURF_UNDERWATER) && gl_detail.value && detailtexture)
+			{
+				s->polys->detail_chain = detail_polys;
+				detail_polys = s->polys;
+			}
+			if (at->fb_texturenum && draw_fbs && !mtex_fbs)
+			{
+				if (at->isLumaTexture)
 				{
-					s->polys->caustics_chain = caustics_polys;
-					caustics_polys = s->polys;
+					s->polys->luma_chain = luma_polys[at->fb_texturenum];
+					luma_polys[at->fb_texturenum] = s->polys;
+					drawlumas = true;
 				}
-				if (!(s->flags & SURF_UNDERWATER) && gl_detail.value && detailtexture)
+				else
 				{
-					s->polys->detail_chain = detail_polys;
-					detail_polys = s->polys;
-				}
-				if (at->fb_texturenum && draw_fbs && !mtex_fbs)
-				{
-					if (at->isLumaTexture)
-					{
-						s->polys->luma_chain = luma_polys[at->fb_texturenum];
-						luma_polys[at->fb_texturenum] = s->polys;
-						drawlumas = true;
-					}
-					else
-					{
-						s->polys->fb_chain = fullbright_polys[at->fb_texturenum];
-						fullbright_polys[at->fb_texturenum] = s->polys;
-						drawfullbrights = true;
-					}
+					s->polys->fb_chain = fullbright_polys[at->fb_texturenum];
+					fullbright_polys[at->fb_texturenum] = s->polys;
+					drawfullbrights = true;
 				}
 			}
+		}
 		if (doMtex1)
 			GL_DisableTMU (GL_TEXTURE1);
 		if (doMtex2)
@@ -1598,26 +1485,25 @@ void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 		bound = false;
 		entalpha = 1.0f;
 		for (s = t->texturechains[chain]; s; s = s->texturechain)
-			if (!s->culled)
+		{
+			if (!bound) //only bind once we are sure we need this texture
 			{
-				if (!bound) //only bind once we are sure we need this texture
+				// joe: Always render teleport as opaque
+				if (strcmp(s->texinfo->texture->name, "*teleport"))
 				{
-					// joe: Always render teleport as opaque
-					if (strcmp(s->texinfo->texture->name, "*teleport"))
-					{
-						glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
-						glPolygonOffset(-1, -1);			//
-						entalpha = GL_WaterAlphaForEntitySurface(ent, s);
-						R_BeginTransparentDrawing(entalpha);
-					}
-					GL_Bind(t->gl_texturenum);
-					bound = true;
+					glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
+					glPolygonOffset(-1, -1);			//
+					entalpha = GL_WaterAlphaForEntitySurface(ent, s);
+					R_BeginTransparentDrawing(entalpha);
 				}
-				for (p = s->polys->next; p; p = p->next)
-				{
-					DrawWaterPoly(p);
-				}
+				GL_Bind(t->gl_texturenum);
+				bound = true;
 			}
+			for (p = s->polys->next; p; p = p->next)
+			{
+				DrawWaterPoly(p);
+			}
+		}
 
 		R_EndTransparentDrawing(entalpha);
 		glDisable(GL_POLYGON_OFFSET_FILL);
@@ -1635,12 +1521,6 @@ void R_DrawTextureChains(model_t *model, entity_t *ent, texchain_t chain)
 
 	entalpha = (ent != NULL) ? ent->transparency : 1.0f;
 	
-	// ericw -- the mh dynamic lightmap speedup: make a first pass through all
-	// surfaces we are going to draw, and rebuild any lightmaps that need it.
-	// this also chains surfaces by lightmap which is used by r_lightmap 1.
-	// the previous implementation of the speedup uploaded lightmaps one frame
-	// late which was visible under some conditions, this method avoids that.
-	R_BuildLightmapChains(model, chain);
 	R_UploadLightmaps();
 
 	if (r_world_program != 0)
@@ -1736,6 +1616,7 @@ void R_DrawBrushModel (entity_t *ent)
 			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
 		{
 			R_ChainSurface(psurf, chain_model);
+			R_RenderDynamicLightmaps(psurf);
 		}
 	}
 

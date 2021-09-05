@@ -87,8 +87,7 @@ cvar_t	r_shadows = {"r_shadows", "2"};		// probably a bit rough...
 qboolean OnChange_r_wateralpha(cvar_t *var, char *string);
 cvar_t	r_wateralpha = {"r_wateralpha", "1", 0, OnChange_r_wateralpha };
 cvar_t	r_dynamic = {"r_dynamic", "1"};
-qboolean OnChange_r_novis(cvar_t *var, char *string);
-cvar_t	r_novis = {"r_novis", "0", 0, OnChange_r_novis };
+cvar_t	r_novis = {"r_novis", "0" };
 cvar_t	r_fullbrightskins = {"r_fullbrightskins", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_skycolor = {"r_skycolor", "4"};
@@ -157,7 +156,6 @@ float	q3legs_rot;
 #endif
 
 void R_MarkSurfaces(void);
-void R_CullSurfaces(void);
 void R_InitBubble (void);
 
 //==============================================================================
@@ -294,14 +292,22 @@ R_CullBox
 Returns true if the box is completely outside the frustum
 =================
 */
-qboolean R_CullBox (vec3_t mins, vec3_t maxs)
+qboolean R_CullBox (vec3_t emins, vec3_t emaxs)
 {
-	int	i;
-
-	for (i = 0 ; i < 4 ; i++)
-		if (BOX_ON_PLANE_SIDE(mins, maxs, &frustum[i]) == 2)
+	int i;
+	mplane_t *p;
+	byte signbits;
+	float vec[3];
+	for (i = 0; i < 4; i++)
+	{
+		p = frustum + i;
+		signbits = p->signbits;
+		vec[0] = ((signbits % 2)<1) ? emaxs[0] : emins[0];
+		vec[1] = ((signbits % 4)<2) ? emaxs[1] : emins[1];
+		vec[2] = ((signbits % 8)<4) ? emaxs[2] : emins[2];
+		if (p->normal[0] * vec[0] + p->normal[1] * vec[1] + p->normal[2] * vec[2] < p->dist)
 			return true;
-
+	}
 	return false;
 }
 
@@ -2944,6 +2950,8 @@ void R_SetupFrame (void)
 			Cvar_Set (&r_skybox, prev_skybox);
 	}
 
+	// Need to do those early because we now update dynamic light maps during R_MarkSurfaces
+	R_PushDlights(); 
 	R_AnimateLight ();
 
 	r_framecount++;
@@ -3176,8 +3184,6 @@ void R_RenderScene (void)
 	R_SetupGL ();
 
 	R_MarkSurfaces(); //johnfitz -- create texture chains from PVS
-
-	R_CullSurfaces(); //johnfitz -- do after R_SetFrustum and R_MarkSurfaces
 
 	Fog_EnableGFog();	//johnfitz 
 

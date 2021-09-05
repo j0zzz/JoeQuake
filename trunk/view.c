@@ -1510,7 +1510,6 @@ void V_RenderView (void)
 		V_CalcRefdef ();
 	}
 
-	R_PushDlights ();
 #ifndef GLQUAKE
 	if (lcd_x.value)
 	{
@@ -1526,8 +1525,6 @@ void V_RenderView (void)
 		R_RenderView ();
 
 		vid.buffer += vid.rowbytes >> 1;
-
-		R_PushDlights ();
 
 		r_refdef.viewangles[YAW] += lcd_yaw.value * 2;
 		for (i=0 ; i<3 ; i++)
