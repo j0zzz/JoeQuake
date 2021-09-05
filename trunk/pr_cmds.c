@@ -40,21 +40,43 @@ static char *PR_GetTempString(void)
 ===============================================================================
 */
 
+static const char* PF_GetStringArg(int idx, void* userdata)
+{
+	if (userdata)
+		idx += *(int*)userdata;
+	if (idx < 0 || idx >= pr_argc)
+		return "";
+	return LOC_GetString(G_STRING(OFS_PARM0 + idx * 3));
+}
+
 static char *PF_VarString(int	first)
 {
 	int		i;
 	static char out[1024];
+	const char *format;
 	size_t s;
 
 	out[0] = 0;
 	s = 0;
-	for (i = first; i < pr_argc; i++)
+	if (first >= pr_argc)
+		return out;
+
+	format = LOC_GetString(G_STRING((OFS_PARM0 + first * 3)));
+	if (LOC_HasPlaceholders(format))
 	{
-		s = Q_strlcat(out, G_STRING((OFS_PARM0 + i * 3)), sizeof(out));
-		if (s >= sizeof(out))
+		int offset = first + 1;
+		s = LOC_Format(format, PF_GetStringArg, &offset, out, sizeof(out));
+	}
+	else
+	{
+		for (i = first; i < pr_argc; i++)
 		{
-			Con_DPrintf("PF_VarString: overflow (string truncated)\n");
-			return out;
+			s = Q_strlcat(out, LOC_GetString(G_STRING(OFS_PARM0 + i * 3)), sizeof(out));
+			if (s >= sizeof(out))
+			{
+				Con_DPrintf("PF_VarString: overflow (string truncated)\n");
+				return out;
+			}
 		}
 	}
 	if (s > 255)
@@ -1579,7 +1601,7 @@ void PF_WriteCoord (void)
 
 void PF_WriteString (void)
 {
-	MSG_WriteString (WriteDest(), G_STRING(OFS_PARM1));
+	MSG_WriteString (WriteDest(), (char *)LOC_GetString(G_STRING(OFS_PARM1)));
 }
 
 void PF_WriteEntity (void)

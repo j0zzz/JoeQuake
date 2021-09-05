@@ -1052,6 +1052,8 @@ void Host_Init (quakeparms_t *parms)
 	        Neh_Init ();
 #endif
 
+	LOC_Init(); // for 2021 rerelease support
+
 	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = Hunk_LowMark ();
 
@@ -1123,6 +1125,7 @@ void Host_Shutdown (void)
 	S_Shutdown ();
 	IN_Shutdown ();
 	Con_Shutdown ();
+	LOC_Shutdown();
 
 	if (cls.state != ca_dedicated)
 		VID_Shutdown ();

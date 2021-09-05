@@ -161,6 +161,26 @@ void Q_snprintfz (char *dest, size_t size, char *fmt, ...);
 size_t Q_strlcat(char *dst, const char *src, size_t siz);
 size_t Q_strlcpy(char *dst, const char *src, size_t siz);
 
+static inline int Q_isdigit(int c)
+{
+	return (c >= '0' && c <= '9');
+}
+
+static inline int Q_isblank(int c)
+{
+	return (c == ' ' || c == '\t');
+}
+
+static inline int Q_isspace(int c)
+{
+	switch (c) {
+	case ' ':  case '\t':
+	case '\n': case '\r':
+	case '\f': case '\v': return 1;
+	}
+	return 0;
+}
+
 //============================================================================
 
 extern	char		com_token[1024];
@@ -188,6 +208,16 @@ char *va (char *format, ...);
 // does a varargs printf into a temp buffer
 
 char *CopyString (char *s);
+
+unsigned COM_HashString(const char *str);
+
+// localization support for 2021 rerelease version:
+void LOC_Init(void);
+void LOC_Shutdown(void);
+const char* LOC_GetRawString(const char *key);
+const char* LOC_GetString(const char *key);
+qboolean LOC_HasPlaceholders(const char *str);
+size_t LOC_Format(const char *format, const char* (*getarg_fn)(int idx, void* userdata), void* userdata, char* out, size_t len);
 
 //============================================================================
 
