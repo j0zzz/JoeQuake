@@ -1175,7 +1175,7 @@ FIXME: make this buffer size safe someday
 char *va (char *format, ...)
 {
 	va_list         argptr;
-	static	char	string[8][2048];		
+	static	char	string[8][4096];		
 	static	int	idx = 0;
 
 	idx++;

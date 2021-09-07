@@ -721,7 +721,7 @@ void GLAlias_CreateShaders(void)
 		"	while (yawofs < 0)\n"
 		"		yawofs += 256;\n"
 		"\n"
-		"	retval = texelFetch(VlightTable, pitchofs * 256 + yawofs).r;\n"
+		"	retval = %s;\n"
 		"\n"
 		"	return retval / 256;\n"
 		"}\n"
@@ -765,6 +765,9 @@ void GLAlias_CreateShaders(void)
 		"		gl_FrontColor = vec4(vec3(l), LightColor.w);\n"
 		"	}\n"
 		"}\n";
+
+	// unable to get texture buffer and vertex lighting to work on ATI cards
+	vertSource = va((char *)vertSource, gl_vendor_ati ? "128" : "texelFetch(VlightTable, pitchofs * 256 + yawofs).r");
 
 	const GLchar *fragSource = \
 		"#version 150 compatibility\n"
@@ -902,7 +905,7 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1f(lerpDistLoc, distance);
 	qglUniform3f(shadevectorLoc, shadevector[0], shadevector[1], shadevector[2]);
 	qglUniform4f(lightColorLoc, lightcolor[0], lightcolor[1], lightcolor[2], ent->transparency);
-	qglUniform1i(useVertexLightingLoc, (gl_vertexlights.value && !full_light) ? 1 : 0);
+	qglUniform1i(useVertexLightingLoc, (gl_vertexlights.value && !full_light && !gl_vendor_ati) ? 1 : 0);
 	qglUniform1f(shadeLightLoc, shadelight);
 	qglUniform1f(ambientLightLoc, ambientlight);
 	qglUniform1f(aPitchLoc, apitch);

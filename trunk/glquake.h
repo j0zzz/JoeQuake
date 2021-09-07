@@ -357,6 +357,7 @@ void Check_Gamma (unsigned char *pal);
 void GL_Init (void);
 qboolean CheckExtension (const char *extension);
 extern qboolean	gl_add_ext, gl_allow_ztrick;
+extern qboolean gl_vendor_ati;
 
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);

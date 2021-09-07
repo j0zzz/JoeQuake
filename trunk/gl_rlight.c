@@ -615,6 +615,10 @@ void R_InitVertexLights (void)
 {
 	R_ResetAnormTable ();
 	
-	GL_BuildTextureBufferWithLightData();
-	GL_BuildUniformBufferWithAnormData();
+	// unable to get texture buffer and vertex lighting to work on ATI cards
+	if (!gl_vendor_ati)
+	{
+		GL_BuildTextureBufferWithLightData();
+		GL_BuildUniformBufferWithAnormData();
+	}
 }

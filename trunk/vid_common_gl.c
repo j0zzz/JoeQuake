@@ -77,6 +77,7 @@ lpGetUniformBlockIndexFUNC qglGetUniformBlockIndex = NULL;
 lpUniformBlockBindingFUNC qglUniformBlockBinding = NULL;
 
 qboolean	gl_add_ext = false;
+qboolean	gl_vendor_ati = false;
 
 float		gldepthmin, gldepthmax;
 qboolean	gl_allow_ztrick = true;
@@ -130,7 +131,7 @@ void CheckMultiTextureExtensions (void)
 	glGetIntegerv (GL_MAX_TEXTURE_IMAGE_UNITS, &gl_textureunits);
 	gl_textureunits = min(gl_textureunits, 8);
 
-	if (COM_CheckParm("-maxtmu2") /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/)
+	if (COM_CheckParm("-maxtmu2"))
 		gl_textureunits = min(gl_textureunits, 2);
 
 	if (gl_textureunits < 2)
@@ -282,6 +283,9 @@ void GL_Init (void)
 	CheckMultiTextureExtensions ();
 	CheckVertexBufferExtensions();
 	CheckGLSLExtensions();
+
+	if (!strcmp(gl_vendor, "ATI Technologies Inc."))
+		gl_vendor_ati = true;
 
 	GLAlias_CreateShaders();
 	GLWorld_CreateShaders();
