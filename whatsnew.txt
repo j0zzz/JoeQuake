@@ -1,10 +1,65 @@
 
- version 0.17.0 build 6688
+ version 0.17.1 build 6866 (hotfix #3)
+ -----------------------
+
+Messages 'Couldn't load skybox' are ignored if game is started with -no24bit
+Fixed bug when certain models were not drawn as transparent (related to newer maps)
+Fixed window texture having a black bar on ad_necrokeep
+Fixed rare issue when rendering of water surfaces was bugged
+Fix check for extended sound protocol (Sphere)
+Allow using scr_autoid during coop gameplay (Sphere)
+Removed unnecessary limitation on console background's size to be 320x200
+Added dynamic entity fragment handling from QuakeSpasm (no more 'Too many efrags!' messages)
+
+ version 0.17.1 build 6806 (hotfix #2)
+ -----------------------
+
+Fixed bug when certain alias model were invisible sometimes (when using GLSL)
+Raised max supported 8bit image size to 2048x2048 (ad_heresp1)
+Raised max depth of QuakeC calling stack to 64 (ad_heresp2)
+	This means more complex operations (called from AD progs.dat) can be executed without problems
+Fixed crash on certain maps when loading sky texture
+Fixed bug when skybox images were reloaded unnecessarily all the time
+
+ version 0.17.1 build 6746 (hotfix)
+ -----------------------
+
+Fixed bug when wrong tile textures were drawn in the Multiplayer / Player color setup menu
+Fixed bug when spawning of specific edicts overflew the max_edicts list
+
+ version 0.17.1 build 6740
+ -----------------------
+
+Fixed bug when transparent brushes remained opaque sometimes
+Fixed pause plaque showing when loading a save (Sphere)
+Fixed bug with bgmvolume adjustment when FMOD module is used
+Fixed bugs regarding QdQstats patch recognition
+Disabled joequake-side QdQStats messages during demo playback to ignore printing them twice
+Fixed coop client freeze on server map restart (Sphere)
+All (bsp/mdl) textures are drawn using OpenGL's VBO and GLSL tech (performance improvement)
+Switched off texture filtering and mipmapping on underwater caustics texture
+Fixed qdqstats replacement messages for coop (Sphere)
+Fixed sky texture when waterfog is used
+Added resolution scaling from QuakeSpasm, also added option to adjust in the Video modes menu
+Added GLSL gamma correction from QuakeSpasm
+	To ignore GLSL gamma and use the old hardware gamma instead, -noglslgamma cmd line switch can be used
+Added dynamic gfx texture loading
+	Not required anymore to use +set gl_externaltextures_gfx <0|1> in the cmd line, 
+	menu/hud textures are reloaded dynamically when the cvar changes
+Console background image is now controlled by the value of gl_externaltextures_gfx
+Changed default values of gl_externaltextures_* cvars to be off
+	Most of the players like the old vanilla look, so I decided to not force the hi-res images by default
+Added option to set Power bunnyhopping on/off in the menu (temporarly in Miscellaneous options)
+Added option to set gl_texturemode_hud and _sky in the texture options menu
+Changed default key bindings to make more sense for new players (like WASD for movement, MOUSE1 for attack, etc)
+Fixed bug when the console font wasn't properly texture-filtered sometimes
+
+ version 0.17.0 build 6689
  -----------------------
 
 loading of lightmaps is done much faster
 fixed rendering alpha textures w/o multitexturing
-fixed memory leak during level changes (which was caused by a previous change in the BETA version)
+fixed memory leak during level changes (caused by a previous change in the BETA version)
 added r_noshadow_list cvar from QS to support mods (e.g. AD)
 fixed occasional 'bad usehunk' error when starting the game
 server protocol version is switched to 666 automatically for required maps
@@ -16,6 +71,9 @@ added QdQStats printed messages
 	these messages are only shown if there is no qdqstats progs.dat loaded
 	(more qdqstats options are expected in the future)
 fixed the timing in the name of marathon runs recorded by cl_autodemo
+Fixed pause plaque when connecting to paused server (Sphere)
+Only pause time-based viewangle calculations (Sphere)
+Fixed memory access violation in r_viewleaf2 (caused by a previous change in the BETA version) (Sphere)
 
  version 0.17.0 BETA build 6665
  -----------------------
@@ -26,6 +84,11 @@ fixed bug when old style sky were still drawn on some maps even when skybox was 
 fixed size of buffer for KeepaliveMessage (Sphere)
 fixed crash due to NULL cl_entities reference when joining to a server w/o spawning a local server before (e.g. starting a map)
 fixed bug when the game crashed due to memory corruption when strings longer than 255 were printed (came from progs.dat)
+Allow disabling host search on connect command (Sphere)
+	for detailed information read the description of cvar 'net_connectsearch' in the readme
+Check hostcache for ip address as well (Sphere)
+Introduced a new cvar to disable attempts to get domain names (Sphere)
+	for detailed information read the description of cvar 'net_getdomainname' in the readme
 
  version 0.17.0 BETA build 6658
  -----------------------
