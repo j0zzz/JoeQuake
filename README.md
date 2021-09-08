@@ -807,6 +807,7 @@ I would like to thank the following people for using their stuff:
 * A. "Fuh" Nourai, for every FuhQuake addition
 * Anton "Tonik" Gavrilov, for every ZQuake addition
 * John Fitzgibbons, Eric Wasylishen, Spike and all the QuakeSpasm devs for every QS addition
+* the Minizip library: http://www.winimage.com/zLibDll/minizip.html
 * fenix@io.com, for alias model interpolation
 * LordHavoc, for lerping alias model textures
 * Alexander Kovalchuk, for plenty of [sons]Quake additions
