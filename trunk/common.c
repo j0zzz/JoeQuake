@@ -2016,16 +2016,20 @@ void LOC_LoadFile(const char *file)
 		unz_file_info file_info;
 		void* buf = NULL;
 		uInt size_buf;
+		char filename_inzip[256];
 		
 		Q_snprintfz(path, sizeof(path), "%s/QuakeEX.kpf", com_basedir);
 		fill_win32_filefunc(&ffunc);
 		uf = unzOpen2(path, &ffunc);
 		if (!uf) goto fail_zip;
-		if (unzLocateFile(uf, file, 0) != UNZ_OK) goto fail_zip;
-		err = unzGetCurrentFileInfo(uf, &file_info, (char *)file, strlen(file), NULL, 0, NULL, 0);
+		err = unzLocateFile(uf, file, 0);
+		if (err != UNZ_OK) goto fail_zip;
+		err = unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
+		if (err != UNZ_OK) goto fail_zip;
 		size_buf = file_info.uncompressed_size;
 		buf = (void*)Q_malloc(size_buf);
 		err = unzOpenCurrentFile(uf);
+		if (err != UNZ_OK) goto fail_zip;
 		err = unzReadCurrentFile(uf, buf, size_buf);
 		if (err < 0)
 		{
@@ -2049,7 +2053,7 @@ fail_zip:	if (uf) unzCloseCurrentFile(uf);
 		fseek(fp, 0, SEEK_END);
 		i = ftell(fp);
 		if (i <= 0) goto fail_txt;
-		localization.text = (char *)calloc(1, i + 1);
+		localization.text = (char *)Q_calloc(1, i + 1);
 		if (!localization.text)
 		{
 fail_txt:	if (fp) fclose(fp);
