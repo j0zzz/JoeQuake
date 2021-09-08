@@ -104,6 +104,9 @@
     <Filter Include="Header Files\VM_h">
       <UniqueIdentifier>{6844e548-1b5e-4b52-996d-b9c2789e0e3a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Unzip">
+      <UniqueIdentifier>{12143103-6799-4a01-9045-015d2da6e652}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="joequake.rc">
@@ -401,6 +404,15 @@
     </ClCompile>
     <ClCompile Include="fmod.c">
       <Filter>Source Files\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="ioapi.c">
+      <Filter>Source Files\Unzip</Filter>
+    </ClCompile>
+    <ClCompile Include="iowin32.c">
+      <Filter>Source Files\Unzip</Filter>
+    </ClCompile>
+    <ClCompile Include="unzip.c">
+      <Filter>Source Files\Unzip</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

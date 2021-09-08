@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // common.c -- misc functions used in client and server
 
 #include "quakedef.h"
+#include "unzip.h"
+#include "iowin32.h"
 
 #define NUM_SAFE_ARGVS  7
 
@@ -2006,20 +2008,58 @@ void LOC_LoadFile(const char *file)
 
 	Q_snprintfz(path, sizeof(path), "%s/%s", com_basedir, file);
 	fp = fopen(path, "rb");
-	if (!fp) goto fail;
-	fseek(fp, 0, SEEK_END);
-	i = ftell(fp);
-	if (i <= 0) goto fail;
-	localization.text = (char *)calloc(1, i + 1);
-	if (!localization.text)
+	if (!fp)
 	{
-	fail:		if (fp) fclose(fp);
-		Con_DPrintf("Couldn't load '%s'\nfrom '%s'\n", file, com_basedir);
-		return;
+		unzFile uf = NULL;
+		zlib_filefunc_def ffunc;
+		int err = UNZ_OK;
+		unz_file_info file_info;
+		void* buf = NULL;
+		uInt size_buf;
+		
+		Q_snprintfz(path, sizeof(path), "%s/QuakeEX.kpf", com_basedir);
+		fill_win32_filefunc(&ffunc);
+		uf = unzOpen2(path, &ffunc);
+		if (!uf) goto fail_zip;
+		if (unzLocateFile(uf, file, 0) != UNZ_OK) goto fail_zip;
+		err = unzGetCurrentFileInfo(uf, &file_info, (char *)file, strlen(file), NULL, 0, NULL, 0);
+		size_buf = file_info.uncompressed_size;
+		buf = (void*)Q_malloc(size_buf);
+		err = unzOpenCurrentFile(uf);
+		err = unzReadCurrentFile(uf, buf, size_buf);
+		if (err < 0)
+		{
+			Con_DPrintf("Couldn't extract '%s'\n from '%s'\n Error code: %i", file, path, err);
+			goto fail_zip;
+		}
+		localization.text = (char *)Q_calloc(1, size_buf + 1);
+		memcpy(localization.text, buf, size_buf);
+		if (!localization.text)
+		{
+fail_zip:	if (uf) unzCloseCurrentFile(uf);
+			if (buf) free(buf);
+			Con_DPrintf("Couldn't load '%s'\nfrom '%s'\n", file, path);
+			return;
+		}
+		unzCloseCurrentFile(uf);
+		free(buf);
 	}
-	fseek(fp, 0, SEEK_SET);
-	fread(localization.text, 1, i, fp);
-	fclose(fp);
+	else
+	{
+		fseek(fp, 0, SEEK_END);
+		i = ftell(fp);
+		if (i <= 0) goto fail_txt;
+		localization.text = (char *)calloc(1, i + 1);
+		if (!localization.text)
+		{
+fail_txt:	if (fp) fclose(fp);
+			Con_DPrintf("Couldn't load '%s'\nfrom '%s'\n", file, com_basedir);
+			return;
+		}
+		fseek(fp, 0, SEEK_SET);
+		fread(localization.text, 1, i, fp);
+		fclose(fp);
+	}
 
 	cursor = localization.text;
 

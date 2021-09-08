@@ -442,6 +442,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="cd_win.c" />
+    <ClCompile Include="ioapi.c" />
+    <ClCompile Include="iowin32.c" />
     <ClCompile Include="snd_dma.c" />
     <ClCompile Include="snd_mem.c" />
     <ClCompile Include="snd_mix.c" />
@@ -592,6 +594,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="unzip.c" />
     <ClCompile Include="vid_common_gl.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
