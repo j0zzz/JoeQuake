@@ -250,7 +250,8 @@ void Host_InitLocal (void)
 
 	Cvar_Register (&temp1);
 
-	Cvar_Register(&campaign);
+	if (machine)
+		Cvar_Register(&campaign);
 
 	Cmd_AddCommand ("writeconfig", Host_WriteConfig_f);
 
@@ -1052,7 +1053,8 @@ void Host_Init (quakeparms_t *parms)
 	        Neh_Init ();
 #endif
 
-	LOC_Init(); // for 2021 rerelease support
+	if (machine)
+		LOC_Init(); // for the machinegames mission pack from the 2021 rerelease
 
 	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = Hunk_LowMark ();
@@ -1125,7 +1127,9 @@ void Host_Shutdown (void)
 	S_Shutdown ();
 	IN_Shutdown ();
 	Con_Shutdown ();
-	LOC_Shutdown();
+
+	if (machine)
+		LOC_Shutdown();
 
 	if (cls.state != ca_dedicated)
 		VID_Shutdown ();

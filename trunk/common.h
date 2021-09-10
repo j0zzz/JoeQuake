@@ -273,4 +273,4 @@ byte *COM_LoadMallocFile(char *path);
 
 extern	struct	cvar_s	registered;
 
-extern	int	rogue, hipnotic, nehahra, runequake;
+extern	int	rogue, hipnotic, nehahra, runequake, machine;

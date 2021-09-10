@@ -52,7 +52,7 @@ char	**com_argv;
 #define CMDLINE_LENGTH	256
 char	com_cmdline[CMDLINE_LENGTH];
 
-int	rogue = 0, hipnotic = 0, nehahra = 0, runequake = 0;
+int	rogue = 0, hipnotic = 0, nehahra = 0, runequake = 0, machine = 0;
 
 void COM_Path_f (void);
 void COM_Gamedir_f (void);
@@ -1112,6 +1112,9 @@ void COM_InitArgv (int argc, char **argv)
 	if (COM_CheckParm("-hipnotic"))
 		hipnotic = 1;
 
+	if (COM_CheckParm("-machine"))
+		machine = 1;
+
 #ifdef GLQUAKE
 	if (COM_CheckParm("-nehahra"))
 		nehahra = 1;
@@ -1120,8 +1123,8 @@ void COM_InitArgv (int argc, char **argv)
 	if (COM_CheckParm("-runequake"))
 		runequake = 1;
 
-	if (hipnotic && rogue)
-		Sys_Error ("You can't run both mission packs at the same time");
+	if ((hipnotic + rogue + machine) > 1)
+		Sys_Error ("You can't run multiple mission packs at the same time");
 }
 
 /*
@@ -1919,6 +1922,8 @@ void COM_InitFilesystem (void)
 		COM_AddGameDirectory (va("%s/rogue", com_basedir));
 	if (COM_CheckParm("-hipnotic"))
 		COM_AddGameDirectory (va("%s/hipnotic", com_basedir));
+	if (COM_CheckParm("-machine"))
+		COM_AddGameDirectory(va("%s/mg1", com_basedir));
 
 #ifdef GLQUAKE
 	if (COM_CheckParm("-nehahra"))
@@ -2004,8 +2009,6 @@ void LOC_LoadFile(const char *file)
 	if (!file || !*file)
 		return;
 
-	Con_DPrintf("Language initialization\n");
-
 	Q_snprintfz(path, sizeof(path), "%s/%s", com_basedir, file);
 	fp = fopen(path, "rb");
 	if (!fp)
@@ -2031,18 +2034,14 @@ void LOC_LoadFile(const char *file)
 		err = unzOpenCurrentFile(uf);
 		if (err != UNZ_OK) goto fail_zip;
 		err = unzReadCurrentFile(uf, buf, size_buf);
-		if (err < 0)
-		{
-			Con_DPrintf("Couldn't extract '%s'\n from '%s'\n Error code: %i", file, path, err);
-			goto fail_zip;
-		}
+		if (err < 0) goto fail_zip;
 		localization.text = (char *)Q_calloc(1, size_buf + 1);
 		memcpy(localization.text, buf, size_buf);
 		if (!localization.text)
 		{
 fail_zip:	if (uf) unzCloseCurrentFile(uf);
 			if (buf) free(buf);
-			Con_DPrintf("Couldn't load '%s'\nfrom '%s'\n", file, path);
+			Con_Printf("Couldn't load '%s'\nfrom '%s'\n", file, path);
 			return;
 		}
 		unzCloseCurrentFile(uf);
@@ -2057,7 +2056,7 @@ fail_zip:	if (uf) unzCloseCurrentFile(uf);
 		if (!localization.text)
 		{
 fail_txt:	if (fp) fclose(fp);
-			Con_DPrintf("Couldn't load '%s'\nfrom '%s'\n", file, com_basedir);
+			Con_Printf("Couldn't load '%s'\nfrom '%s'\n", file, com_basedir);
 			return;
 		}
 		fseek(fp, 0, SEEK_SET);
@@ -2222,7 +2221,7 @@ fail_txt:	if (fp) fclose(fp);
 		}
 	}
 
-	Con_DPrintf("Loaded %d strings from '%s'\n", localization.numentries, file);
+	Con_Printf("Language initialized\nLoaded %d strings from '%s'\n", localization.numentries, file);
 }
 
 /*

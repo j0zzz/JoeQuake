@@ -949,7 +949,13 @@ void CL_RelinkEntities (void)
 			if ((ent->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED))
 				CL_NewDlight (i, ent->origin, 200 + (rand() & 31), 0.1, lt_redblue);
 			else if (ent->effects & EF_BLUE)
-				CL_NewDlight (i, ent->origin, 200 + (rand() & 31), 0.1, lt_blue);
+			{
+				// they added glow to the deathknight's beam in the machinegames mission pack, with value EF_BLUE. sigh.
+				if (machine)
+					CL_NewDlight(i, ent->origin, 200 + (rand() & 31), 0.1, lt_default);
+				else
+					CL_NewDlight(i, ent->origin, 200 + (rand() & 31), 0.1, lt_blue);
+			}
 			else if (ent->effects & EF_RED)
 				CL_NewDlight (i, ent->origin, 200 + (rand() & 31), 0.1, lt_red);
 		// EF_BRIGHTLIGHT is not used by original progs

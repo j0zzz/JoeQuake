@@ -1489,7 +1489,7 @@ void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 			if (!bound) //only bind once we are sure we need this texture
 			{
 				// joe: Always render teleport as opaque
-				if (strcmp(s->texinfo->texture->name, "*teleport"))
+				if (strcmp(s->texinfo->texture->name, "*teleport") && strcmp(s->texinfo->texture->name, "*tele01"))
 				{
 					glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
 					glPolygonOffset(-1, -1);			//
