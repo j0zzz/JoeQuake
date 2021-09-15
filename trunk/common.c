@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "unzip.h"
-#include "iowin32.h"
 
 #define NUM_SAFE_ARGVS  7
 
@@ -2022,7 +2021,7 @@ void LOC_LoadFile(const char *file)
 		char filename_inzip[256];
 		
 		Q_snprintfz(path, sizeof(path), "%s/QuakeEX.kpf", com_basedir);
-		fill_win32_filefunc(&ffunc);
+		fill_fopen_filefunc(&ffunc);
 		uf = unzOpen2(path, &ffunc);
 		if (!uf) goto fail_zip;
 		err = unzLocateFile(uf, file, 0);

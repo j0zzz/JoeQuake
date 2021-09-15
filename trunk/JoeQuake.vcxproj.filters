@@ -408,9 +408,6 @@
     <ClCompile Include="ioapi.c">
       <Filter>Source Files\Unzip</Filter>
     </ClCompile>
-    <ClCompile Include="iowin32.c">
-      <Filter>Source Files\Unzip</Filter>
-    </ClCompile>
     <ClCompile Include="unzip.c">
       <Filter>Source Files\Unzip</Filter>
     </ClCompile>

@@ -443,7 +443,6 @@
     </ClCompile>
     <ClCompile Include="cd_win.c" />
     <ClCompile Include="ioapi.c" />
-    <ClCompile Include="iowin32.c" />
     <ClCompile Include="snd_dma.c" />
     <ClCompile Include="snd_mem.c" />
     <ClCompile Include="snd_mix.c" />
