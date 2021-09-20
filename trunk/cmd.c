@@ -708,7 +708,7 @@ static void CompareParams (void)
 }
 
 static void PrintEntries (void);
-extern char key_lines[32][MAXCMDLINE];
+extern char key_lines[64][MAXCMDLINE];
 extern int	edit_line;
 extern int	key_linepos;
 

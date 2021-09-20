@@ -58,7 +58,7 @@ int		con_notifylines;		// scan lines to clear for notify lines
 
 FILE	*qconsole_log;
 
-extern	char key_lines[32][MAXCMDLINE];
+extern	char key_lines[64][MAXCMDLINE];
 extern	int	edit_line;
 extern	int	key_linepos;
 extern	int	key_insert;
