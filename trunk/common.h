@@ -254,7 +254,7 @@ typedef struct searchpath_s
 	struct searchpath_s *next;
 } searchpath_t;
 
-searchpath_t	*com_searchpaths;
+extern	searchpath_t	*com_searchpaths;
 
 void COM_ForceExtension (char *path, char *extension);
 int COM_FileLength (FILE *f);

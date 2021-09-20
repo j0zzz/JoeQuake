@@ -37,6 +37,8 @@ static char *safeargvs[NUM_SAFE_ARGVS] = {
 	"-dibonly"
 };
 
+searchpath_t	*com_searchpaths;
+
 cvar_t  registered = {"registered", "0"};
 cvar_t  cmdline = {"cmdline", "0", CVAR_SERVER};
 
