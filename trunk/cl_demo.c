@@ -34,6 +34,7 @@ qboolean	start_of_demo = false;
 #ifdef _WIN32
 static	HANDLE	hDZipProcess = NULL;
 #else
+#include <errno.h>
 //#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
