@@ -315,7 +315,7 @@ LIGHT SAMPLING
 mplane_t	*lightplane;
 vec3_t		lightspot, lightcolor;
 
-int RecursiveLightPoint (vec3_t color, mnode_t *node, vec3_t start, vec3_t end)
+int RecursiveLightPoint(vec3_t color, mnode_t *node, vec3_t rayorg, vec3_t start, vec3_t end, float *maxdist)
 {
 	float	front, back, frac;
 	vec3_t	mid;
@@ -347,7 +347,7 @@ loc0:
 	VectorInterpolate (start, frac, end, mid);
 
 // go down front side
-	if (RecursiveLightPoint(color, node->children[front < 0], start, mid))
+	if (RecursiveLightPoint(color, node->children[front < 0], rayorg, start, mid, maxdist))
 	{
 		return true;	// hit something
 	}
@@ -363,6 +363,9 @@ loc0:
 		surf = cl.worldmodel->surfaces + node->firstsurface;
 		for (i = 0 ; i < node->numsurfaces ; i++, surf++)
 		{
+			float sfront, sback, dist;
+			vec3_t raydelta;
+
 			if (surf->flags & SURF_DRAWTILED)
 				continue;	// no lightmaps
 
@@ -378,8 +381,32 @@ loc0:
 			if (ds > surf->extents[0] || dt > surf->extents[1])
 				continue;
 
-			if (surf->samples)
+			if (surf->plane->type < 3)
 			{
+				sfront = rayorg[surf->plane->type] - surf->plane->dist;
+				sback = end[surf->plane->type] - surf->plane->dist;
+			}
+			else
+			{
+				sfront = DotProduct(rayorg, surf->plane->normal) - surf->plane->dist;
+				sback = DotProduct(end, surf->plane->normal) - surf->plane->dist;
+			}
+			VectorSubtract(end, rayorg, raydelta);
+			dist = sfront / (sfront - sback) * VectorLength(raydelta);
+
+			if (!surf->samples)
+			{
+				// We hit a surface that is flagged as lightmapped, but doesn't have actual lightmap info.
+				// Instead of just returning black, we'll keep looking for nearby surfaces that do have valid samples.
+				// This fixes occasional pitch-black models in otherwise well-lit areas in DOTM (e.g. mge1m1, mge4m1)
+				// caused by overlapping surfaces with mixed lighting data.
+				const float nearby = 8.f;
+				dist += nearby;
+				*maxdist = min(*maxdist, dist);
+				continue;
+			}
+
+			if (dist < *maxdist) {
 				// enhanced to interpolate lighting
 				byte	*lightmap;
 				int		maps, line3, dsfrac = ds & 15, dtfrac = dt & 15, r00 = 0, g00 = 0, b00 = 0, r01 = 0, g01 = 0, b01 = 0, r10 = 0, g10 = 0, b10 = 0, r11 = 0, g11 = 0, b11 = 0;
@@ -424,13 +451,14 @@ loc0:
 		}
 
 	// go down back side
-		return RecursiveLightPoint (color, node->children[front >= 0], mid, end);
+		return RecursiveLightPoint(color, node->children[front >= 0], rayorg, mid, end, maxdist);
 	}
 }
 
 int R_LightPoint (vec3_t p)
 {
 	vec3_t	end;
+	float maxdist = 8192.f; //johnfitz -- was 2048
 
 	if (r_fullbright.value || !cl.worldmodel->lightdata)
 	{
@@ -440,10 +468,10 @@ int R_LightPoint (vec3_t p)
 
 	end[0] = p[0];
 	end[1] = p[1];
-	end[2] = p[2] - 2048;
+	end[2] = p[2] - maxdist;
 
 	VectorClear (lightcolor);
-	RecursiveLightPoint (lightcolor, cl.worldmodel->nodes, p, end);
+	RecursiveLightPoint(lightcolor, cl.worldmodel->nodes, p, p, end, &maxdist);
 
 	return (lightcolor[0] + lightcolor[1] + lightcolor[2]) / 3.0;
 }
@@ -614,7 +642,7 @@ void GL_BuildUniformBufferWithAnormData(void)
 void R_InitVertexLights (void)
 {
 	R_ResetAnormTable ();
-	
+
 	// unable to get texture buffer and vertex lighting to work on ATI cards
 	if (!gl_vendor_ati)
 	{
