@@ -572,8 +572,10 @@ qboolean Host_FilterTime (double time)
 
 	if (host_framerate.value > 0 || (cls.demoplayback && cl_demospeed.value != 1))
 		frametime = MinPhysFrameTime();
+#ifdef _WIN32
 	else if (Movie_IsActive())
 		frametime = Movie_FrameTime();
+#endif
 	else
 		frametime = 1.0 / (!cl_maxfps.value ? 1000 : bound(10, cl_maxfps.value, 1000));
 

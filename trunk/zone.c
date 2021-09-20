@@ -103,7 +103,11 @@ void *Q_strdup (const char *str)
 {
 	char	*p;
 
+#ifdef _WIN32
 	if (!(p = _strdup(str)))
+#else
+	if (!(p = strdup(str)))
+#endif
 		Sys_Error ("Not enough memory free; check disk space");
 
 	return p;
