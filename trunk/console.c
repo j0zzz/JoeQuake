@@ -413,7 +413,7 @@ The input line scrolls horizontally if typing goes beyond the right edge
 void Con_DrawInput (void)
 {
 	int	i, size;
-	char	*text, temp[MAXCMDLINE];
+	char	*text, temp[MAXCMDLINE+1];
 
 	if (key_dest != key_console && !con_forcedup)
 		return;		// don't draw anything
@@ -423,6 +423,8 @@ void Con_DrawInput (void)
 	// fill out remainder with spaces
 	for (i = strlen(text) ; i < MAXCMDLINE ; i++)
 		text[i] = ' ';
+	// but make sure it's null terminated because Draw_String requires that
+	text[MAXCMDLINE] = '\0';
 		
 	// add the cursor frame
 	if ((int)(realtime * con_cursorspeed) & 1)
