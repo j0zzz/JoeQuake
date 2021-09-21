@@ -23,6 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fmod_errors.h"
 #include "quakedef.h"
 
+#ifndef _WIN32
+#include <dlfcn.h>
+#endif
+
 static FMUSIC_MODULE	*mod = NULL;
 static FSOUND_STREAM	*stream = NULL;
 
