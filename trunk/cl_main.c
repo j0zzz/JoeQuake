@@ -1128,7 +1128,9 @@ void CL_RelinkEntities (void)
 			continue;
 
 		// nehahra support
-		if (ent->effects & EF_NODRAW)
+		// BUT: the mg1 machine mission pack uses the same value as EF_NODRAW
+		// for some kind of quad effect. So do not want to hide in that case.
+		if (ent->effects & EF_NODRAW && !machine)
 			continue;
 
 		VectorCopy(ent->origin, ent->oldorigin);
