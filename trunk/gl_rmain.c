@@ -613,19 +613,24 @@ static GLuint shadeLightLoc;
 static GLuint ambientLightLoc;
 static GLuint aPitchLoc;
 static GLuint aYawLoc;
-static GLuint modelViewMatrixLoc;
-static GLuint projectionMatrixLoc;
 
 // uniforms used in frag shader
 static GLuint texLoc;
 static GLuint fullbrightTexLoc;
 static GLuint useFullbrightTexLoc;
 static GLuint useAlphaTestLoc;
-static GLuint useWaterFogLoc;
-static GLuint fogDensityLoc;
-static GLuint fogStartLoc;
-static GLuint fogEndLoc;
-static GLuint fogColorLoc;
+
+typedef struct
+{
+	float modelViewMatrix[16];
+	float projectionMatrix[16];
+} modelViewProjectionMatrix_data_t;
+
+static modelViewProjectionMatrix_data_t modelViewProjectionMatrix_data;
+GLuint	ubo_modelViewProjectionMatrix;
+
+fog_data_t fog_data;
+GLuint	ubo_fog;
 
 #define pose1VertexAttrIndex 0
 #define pose1NormalAttrIndex 1
@@ -690,8 +695,11 @@ void GLAlias_CreateShaders(void)
 		"uniform float AmbientLight;\n"
 		"uniform float APitch;\n"
 		"uniform float AYaw;\n"
-		"uniform mat4 ModelViewMatrix;\n"
-		"uniform mat4 ProjectionMatrix;\n"
+		"layout(std140, binding = 0) uniform ModelViewProjectionMatrix\n"
+		"{\n"
+		"	mat4 ModelViewMatrix;\n"
+		"	mat4 ProjectionMatrix;\n"
+		"};\n"
 		"layout(std430, binding = 0) buffer VlightTable\n"
 		"{\n"
 		"	int VlightTableData[256][256];\n"
@@ -785,11 +793,14 @@ void GLAlias_CreateShaders(void)
 		"uniform sampler2D FullbrightTex;\n"
 		"uniform int UseFullbrightTex;\n"
 		"uniform bool UseAlphaTest;\n"
-		"uniform int UseWaterFog;\n"
-		"uniform float FogDensity;\n"
-		"uniform float FogStart;\n"
-		"uniform float FogEnd;\n"
-		"uniform vec4 FogColor;\n"
+		"layout(std140, binding = 1) uniform FogData\n"
+		"{\n"
+		"	int UseWaterFog;\n"
+		"	float FogDensity;\n"
+		"	float FogStart;\n"
+		"	float FogEnd;\n"
+		"	vec4 FogColor;\n"
+		"};\n"
 		"\n"
 		"in vec2 TexCoordsOut;\n"
 		"in vec4 ColorOut;\n"
@@ -837,17 +848,28 @@ void GLAlias_CreateShaders(void)
 		ambientLightLoc = GL_GetUniformLocation(&r_alias_program, "AmbientLight");
 		aPitchLoc = GL_GetUniformLocation(&r_alias_program, "APitch");
 		aYawLoc = GL_GetUniformLocation(&r_alias_program, "AYaw");
-		modelViewMatrixLoc = GL_GetUniformLocation(&r_alias_program, "ModelViewMatrix");
-		projectionMatrixLoc = GL_GetUniformLocation(&r_alias_program, "ProjectionMatrix");
 		texLoc = GL_GetUniformLocation(&r_alias_program, "Tex");
 		fullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "FullbrightTex");
 		useFullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "UseFullbrightTex");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_alias_program, "UseAlphaTest");
-		useWaterFogLoc = GL_GetUniformLocation(&r_alias_program, "UseWaterFog");
-		fogDensityLoc = GL_GetUniformLocation(&r_alias_program, "FogDensity");
-		fogStartLoc = GL_GetUniformLocation(&r_alias_program, "FogStart");
-		fogEndLoc = GL_GetUniformLocation(&r_alias_program, "FogEnd");
-		fogColorLoc = GL_GetUniformLocation(&r_alias_program, "FogColor");
+
+		GLuint modelViewProjectionMatrixLoc = qglGetUniformBlockIndex(r_alias_program, "ModelViewProjectionMatrix");
+		qglUniformBlockBinding(r_alias_program, modelViewProjectionMatrixLoc, 0);
+
+		qglGenBuffers(1, &ubo_modelViewProjectionMatrix);
+		qglBindBuffer(GL_UNIFORM_BUFFER, ubo_modelViewProjectionMatrix);
+		qglBufferData(GL_UNIFORM_BUFFER, sizeof(modelViewProjectionMatrix_data_t), NULL, GL_STATIC_DRAW);
+		qglBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo_modelViewProjectionMatrix);
+		qglBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+		GLuint fogDataLoc = qglGetUniformBlockIndex(r_alias_program, "FogData");
+		qglUniformBlockBinding(r_alias_program, fogDataLoc, 1);
+
+		qglGenBuffers(1, &ubo_fog);
+		qglBindBuffer(GL_UNIFORM_BUFFER, ubo_fog);
+		qglBufferData(GL_UNIFORM_BUFFER, sizeof(fog_data_t), NULL, GL_STATIC_DRAW);
+		qglBindBufferBase(GL_UNIFORM_BUFFER, 1, ubo_fog);
+		qglBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
 }
 
@@ -868,7 +890,6 @@ Based on code by MH from RMQEngine
 void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int distance, int gl_texture, int fb_texture, qboolean islumaskin)
 {
 	int			pose, numposes;
-	float		model[16], project[16], *fogColor;
 
 	if ((frame >= paliashdr->numframes) || (frame < 0))
 	{
@@ -936,20 +957,22 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1f(ambientLightLoc, ambientlight);
 	qglUniform1f(aPitchLoc, apitch);
 	qglUniform1f(aYawLoc, ayaw);
-	glGetFloatv(GL_MODELVIEW_MATRIX, model);
-	qglUniformMatrix4fv(modelViewMatrixLoc, 1, GL_FALSE, model);
-	glGetFloatv(GL_PROJECTION_MATRIX, project);
-	qglUniformMatrix4fv(projectionMatrixLoc, 1, GL_FALSE, project);
+	
+	glGetFloatv(GL_MODELVIEW_MATRIX, modelViewProjectionMatrix_data.modelViewMatrix);
+	glGetFloatv(GL_PROJECTION_MATRIX, modelViewProjectionMatrix_data.projectionMatrix);
+
+	qglBindBuffer(GL_UNIFORM_BUFFER, ubo_modelViewProjectionMatrix);
+	qglBufferData(GL_UNIFORM_BUFFER, sizeof(modelViewProjectionMatrix_data_t), &modelViewProjectionMatrix_data, GL_STATIC_DRAW);
+	qglBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 	qglUniform1i(texLoc, 0);
 	qglUniform1i(fullbrightTexLoc, 1);
 	qglUniform1i(useFullbrightTexLoc, (fb_texture != 0) ? (islumaskin ? 2 : 1) : 0);
 	qglUniform1i(useAlphaTestLoc, (currententity->model->flags & MF_HOLEY) ? 1 : 0);
-	qglUniform1i(useWaterFogLoc, (r_viewleaf->contents != CONTENTS_EMPTY && r_viewleaf->contents != CONTENTS_SOLID) ? (int)gl_waterfog.value : 0);
-	qglUniform1f(fogDensityLoc, (Fog_IsWaterFog() && gl_waterfog.value == 2) ? 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1) : Fog_GetDensity() / 64.0);
-	qglUniform1f(fogStartLoc, 150.0f);
-	qglUniform1f(fogEndLoc, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
-	fogColor = Fog_GetColor();
-	qglUniform4f(fogColorLoc, *fogColor, *(fogColor + 1), *(fogColor + 2), *(fogColor + 3));
+
+	qglBindBuffer(GL_UNIFORM_BUFFER, ubo_fog);
+	qglBufferData(GL_UNIFORM_BUFFER, sizeof(fog_data_t), &fog_data, GL_STATIC_DRAW);
+	qglBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	// set textures
 	GL_SelectTexture(GL_TEXTURE0);

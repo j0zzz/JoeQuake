@@ -406,6 +406,17 @@ void Fog_Init(void);
 void Fog_SetupState(void);
 qboolean Fog_IsWaterFog(void);
 
+typedef struct
+{
+	int useWaterFog;
+	float density;
+	float start;
+	float end;
+	float color[4];
+} fog_data_t;
+
+extern fog_data_t fog_data;
+
 // gl_rlight.c
 void R_MarkLights (dlight_t *light, int lnum, mnode_t *node);
 void R_AnimateLight (void);

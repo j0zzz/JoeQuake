@@ -323,25 +323,28 @@ joe: moved waterfog handling code here. Fog in liquids, from FuhQuake
 */
 void Fog_SetupFrame (void)
 {
-	glFogfv(GL_FOG_COLOR, Fog_GetColor());
-	if (Fog_IsWaterFog())
+	fog_data.useWaterFog = Fog_IsWaterFog() ? (int)gl_waterfog.value : 0;
+	fog_data.density = (Fog_IsWaterFog() && gl_waterfog.value == 2) ? 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1) : Fog_GetDensity() / 64.0;
+	fog_data.start = 150.0f;
+	fog_data.end = 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1);
+	memcpy(fog_data.color, Fog_GetColor(), sizeof(fog_data.color));
+
+	glFogfv(GL_FOG_COLOR, fog_data.color);
+	if (fog_data.useWaterFog == 2)
 	{
-		if (gl_waterfog.value == 2)
-		{
-			glFogi(GL_FOG_MODE, GL_EXP);
-			glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
-		}
-		else
-		{
-			glFogi(GL_FOG_MODE, GL_LINEAR);
-			glFogf(GL_FOG_START, 150.0f);
-			glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
-		}
+		glFogi(GL_FOG_MODE, GL_EXP);
+		glFogf(GL_FOG_DENSITY, fog_data.density);
+	}
+	else if (fog_data.useWaterFog == 1)
+	{
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+		glFogf(GL_FOG_START, fog_data.start);
+		glFogf(GL_FOG_END, fog_data.end);
 	}
 	else
 	{
 		glFogi(GL_FOG_MODE, GL_EXP2);
-		glFogf(GL_FOG_DENSITY, Fog_GetDensity() / 64.0);
+		glFogf(GL_FOG_DENSITY, fog_data.density);
 	}
 }
 
