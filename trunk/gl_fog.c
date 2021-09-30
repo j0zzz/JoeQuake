@@ -326,7 +326,7 @@ void Fog_SetupFrame (void)
 	glFogfv(GL_FOG_COLOR, Fog_GetColor());
 	if (Fog_IsWaterFog())
 	{
-		if (((int)gl_waterfog.value) == 2)
+		if (gl_waterfog.value == 2)
 		{
 			glFogi(GL_FOG_MODE, GL_EXP);
 			glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));

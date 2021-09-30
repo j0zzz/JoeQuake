@@ -612,12 +612,19 @@ static GLuint shadeLightLoc;
 static GLuint ambientLightLoc;
 static GLuint aPitchLoc;
 static GLuint aYawLoc;
+static GLuint modelViewMatrixLoc;
+static GLuint projectionMatrixLoc;
 
 // uniforms used in frag shader
 static GLuint texLoc;
 static GLuint fullbrightTexLoc;
 static GLuint useFullbrightTexLoc;
 static GLuint useAlphaTestLoc;
+static GLuint useWaterFogLoc;
+static GLuint fogDensityLoc;
+static GLuint fogStartLoc;
+static GLuint fogEndLoc;
+static GLuint fogColorLoc;
 
 #define pose1VertexAttrIndex 0
 #define pose1NormalAttrIndex 1
@@ -669,7 +676,7 @@ void GLAlias_CreateShaders(void)
 	};
 
 	const GLchar *vertSource = \
-		"#version 150 compatibility\n"
+		"#version 430\n"
 		"\n"
 		"#define NUMVERTEXNORMALS	162\n"
 		"\n"
@@ -682,19 +689,23 @@ void GLAlias_CreateShaders(void)
 		"uniform float AmbientLight;\n"
 		"uniform float APitch;\n"
 		"uniform float AYaw;\n"
-		"uniform VlightData\n"
+		"uniform mat4 ModelViewMatrix;\n"
+		"uniform mat4 ProjectionMatrix;\n"
+		"layout(std430, binding = 0) buffer VlightTable\n"
 		"{\n"
+		"	int VlightTableData[256][256];\n"
 		"	int AnormPitch[NUMVERTEXNORMALS];\n"
 		"	int AnormYaw[NUMVERTEXNORMALS];\n"
 		"};\n"
-		"uniform usamplerBuffer VlightTable;\n"
-		"attribute vec4 TexCoords; // only xy are used \n"
+		"attribute vec4 TexCoords; // only xy are used\n"
 		"attribute vec4 Pose1Vert;\n"
 		"attribute vec3 Pose1Normal;\n"
 		"attribute vec4 Pose2Vert;\n"
 		"attribute vec3 Pose2Normal;\n"
 		"\n"
-		"varying float FogFragCoord;\n"
+		"out vec2 TexCoordsOut;\n"
+		"out vec4 ColorOut;\n"
+		"out float FogFragCoord;\n"
 		"\n"
 		"float r_avertexnormal_dot(vec3 vertexnormal) // from MH \n"
 		"{\n"
@@ -721,7 +732,7 @@ void GLAlias_CreateShaders(void)
 		"	while (yawofs < 0)\n"
 		"		yawofs += 256;\n"
 		"\n"
-		"	retval = %s;\n"
+		"	retval = VlightTableData[pitchofs][yawofs];\n"
 		"\n"
 		"	return retval / 256;\n"
 		"}\n"
@@ -738,14 +749,14 @@ void GLAlias_CreateShaders(void)
 		"}\n"
 		"void main()\n"
 		"{\n"
-		"	gl_TexCoord[0] = TexCoords;\n"
+		"	TexCoordsOut = TexCoords.xy;\n"
 		"	float lerpfrac;"
 		"	if (distance(Pose1Vert.xyz, Pose2Vert.xyz) < LerpDist)\n"
 		"		lerpfrac = Blend;\n"
 		"	else\n"
 		"		lerpfrac = 1.0;\n"
 		"	vec4 lerpedVert = mix(vec4(Pose1Vert.xyz, 1.0), vec4(Pose2Vert.xyz, 1.0), lerpfrac);\n"
-		"	gl_Position = gl_ModelViewProjectionMatrix * lerpedVert;\n"
+		"	gl_Position = ProjectionMatrix * ModelViewMatrix * lerpedVert;\n"
 		"	FogFragCoord = gl_Position.w;\n"
 		"	if (UseVertexLighting)\n"
 		"	{\n"
@@ -753,7 +764,7 @@ void GLAlias_CreateShaders(void)
 		"		int pose2_lni = int(Pose2Vert.w);\n"
 		"		float l = R_LerpVertexLight(AnormPitch[pose1_lni], AnormYaw[pose1_lni], AnormPitch[pose2_lni], AnormYaw[pose2_lni], Blend, APitch, AYaw);\n"
 		"		l = min(l, 1.0);\n"
-		"		gl_FrontColor = vec4(vec3(LightColor.xyz / 256.0 + l), LightColor.w);\n"
+		"		ColorOut = vec4(vec3(LightColor.xyz / 256.0 + l), LightColor.w);\n"
 		"	}\n"
 		"	else\n"
 		"	{\n"
@@ -762,39 +773,49 @@ void GLAlias_CreateShaders(void)
 		"		float l = mix(dot1, dot2, Blend);\n"
 		"		l = (l * ShadeLight + AmbientLight) / 256.0;\n"
 		"		l = min(l, 1.0);\n"
-		"		gl_FrontColor = vec4(vec3(l), LightColor.w);\n"
+		"		ColorOut = vec4(vec3(l), LightColor.w);\n"
 		"	}\n"
 		"}\n";
 
-	// unable to get texture buffer and vertex lighting to work on ATI cards
-	vertSource = va((char *)vertSource, gl_vendor_ati ? "128" : "texelFetch(VlightTable, pitchofs * 256 + yawofs).r");
-
 	const GLchar *fragSource = \
-		"#version 150 compatibility\n"
+		"#version 430\n"
 		"\n"
 		"uniform sampler2D Tex;\n"
 		"uniform sampler2D FullbrightTex;\n"
 		"uniform int UseFullbrightTex;\n"
 		"uniform bool UseAlphaTest;\n"
+		"uniform int UseWaterFog;\n"
+		"uniform float FogDensity;\n"
+		"uniform float FogStart;\n"
+		"uniform float FogEnd;\n"
+		"uniform vec4 FogColor;\n"
 		"\n"
-		"varying float FogFragCoord;\n"
+		"in vec2 TexCoordsOut;\n"
+		"in vec4 ColorOut;\n"
+		"in float FogFragCoord;\n"
 		"\n"
 		"void main()\n"
 		"{\n"
-		"	vec4 result = texture2D(Tex, gl_TexCoord[0].xy);\n"
+		"	vec4 result = texture2D(Tex, TexCoordsOut.xy);\n"
 		"	if (UseAlphaTest && (result.a < 0.666))\n"
 		"		discard;\n"
-		"	result *= gl_Color;\n"
-		"	vec4 fb = texture2D(FullbrightTex, gl_TexCoord[0].xy);\n"
+		"	result *= ColorOut;\n"
+		"	vec4 fb = texture2D(FullbrightTex, TexCoordsOut.xy);\n"
 		"	if (UseFullbrightTex == 1)\n"
 		"		result = mix(result, fb, fb.a);\n"
 		"	else if (UseFullbrightTex == 2)\n"
 		"		result += fb;\n"
 		"	result = clamp(result, 0.0, 1.0);\n"
-		"	float fog = exp(-gl_Fog.density * gl_Fog.density * FogFragCoord * FogFragCoord);\n"
+		"	float fog = 0.0;\n"
+		"	if (UseWaterFog == 1)\n"
+		"		fog = (FogEnd - FogFragCoord) / (FogEnd - FogStart);\n"
+		"	else if (UseWaterFog == 2)\n"
+		"		fog = exp(-FogDensity * FogFragCoord);\n"
+		"	else\n"
+		"		fog = exp(-FogDensity * FogDensity * FogFragCoord * FogFragCoord);\n"
 		"	fog = clamp(fog, 0.0, 1.0);\n"
-		"	result = mix(gl_Fog.color, result, fog);\n"
-		"	result.a = gl_Color.a;\n" // FIXME: This will make almost transparent things cut holes though heavy fog
+		"	result = mix(FogColor, result, fog);\n"
+		"	result.a = ColorOut.a;\n" // FIXME: This will make almost transparent things cut holes though heavy fog
 		"	gl_FragColor = result;\n"
 		"}\n";
 
@@ -815,14 +836,17 @@ void GLAlias_CreateShaders(void)
 		ambientLightLoc = GL_GetUniformLocation(&r_alias_program, "AmbientLight");
 		aPitchLoc = GL_GetUniformLocation(&r_alias_program, "APitch");
 		aYawLoc = GL_GetUniformLocation(&r_alias_program, "AYaw");
+		modelViewMatrixLoc = GL_GetUniformLocation(&r_alias_program, "ModelViewMatrix");
+		projectionMatrixLoc = GL_GetUniformLocation(&r_alias_program, "ProjectionMatrix");
 		texLoc = GL_GetUniformLocation(&r_alias_program, "Tex");
 		fullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "FullbrightTex");
 		useFullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "UseFullbrightTex");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_alias_program, "UseAlphaTest");
-
-		// joe: bind uniform buffer here, only once
-		GLuint vlightDataLoc = qglGetUniformBlockIndex(r_alias_program, "VlightData");
-		qglUniformBlockBinding(r_alias_program, vlightDataLoc, 0);
+		useWaterFogLoc = GL_GetUniformLocation(&r_alias_program, "UseWaterFog");
+		fogDensityLoc = GL_GetUniformLocation(&r_alias_program, "FogDensity");
+		fogStartLoc = GL_GetUniformLocation(&r_alias_program, "FogStart");
+		fogEndLoc = GL_GetUniformLocation(&r_alias_program, "FogEnd");
+		fogColorLoc = GL_GetUniformLocation(&r_alias_program, "FogColor");
 	}
 }
 
@@ -843,6 +867,7 @@ Based on code by MH from RMQEngine
 void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int distance, int gl_texture, int fb_texture, qboolean islumaskin)
 {
 	int			pose, numposes;
+	float		model[16], project[16], *fogColor;
 
 	if ((frame >= paliashdr->numframes) || (frame < 0))
 	{
@@ -905,15 +930,25 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1f(lerpDistLoc, distance);
 	qglUniform3f(shadevectorLoc, shadevector[0], shadevector[1], shadevector[2]);
 	qglUniform4f(lightColorLoc, lightcolor[0], lightcolor[1], lightcolor[2], ent->transparency);
-	qglUniform1i(useVertexLightingLoc, (gl_vertexlights.value && !full_light && !gl_vendor_ati) ? 1 : 0);
+	qglUniform1i(useVertexLightingLoc, (gl_vertexlights.value && !full_light) ? 1 : 0);
 	qglUniform1f(shadeLightLoc, shadelight);
 	qglUniform1f(ambientLightLoc, ambientlight);
 	qglUniform1f(aPitchLoc, apitch);
 	qglUniform1f(aYawLoc, ayaw);
+	glGetFloatv(GL_MODELVIEW_MATRIX, model);
+	qglUniformMatrix4fv(modelViewMatrixLoc, 1, GL_FALSE, model);
+	glGetFloatv(GL_PROJECTION_MATRIX, project);
+	qglUniformMatrix4fv(projectionMatrixLoc, 1, GL_FALSE, project);
 	qglUniform1i(texLoc, 0);
 	qglUniform1i(fullbrightTexLoc, 1);
 	qglUniform1i(useFullbrightTexLoc, (fb_texture != 0) ? (islumaskin ? 2 : 1) : 0);
 	qglUniform1i(useAlphaTestLoc, (currententity->model->flags & MF_HOLEY) ? 1 : 0);
+	qglUniform1i(useWaterFogLoc, (r_viewleaf->contents != CONTENTS_EMPTY && r_viewleaf->contents != CONTENTS_SOLID) ? (int)gl_waterfog.value : 0);
+	qglUniform1f(fogDensityLoc, (Fog_IsWaterFog() && gl_waterfog.value == 2) ? 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1) : Fog_GetDensity() / 64.0);
+	qglUniform1f(fogStartLoc, 150.0f);
+	qglUniform1f(fogEndLoc, 4250.0f - (4250.0f - 1536.0f) * bound(0, gl_waterfog_density.value, 1));
+	fogColor = Fog_GetColor();
+	qglUniform4f(fogColorLoc, *fogColor, *(fogColor + 1), *(fogColor + 2), *(fogColor + 3));
 
 	// set textures
 	GL_SelectTexture(GL_TEXTURE0);

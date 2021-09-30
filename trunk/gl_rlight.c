@@ -489,12 +489,10 @@ float	vlight_yaw = 45;
 float	vlight_highcut = 128;
 float	vlight_lowcut = 60;
 
-byte	anorm_pitch[NUMVERTEXNORMALS];
-byte	anorm_yaw[NUMVERTEXNORMALS];
-int		anorm_pitch_GLSL[NUMVERTEXNORMALS];
-int		anorm_yaw_GLSL[NUMVERTEXNORMALS];
+int		anorm_pitch[NUMVERTEXNORMALS];
+int		anorm_yaw[NUMVERTEXNORMALS];
 
-byte	vlighttable[256][256];
+int		vlighttable[256][256];
 
 float R_GetVertexLightValue (byte ppitch, byte pyaw, float apitch, float ayaw)
 {
@@ -553,8 +551,8 @@ void R_ResetAnormTable (void)
 	for (i=0 ; i<NUMVERTEXNORMALS ; i++)
 	{
 		vectoangles (r_avertexnormals[i], ang);
-		anorm_pitch_GLSL[i] = anorm_pitch[i] = ang[0] * 256 / 360;
-		anorm_yaw_GLSL[i] = anorm_yaw[i] = ang[1] * 256 / 360;
+		anorm_pitch[i] = ang[0] * 256 / 360;
+		anorm_yaw[i] = ang[1] * 256 / 360;
 	}
 
 	// Next, a light value table must be constructed for pitch/yaw offsets
@@ -586,67 +584,43 @@ void R_ResetAnormTable (void)
 	}
 }
 
-GLuint	tbo, tbo_tex;
-GLuint	ubo;
+GLuint	ssbo_vlighttable;
 
 /*
 ==================
-GL_BuildTextureBufferWithLightData
+GL_BuildShaderStorageBufferWithLightData
 
-joe: vlighttable is a huge array to use in GLSL
+vlighttable is a huge array to use in GLSL
 uniform arrays and uniform buffers don't enable that much data to be sent
-the best solution I found is to load it to the texture buffer
+the best solution I found is to load it to the shader storage buffer
+
+anorm_pitch and anorm_yaw arrays only set at startup
+so let's also load them to the shader storage buffer instead of sending it to the shader every frame
+
+Originally I used the texture buffer to keep the supported GLSL version 
+as low as possible (1.40), but I couldn't make it work with AMD/ATI cards
 ==================
 */
-void GL_BuildTextureBufferWithLightData(void)
+void GL_BuildShaderStorageBufferWithLightData(void)
 {
 	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
 		return;
 
-	qglGenBuffers(1, &tbo);
-	qglBindBuffer(GL_TEXTURE_BUFFER, tbo);
-	qglBufferData(GL_TEXTURE_BUFFER, sizeof(vlighttable), vlighttable, GL_STATIC_DRAW);
-	qglBindBuffer(GL_TEXTURE_BUFFER, 0);
+	qglGenBuffers(1, &ssbo_vlighttable);
+	qglBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vlighttable);
+	qglBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vlighttable) + sizeof(anorm_pitch) + sizeof(anorm_yaw), NULL, GL_STATIC_DRAW);
+	qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_vlighttable);
 
-	tbo_tex = texture_extension_number++;
-	glBindTexture(GL_TEXTURE_BUFFER, tbo_tex);
-	qglTexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, tbo);
-}
+	qglBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vlighttable), vlighttable);
+	qglBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(vlighttable), sizeof(anorm_pitch), anorm_pitch);
+	qglBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(vlighttable) + sizeof(anorm_pitch), sizeof(anorm_yaw), anorm_yaw);
 
-/*
-==================
-GL_BuildUniformBufferWithAnormData
-
-joe: anorm_pitch and anorm_yaw arrays only set at startup
-so let's load them to a uniform buffer instead of sending it to the shader every frame
-==================
-*/
-void GL_BuildUniformBufferWithAnormData(void)
-{
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
-		return;
-
-	qglGenBuffers(1, &ubo);
-	qglBindBuffer(GL_UNIFORM_BUFFER, ubo);
-	qglBufferData(GL_UNIFORM_BUFFER, sizeof(anorm_pitch_GLSL) + sizeof(anorm_yaw_GLSL), NULL, GL_STATIC_DRAW);
-	//qglBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-	qglBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo);
-
-	//qglBindBuffer(GL_UNIFORM_BUFFER, ubo);
-	qglBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(anorm_pitch_GLSL), anorm_pitch_GLSL);
-	qglBufferSubData(GL_UNIFORM_BUFFER, sizeof(anorm_pitch_GLSL), sizeof(anorm_yaw_GLSL), anorm_yaw_GLSL);
-	qglBindBuffer(GL_UNIFORM_BUFFER, 0);
+	qglBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void R_InitVertexLights (void)
 {
 	R_ResetAnormTable ();
 
-	// unable to get texture buffer and vertex lighting to work on ATI cards
-	if (!gl_vendor_ati)
-	{
-		GL_BuildTextureBufferWithLightData();
-		GL_BuildUniformBufferWithAnormData();
-	}
+	GL_BuildShaderStorageBufferWithLightData();
 }

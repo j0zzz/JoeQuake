@@ -71,13 +71,13 @@ lpUniform1iFUNC qglUniform1i = NULL; //ericw
 lpUniform1fFUNC qglUniform1f = NULL; //ericw
 lpUniform3fFUNC qglUniform3f = NULL; //ericw
 lpUniform4fFUNC qglUniform4f = NULL; //ericw
+lpUniformMatrix4fvFUNC qglUniformMatrix4fv = NULL;
 lpTexBufferFUNC qglTexBuffer = NULL;
 lpBindBufferBaseFUNC qglBindBufferBase = NULL;
 lpGetUniformBlockIndexFUNC qglGetUniformBlockIndex = NULL;
 lpUniformBlockBindingFUNC qglUniformBlockBinding = NULL;
 
 qboolean	gl_add_ext = false;
-qboolean	gl_vendor_ati = false;
 
 float		gldepthmin, gldepthmax;
 qboolean	gl_allow_ztrick = true;
@@ -145,7 +145,8 @@ void CheckMultiTextureExtensions (void)
 
 void CheckVertexBufferExtensions(void)
 {
-	if (!COM_CheckParm("-novbo") && gl_version_major >= 1 && gl_version_minor >= 5)
+	if (!COM_CheckParm("-novbo") && 
+		((gl_version_major == 1 && gl_version_minor >= 5) || gl_version_major > 1))
 	{
 		qglBindBuffer = (void *)qglGetProcAddress("glBindBufferARB");
 		qglBufferData = (void *)qglGetProcAddress("glBufferDataARB");
@@ -186,6 +187,7 @@ void CheckGLSLExtensions(void)
 		qglUniform1f = (void *)qglGetProcAddress("glUniform1f");
 		qglUniform3f = (void *)qglGetProcAddress("glUniform3f");
 		qglUniform4f = (void *)qglGetProcAddress("glUniform4f");
+		qglUniformMatrix4fv = (void *)qglGetProcAddress("glUniformMatrix4fv");
 		qglTexBuffer = (void *)qglGetProcAddress("glTexBuffer");
 		qglBindBufferBase = (void *)qglGetProcAddress("glBindBufferBase");
 		qglGetUniformBlockIndex = (void *)qglGetProcAddress("glGetUniformBlockIndex");
@@ -214,6 +216,7 @@ void CheckGLSLExtensions(void)
 			qglUniform1f &&
 			qglUniform3f &&
 			qglUniform4f &&
+			qglUniformMatrix4fv &&
 			qglTexBuffer &&
 			qglBindBufferBase &&
 			qglGetUniformBlockIndex &&
@@ -283,9 +286,6 @@ void GL_Init (void)
 	CheckMultiTextureExtensions ();
 	CheckVertexBufferExtensions();
 	CheckGLSLExtensions();
-
-	if (!strcmp(gl_vendor, "ATI Technologies Inc."))
-		gl_vendor_ati = true;
 
 	GLAlias_CreateShaders();
 	GLWorld_CreateShaders();

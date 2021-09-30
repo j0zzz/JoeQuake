@@ -297,6 +297,7 @@ typedef void (APIENTRY *lpUniform1iFUNC) (GLint location, GLint v0);
 typedef void (APIENTRY *lpUniform1fFUNC) (GLint location, GLfloat v0);
 typedef void (APIENTRY *lpUniform3fFUNC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
 typedef void (APIENTRY *lpUniform4fFUNC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+typedef void (APIENTRY *lpUniformMatrix4fvFUNC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 typedef void (APIENTRY *lpTexBufferFUNC) (GLenum target, GLenum internalformat, GLuint buffer);
 typedef void (APIENTRY *lpBindBufferBaseFUNC) (GLenum target, GLuint index, GLuint buffer);
 typedef GLuint(APIENTRY *lpGetUniformBlockIndexFUNC) (GLuint program, const GLchar *uniformBlockName);
@@ -333,6 +334,7 @@ extern lpUniform1iFUNC qglUniform1i;
 extern lpUniform1fFUNC qglUniform1f;
 extern lpUniform3fFUNC qglUniform3f;
 extern lpUniform4fFUNC qglUniform4f;
+extern lpUniformMatrix4fvFUNC qglUniformMatrix4fv;
 extern lpTexBufferFUNC qglTexBuffer;
 extern lpBindBufferBaseFUNC qglBindBufferBase;
 extern lpGetUniformBlockIndexFUNC qglGetUniformBlockIndex;
@@ -357,7 +359,6 @@ void Check_Gamma (unsigned char *pal);
 void GL_Init (void);
 qboolean CheckExtension (const char *extension);
 extern qboolean	gl_add_ext, gl_allow_ztrick;
-extern qboolean gl_vendor_ati;
 
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);
@@ -403,6 +404,7 @@ void Fog_SetupFrame(void);
 void Fog_NewMap(void);
 void Fog_Init(void);
 void Fog_SetupState(void);
+qboolean Fog_IsWaterFog(void);
 
 // gl_rlight.c
 void R_MarkLights (dlight_t *light, int lnum, mnode_t *node);
@@ -415,7 +417,7 @@ void R_InitVertexLights (void);
 extern	float	bubblecolor[NUM_DLIGHTTYPES][4];
 extern	vec3_t	lightspot, lightcolor;
 extern	float	vlight_pitch, vlight_yaw;
-extern	byte	anorm_pitch[NUMVERTEXNORMALS], anorm_yaw[NUMVERTEXNORMALS];
+extern	int		anorm_pitch[NUMVERTEXNORMALS], anorm_yaw[NUMVERTEXNORMALS];
 
 // gl_refrag.c
 void R_StoreEfrags (efrag_t **ppefrag);
