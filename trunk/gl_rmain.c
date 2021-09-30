@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_rmain.c
 
 #include "quakedef.h"
+#include <stddef.h>
 
 entity_t r_worldentity;
 
@@ -3040,7 +3041,7 @@ void R_SetupFrame (void)
 	r_cache_thrash = false;
 }
 
-__inline void MYgluPerspective (GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
+void MYgluPerspective (GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
 {
 	GLdouble	xmin, xmax, ymin, ymax;
 
