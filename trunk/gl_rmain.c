@@ -706,11 +706,11 @@ void GLAlias_CreateShaders(void)
 		"	int AnormPitch[NUMVERTEXNORMALS];\n"
 		"	int AnormYaw[NUMVERTEXNORMALS];\n"
 		"};\n"
-		"attribute vec4 TexCoords; // only xy are used\n"
-		"attribute vec4 Pose1Vert;\n"
-		"attribute vec3 Pose1Normal;\n"
-		"attribute vec4 Pose2Vert;\n"
-		"attribute vec3 Pose2Normal;\n"
+		"in vec4 TexCoords; // only xy are used\n"
+		"in vec4 Pose1Vert;\n"
+		"in vec3 Pose1Normal;\n"
+		"in vec4 Pose2Vert;\n"
+		"in vec3 Pose2Normal;\n"
 		"\n"
 		"out vec2 TexCoordsOut;\n"
 		"out vec4 ColorOut;\n"
@@ -806,6 +806,8 @@ void GLAlias_CreateShaders(void)
 		"in vec4 ColorOut;\n"
 		"in float FogFragCoord;\n"
 		"\n"
+		"out vec4 FragColor;\n"
+		"\n"
 		"void main()\n"
 		"{\n"
 		"	vec4 result = texture2D(Tex, TexCoordsOut.xy);\n"
@@ -828,7 +830,7 @@ void GLAlias_CreateShaders(void)
 		"	fog = clamp(fog, 0.0, 1.0);\n"
 		"	result = mix(FogColor, result, fog);\n"
 		"	result.a = ColorOut.a;\n" // FIXME: This will make almost transparent things cut holes though heavy fog
-		"	gl_FragColor = result;\n"
+		"	FragColor = result;\n"
 		"}\n";
 
 	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
