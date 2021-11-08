@@ -1469,44 +1469,52 @@ R_DrawTextureChains_Water -- johnfitz
 */
 void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 {
-	int			i;
+	int			i, teleport;
 	msurface_t	*s;
 	texture_t	*t;
 	glpoly_t	*p;
-	qboolean	bound;
+	qboolean	bound, isTeleportTexture;
 	float		entalpha;
 
-	for (i = 0; i<model->numtextures; i++)
+	for (teleport = 1; teleport >= 0; teleport--)
 	{
-		t = model->textures[i];
-		if (!t || !t->texturechains[chain] || !(t->texturechains[chain]->flags & SURF_DRAWTURB))
-			continue;
-
-		bound = false;
-		entalpha = 1.0f;
-		for (s = t->texturechains[chain]; s; s = s->texturechain)
+		for (i = 0; i<model->numtextures; i++)
 		{
-			if (!bound) //only bind once we are sure we need this texture
-			{
-				// joe: Always render teleport as opaque
-				if (strcmp(s->texinfo->texture->name, "*teleport") && strcmp(s->texinfo->texture->name, "*tele01"))
-				{
-					glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
-					glPolygonOffset(-1, -1);			//
-					entalpha = GL_WaterAlphaForEntitySurface(ent, s);
-					R_BeginTransparentDrawing(entalpha);
-				}
-				GL_Bind(t->gl_texturenum);
-				bound = true;
-			}
-			for (p = s->polys->next; p; p = p->next)
-			{
-				DrawWaterPoly(p);
-			}
-		}
+			t = model->textures[i];
+			if (!t || !t->texturechains[chain] || !(t->texturechains[chain]->flags & SURF_DRAWTURB))
+				continue;
 
-		R_EndTransparentDrawing(entalpha);
-		glDisable(GL_POLYGON_OFFSET_FILL);
+			bound = false;
+			entalpha = 1.0f;
+
+			for (s = t->texturechains[chain]; s; s = s->texturechain)
+			{
+				isTeleportTexture = !strcmp(s->texinfo->texture->name, "*teleport") || !strcmp(s->texinfo->texture->name, "*tele01");
+				if ((teleport && isTeleportTexture) || (!teleport && !isTeleportTexture))
+				{
+					if (!bound) //only bind once we are sure we need this texture
+					{
+						// joe: Always render teleport as opaque
+						if (!isTeleportTexture)
+						{
+							glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
+							glPolygonOffset(-1, -1);			//
+							entalpha = GL_WaterAlphaForEntitySurface(ent, s);
+							R_BeginTransparentDrawing(entalpha);
+						}
+						GL_Bind(t->gl_texturenum);
+						bound = true;
+					}
+					for (p = s->polys->next; p; p = p->next)
+					{
+						DrawWaterPoly(p);
+					}
+				}
+			}
+
+			R_EndTransparentDrawing(entalpha);
+			glDisable(GL_POLYGON_OFFSET_FILL);
+		}
 	}
 }
 

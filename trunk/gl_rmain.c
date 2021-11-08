@@ -2719,7 +2719,7 @@ void R_DrawEntitiesOnList ()
 		if (qmb_initialized && SetFlameModelState() == -1)
 			continue;
 
-		if (ISTRANSPARENT(currententity) && cl_numvisedicts < MAX_VISEDICTS)
+		if (ISTRANSPARENT(currententity) && cl_numtransvisedicts < MAX_VISEDICTS)
 		{
 			cl_transvisedicts[cl_numtransvisedicts++] = currententity;
 			continue;
