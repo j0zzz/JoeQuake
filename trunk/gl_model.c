@@ -503,9 +503,9 @@ void Mod_LoadTextures (lump_t *l)
 			mt->offsets[j] = LittleLong(mt->offsets[j]);
 
 		if ((mt->width & 15) || (mt->height & 15))
-			Sys_Error("Mod_LoadTextures: Texture %s is not 16 aligned", mt->name);
+			Con_DPrintf("Warning: texture %s (%d x %d) is not 16 aligned\n", mt->name, mt->width, mt->height);
 
-		pixels = mt->width * mt->height / 64 * 85;	// joe: I don't get this multiplication, copied from QuakeSpasm
+		pixels = mt->width * mt->height; // only copy the first mip, the rest are auto-generated
 		tx = (texture_t *)Hunk_AllocName(sizeof(texture_t) + pixels, loadname);
 		loadmodel->textures[i] = tx;
 
