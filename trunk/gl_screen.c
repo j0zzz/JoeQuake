@@ -974,11 +974,12 @@ static void SCR_DrawCursor(void)
 	}
 	else
 	{
-		color_t c = RGBA_TO_COLOR(0, 255, 0, 255);
-		Draw_AlphaLineRGB(cursor_x + (10 * scale), cursor_y + (10 * scale), cursor_x + (40 * scale), cursor_y + (40 * scale), 10 * scale, c);
-		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (20 * scale), cursor_y, 10 * scale, c);
-		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x, cursor_y + 20 * scale, 10 * scale, c);
-		Draw_AlphaLineRGB(cursor_x + (20 * scale), cursor_y, cursor_x, cursor_y + (20 * scale), 10 * scale, c);
+		color_t c = RGBA_TO_COLOR(255, 255, 255, 255);
+		scale *= 3;
+		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (50 * scale), cursor_y + (20 * scale), 2, c);
+		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (20 * scale), cursor_y + (50 * scale), 2, c);
+		Draw_AlphaLineRGB(cursor_x + (50 * scale), cursor_y + (20 * scale), cursor_x + (25 * scale), cursor_y + (25 * scale), 2, c);
+		Draw_AlphaLineRGB(cursor_x + (20 * scale), cursor_y + (50 * scale), cursor_x + (25 * scale), cursor_y + (25 * scale), 2, c);
 	}
 #else // GLQUAKE
 	/*
