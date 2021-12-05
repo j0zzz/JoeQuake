@@ -2222,7 +2222,7 @@ fail_txt:	if (fp) fclose(fp);
 		}
 	}
 
-	Con_Printf("Language initialized\nLoaded %d strings from '%s'\n", localization.numentries, file);
+	Con_Printf("Language initialized\nLoaded %d strings from `%s`\n", localization.numentries, file);
 }
 
 /*
