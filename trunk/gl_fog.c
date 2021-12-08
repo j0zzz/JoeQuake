@@ -217,6 +217,10 @@ void Fog_ParseWorldspawn (void)
 		if (!strcmp("fog", key))
 		{
 			sscanf(value, "%f %f %f %f", &fog_density, &fog_red, &fog_green, &fog_blue);
+			fog_density = max(0.0, fog_density);
+			fog_red = bound(0.0, fog_red, 1.0);
+			fog_green = bound(0.0, fog_green, 1.0);
+			fog_blue = bound(0.0, fog_blue, 1.0);
 		}
 	}
 }
