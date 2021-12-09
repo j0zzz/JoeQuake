@@ -787,6 +787,7 @@ void _Host_Frame (double time)
 			CL_ReadFromServer();
 
 		if (!cls.demoplayback || // not demo playback
+			key_dest == key_menu ||	// in menu, for correct mouse cursor movement
 			cls.state == ca_disconnected // We need to move the mouse also when disconnected 
 			)
 		{
