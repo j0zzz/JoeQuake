@@ -21,6 +21,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern	char	demodir[MAX_OSPATH];
 
+typedef struct menu_window_s
+{
+	int x;
+	int y;
+	int w;
+	int h;
+} menu_window_t;
+
 // menus
 void M_Init (void);
 void M_Keydown (int key);
@@ -28,5 +36,18 @@ void M_Draw (void);
 void M_ToggleMenu_f (void);
 void M_Menu_Main_f (void);
 void M_Menu_Quit_f (void);
-qboolean Menu_Mouse_Event(const mouse_state_t* ms);
+
 void M_DrawTextBox(int x, int y, int width, int lines);
+void M_Menu_Options_f(void);
+void M_Print(int cx, int cy, char *str);
+void M_Print_GetPoint(int cx, int cy, int *rx, int *ry, char *str, qboolean red);
+void M_PrintWhite(int cx, int cy, char *str);
+void M_DrawCharacter(int cx, int line, int num);
+void M_DrawTransPic(int x, int y, mpic_t *pic);
+void M_DrawPic(int x, int y, mpic_t *pic);
+void M_DrawCheckbox(int x, int y, int on);
+void M_DrawSliderFloat2(int x, int y, float range, float value);
+
+qboolean M_Mouse_Select(const menu_window_t *uw, const mouse_state_t *m, int entries, int *newentry);
+qboolean Menu_Mouse_Event(const mouse_state_t* ms);
+qboolean M_Video_Mouse_Event(const mouse_state_t *ms);
