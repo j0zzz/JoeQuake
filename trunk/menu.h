@@ -46,7 +46,7 @@ void M_DrawCharacter(int cx, int line, int num);
 void M_DrawTransPic(int x, int y, mpic_t *pic);
 void M_DrawPic(int x, int y, mpic_t *pic);
 void M_DrawCheckbox(int x, int y, int on);
-void M_DrawSliderFloat2(int x, int y, float range, float value);
+void M_DrawSliderFloat2(int x, int y, float range, float value, menu_window_t *w);
 
 qboolean M_Mouse_Select(const menu_window_t *uw, const mouse_state_t *m, int entries, int *newentry);
 qboolean Menu_Mouse_Event(const mouse_state_t* ms);

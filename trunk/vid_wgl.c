@@ -1868,6 +1868,7 @@ int	video_cursor_column = 0;
 int video_mode_rows = 0;
 
 menu_window_t video_window;
+menu_window_t video_slider_resscale_window;
 
 static	int	vid_line, vid_wmodes;
 
@@ -1889,23 +1890,6 @@ typedef struct
 #define MAX_MODEDESCS		(MAX_COLUMN_SIZE * VID_ROW_SIZE)
 
 static	modedesc_t	modedescs[MAX_MODEDESCS];
-
-void VID_AdjustSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (video_cursor_row)
-	{
-	case 4:	// resolution scale
-		r_scale.value += dir * 0.05;
-		r_scale.value = bound(0.25, r_scale.value, 1);
-		Cvar_SetValue(&r_scale, r_scale.value);
-		break;
-
-	default:
-		break;
-	}
-}
 
 /*
 ================
@@ -1960,7 +1944,7 @@ void VID_MenuDraw (void)
 
 	M_Print_GetPoint(16, 64, &lx, &ly, "  Resolution scale", video_cursor_row == 4);
 	r = (r_scale.value - 0.25) / 0.75;
-	M_DrawSliderFloat2(188, 64, r, r_scale.value);
+	M_DrawSliderFloat2(188, 64, r, r_scale.value, &video_slider_resscale_window);
 
 	M_Print_GetPoint(16, 80, &lx, &ly, "     Apply changes", video_cursor_row == 6);
 
@@ -2022,6 +2006,23 @@ void VID_MenuDraw (void)
 		M_DrawTextBox(40, 10 * 8, 27, 2);
 		M_PrintWhite(48, 11 * 8, "Would you like to keep this");
 		M_PrintWhite(48, 12 * 8, "        video mode?");
+	}
+}
+
+void M_Video_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (video_cursor_row)
+	{
+	case 4:	// resolution scale
+		r_scale.value += dir * 0.05;
+		r_scale.value = bound(0.25, r_scale.value, 1);
+		Cvar_SetValue(&r_scale, r_scale.value);
+		break;
+
+	default:
+		break;
 	}
 }
 
@@ -2118,7 +2119,7 @@ void VID_MenuKey (int key)
 			}
 		}
 		else
-			VID_AdjustSliders(-1);
+			M_Video_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
@@ -2129,7 +2130,7 @@ void VID_MenuKey (int key)
 				video_cursor_column = 0;
 		}
 		else
-			VID_AdjustSliders(1);
+			M_Video_KeyboardSlider(1);
 		break;
 
 	case K_ENTER:
@@ -2208,7 +2209,33 @@ void VID_MenuKey (int key)
 		video_cursor_row++;
 }
 
+extern qboolean M_Mouse_Select_Column(const menu_window_t *uw, const mouse_state_t *m, int entries, int *newentry);
 extern qboolean M_Mouse_Select_RowColumn(const menu_window_t *uw, const mouse_state_t *m, int row_entries, int *newentry_row, int col_entries, int *newentry_col);
+
+void M_Video_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (video_cursor_row)
+		{
+		case 4:	// resolution scale
+			M_Mouse_Select_Column(&video_slider_resscale_window, ms, 16, &slider_pos);
+			r_scale.value = bound(0.25, 0.25 + (slider_pos * 0.05), 1);
+			Cvar_SetValue(&r_scale, r_scale.value);
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
 
 qboolean M_Video_Mouse_Event(const mouse_state_t *ms)
 {
@@ -2216,6 +2243,8 @@ qboolean M_Video_Mouse_Event(const mouse_state_t *ms)
 
 	if (ms->button_up == 1) VID_MenuKey(K_MOUSE1);
 	if (ms->button_up == 2) VID_MenuKey(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Video_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }

@@ -328,6 +328,33 @@ qboolean M_Mouse_Select(const menu_window_t *uw, const mouse_state_t *m, int ent
 	return true;
 }
 
+qboolean M_Mouse_Select_Column(const menu_window_t *uw, const mouse_state_t *m, int entries, int *newentry)
+{
+	double entrywidth;
+	double nentry;
+	menu_window_t rw;
+	menu_window_t *w = &rw; // just a language "shortcut"
+
+	M_Window_Adjust(uw, w);
+
+	// window is invisible
+	if (!(w->h > 0) || !(w->w > 0)) return false;
+
+	//FIXME - this method is used for menu sliders, where we want to keep the movement 
+	//outside the window too, since ideally the user holds MOUSE1 down during movement
+
+	// check if the pointer is inside of the window
+	//if (m->x < w->x || m->y < w->y || m->x > w->x + w->w || m->y > w->y + w->h)
+	//	return false; // no, it's not
+
+	entrywidth = w->w / entries;
+	nentry = (int)(m->x - w->x) / (int)entrywidth;
+
+	*newentry = bound(0, nentry, entries - 1);
+
+	return true;
+}
+
 qboolean M_Mouse_Select_RowColumn(const menu_window_t *uw, const mouse_state_t *m, int row_entries, int *newentry_row, int col_entries, int *newentry_col)
 {
 	double entryheight, entrywidth;
@@ -2054,7 +2081,7 @@ void M_Menu_Options_f (void)
 	CheckMPOptimized ();
 }
 
-void M_DrawSlider(int x, int y, float range)
+void M_DrawSlider(int x, int y, float range, menu_window_t *w)
 {
 	int	i;
 
@@ -2064,36 +2091,84 @@ void M_DrawSlider(int x, int y, float range)
 		M_DrawCharacter(x + i * 8, y, 129);
 	M_DrawCharacter(x + i * 8, y, 130);
 	M_DrawCharacter(x + (SLIDER_RANGE - 1) * 8 * range, y, 131);
+
+	w->x = x + ((menuwidth - 320) >> 1);
+	w->y = y + m_yofs;
+	w->w = SLIDER_RANGE * 8;
+	w->h = 8;
+
+//#ifdef _DEBUG
+//	{
+//		color_t c = RGBA_TO_COLOR(255, 0, 0, 255);
+//		Draw_AlphaLineRGB(w->x, w->y, w->x + w->w, w->y, 2, c);
+//		Draw_AlphaLineRGB(w->x, w->y, w->x, w->y + w->h, 2, c);
+//		Draw_AlphaLineRGB(w->x, w->y + w->h, w->x + w->w, w->y + w->h, 2, c);
+//		Draw_AlphaLineRGB(w->x + w->w, w->y, w->x + w->w, w->y + w->h, 2, c);
+//	}
+//#endif
 }
 
-void M_DrawSliderInt(int x, int y, float range, int value)
+void M_DrawSliderInt(int x, int y, float range, int value, menu_window_t *w)
 {
 	char val_as_str[10];
 
-	M_DrawSlider(x, y, range);
+	M_DrawSlider(x, y, range, w);
 
 	sprintf(val_as_str, "%i", value);
 	M_Print(x + SLIDER_RANGE * 8 + 16, y, val_as_str);
 }
 
-void M_DrawSliderFloat (int x, int y, float range, float value)
+void M_DrawSliderFloat (int x, int y, float range, float value, menu_window_t *w)
 {
 	char val_as_str[10];
 
-	M_DrawSlider(x, y, range);
+	M_DrawSlider(x, y, range, w);
 
 	sprintf(val_as_str, "%.1f", value);
 	M_Print(x + SLIDER_RANGE * 8 + 16, y, val_as_str);
 }
 
-void M_DrawSliderFloat2(int x, int y, float range, float value)
+void M_DrawSliderFloat2(int x, int y, float range, float value, menu_window_t *w)
 {
 	char val_as_str[10];
 
-	M_DrawSlider(x, y, range);
+	M_DrawSlider(x, y, range, w);
 
 	sprintf(val_as_str, "%.2f", value);
 	M_Print(x + SLIDER_RANGE * 8 + 16, y, val_as_str);
+}
+
+int FindSliderItemIndex(float *values, int max_items_count, cvar_t *cvar)
+{
+	int i, current_index;
+
+	if (cvar->value < values[0])
+		current_index = 0;
+	else if (cvar->value >= values[max_items_count - 1])
+		current_index = max_items_count - 1;
+	else
+		for (i = 0; i < max_items_count - 1; i++)
+		{
+			if (cvar->value >= values[i] && cvar->value < values[i + 1])
+			{
+				current_index = i;
+				break;
+			}
+		}
+
+	return current_index;
+}
+
+void AdjustSliderBasedOnArrayOfValues(int dir, float *values, int max_items_count, cvar_t *cvar)
+{
+	int current_index;
+
+	current_index = FindSliderItemIndex(values, max_items_count, cvar);
+
+	if (dir < 0 && current_index > 0)
+		Cvar_SetValue(cvar, values[current_index - 1]);
+	else if (dir > 0 && current_index < (max_items_count - 1))
+		Cvar_SetValue(cvar, values[current_index + 1]);
 }
 
 void M_DrawCheckbox (int x, int y, int on)
@@ -2520,65 +2595,15 @@ qboolean M_Keys_Mouse_Event(const mouse_state_t *ms)
 int	mouse_cursor = 0;
 
 menu_window_t mouse_window;
+menu_window_t mouse_slider_sensitivity_window;
+menu_window_t mouse_slider_rate_window;
 
 extern qboolean use_m_smooth;
 extern cvar_t m_filter;
 extern cvar_t m_rate;
 
-int FindSliderItemIndex(float *values, int max_items_count, cvar_t *cvar)
-{
-	int i, current_index;
-	
-	if (cvar->value < values[0])
-		current_index = 0;
-	else if (cvar->value >= values[max_items_count - 1])
-		current_index = max_items_count - 1;
-	else
-		for (i = 0; i < max_items_count - 1; i++)
-		{
-			if (cvar->value >= values[i] && cvar->value < values[i + 1])
-			{
-				current_index = i;
-				break;
-			}
-		}
-
-	return current_index;
-}
-
-void AdjustSliderBasedOnArrayOfValues(int dir, float *values, int max_items_count, cvar_t *cvar)
-{
-	int current_index;
-	
-	current_index = FindSliderItemIndex(values, max_items_count, cvar);
-
-	if (dir < 0 && current_index > 0)
-		Cvar_SetValue(cvar, values[current_index - 1]);
-	else if (dir > 0 && current_index < (max_items_count - 1))
-		Cvar_SetValue(cvar, values[current_index + 1]);
-}
-
 #define MOUSE_RATE_ITEMS 8
 float mouse_rate_values[MOUSE_RATE_ITEMS] = { 60, 125, 250, 500, 800, 1000, 1500, 2000 };
-
-void M_AdjustMouseSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (mouse_cursor)
-	{
-	case 0:	// mouse speed
-		sensitivity.value += dir * 0.5;
-		sensitivity.value = bound(1, sensitivity.value, 11);
-		Cvar_SetValue(&sensitivity, sensitivity.value);
-		break;
-
-	case 5:	// mouse rate
-		if (use_m_smooth)
-			AdjustSliderBasedOnArrayOfValues(dir, mouse_rate_values, MOUSE_RATE_ITEMS, &m_rate);
-		break;
-	}
-}
 
 void M_Menu_Mouse_f(void)
 {
@@ -2599,7 +2624,7 @@ void M_Mouse_Draw(void)
 
 	M_Print_GetPoint(16, 32, &mouse_window.x, &mouse_window.y, "           Mouse speed", mouse_cursor == 0);
 	r = (sensitivity.value - 1) / 10;
-	M_DrawSliderFloat(220, 32, r, sensitivity.value);
+	M_DrawSliderFloat(220, 32, r, sensitivity.value, &mouse_slider_sensitivity_window);
 
 	M_Print_GetPoint(16, 40, &lx, &ly, "          Mouse filter", mouse_cursor == 1);
 	M_DrawCheckbox(220, 40, m_filter.value);
@@ -2615,7 +2640,7 @@ void M_Mouse_Draw(void)
 	{
 		//r = (m_rate.value - mouse_rate_values[0]) / (mouse_rate_values[MOUSE_RATE_ITEMS-1] - mouse_rate_values[0]);
 		r = (float)FindSliderItemIndex(mouse_rate_values, MOUSE_RATE_ITEMS, &m_rate) / (MOUSE_RATE_ITEMS - 1);
-		M_DrawSliderInt(220, 72, r, m_rate.value);
+		M_DrawSliderInt(220, 72, r, m_rate.value, &mouse_slider_rate_window);
 	}
 	else
 	{
@@ -2647,6 +2672,25 @@ void M_Mouse_Draw(void)
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Mouse smoothing must be set from the");
 		M_Print(2 * 8, 176 + 8 * 4, "command line with -dinput and -m_smooth");
+	}
+}
+
+void M_Mouse_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (mouse_cursor)
+	{
+	case 0:	// mouse speed
+		sensitivity.value += dir * 0.5;
+		sensitivity.value = bound(1, sensitivity.value, 11);
+		Cvar_SetValue(&sensitivity, sensitivity.value);
+		break;
+
+	case 5:	// mouse rate
+		if (use_m_smooth)
+			AdjustSliderBasedOnArrayOfValues(dir, mouse_rate_values, MOUSE_RATE_ITEMS, &m_rate);
+		break;
 	}
 }
 
@@ -2713,11 +2757,11 @@ void M_Mouse_Key(int k)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustMouseSliders(-1);
+		M_Mouse_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustMouseSliders(1);
+		M_Mouse_KeyboardSlider(1);
 		break;
 	}
 
@@ -2755,14 +2799,47 @@ void M_Mouse_Key(int k)
 	}
 }
 
+void M_Mouse_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+	
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (mouse_cursor)
+		{
+		case 0:	// mouse speed
+			M_Mouse_Select_Column(&mouse_slider_sensitivity_window, ms, 21, &slider_pos);
+			sensitivity.value = bound(1, (slider_pos * 0.5) + 1, 11);
+			Cvar_SetValue(&sensitivity, sensitivity.value);
+			break;
+
+		case 5:	// mouse rate
+			if (use_m_smooth)
+			{
+				M_Mouse_Select_Column(&mouse_slider_rate_window, ms, MOUSE_RATE_ITEMS, &slider_pos);
+				Cvar_SetValue(&m_rate, mouse_rate_values[slider_pos]);
+			}
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_Mouse_Mouse_Event(const mouse_state_t *ms)
 {
 	M_Mouse_Select(&mouse_window, ms, MOUSE_ITEMS, &mouse_cursor);
 
-	//TODO: calculate if we're inside a slider bar
-
 	if (ms->button_up == 1) M_Mouse_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_Mouse_Key(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Mouse_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
@@ -2775,24 +2852,10 @@ qboolean M_Mouse_Mouse_Event(const mouse_state_t *ms)
 int	misc_cursor = 0;
 
 menu_window_t misc_window;
+menu_window_t misc_slider_demospeed_window;
 
 #define DEMO_SPEED_ITEMS 6
 float demo_speed_values[DEMO_SPEED_ITEMS] = { 0.125, 0.25, 0.5, 1, 2, 4 };
-
-void M_AdjustMiscSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (misc_cursor)
-	{
-	case 2:	// demo speed
-		AdjustSliderBasedOnArrayOfValues(dir, demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed);
-		break;
-
-	default:
-		break;
-	}
-}
 
 void M_Menu_Misc_f(void)
 {
@@ -2820,7 +2883,7 @@ void M_Misc_Draw(void)
 	M_Print_GetPoint(16, 48, &lx, &ly, "   Demo playback speed", misc_cursor == 2);
 	//r = (cl_demospeed.value - demo_speed_values[0]) / (demo_speed_values[DEMO_SPEED_ITEMS-1] - demo_speed_values[0]);
 	r = (float)FindSliderItemIndex(demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed) / (DEMO_SPEED_ITEMS - 1);
-	M_DrawSliderFloat2(220, 48, r, cl_demospeed.value);
+	M_DrawSliderFloat2(220, 48, r, cl_demospeed.value, &misc_slider_demospeed_window);
 
 	M_Print_GetPoint(-24, 64, &lx, &ly, "Advanced command completion", misc_cursor == 4);
 	M_DrawCheckbox(220, 64, cl_advancedcompletion.value);
@@ -2858,6 +2921,21 @@ void M_Misc_Draw(void)
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Shows a confirmation screen");
 		M_Print(2 * 8, 176 + 8 * 4, "when exiting the game");
+	}
+}
+
+void M_Misc_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (misc_cursor)
+	{
+	case 2:	// demo speed
+		AdjustSliderBasedOnArrayOfValues(dir, demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed);
+		break;
+
+	default:
+		break;
 	}
 }
 
@@ -2952,11 +3030,11 @@ void M_Misc_Key(int k)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustMiscSliders(-1);
+		M_Misc_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustMiscSliders(1);
+		M_Misc_KeyboardSlider(1);
 		break;
 	}
 
@@ -2966,12 +3044,38 @@ void M_Misc_Key(int k)
 		misc_cursor++;
 }
 
+void M_Misc_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (misc_cursor)
+		{
+		case 2:	// demo speed
+			M_Mouse_Select_Column(&misc_slider_demospeed_window, ms, DEMO_SPEED_ITEMS, &slider_pos);
+			Cvar_SetValue(&cl_demospeed, demo_speed_values[slider_pos]);
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_Misc_Mouse_Event(const mouse_state_t *ms)
 {
 	M_Mouse_Select(&misc_window, ms, MISC_ITEMS, &misc_cursor);
 
 	if (ms->button_up == 1) M_Misc_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_Misc_Key(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Misc_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
@@ -2984,58 +3088,15 @@ qboolean M_Misc_Mouse_Event(const mouse_state_t *ms)
 int	hud_cursor = 0;
 
 menu_window_t hud_window;
+menu_window_t hud_slider_sbarscale_window;
+menu_window_t hud_slider_crosshairsize_window;
+menu_window_t hud_slider_crosshairalpha_window;
+menu_window_t hud_slider_consize_window;
+menu_window_t hud_slider_conspeed_window;
+menu_window_t hud_slider_conalpha_window;
 
 #define CONSOLE_SPEED_ITEMS 5
 float console_speed_values[CONSOLE_SPEED_ITEMS] = { 200, 500, 1000, 5000, 99999 };
-
-void M_AdjustHudSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (hud_cursor)
-	{
-	case 0:	// sbar scale
-		scr_sbarscale_amount.value += dir * 0.5;
-		scr_sbarscale_amount.value = bound(1, scr_sbarscale_amount.value, 4);
-		Cvar_SetValue(&scr_sbarscale_amount, scr_sbarscale_amount.value);
-		break;
-
-	case 5:	// crosshair scale
-		crosshairsize.value += dir * 0.5;
-		crosshairsize.value = bound(0, crosshairsize.value, 3);
-		Cvar_SetValue(&crosshairsize, crosshairsize.value);
-		break;
-
-	case 6:	// crosshair alpha
-#ifdef GLQUAKE
-		gl_crosshairalpha.value += dir * 0.1;
-		gl_crosshairalpha.value = bound(0, gl_crosshairalpha.value, 1);
-		Cvar_SetValue(&gl_crosshairalpha, gl_crosshairalpha.value);
-#endif
-		break;
-
-	case 18:// console height
-		scr_consize.value += dir * 0.1;
-		scr_consize.value = bound(0, scr_consize.value, 1);
-		Cvar_SetValue(&scr_consize, scr_consize.value);
-		break;
-
-	case 19: // console speed
-		AdjustSliderBasedOnArrayOfValues(dir, console_speed_values, CONSOLE_SPEED_ITEMS, &scr_conspeed);
-		break;
-
-	case 20:// console alpha
-#ifdef GLQUAKE
-		gl_conalpha.value += dir * 0.1;
-		gl_conalpha.value = bound(0, gl_conalpha.value, 1);
-		Cvar_SetValue(&gl_conalpha, gl_conalpha.value);
-#endif
-		break;
-
-	default:
-		break;
-	}
-}
 
 void DrawHudType(int x, int y)
 {
@@ -3206,7 +3267,7 @@ void M_Hud_Draw(void)
 
 	M_Print_GetPoint(16, 32, &hud_window.x, &hud_window.y, "     Hud/Console scale", hud_cursor == 0);
 	r = (scr_sbarscale_amount.value - 1) / 3;
-	M_DrawSliderFloat(220, 32, r, scr_sbarscale_amount.value);
+	M_DrawSliderFloat(220, 32, r, scr_sbarscale_amount.value, &hud_slider_sbarscale_window);
 
 	M_Print_GetPoint(16, 40, &lx, &ly, "             Hud style", hud_cursor == 1);
 	DrawHudType(220, 40);
@@ -3240,11 +3301,11 @@ void M_Hud_Draw(void)
 
 	M_Print_GetPoint(16, 72, &lx, &ly, "       Crosshair scale", hud_cursor == 5);
 	r = crosshairsize.value / 3;
-	M_DrawSliderFloat(220, 72, r, crosshairsize.value);
+	M_DrawSliderFloat(220, 72, r, crosshairsize.value, &hud_slider_crosshairsize_window);
 
 	M_Print_GetPoint(16, 80, &lx, &ly, "Crosshair transparency", hud_cursor == 6);
 #ifdef GLQUAKE
-	M_DrawSliderFloat(220, 80, gl_crosshairalpha.value, gl_crosshairalpha.value);
+	M_DrawSliderFloat(220, 80, gl_crosshairalpha.value, gl_crosshairalpha.value, &hud_slider_crosshairalpha_window);
 #endif
 
 	M_DrawTextBox(180, 88, 3, 3);
@@ -3266,15 +3327,15 @@ void M_Hud_Draw(void)
 	M_DrawCheckbox(220, 160, show_stats_small.value);
 
 	M_Print_GetPoint(16, 176, &lx, &ly, "        Console height", hud_cursor == 18);
-	M_DrawSliderFloat(220, 176, scr_consize.value, scr_consize.value);
+	M_DrawSliderFloat(220, 176, scr_consize.value, scr_consize.value, &hud_slider_consize_window);
 
 	M_Print_GetPoint(16, 184, &lx, &ly, "         Console speed", hud_cursor == 19);
 	r = (float)FindSliderItemIndex(console_speed_values, CONSOLE_SPEED_ITEMS, &scr_conspeed) / (CONSOLE_SPEED_ITEMS - 1);
-	M_DrawSliderInt(220, 184, r, scr_conspeed.value);
+	M_DrawSliderInt(220, 184, r, scr_conspeed.value, &hud_slider_conspeed_window);
 
 	M_Print_GetPoint(16, 192, &lx, &ly, "  Console transparency", hud_cursor == 20);
 #ifdef GLQUAKE
-	M_DrawSliderFloat(220, 192, gl_conalpha.value, gl_conalpha.value);
+	M_DrawSliderFloat(220, 192, gl_conalpha.value, gl_conalpha.value, &hud_slider_conalpha_window);
 #endif
 
 	hud_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
@@ -3286,6 +3347,55 @@ void M_Hud_Draw(void)
 
 	// cursor
 	M_DrawCharacter(200, 32 + hud_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+}
+
+void M_Hud_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (hud_cursor)
+	{
+	case 0:	// sbar scale
+		scr_sbarscale_amount.value += dir * 0.5;
+		scr_sbarscale_amount.value = bound(1, scr_sbarscale_amount.value, 4);
+		Cvar_SetValue(&scr_sbarscale_amount, scr_sbarscale_amount.value);
+		break;
+
+	case 5:	// crosshair scale
+		crosshairsize.value += dir * 0.5;
+		crosshairsize.value = bound(0, crosshairsize.value, 3);
+		Cvar_SetValue(&crosshairsize, crosshairsize.value);
+		break;
+
+	case 6:	// crosshair alpha
+#ifdef GLQUAKE
+		gl_crosshairalpha.value += dir * 0.1;
+		gl_crosshairalpha.value = bound(0, gl_crosshairalpha.value, 1);
+		Cvar_SetValue(&gl_crosshairalpha, gl_crosshairalpha.value);
+#endif
+		break;
+
+	case 18:// console height
+		scr_consize.value += dir * 0.1;
+		scr_consize.value = bound(0, scr_consize.value, 1);
+		Cvar_SetValue(&scr_consize, scr_consize.value);
+		break;
+
+	case 19: // console speed
+		AdjustSliderBasedOnArrayOfValues(dir, console_speed_values, CONSOLE_SPEED_ITEMS, &scr_conspeed);
+		break;
+
+	case 20:// console alpha
+#ifdef GLQUAKE
+		gl_conalpha.value += dir * 0.1;
+		gl_conalpha.value = bound(0, gl_conalpha.value, 1);
+		Cvar_SetValue(&gl_conalpha, gl_conalpha.value);
+#endif
+		break;
+
+	default:
+		break;
+	}
 }
 
 void M_Hud_Key(int k)
@@ -3420,11 +3530,11 @@ void M_Hud_Key(int k)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustHudSliders(-1);
+		M_Hud_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustHudSliders(1);
+		M_Hud_KeyboardSlider(1);
 		break;
 	}
 
@@ -3444,12 +3554,72 @@ void M_Hud_Key(int k)
 	}
 }
 
+void M_Hud_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (hud_cursor)
+		{
+		case 0:	// sbar scale
+			M_Mouse_Select_Column(&hud_slider_sbarscale_window, ms, 7, &slider_pos);
+			scr_sbarscale_amount.value = bound(1, (slider_pos * 0.5) + 1, 4);
+			Cvar_SetValue(&scr_sbarscale_amount, scr_sbarscale_amount.value);
+			break;
+
+		case 5:	// crosshair scale
+			M_Mouse_Select_Column(&hud_slider_crosshairsize_window, ms, 7, &slider_pos);
+			crosshairsize.value = bound(0, slider_pos * 0.5, 3);
+			Cvar_SetValue(&crosshairsize, crosshairsize.value);
+			break;
+
+		case 6:	// crosshair alpha
+#ifdef GLQUAKE
+			M_Mouse_Select_Column(&hud_slider_crosshairalpha_window, ms, 11, &slider_pos);
+			gl_crosshairalpha.value = bound(0, slider_pos * 0.1, 1);
+			Cvar_SetValue(&gl_crosshairalpha, gl_crosshairalpha.value);
+#endif
+			break;
+
+		case 18:// console height
+			M_Mouse_Select_Column(&hud_slider_consize_window, ms, 11, &slider_pos);
+			scr_consize.value = bound(0, slider_pos * 0.1, 1);
+			Cvar_SetValue(&scr_consize, scr_consize.value);
+			break;
+
+		case 19: // console speed
+			M_Mouse_Select_Column(&hud_slider_conspeed_window, ms, CONSOLE_SPEED_ITEMS, &slider_pos);
+			Cvar_SetValue(&scr_conspeed, console_speed_values[slider_pos]);
+			break;
+
+		case 20:// console alpha
+#ifdef GLQUAKE
+			M_Mouse_Select_Column(&hud_slider_conalpha_window, ms, 11, &slider_pos);
+			gl_conalpha.value = bound(0, slider_pos * 0.1, 1);
+			Cvar_SetValue(&gl_conalpha, gl_conalpha.value);
+#endif
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_Hud_Mouse_Event(const mouse_state_t *ms)
 {
 	M_Mouse_Select(&hud_window, ms, HUD_ITEMS, &hud_cursor);
 
 	if (ms->button_up == 1) M_Hud_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_Hud_Key(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Hud_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
@@ -3468,32 +3638,9 @@ int red, green, blue;
 int	colorchooser_cursor = 0;
 
 menu_window_t colorchooser_window;
-
-void M_AdjustColorChooserSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (colorchooser_cursor)
-	{
-	case 0:
-		red += dir * 15;
-		red = bound(0, red, 255);
-		break;
-
-	case 1:
-		green += dir * 15;
-		green = bound(0, green, 255);
-		break;
-
-	case 2:
-		blue += dir * 15;
-		blue = bound(0, blue, 255);
-		break;
-
-	default:
-		break;
-	}
-}
+menu_window_t colorchooser_slider_red_window;
+menu_window_t colorchooser_slider_green_window;
+menu_window_t colorchooser_slider_blue_window;
 
 void M_Menu_Crosshair_ColorChooser_f(void)
 {
@@ -3567,15 +3714,15 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 
 	M_Print_GetPoint(16, 48, &colorchooser_window.x, &colorchooser_window.y, "           Red", colorchooser_cursor == 0);
 	r = red / 255.0F;
-	M_DrawSliderInt(156, 48, r, red);
+	M_DrawSliderInt(156, 48, r, red, &colorchooser_slider_red_window);
 
 	M_Print_GetPoint(16, 56, &lx, &ly, "         Green", colorchooser_cursor == 1);
 	r = green / 255.0F;
-	M_DrawSliderInt(156, 56, r, green);
+	M_DrawSliderInt(156, 56, r, green, &colorchooser_slider_green_window);
 
 	M_Print_GetPoint(16, 64, &lx, &ly, "          Blue", colorchooser_cursor == 2);
 	r = blue / 255.0F;
-	M_DrawSliderInt(156, 64, r, blue);
+	M_DrawSliderInt(156, 64, r, blue, &colorchooser_slider_blue_window);
 
 	M_Print_GetPoint(16, 80, &lx, &ly, "Accept changes", colorchooser_cursor == 4);
 
@@ -3618,6 +3765,32 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 
 	// cursor
 	M_DrawCharacter(136, 48 + colorchooser_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+}
+
+void M_ColorChooser_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (colorchooser_cursor)
+	{
+	case 0:
+		red += dir * 15;
+		red = bound(0, red, 255);
+		break;
+
+	case 1:
+		green += dir * 15;
+		green = bound(0, green, 255);
+		break;
+
+	case 2:
+		blue += dir * 15;
+		blue = bound(0, blue, 255);
+		break;
+
+	default:
+		break;
+	}
 }
 
 void M_ColorChooser_Key(int k, colorchooser_t cstype)
@@ -3701,11 +3874,11 @@ void M_ColorChooser_Key(int k, colorchooser_t cstype)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustColorChooserSliders(-1);
+		M_ColorChooser_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustColorChooserSliders(1);
+		M_ColorChooser_KeyboardSlider(1);
 		break;
 	}
 
@@ -3715,12 +3888,48 @@ void M_ColorChooser_Key(int k, colorchooser_t cstype)
 		colorchooser_cursor++;
 }
 
+void M_ColorChooser_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (colorchooser_cursor)
+		{
+		case 0:
+			M_Mouse_Select_Column(&colorchooser_slider_red_window, ms, 18, &slider_pos);
+			red = bound(0, slider_pos * 15, 255);
+			break;
+
+		case 1:
+			M_Mouse_Select_Column(&colorchooser_slider_green_window, ms, 18, &slider_pos);
+			green = bound(0, slider_pos * 15, 255);
+			break;
+
+		case 2:
+			M_Mouse_Select_Column(&colorchooser_slider_blue_window, ms, 18, &slider_pos);
+			blue = bound(0, slider_pos * 15, 255);
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_ColorChooser_Mouse_Event(const mouse_state_t *ms, colorchooser_t cstype)
 {
 	M_Mouse_Select(&colorchooser_window, ms, COLORCHOOSER_ITEMS, &colorchooser_cursor);
 
 	if (ms->button_up == 1) M_ColorChooser_Key(K_MOUSE1, cstype);
 	if (ms->button_up == 2) M_ColorChooser_Key(K_MOUSE2, cstype);
+
+	if (ms->buttons[1]) M_ColorChooser_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
@@ -3733,26 +3942,8 @@ qboolean M_ColorChooser_Mouse_Event(const mouse_state_t *ms, colorchooser_t csty
 int	sound_cursor = 0;
 
 menu_window_t sound_window;
-
-void M_AdjustSoundSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (sound_cursor)
-	{
-	case 0:	// sfx volume
-		s_volume.value += dir * 0.1;
-		s_volume.value = bound(0, s_volume.value, 1);
-		Cvar_SetValue(&s_volume, s_volume.value);
-		break;
-
-	case 1:	// bgm volume
-		bgmvolume.value += dir * 0.1;
-		bgmvolume.value = bound(0, bgmvolume.value, 1);
-		Cvar_SetValue(&bgmvolume, bgmvolume.value);
-		break;
-	}
-}
+menu_window_t sound_slider_volume_window;
+menu_window_t sound_slider_bgmvolume_window;
 
 void M_Menu_Sound_f(void)
 {
@@ -3772,10 +3963,10 @@ void M_Sound_Draw(void)
 	M_DrawPic((320 - p->width) >> 1, 4, p);
 
 	M_Print_GetPoint(16, 32, &sound_window.x, &sound_window.y, "          Sound volume", sound_cursor == 0);
-	M_DrawSliderFloat(220, 32, s_volume.value, s_volume.value);
+	M_DrawSliderFloat(220, 32, s_volume.value, s_volume.value, &sound_slider_volume_window);
 
 	M_Print_GetPoint(16, 40, &lx, &ly, "          Music volume", sound_cursor == 1);
-	M_DrawSliderFloat(220, 40, bgmvolume.value, bgmvolume.value);
+	M_DrawSliderFloat(220, 40, bgmvolume.value, bgmvolume.value, &sound_slider_bgmvolume_window);
 
 	M_Print_GetPoint(16, 48, &lx, &ly, "         Sound quality", sound_cursor == 2);
 	sprintf(sound_quality, "%s KHz", s_khz.string);
@@ -3792,6 +3983,26 @@ void M_Sound_Draw(void)
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Sound quality must be set from the");
 		M_Print(2 * 8, 176 + 8 * 4, "command line with +set s_khz <22 or 44>");
+	}
+}
+
+void M_Sound_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (sound_cursor)
+	{
+	case 0:	// sfx volume
+		s_volume.value += dir * 0.1;
+		s_volume.value = bound(0, s_volume.value, 1);
+		Cvar_SetValue(&s_volume, s_volume.value);
+		break;
+
+	case 1:	// bgm volume
+		bgmvolume.value += dir * 0.1;
+		bgmvolume.value = bound(0, bgmvolume.value, 1);
+		Cvar_SetValue(&bgmvolume, bgmvolume.value);
+		break;
 	}
 }
 
@@ -3846,12 +4057,43 @@ void M_Sound_Key(int k)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustSoundSliders(-1);
+		M_Sound_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustSoundSliders(1);
+		M_Sound_KeyboardSlider(1);
 		break;
+	}
+}
+
+void M_Sound_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (sound_cursor)
+		{
+		case 0:	// sfx volume
+			M_Mouse_Select_Column(&sound_slider_volume_window, ms, 11, &slider_pos);
+			s_volume.value = bound(0, slider_pos * 0.1, 1);
+			Cvar_SetValue(&s_volume, s_volume.value);
+			break;
+
+		case 1:	// bgm volume
+			M_Mouse_Select_Column(&sound_slider_bgmvolume_window, ms, 11, &slider_pos);
+			bgmvolume.value = bound(0, slider_pos * 0.1, 1);
+			Cvar_SetValue(&bgmvolume, bgmvolume.value);
+			break;
+
+		default:
+			break;
+		}
+		return;
 	}
 }
 
@@ -3861,6 +4103,8 @@ qboolean M_Sound_Mouse_Event(const mouse_state_t *ms)
 
 	if (ms->button_up == 1) M_Sound_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_Sound_Key(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Sound_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
@@ -3875,6 +4119,11 @@ qboolean M_Sound_Mouse_Event(const mouse_state_t *ms)
 int	view_cursor = 0;
 
 menu_window_t view_window;
+menu_window_t view_slider_viewsize_window;
+menu_window_t view_slider_gamma_window;
+menu_window_t view_slider_contrast_window;
+menu_window_t view_slider_fov_window;
+menu_window_t view_slider_farclip_window;
 
 void M_Menu_View_f (void)
 {
@@ -3885,42 +4134,6 @@ void M_Menu_View_f (void)
 
 #define	FARCLIP_ITEMS	6
 float farclip_values[] = { 1024, 2048, 4096, 8192, 16384, 32768 };
-
-void M_AdjustViewSliders (int dir)
-{
-	S_LocalSound ("misc/menu3.wav");
-
-	switch (view_cursor)
-	{
-	case 0:	// screen size
-		scr_viewsize.value += dir * 10;
-		scr_viewsize.value = bound(30, scr_viewsize.value, 120);
-		Cvar_SetValue(&scr_viewsize, scr_viewsize.value);
-		break;
-
-	case 1:	// gamma
-		v_gamma.value -= dir * 0.05;
-		v_gamma.value = bound(0.5, v_gamma.value, 1);
-		Cvar_SetValue(&v_gamma, v_gamma.value);
-		break;
-
-	case 2:	// contrast
-		v_contrast.value += dir * 0.1;
-		v_contrast.value = bound(1, v_contrast.value, 2);
-		Cvar_SetValue(&v_contrast, v_contrast.value);
-		break;
-
-	case 4:// fov
-		scr_fov.value += dir * 5;
-		scr_fov.value = bound(90, scr_fov.value, 130);
-		Cvar_SetValue(&scr_fov, scr_fov.value);
-		break;
-
-	case 6:// view distance
-		AdjustSliderBasedOnArrayOfValues(dir, farclip_values, FARCLIP_ITEMS, &r_farclip);
-		break;
-	}
-}
 
 void M_View_Draw (void)
 {
@@ -3935,19 +4148,19 @@ void M_View_Draw (void)
 	
 	M_Print_GetPoint(16, 32, &view_window.x, &view_window.y, "           Screen size", view_cursor == 0);
 	r = (scr_viewsize.value - 30) / (120 - 30);
-	M_DrawSliderInt(220, 32, r, (int)(scr_viewsize.value / 10));
+	M_DrawSliderInt(220, 32, r, (int)(scr_viewsize.value / 10), &view_slider_viewsize_window);
 
 	M_Print_GetPoint(16, 40, &lx, &ly, "                 Gamma", view_cursor == 1);
 	r = (1.0 - v_gamma.value) / 0.5;
-	M_DrawSliderFloat2(220, 40, r, v_gamma.value);
+	M_DrawSliderFloat2(220, 40, r, v_gamma.value, &view_slider_gamma_window);
 
 	M_Print_GetPoint(16, 48, &lx, &ly, "              Contrast", view_cursor == 2);
 	r = v_contrast.value - 1.0;
-	M_DrawSliderFloat(220, 48, r, v_contrast.value);
+	M_DrawSliderFloat(220, 48, r, v_contrast.value, &view_slider_contrast_window);
 
 	M_Print_GetPoint(16, 64, &lx, &ly, "         Field of view", view_cursor == 4);
 	r = (scr_fov.value - 90) / (130 - 90);
-	M_DrawSliderInt(220, 64, r, scr_fov.value);
+	M_DrawSliderInt(220, 64, r, scr_fov.value, &view_slider_fov_window);
 
 	M_Print_GetPoint(16, 72, &lx, &ly, "        Widescreen fov", view_cursor == 5);
 	M_DrawCheckbox(220, 72, scr_widescreen_fov.value);
@@ -3955,7 +4168,7 @@ void M_View_Draw (void)
 	M_Print_GetPoint(16, 80, &lx, &ly, "         View distance", view_cursor == 6);
 	//r = (r_farclip.value - farclip_values[0]) / (farclip_values[FARCLIP_ITEMS-1] - farclip_values[0]);
 	r = (float)FindSliderItemIndex(farclip_values, FARCLIP_ITEMS, &r_farclip) / (FARCLIP_ITEMS - 1);
-	M_DrawSliderInt(220, 80, r, r_farclip.value);
+	M_DrawSliderInt(220, 80, r, r_farclip.value, &view_slider_farclip_window);
 
 	M_Print_GetPoint(16, 88, &lx, &ly, "             Solid sky", view_cursor == 7);
 	M_DrawCheckbox(220, 88, r_fastsky.value);
@@ -4011,6 +4224,42 @@ void M_View_Draw (void)
 	}
 }
 
+void M_View_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (view_cursor)
+	{
+	case 0:	// screen size
+		scr_viewsize.value += dir * 10;
+		scr_viewsize.value = bound(30, scr_viewsize.value, 120);
+		Cvar_SetValue(&scr_viewsize, scr_viewsize.value);
+		break;
+
+	case 1:	// gamma
+		v_gamma.value -= dir * 0.05;
+		v_gamma.value = bound(0.5, v_gamma.value, 1);
+		Cvar_SetValue(&v_gamma, v_gamma.value);
+		break;
+
+	case 2:	// contrast
+		v_contrast.value += dir * 0.1;
+		v_contrast.value = bound(1, v_contrast.value, 2);
+		Cvar_SetValue(&v_contrast, v_contrast.value);
+		break;
+
+	case 4:// fov
+		scr_fov.value += dir * 5;
+		scr_fov.value = bound(90, scr_fov.value, 130);
+		Cvar_SetValue(&scr_fov, scr_fov.value);
+		break;
+
+	case 6:// view distance
+		AdjustSliderBasedOnArrayOfValues(dir, farclip_values, FARCLIP_ITEMS, &r_farclip);
+		break;
+	}
+}
+
 void M_View_Key (int k)
 {
 	float newvalue;
@@ -4051,11 +4300,11 @@ void M_View_Key (int k)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustViewSliders (-1);
+		M_View_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustViewSliders (1);
+		M_View_KeyboardSlider(1);
 		break;
 
 	case K_ENTER:
@@ -4103,7 +4352,6 @@ void M_View_Key (int k)
 			break;
 
 		default:
-			M_AdjustViewSliders(1);
 			break;
 		}
 	}
@@ -4114,12 +4362,62 @@ void M_View_Key (int k)
 		view_cursor++;
 }
 
+void M_View_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (view_cursor)
+		{
+		case 0:	// screen size
+			M_Mouse_Select_Column(&view_slider_viewsize_window, ms, 10, &slider_pos);
+			scr_viewsize.value = bound(30, (slider_pos * 10) + 30, 120);
+			Cvar_SetValue(&scr_viewsize, scr_viewsize.value);
+			break;
+
+		case 1:	// gamma
+			M_Mouse_Select_Column(&view_slider_gamma_window, ms, 11, &slider_pos);
+			v_gamma.value = bound(0.5, 1 - (slider_pos * 0.05), 1);
+			Cvar_SetValue(&v_gamma, v_gamma.value);
+			break;
+
+		case 2:	// contrast
+			M_Mouse_Select_Column(&view_slider_contrast_window, ms, 11, &slider_pos);
+			v_contrast.value = bound(1, (slider_pos * 0.1) + 1, 2);
+			Cvar_SetValue(&v_contrast, v_contrast.value);
+			break;
+
+		case 4:// fov
+			M_Mouse_Select_Column(&view_slider_fov_window, ms, 9, &slider_pos);
+			scr_fov.value = bound(90, (slider_pos * 5) + 90, 130);
+			Cvar_SetValue(&scr_fov, scr_fov.value);
+			break;
+
+		case 6:// view distance
+			M_Mouse_Select_Column(&view_slider_farclip_window, ms, FARCLIP_ITEMS, &slider_pos);
+			Cvar_SetValue(&r_farclip, farclip_values[slider_pos]);
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_View_Mouse_Event(const mouse_state_t *ms)
 {
 	M_Mouse_Select(&view_window, ms, VIEW_ITEMS, &view_cursor);
 
 	if (ms->button_up == 1) M_View_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_View_Key(K_MOUSE2);
+
+	if (ms->buttons[1]) M_View_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
@@ -4132,6 +4430,9 @@ qboolean M_View_Mouse_Event(const mouse_state_t *ms)
 int opengl_cursor = 0;
 
 menu_window_t opengl_window;
+menu_window_t opengl_slider_wateralpha_window;
+menu_window_t opengl_slider_waterfog_density_window;
+menu_window_t opengl_slider_ringalpha_window;
 
 void SearchForCharsets(void)
 {
@@ -4163,32 +4464,6 @@ void M_Menu_Renderer_f(void)
 	SearchForCharsets();
 }
 
-void M_AdjustOpenGLSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (opengl_cursor)
-	{
-	case 8:
-		r_wateralpha.value += dir * 0.1;
-		r_wateralpha.value = bound(0, r_wateralpha.value, 1);
-		Cvar_SetValue(&r_wateralpha, r_wateralpha.value);
-		break;
-
-	case 11:
-		gl_waterfog_density.value += dir * 0.1;
-		gl_waterfog_density.value = bound(0, gl_waterfog_density.value, 1);
-		Cvar_SetValue(&gl_waterfog_density, gl_waterfog_density.value);
-		break;
-
-	case 13:
-		gl_ringalpha.value += dir * 0.1;
-		gl_ringalpha.value = bound(0, gl_ringalpha.value, 1);
-		Cvar_SetValue(&gl_ringalpha, gl_ringalpha.value);
-		break;
-	}
-}
-
 void M_Renderer_Draw(void)
 {
 	int		lx, ly;
@@ -4217,7 +4492,7 @@ void M_Renderer_Draw(void)
 	M_DrawCheckbox(220, 80, gl_loadq3models.value);
 
 	M_Print_GetPoint(16, 96, &lx, &ly, "    Water transparency", opengl_cursor == 8);
-	M_DrawSliderFloat(220, 96, r_wateralpha.value, r_wateralpha.value);
+	M_DrawSliderFloat(220, 96, r_wateralpha.value, r_wateralpha.value, &opengl_slider_wateralpha_window);
 
 	M_Print_GetPoint(16, 104, &lx, &ly, "        Water caustics", opengl_cursor == 9);
 	M_DrawCheckbox(220, 104, gl_caustics.value);
@@ -4226,10 +4501,10 @@ void M_Renderer_Draw(void)
 	M_Print(220, 112, !gl_waterfog.value ? "off" : gl_waterfog.value == 2 ? "extra" : "normal");
 
 	M_Print_GetPoint(16, 120, &lx, &ly, "      Waterfog density", opengl_cursor == 11);
-	M_DrawSliderFloat(220, 120, gl_waterfog_density.value, gl_waterfog_density.value);
+	M_DrawSliderFloat(220, 120, gl_waterfog_density.value, gl_waterfog_density.value, &opengl_slider_waterfog_density_window);
 
 	M_Print_GetPoint(-8, 136, &lx, &ly, "Invisibility transparency", opengl_cursor == 13);
-	M_DrawSliderFloat(220, 136, gl_ringalpha.value, gl_ringalpha.value);
+	M_DrawSliderFloat(220, 136, gl_ringalpha.value, gl_ringalpha.value, &opengl_slider_ringalpha_window);
 
 	M_Print_GetPoint(16, 144, &lx, &ly, "     Console font type", opengl_cursor == 14);
 	M_Print(220, 144, gl_consolefont.string);
@@ -4250,6 +4525,32 @@ void M_Renderer_Draw(void)
 
 	// cursor
 	M_DrawCharacter(200, 32 + opengl_cursor * 8, 12 + ((int)(realtime * 4) & 1));
+}
+
+void M_Renderer_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (opengl_cursor)
+	{
+	case 8:
+		r_wateralpha.value += dir * 0.1;
+		r_wateralpha.value = bound(0, r_wateralpha.value, 1);
+		Cvar_SetValue(&r_wateralpha, r_wateralpha.value);
+		break;
+
+	case 11:
+		gl_waterfog_density.value += dir * 0.1;
+		gl_waterfog_density.value = bound(0, gl_waterfog_density.value, 1);
+		Cvar_SetValue(&gl_waterfog_density, gl_waterfog_density.value);
+		break;
+
+	case 13:
+		gl_ringalpha.value += dir * 0.1;
+		gl_ringalpha.value = bound(0, gl_ringalpha.value, 1);
+		Cvar_SetValue(&gl_ringalpha, gl_ringalpha.value);
+		break;
+	}
 }
 
 void M_Renderer_Key(int k)
@@ -4294,11 +4595,11 @@ void M_Renderer_Key(int k)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustOpenGLSliders(-1);
+		M_Renderer_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustOpenGLSliders(1);
+		M_Renderer_KeyboardSlider(1);
 		break;
 
 	case K_ENTER:
@@ -4415,7 +4716,6 @@ void M_Renderer_Key(int k)
 			break;
 
 		default:
-			M_AdjustOpenGLSliders(1);
 			break;
 		}
 	}
@@ -4426,12 +4726,51 @@ void M_Renderer_Key(int k)
 		opengl_cursor++;
 }
 
+void M_Renderer_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (opengl_cursor)
+		{
+		case 8:
+			M_Mouse_Select_Column(&opengl_slider_wateralpha_window, ms, 11, &slider_pos);
+			r_wateralpha.value = bound(0, slider_pos * 0.1, 1);
+			Cvar_SetValue(&r_wateralpha, r_wateralpha.value);
+			break;
+
+		case 11:
+			M_Mouse_Select_Column(&opengl_slider_waterfog_density_window, ms, 11, &slider_pos);
+			gl_waterfog_density.value = bound(0, slider_pos * 0.1, 1);
+			Cvar_SetValue(&gl_waterfog_density, gl_waterfog_density.value);
+			break;
+
+		case 13:
+			M_Mouse_Select_Column(&opengl_slider_ringalpha_window, ms, 11, &slider_pos);
+			gl_ringalpha.value = bound(0, slider_pos * 0.1, 1);
+			Cvar_SetValue(&gl_ringalpha, gl_ringalpha.value);
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_Renderer_Mouse_Event(const mouse_state_t *ms)
 {
 	M_Mouse_Select(&opengl_window, ms, OPENGL_ITEMS, &opengl_cursor);
 
 	if (ms->button_up == 1) M_Renderer_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_Renderer_Key(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Renderer_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
@@ -4444,6 +4783,8 @@ qboolean M_Renderer_Mouse_Event(const mouse_state_t *ms)
 int textures_cursor = 0;
 
 menu_window_t textures_window;
+menu_window_t textures_slider_picmip_window;
+menu_window_t textures_slider_maxsize_window;
 
 char *texture_filters[] = {
 	"GL_NEAREST_MIPMAP_NEAREST",
@@ -4466,24 +4807,6 @@ void M_Menu_Textures_f(void)
 
 #define MAX_SIZE_ITEMS 7
 float max_size_values[MAX_SIZE_ITEMS] = { 256, 512, 1024, 2048, 4096, 8192, 16384 };
-
-void M_AdjustTexturesSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (textures_cursor)
-	{
-	case 3:
-		gl_picmip.value -= dir;
-		gl_picmip.value = bound(0, gl_picmip.value, 4);
-		Cvar_SetValue(&gl_picmip, gl_picmip.value);
-		break;
-
-	case 5:
-		AdjustSliderBasedOnArrayOfValues(dir, max_size_values, MAX_SIZE_ITEMS, &gl_max_size);
-		break;
-	}
-}
 
 void M_Textures_Draw(void)
 {
@@ -4511,7 +4834,7 @@ void M_Textures_Draw(void)
 
 	M_Print_GetPoint(16, 56, &lx, &ly, "       Texture quality", textures_cursor == 3);
 	r = (4 - gl_picmip.value) * 0.25;
-	M_DrawSlider(220, 56, r);
+	M_DrawSlider(220, 56, r, &textures_slider_picmip_window);
 
 	M_Print_GetPoint(16, 64, &lx, &ly, "     Detailed textures", textures_cursor == 4);
 	M_DrawCheckbox(220, 64, gl_detail.value);
@@ -4519,7 +4842,7 @@ void M_Textures_Draw(void)
 	M_Print_GetPoint(16, 72, &lx, &ly, "      Max texture size", textures_cursor == 5);
 	//r = (gl_max_size.value - max_size_values[0]) / (max_size_values[MAX_SIZE_ITEMS-1] - max_size_values[0]);
 	r = (float)FindSliderItemIndex(max_size_values, MAX_SIZE_ITEMS, &gl_max_size) / (MAX_SIZE_ITEMS - 1);
-	M_DrawSliderInt(220, 72, r, gl_max_size.value);
+	M_DrawSliderInt(220, 72, r, gl_max_size.value, &textures_slider_maxsize_window);
 
 	M_Print_GetPoint(-40, 88, &lx, &ly, "Enable external textures for:", false);
 
@@ -4557,6 +4880,24 @@ void M_Textures_Draw(void)
 		M_Print(2 * 8, 176 + 8 * 3, "Dynamic objects are players, monsters,");
 		M_Print(2 * 8, 176 + 8 * 4, "weapons, armors, keys, gibs, backpack,");
 		M_Print(2 * 8, 176 + 8 * 5, "rocket, grenade and torches");
+	}
+}
+
+void M_Textures_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (textures_cursor)
+	{
+	case 3:
+		gl_picmip.value -= dir;
+		gl_picmip.value = bound(0, gl_picmip.value, 4);
+		Cvar_SetValue(&gl_picmip, gl_picmip.value);
+		break;
+
+	case 5:
+		AdjustSliderBasedOnArrayOfValues(dir, max_size_values, MAX_SIZE_ITEMS, &gl_max_size);
+		break;
 	}
 }
 
@@ -4600,11 +4941,11 @@ void M_Textures_Key(int k)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustTexturesSliders(-1);
+		M_Textures_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustTexturesSliders(1);
+		M_Textures_KeyboardSlider(1);
 		break;
 
 	case K_ENTER:
@@ -4660,7 +5001,6 @@ void M_Textures_Key(int k)
 			break;
 
 		default:
-			M_AdjustTexturesSliders(1);
 			break;
 		}
 	}
@@ -4671,12 +5011,44 @@ void M_Textures_Key(int k)
 		textures_cursor += 2;
 }
 
+void M_Textures_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (textures_cursor)
+		{
+		case 3:
+			M_Mouse_Select_Column(&textures_slider_picmip_window, ms, 5, &slider_pos);
+			gl_picmip.value = bound(0, 4 - slider_pos, 4);
+			Cvar_SetValue(&gl_picmip, gl_picmip.value);
+			break;
+
+		case 5:
+			M_Mouse_Select_Column(&textures_slider_maxsize_window, ms, MAX_SIZE_ITEMS, &slider_pos);
+			Cvar_SetValue(&gl_max_size, max_size_values[slider_pos]);
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_Textures_Mouse_Event(const mouse_state_t *ms)
 {
 	M_Mouse_Select(&textures_window, ms, TEXTURES_ITEMS, &textures_cursor);
 
 	if (ms->button_up == 1) M_Textures_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_Textures_Key(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Textures_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
@@ -4863,6 +5235,8 @@ qboolean M_Particles_Mouse_Event(const mouse_state_t *ms)
 int	decals_cursor = 0;
 
 menu_window_t decals_window;
+menu_window_t decals_slider_decaltime_window;
+menu_window_t decals_slider_viewdistance_window;
 
 void M_Menu_Decals_f(void)
 {
@@ -4877,22 +5251,6 @@ float decal_time_values[] = { 15, 30, 60, 120, 300, 600 };
 #define	DECAL_VIEWDISTANCE_ITEMS	6
 float decal_viewdistance_values[] = { 512, 1024, 2048, 4096, 8192, 16384 };
 
-void M_AdjustDecalsSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (decals_cursor)
-	{
-	case 0:
-		AdjustSliderBasedOnArrayOfValues(dir, decal_time_values, DECAL_TIME_ITEMS, &gl_decaltime);
-		break;
-
-	case 1:
-		AdjustSliderBasedOnArrayOfValues(dir, decal_viewdistance_values, DECAL_VIEWDISTANCE_ITEMS, &gl_decal_viewdistance);
-		break;
-	}
-}
-
 void M_Decals_Draw(void)
 {
 	int		lx, ly;
@@ -4906,12 +5264,12 @@ void M_Decals_Draw(void)
 	M_Print_GetPoint(-32, 32, &decals_window.x, &decals_window.y, "Lifetime of decals (seconds)", decals_cursor == 0);
 	//r = (gl_decaltime.value - decal_time_values[0]) / (decal_time_values[DECAL_TIME_ITEMS-1] - decal_time_values[0]);
 	r = (float)FindSliderItemIndex(decal_time_values, DECAL_TIME_ITEMS, &gl_decaltime) / (DECAL_TIME_ITEMS - 1);
-	M_DrawSliderInt(220, 32, r, gl_decaltime.value);
+	M_DrawSliderInt(220, 32, r, gl_decaltime.value, &decals_slider_decaltime_window);
 
 	M_Print_GetPoint(8, 40, &lx, &ly, "View distance of decals", decals_cursor == 1);
 	//r = (gl_decal_viewdistance.value - decal_viewdistance_values[0]) / (decal_viewdistance_values[DECAL_VIEWDISTANCE_ITEMS-1] - decal_viewdistance_values[0]);
 	r = (float)FindSliderItemIndex(decal_viewdistance_values, DECAL_VIEWDISTANCE_ITEMS, &gl_decal_viewdistance) / (DECAL_VIEWDISTANCE_ITEMS - 1);
-	M_DrawSliderInt(220, 40, r, gl_decal_viewdistance.value);
+	M_DrawSliderInt(220, 40, r, gl_decal_viewdistance.value, &decals_slider_viewdistance_window);
 
 	M_Print_GetPoint(16, 56, &lx, &ly, "       Blood splatters", decals_cursor == 3);
 	M_DrawCheckbox(220, 56, gl_decal_blood.value);
@@ -4938,6 +5296,22 @@ void M_Decals_Draw(void)
 	M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 	M_Print(2 * 8, 176 + 8 * 3, "Decals are displayed only when using");
 	M_Print(2 * 8, 176 + 8 * 4, "QMB or Quake3 style particle effects");
+}
+
+void M_Decals_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (decals_cursor)
+	{
+	case 0:
+		AdjustSliderBasedOnArrayOfValues(dir, decal_time_values, DECAL_TIME_ITEMS, &gl_decaltime);
+		break;
+
+	case 1:
+		AdjustSliderBasedOnArrayOfValues(dir, decal_viewdistance_values, DECAL_VIEWDISTANCE_ITEMS, &gl_decal_viewdistance);
+		break;
+	}
 }
 
 void M_Decals_Key(int k)
@@ -4978,11 +5352,11 @@ void M_Decals_Key(int k)
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustDecalsSliders(-1);
+		M_Decals_KeyboardSlider(-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustDecalsSliders(1);
+		M_Decals_KeyboardSlider(1);
 		break;
 
 	case K_ENTER:
@@ -5007,7 +5381,6 @@ void M_Decals_Key(int k)
 			break;
 
 		default:
-			M_AdjustDecalsSliders(1);
 			break;
 		}
 	}
@@ -5018,12 +5391,43 @@ void M_Decals_Key(int k)
 		decals_cursor++;
 }
 
+void M_Decals_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (decals_cursor)
+		{
+		case 0:
+			M_Mouse_Select_Column(&decals_slider_decaltime_window, ms, DECAL_TIME_ITEMS, &slider_pos);
+			Cvar_SetValue(&gl_decaltime, decal_time_values[slider_pos]);
+			break;
+
+		case 1:
+			M_Mouse_Select_Column(&decals_slider_viewdistance_window, ms, DECAL_VIEWDISTANCE_ITEMS, &slider_pos);
+			Cvar_SetValue(&gl_decal_viewdistance, decal_viewdistance_values[slider_pos]);
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_Decals_Mouse_Event(const mouse_state_t *ms)
 {
 	M_Mouse_Select(&decals_window, ms, DECALS_ITEMS, &decals_cursor);
 
 	if (ms->button_up == 1) M_Decals_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_Decals_Key(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Decals_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
@@ -5042,17 +5446,6 @@ void M_Menu_Weapons_f(void)
 	key_dest = key_menu;
 	m_state = m_weapons;
 	m_entersound = true;
-}
-
-void M_AdjustWeaponsSliders(int dir)
-{
-	S_LocalSound("misc/menu3.wav");
-
-	switch (weapons_cursor)
-	{
-	default:
-		break;
-	}
 }
 
 void DrawViewmodelType(int x, int y)
