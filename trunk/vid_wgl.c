@@ -1957,10 +1957,10 @@ void VID_MenuDraw (void)
 	video_mode_rows = 0;
 	for (i = 0 ; i < vid_wmodes ; i++)
 	{
-		//if (modedescs[i].iscur)
-		//	M_PrintWhite (column, row, modedescs[i].desc);
-		//else
-		M_Print_GetPoint(column, row, &lx, &ly, modedescs[i].desc, video_cursor_row == ((row - 32) / 8) && video_cursor_column == (column / (14 * 8)));
+		if (modedescs[i].iscur)
+			M_Print (column, row, modedescs[i].desc);
+		else
+			M_Print_GetPoint(column, row, &lx, &ly, modedescs[i].desc, video_cursor_row == ((row - 32) / 8) && video_cursor_column == (column / (14 * 8)));
 
 		column += 14 * 8;
 
@@ -1979,17 +1979,8 @@ void VID_MenuDraw (void)
 	video_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	video_window.h = ly - video_window.y + 8;
 
-	// don't draw cursor if we're on a spacing line
-	if (video_cursor_row == 5 || video_cursor_row == 7)
-		return;
-
-	// cursor
-	if (video_cursor_row < VIDEO_ITEMS)
-		M_DrawCharacter(168, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
-	else // we are in the resolutions region
-		M_DrawCharacter(-8 + video_cursor_column * 14 * 8, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
-
-	M_Print(8 * 8, row + 8, "Press enter to set mode");
+	if (video_cursor_row >= 8)
+		M_Print(8 * 8, row + 8, "Press enter to set mode");
 
 	if (video_cursor_row == 0 && modestate == MS_FULLDIB)
 	{
@@ -2010,6 +2001,16 @@ void VID_MenuDraw (void)
 		M_PrintWhite(48, 11 * 8, "Would you like to keep this");
 		M_PrintWhite(48, 12 * 8, "        video mode?");
 	}
+
+	// don't draw cursor if we're on a spacing line
+	if (video_cursor_row == 5 || video_cursor_row == 7)
+		return;
+
+	// cursor
+	if (video_cursor_row < VIDEO_ITEMS)
+		M_DrawCharacter(168, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
+	else // we are in the resolutions region
+		M_DrawCharacter(-8 + video_cursor_column * 14 * 8, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
 }
 
 void M_Video_KeyboardSlider(int dir)
