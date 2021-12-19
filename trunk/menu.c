@@ -2869,7 +2869,16 @@ void M_Mouse_MouseSlider(int k, const mouse_state_t *ms)
 
 qboolean M_Mouse_Mouse_Event(const mouse_state_t *ms)
 {
-	M_Mouse_Select(&mouse_window, ms, MOUSE_ITEMS, &mouse_cursor);
+	int mouse_items = MOUSE_ITEMS;
+
+#ifdef _WIN32
+	if (modestate != MS_WINDOWED)
+#else
+	if (!vid_windowedmouse)
+#endif
+		mouse_items = MOUSE_ITEMS - 2;
+
+	M_Mouse_Select(&mouse_window, ms, mouse_items, &mouse_cursor);
 
 	if (ms->button_up == 1) M_Mouse_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_Mouse_Key(K_MOUSE2);
