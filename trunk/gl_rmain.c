@@ -165,7 +165,7 @@ void R_InitBubble (void);
 //
 //==============================================================================
 
-static GLuint r_gamma_texture;
+GLuint r_gamma_texture;
 static GLuint r_gamma_program;
 static int r_gamma_texture_width, r_gamma_texture_height;
 

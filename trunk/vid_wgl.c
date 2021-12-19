@@ -112,6 +112,8 @@ qboolean	customgamma = false;
 
 void RestoreHWGamma (void);
 
+extern GLuint r_gamma_texture;
+
 HWND WINAPI InitializeWindow (HINSTANCE hInstance, int nCmdShow);
 
 modestate_t	modestate = MS_UNINIT;
@@ -595,6 +597,9 @@ int VID_SetMode (int modenum, unsigned char *palette)
 
 	vid.recalc_refdef = 1;
 
+	// force reloading GLSL gamma after mode change
+	r_gamma_texture = 0;
+
 	return true;
 }
 
@@ -834,8 +839,6 @@ qboolean OnChange_vid_mode(cvar_t *var, char *string)
 
 	// we call a few Cvar_SetValues in VID_SetMode and in deeper functions but their callbacks will not be triggered
 	VID_SetMode(modenum, host_basepal);
-
-	//Cbuf_AddText("v_cshift 0 0 0 1\n");	//FIXME
 
 	return true;
 }
