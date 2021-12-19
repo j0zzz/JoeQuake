@@ -95,7 +95,7 @@ cvar_t		scr_sshot_format = {"scr_sshot_format", "jpg"};
 cvar_t		scr_autoid = { "scr_autoid", "0" };
 cvar_t		scr_widescreen_fov = {"scr_widescreen_fov", "1", CVAR_ARCHIVE};
 
-cvar_t		scr_cursor_scale = { "scr_cursor_scale", "0.2" };				// The mouse cursor scale
+cvar_t		scr_cursor_scale = { "scr_cursor_scale", "1" };				// The mouse cursor scale
 #ifdef GLQUAKE
 cvar_t		scr_cursor_alpha = { "scr_cursor_alpha", "1" };
 #endif
@@ -408,6 +408,10 @@ void SCR_LoadCursorImage()
 		Con_Printf("Couldn't load cursor\n");
 		return;
 	}
+
+	//joe: 1/5 of the built-in cursor image
+	pic->width = 36;
+	pic->height = 36;
 
 	scr_cursor = *pic;
 }
@@ -975,11 +979,10 @@ static void SCR_DrawCursor(void)
 	else
 	{
 		color_t c = RGBA_TO_COLOR(255, 255, 255, 255);
-		scale *= 3;
-		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (50 * scale), cursor_y + (20 * scale), 2, c);
-		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (20 * scale), cursor_y + (50 * scale), 2, c);
-		Draw_AlphaLineRGB(cursor_x + (50 * scale), cursor_y + (20 * scale), cursor_x + (25 * scale), cursor_y + (25 * scale), 2, c);
-		Draw_AlphaLineRGB(cursor_x + (20 * scale), cursor_y + (50 * scale), cursor_x + (25 * scale), cursor_y + (25 * scale), 2, c);
+		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (30 * scale), cursor_y + (12 * scale), 2, c);
+		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (12 * scale), cursor_y + (30 * scale), 2, c);
+		Draw_AlphaLineRGB(cursor_x + (30 * scale), cursor_y + (12 * scale), cursor_x + (15 * scale), cursor_y + (15 * scale), 2, c);
+		Draw_AlphaLineRGB(cursor_x + (12 * scale), cursor_y + (30 * scale), cursor_x + (15 * scale), cursor_y + (15 * scale), 2, c);
 	}
 #else // GLQUAKE
 	/*
