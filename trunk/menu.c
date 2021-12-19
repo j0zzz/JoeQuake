@@ -2590,17 +2590,20 @@ qboolean M_Keys_Mouse_Event(const mouse_state_t *ms)
 //=============================================================================
 /* MOUSE OPTIONS MENU */
 
-#define	MOUSE_ITEMS	8
+#define	MOUSE_ITEMS	11
 
 int	mouse_cursor = 0;
 
 menu_window_t mouse_window;
 menu_window_t mouse_slider_sensitivity_window;
+menu_window_t mouse_slider_cursor_sensitivity_window;
+menu_window_t mouse_slider_cursor_scale_window;
 menu_window_t mouse_slider_rate_window;
 
 extern qboolean use_m_smooth;
 extern cvar_t m_filter;
 extern cvar_t m_rate;
+extern cvar_t scr_cursor_scale;
 
 #define MOUSE_RATE_ITEMS 8
 float mouse_rate_values[MOUSE_RATE_ITEMS] = { 60, 125, 250, 500, 800, 1000, 1500, 2000 };
@@ -2622,8 +2625,8 @@ void M_Mouse_Draw(void)
 	p = Draw_CachePic("gfx/ttl_cstm.lmp");
 	M_DrawPic((320 - p->width) >> 1, 4, p);
 
-	M_Print_GetPoint(16, 32, &mouse_window.x, &mouse_window.y, "           Mouse speed", mouse_cursor == 0);
-	r = (sensitivity.value - 1) / 10;
+	M_Print_GetPoint(16, 32, &mouse_window.x, &mouse_window.y, "   In-game sensitivity", mouse_cursor == 0);
+	r = (sensitivity.value - 0.5) / (10 - 0.5);
 	M_DrawSliderFloat(220, 32, r, sensitivity.value, &mouse_slider_sensitivity_window);
 
 	M_Print_GetPoint(16, 40, &lx, &ly, "          Mouse filter", mouse_cursor == 1);
@@ -2632,19 +2635,27 @@ void M_Mouse_Draw(void)
 	M_Print_GetPoint(16, 48, &lx, &ly, "          Invert mouse", mouse_cursor == 2);
 	M_DrawCheckbox(220, 48, m_pitch.value < 0);
 
-	M_Print_GetPoint(16, 64, &lx, &ly, "   Use mouse smoothing", mouse_cursor == 4);
-	M_DrawCheckbox(220, 64, use_m_smooth);
+	M_Print_GetPoint(16, 64, &lx, &ly, "    Cursor sensitivity", mouse_cursor == 4);
+	r = (cursor_sensitivity.value - 0.5) / (5 - 0.5);
+	M_DrawSliderFloat(220, 64, r, cursor_sensitivity.value, &mouse_slider_cursor_sensitivity_window);
 
-	M_Print_GetPoint(16, 72, &lx, &ly, "            Mouse rate", mouse_cursor == 5);
+	M_Print_GetPoint(16, 72, &lx, &ly, "          Cursor scale", mouse_cursor == 5);
+	r = (scr_cursor_scale.value - 0.2) / (2 - 0.2);
+	M_DrawSliderFloat(220, 72, r, scr_cursor_scale.value, &mouse_slider_cursor_scale_window);
+
+	M_Print_GetPoint(16, 88, &lx, &ly, "   Use mouse smoothing", mouse_cursor == 7);
+	M_DrawCheckbox(220, 88, use_m_smooth);
+
+	M_Print_GetPoint(16, 96, &lx, &ly, "            Mouse rate", mouse_cursor == 8);
 	if (use_m_smooth)
 	{
 		//r = (m_rate.value - mouse_rate_values[0]) / (mouse_rate_values[MOUSE_RATE_ITEMS-1] - mouse_rate_values[0]);
 		r = (float)FindSliderItemIndex(mouse_rate_values, MOUSE_RATE_ITEMS, &m_rate) / (MOUSE_RATE_ITEMS - 1);
-		M_DrawSliderInt(220, 72, r, m_rate.value, &mouse_slider_rate_window);
+		M_DrawSliderInt(220, 96, r, m_rate.value, &mouse_slider_rate_window);
 	}
 	else
 	{
-		M_Print(220, 72, "-");
+		M_Print(220, 96, "-");
 	}
 
 #ifdef _WIN32
@@ -2653,21 +2664,21 @@ void M_Mouse_Draw(void)
 	if (vid_windowedmouse)
 #endif
 	{
-		M_Print_GetPoint(-16, 88, &lx, &ly, "Use mouse in windowed mode", mouse_cursor == 7);
-		M_DrawCheckbox(220, 88, _windowed_mouse.value);
+		M_Print_GetPoint(-16, 112, &lx, &ly, "Use mouse in windowed mode", mouse_cursor == 10);
+		M_DrawCheckbox(220, 112, _windowed_mouse.value);
 	}
 
 	mouse_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	mouse_window.h = ly - mouse_window.y + 8;
 
 	// don't draw cursor if we're on a spacing line
-	if (mouse_cursor == 3 || mouse_cursor == 6)
+	if (mouse_cursor == 3 || mouse_cursor == 6 || mouse_cursor == 9)
 		return;
 
 	// cursor
 	M_DrawCharacter(200, 32 + mouse_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	if (mouse_cursor == 4)
+	if (mouse_cursor == 7)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Mouse smoothing must be set from the");
@@ -2681,13 +2692,25 @@ void M_Mouse_KeyboardSlider(int dir)
 
 	switch (mouse_cursor)
 	{
-	case 0:	// mouse speed
+	case 0:	// in-game sensitivity
 		sensitivity.value += dir * 0.5;
-		sensitivity.value = bound(1, sensitivity.value, 11);
+		sensitivity.value = bound(0, sensitivity.value, 10);
 		Cvar_SetValue(&sensitivity, sensitivity.value);
 		break;
 
-	case 5:	// mouse rate
+	case 4:	// menu sensitivity
+		cursor_sensitivity.value += dir * 0.5;
+		cursor_sensitivity.value = bound(0, cursor_sensitivity.value, 5);
+		Cvar_SetValue(&cursor_sensitivity, cursor_sensitivity.value);
+		break;
+
+	case 5:	// menu sensitivity
+		scr_cursor_scale.value += dir * 0.2;
+		scr_cursor_scale.value = bound(0, scr_cursor_scale.value, 2);
+		Cvar_SetValue(&scr_cursor_scale, scr_cursor_scale.value);
+		break;
+
+	case 8:	// mouse rate
 		if (use_m_smooth)
 			AdjustSliderBasedOnArrayOfValues(dir, mouse_rate_values, MOUSE_RATE_ITEMS, &m_rate);
 		break;
@@ -2716,10 +2739,10 @@ void M_Mouse_Key(int k)
 			Cvar_SetValue(&m_pitch, -m_pitch.value);
 			break;
 
-		case 4:	// mouse smoothing
+		case 7:	// mouse smoothing
 			break;
 
-		case 7:	// _windowed_mouse
+		case 10:// _windowed_mouse
 			Cvar_SetValue(&_windowed_mouse, !_windowed_mouse.value);
 			break;
 
@@ -2778,12 +2801,12 @@ void M_Mouse_Key(int k)
 			mouse_cursor = MOUSE_ITEMS - 3;
 		}
 
-		if (k == K_UPARROW && (mouse_cursor == 3 || mouse_cursor == 6))
+		if (k == K_UPARROW && (mouse_cursor == 3 || mouse_cursor == 6 || mouse_cursor == 9))
 			mouse_cursor--;
 	}
 	else
 	{
-		if (k == K_DOWNARROW && (mouse_cursor == 3 || mouse_cursor == 6))
+		if (k == K_DOWNARROW && (mouse_cursor == 3 || mouse_cursor == 6 || mouse_cursor == 9))
 			mouse_cursor++;
 
 		if (mouse_cursor == MOUSE_ITEMS - 1
@@ -2811,13 +2834,25 @@ void M_Mouse_MouseSlider(int k, const mouse_state_t *ms)
 	case K_MOUSE1:
 		switch (mouse_cursor)
 		{
-		case 0:	// mouse speed
-			M_Mouse_Select_Column(&mouse_slider_sensitivity_window, ms, 21, &slider_pos);
-			sensitivity.value = bound(1, (slider_pos * 0.5) + 1, 11);
+		case 0:	// in-game sensitivity
+			M_Mouse_Select_Column(&mouse_slider_sensitivity_window, ms, 20, &slider_pos);
+			sensitivity.value = bound(0, (slider_pos * 0.5) + 0.5, 10);
 			Cvar_SetValue(&sensitivity, sensitivity.value);
 			break;
 
-		case 5:	// mouse rate
+		case 4:	// menu sensitivity
+			M_Mouse_Select_Column(&mouse_slider_cursor_sensitivity_window, ms, 10, &slider_pos);
+			cursor_sensitivity.value = bound(0, (slider_pos * 0.5) + 0.5, 5);
+			Cvar_SetValue(&cursor_sensitivity, cursor_sensitivity.value);
+			break;
+
+		case 5:	// menu sensitivity
+			M_Mouse_Select_Column(&mouse_slider_cursor_scale_window, ms, 10, &slider_pos);
+			scr_cursor_scale.value = bound(0, (slider_pos * 0.2) + 0.2, 2);
+			Cvar_SetValue(&scr_cursor_scale, scr_cursor_scale.value);
+			break;
+
+		case 6:	// mouse rate
 			if (use_m_smooth)
 			{
 				M_Mouse_Select_Column(&mouse_slider_rate_window, ms, MOUSE_RATE_ITEMS, &slider_pos);
