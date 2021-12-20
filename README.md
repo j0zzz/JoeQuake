@@ -224,6 +224,19 @@ Sets the size of the crosshair, "1.0" by default.
 
 Sets the color of the crosshair, "79" (red) by default.
 
+### `scr_cursor_sensitivity`
+
+Sets the speed of the mouse cursor, "1" by default.
+
+### `scr_cursor_scale`
+
+Sets the size of the mouse cursor, "1" by default.
+
+### `scr_cursor_alpha`
+
+Sets the transparency of the mouse cursor, "1" by default.
+Possible values are between 0.0 (fully transparent) and 1.0 (fully opaque).
+
 ### `cl_demospeed`
 
 Changes the playback speed of a demo, 1 by default.
@@ -833,6 +846,7 @@ The JoeQuake package contains hi-resolution images made by the following artists
 * menu graphics, HUD icons, character sets by Moon[Drunk]
 * HUD player faces by PrimeviL
 * console background by Joseph "BootGuyJoe" Hanley
+* mouse cursor (unknown artist, found on gfx.quakeworld.nu)
 
 ```
 Jozsef Szalontai

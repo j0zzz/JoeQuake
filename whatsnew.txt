@@ -1,4 +1,47 @@
 
+ version 0.17.3 build 7049
+ -----------------------
+
+Fixed bug when sometimes the screen freezed after video mode change
+Added mouse cursor into the menu
+	New variables:
+	scr_cursor_sensitivity: menu cursor speed
+	scr_cursor_scale: menu cursor size
+	scr_cursor_alpha: menu cursor transparency (0.0 to 1.0)
+Reorganized all submenu items in options menu
+	Made all submenus as top-level, for easier access
+Fog parameters are properly normalized at world spawn (fixed issue on map bm_chrisholden)
+Allowed loading textures not aligned to 16 pixels to support horde2 map (merged from QuakeSpasm)
+Fixed bug when a certain trigger caused a lockup on map dm4jam_ww (merged from QuakeSpasm)
+Added support for playing 2021 re-release latest update (merged from QuakeSpasm)
+Fixed bug when teleports were drawn above transparent liquid textures
+Fixed players with quad disappearing in DOTM
+Fixed pitch black models in lit areas in DOTM (merged from QuakeSpasm)
+Fixed vertex lighting in GLSL for AMD/ATI cards
+Plenty of memory and code compilation optimizations by Sphere
+
+ version 0.17.2 build 6949
+ -----------------------
+
+Added -machine cmd line param to fully support MachineGames mission pack
+	Usage: copy the mg1 folder from the root folder of Quake rerelease 
+	to the root folder of your original Quake installation
+	IMPORTANT: It is not supported to use the '-game mg1' command line option
+	The correct and recommended way to do it is using '-machine'
+Vertex lighting is not computed when using OpenGL shader script (glsl), on ATI/AMD gpus
+	This is a temporary solution, it is planned to be fixed in the future
+	Until then, I recommend to use gl_vertexlights 0 (on ATI/AMD gpus only)
+Added basic localized strings support for Quake remastered, from QuakeSpasm
+	Usage: copy the QuakeEX.kpf file from the root folder of Quake rerelease 
+	to the root folder of your original Quake installation
+Using minizip library to extract localization data
+Added surface mark & cull optimization from QuakeSpasm/vkQuake
+Switched to QuakeSpasm's BSP traversing algorithm, to fix map issues on mge4m2
+Added support for Quake remastered, mainly from QuakeSpasm
+Fixed bug when the game stuck in an infinite loop on map sm188_jcr
+Corrected transparency issues on brush models (affected only ATI/AMD gpus)
+Fixed bugged rendering of lava caldron on map jam6_scampie
+
  version 0.17.1 build 6866 (hotfix #3)
  -----------------------
 
