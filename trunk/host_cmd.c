@@ -1706,6 +1706,292 @@ void Host_GetCoords_f (void)
 	fclose (f);
 }
 
+/*
+===============================================================================
+
+				SPAWN PARAMS CONTROL
+
+===============================================================================
+*/
+
+static char* spawnparam_names[NUM_SPAWN_PARMS] = {
+	"items",
+	"health",
+	"armorvalue",
+	"shells",
+	"nails",
+	"rockets",
+	"cells",
+	"weapon",
+	"armortype",
+	"[unknown]",
+	"[unknown]",
+	"[unknown]",
+	"[unknown]",
+	"[unknown]",
+	"[unknown]",
+	"[unknown]"
+};
+
+static void PrintSpawnParam (const client_t* client, const int param_num)
+{
+	Con_Printf("%2i  %10s: %f\n", param_num, spawnparam_names[param_num], client->spawn_parms[param_num]);
+}
+
+static void PrintSpawnParams (const client_t* client)
+{
+	Con_Printf("spawn params for %s:\n", client->name);
+	for (int i = 0; i < NUM_SPAWN_PARMS; ++i)
+		PrintSpawnParam(client, i);
+	Con_Printf("\n");
+}
+
+void Host_PrintSpawnParams_f (void)
+{
+	if (cmd_source != src_command || !sv.active)
+		return;
+
+	const int argc = Cmd_Argc();
+	if (argc > 2)
+	{
+		Con_Printf ("Usage: printspawnparams [clientnum]\n");
+	}
+
+	if (argc > 1)
+	{
+		const int client_num = atoi(Cmd_Argv(1));
+		if (client_num < 0 || client_num >= svs.maxclients)
+		{
+			Con_Printf("Invalid client number.\n");
+			return;
+		}
+		PrintSpawnParams(svs.clients + client_num);
+		return;
+	}
+
+	for (int client_num = 0; client_num < svs.maxclients; ++client_num)
+	{
+		if (!svs.clients[client_num].active)
+			continue;
+		PrintSpawnParams(svs.clients + client_num);
+	}
+}
+
+void Host_SetSpawnParam_f (void)
+{
+	if (cmd_source != src_command || !sv.active)
+		return;
+
+	const int argc = Cmd_Argc();
+	if (argc < 3 || argc > 4)
+	{
+		Con_Printf ("Usage: setspawnparam <paramnum> <value> [clientnum]\n");
+		return;
+	}
+	const int param_num = atoi(Cmd_Argv(1));
+	const float value = atof(Cmd_Argv(2));
+
+	int client_num = 0;
+	if (Cmd_Argc() > 3)
+	{
+		client_num = atoi(Cmd_Argv(3));
+	}
+
+	if (client_num < 0 || client_num >= svs.maxclients)
+	{
+		Con_Printf("Invalid client number.\n");
+		return;
+	}
+	if (param_num < 0 || param_num > NUM_SPAWN_PARMS)
+	{
+		Con_Printf("Invalid spawn param number.\n");
+		return;
+	}
+
+	svs.clients[client_num].spawn_parms[param_num] = value;
+}
+
+struct spawn_params_to_write
+{
+	int items;
+	float health;
+	float armorvalue;
+	float ammo_shells;
+	float ammo_nails;
+	float ammo_rockets;
+	float ammo_cells;
+	float active_weapon;
+	float armortype;
+};
+
+static void WriteNextSpawnParams (FILE *f, const struct spawn_params_to_write params, const int client_num)
+{
+	// remove items that would be removed with level change
+	const int items = params.items - (params.items & (IT_KEY1|IT_KEY2|IT_INVISIBILITY|IT_INVULNERABILITY|IT_SUIT|IT_QUAD));
+	fprintf(f, "setspawnparam 0 %f %i\n", (float)items, client_num);
+	fprintf(f, "setspawnparam 1 %f %i\n", min(max(params.health, 50.0f), 100.0f), client_num);
+	fprintf(f, "setspawnparam 2 %f %i\n", params.armorvalue, client_num);
+	fprintf(f, "setspawnparam 3 %f %i\n", max(params.ammo_shells, 25.0f), client_num);
+	fprintf(f, "setspawnparam 4 %f %i\n", params.ammo_nails, client_num);
+	fprintf(f, "setspawnparam 5 %f %i\n", params.ammo_rockets, client_num);
+	fprintf(f, "setspawnparam 6 %f %i\n", params.ammo_cells, client_num);
+	fprintf(f, "setspawnparam 7 %f %i\n", params.active_weapon, client_num);
+	fprintf(f, "setspawnparam 8 %f %i\n", params.armortype, client_num);
+}
+
+static float GetActiveWeaponForQdQstatsSpawnParams (const int active_weapon)
+{
+	// qdqstats progs handle the spawn param for the active weapon in a special
+	// way. We mirror that in this function to be able to figure out the next
+	// spawn params.
+	switch (active_weapon)
+	{
+		case IT_AXE:
+			return 0.0f;
+		case IT_SHOTGUN:
+			return 1.0f;
+		case IT_SUPER_SHOTGUN:
+			return 2.0f;
+		case IT_NAILGUN:
+			return 3.0f;
+		case IT_SUPER_NAILGUN:
+			return 4.0f;
+		case IT_GRENADE_LAUNCHER:
+			return 5.0f;
+		case IT_ROCKET_LAUNCHER:
+			return 6.0f;
+		case IT_LIGHTNING:
+			return 7.0f;
+		default:
+			// invalid weapon, this should not happen. Default to shotgun.
+			return 1.0f;
+	}
+}
+
+static void WriteNextSpawnParamsForServerClient (FILE *f, entvars_t *client_vars, int client_num)
+{
+	struct spawn_params_to_write params;
+	params.items = (int)client_vars->items;
+	params.health = client_vars->health;
+	params.armorvalue = client_vars->armorvalue;
+	params.ammo_shells = client_vars->ammo_shells;
+	params.ammo_nails = client_vars->ammo_nails;
+	params.ammo_rockets = client_vars->ammo_rockets;
+	params.ammo_cells = client_vars->ammo_cells;
+	params.active_weapon = GetActiveWeaponForQdQstatsSpawnParams((int)client_vars->weapon);
+	params.armortype = roundf(client_vars->armortype * 100.0f);
+	WriteNextSpawnParams(f, params, client_num);
+}
+
+static void WriteNextSpawnParamsForThisClient (FILE *f, int client_num)
+{
+	struct spawn_params_to_write params;
+	params.items = cl.items;
+	params.health = (float)cl.stats[STAT_HEALTH];
+	params.armorvalue = (float)cl.stats[STAT_ARMOR];
+	params.ammo_shells = (float)cl.stats[STAT_SHELLS];
+	params.ammo_nails = (float)cl.stats[STAT_NAILS];
+	params.ammo_rockets = (float)cl.stats[STAT_ROCKETS];
+	params.ammo_cells = (float)cl.stats[STAT_CELLS];
+	params.active_weapon = GetActiveWeaponForQdQstatsSpawnParams(cl.stats[STAT_ACTIVEWEAPON]);
+
+	if (cl.items & IT_ARMOR1)
+		params.armortype = 30.0f;
+	else if (cl.items & IT_ARMOR2)
+		params.armortype = 60.0f;
+	else if (cl.items & IT_ARMOR3)
+		params.armortype = 80.0f;
+	else
+		params.armortype = 0.0f;
+
+	WriteNextSpawnParams(f, params, client_num);
+}
+
+void Host_WriteNextSpawnParams_f(void)
+{
+	char	name[MAX_OSPATH*2], easyname[MAX_OSPATH*2] = "";
+
+	if (cmd_source != src_command)
+		return;
+	if (!sv.active && cls.state == ca_disconnected)
+		return;
+
+	const int argc = Cmd_Argc();
+	if (argc > 3)
+	{
+		Con_Printf ("Usage: writenextspawnparams [clientnum] [filename]\n");
+		return;
+	}
+
+	if (argc < 3)
+	{
+		time_t	ltime;
+		char	str[MAX_OSPATH];
+
+		time (&ltime);
+		strftime (str, sizeof(str)-1, "%Y%m%d_%H%M%S", localtime(&ltime));
+
+		Q_snprintfz (easyname, sizeof(easyname), "%s_%s", CL_MapName(), str);
+	}
+	else if (argc == 3)
+	{
+		if (strstr(Cmd_Argv(2), ".."))
+		{
+			Con_Printf ("Relative pathnames are not allowed\n");
+			return;
+		}
+	}
+
+	if (easyname[0])
+		Q_snprintfz (name, sizeof(name), "%s/%s", com_gamedir, easyname);
+	else
+		Q_snprintfz (name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(2));
+	COM_ForceExtension (name, ".cfg");
+
+	FILE* f = NULL;
+	if (!(f = fopen(name, "w")))
+	{
+		COM_CreatePath(name);
+		if (!(f = fopen(name, "w")))
+		{
+			Con_Printf("ERROR: couldn't open %s\n", name);
+			return;
+		}
+	}
+
+	if (!sv.active)
+	{
+		int client_num = 0;
+		if (argc > 1)
+			client_num = atoi(Cmd_Argv(1));
+		WriteNextSpawnParamsForThisClient(f, client_num);
+	}
+	else
+	{
+		if (argc > 1)
+		{
+			const int client_num = atoi(Cmd_Argv(1));
+			if (client_num < 0 || client_num >= svs.maxclients)
+			{
+				Con_Printf("Invalid client number.\n");
+				fclose(f);
+				return;
+			}
+			WriteNextSpawnParamsForServerClient(f, &svs.clients[client_num].edict->v, client_num);
+		}
+		else
+		{
+			for (int client_num = 0; client_num < svs.maxclients; ++client_num)
+			{
+				if (!svs.clients[client_num].active)
+					continue;
+				WriteNextSpawnParamsForServerClient(f, &svs.clients[client_num].edict->v, client_num);
+			}
+		}
+	}
+	fclose(f);
+}
+
 //=============================================================================
 
 /*
@@ -1756,6 +2042,10 @@ void Host_InitCommands (void)
 	Cmd_AddCommand ("viewprev", Host_Viewprev_f);
 
 	Cmd_AddCommand ("getcoords", Host_GetCoords_f);
+
+	Cmd_AddCommand ("printspawnparams", Host_PrintSpawnParams_f);
+	Cmd_AddCommand ("setspawnparam", Host_SetSpawnParam_f);
+	Cmd_AddCommand ("writenextspawnparams", Host_WriteNextSpawnParams_f);
 
 	Cmd_AddCommand ("mcache", Mod_Print);
 
