@@ -1922,6 +1922,16 @@ void Host_WriteNextSpawnParams_f(void)
 		return;
 
 	const int argc = Cmd_Argc();
+	int client_num = 0;
+	if (argc > 1)
+	{
+		client_num = atoi(Cmd_Argv(1));
+		if (sv.active && (client_num < 0 || client_num >= svs.maxclients))
+		{
+			Con_Printf("Invalid client number.\n");
+			return;
+		}
+	}
 	if (argc > 3)
 	{
 		Con_Printf ("Usage: writenextspawnparams [clientnum] [filename]\n");
@@ -1966,27 +1976,17 @@ void Host_WriteNextSpawnParams_f(void)
 
 	if (!sv.active)
 	{
-		int client_num = 0;
-		if (argc > 1)
-			client_num = atoi(Cmd_Argv(1));
 		WriteNextSpawnParamsForThisClient(f, client_num);
 	}
 	else
 	{
 		if (argc > 1)
 		{
-			const int client_num = atoi(Cmd_Argv(1));
-			if (client_num < 0 || client_num >= svs.maxclients)
-			{
-				Con_Printf("Invalid client number.\n");
-				fclose(f);
-				return;
-			}
 			WriteNextSpawnParamsForServerClient(f, &svs.clients[client_num].edict->v, client_num);
 		}
 		else
 		{
-			for (int client_num = 0; client_num < svs.maxclients; ++client_num)
+			for (client_num = 0; client_num < svs.maxclients; ++client_num)
 			{
 				if (!svs.clients[client_num].active)
 					continue;
