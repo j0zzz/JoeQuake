@@ -1863,8 +1863,13 @@ static float GetActiveWeaponForQdQstatsSpawnParams (const int active_weapon)
 		case IT_LIGHTNING:
 			return 7.0f;
 		default:
-			// invalid weapon, this should not happen. Default to shotgun.
-			return 1.0f;
+			// Set default to axe. It's possible that active_weapon is 0 if we
+			// get it from cl.stats[STAT_ACTIVEWEAPON], because IT_AXE does not
+			// fit in the byte that is sent over to populate it. In that case
+			// returning the value 0.0f for axe is indeed correct. All other
+			// cases would be invalid and should not happen, but defaulting to
+			// axe for those seems like a decent idea too.
+			return 0.0f;
 	}
 }
 
