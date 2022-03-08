@@ -690,6 +690,33 @@ Usage:
 `<density>` defines the thickness of the fog.
 `<red> <green> <blue>` values define the color of the fog.
 
+### `printspawnparams [clientnum]`
+
+Prints the spawn parameters of clients on the server. If `clientnum` is given,
+prints the spawn parameters for the client with that number. If it is not given,
+prints the spawn parameters for all active clients on the server.
+
+### `setspawnparam <paramnum> <value> [clientnum]`
+
+Sets the spawn parameter with index `paramnum` to `value`. If `clientnum` is
+given, the spawn parameter of the client with that number is changed. If it is
+not given, the spawn parameter of the host is changed.
+
+### `writenextspawnparams [clientnum] [filename]`
+
+Writes a config to store the spawn parameters as they would be if the current
+map is finished as is. Can be executed to start playing the next map with those
+stored spawn parameters.
+
+If this client is not the server host, the spawn parameters of this client are
+written and assigned to the number `clientnum` (`0` if not given). If this
+client is the server host, writes spawn parameters of the client with number
+`clientnum`. If `clientnum` is not given, writes the spawn parameters for all
+active clients on the server.
+
+The name of the written config file can be given as `filename`. If not present,
+an automatic name based on current map and time is used.
+
 ## Other features
 
 ### Parameter completion
