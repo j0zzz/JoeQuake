@@ -1914,7 +1914,7 @@ static void WriteNextSpawnParamsForThisClient (FILE *f, int client_num)
 
 void Host_WriteNextSpawnParams_f(void)
 {
-	char	name[MAX_OSPATH*2], easyname[MAX_OSPATH*2] = "";
+	char	name[MAX_OSPATH*2], path[MAX_OSPATH*2];
 
 	if (cmd_source != src_command)
 		return;
@@ -1946,7 +1946,7 @@ void Host_WriteNextSpawnParams_f(void)
 		time (&ltime);
 		strftime (str, sizeof(str)-1, "%Y%m%d_%H%M%S", localtime(&ltime));
 
-		Q_snprintfz (easyname, sizeof(easyname), "%s_%s", CL_MapName(), str);
+		Q_snprintfz (name, sizeof(name), "%s_%s", CL_MapName(), str);
 	}
 	else if (argc == 3)
 	{
@@ -1955,19 +1955,17 @@ void Host_WriteNextSpawnParams_f(void)
 			Con_Printf ("Relative pathnames are not allowed\n");
 			return;
 		}
+		Q_strncpyz (name, Cmd_Argv(2), sizeof(name));
 	}
 
-	if (easyname[0])
-		Q_snprintfz (name, sizeof(name), "%s/%s", com_gamedir, easyname);
-	else
-		Q_snprintfz (name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(2));
 	COM_ForceExtension (name, ".cfg");
+	Q_snprintfz (path, sizeof(path), "%s/%s", com_gamedir, name);
 
 	FILE* f = NULL;
-	if (!(f = fopen(name, "w")))
+	if (!(f = fopen(path, "w")))
 	{
-		COM_CreatePath(name);
-		if (!(f = fopen(name, "w")))
+		COM_CreatePath(path);
+		if (!(f = fopen(path, "w")))
 		{
 			Con_Printf("ERROR: couldn't open %s\n", name);
 			return;
@@ -1994,6 +1992,7 @@ void Host_WriteNextSpawnParams_f(void)
 			}
 		}
 	}
+	Con_Printf ("Wrote %s\n", name);
 	fclose(f);
 }
 
