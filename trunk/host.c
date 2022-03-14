@@ -98,6 +98,7 @@ cvar_t	pausable = {"pausable", "1"};
 cvar_t	temp1 = {"temp1", "0"};
 
 cvar_t campaign = { "campaign", "0" }; // for the 2021 rerelease
+cvar_t horde = { "horde", "0" }; // for the 2021 rerelease
 
 extern cvar_t cl_independentphysics;
 
@@ -251,7 +252,10 @@ void Host_InitLocal (void)
 	Cvar_Register (&temp1);
 
 	if (machine)
+	{
 		Cvar_Register(&campaign);
+		Cvar_Register(&horde);
+	}
 
 	Cmd_AddCommand ("writeconfig", Host_WriteConfig_f);
 
