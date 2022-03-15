@@ -45,6 +45,7 @@ void SV_Init (void)
 {
 	int	i;
 	const char *p;
+	extern cvar_t sv_altnoclip; //johnfitz
 
 	sv.edicts = NULL; // ericw -- sv.edicts switched to use malloc() 
 
@@ -58,6 +59,7 @@ void SV_Init (void)
 	Cvar_Register (&sv_idealpitchscale);
 	Cvar_Register (&sv_aim);
 	Cvar_Register (&sv_nostep);
+	Cvar_Register (&sv_altnoclip); //johnfitz
 
 	for (i=0 ; i<MAX_MODELS ; i++)
 		sprintf (localmodels[i], "*%i", i);

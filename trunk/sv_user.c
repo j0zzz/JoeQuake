@@ -40,6 +40,7 @@ qboolean	onground;
 usercmd_t	cmd;
 
 cvar_t	sv_idealpitchscale = {"sv_idealpitchscale", "0.8"};
+cvar_t	sv_altnoclip = { "sv_altnoclip", "1" }; //johnfitz
 
 extern double sv_frametime;
 
@@ -285,6 +286,29 @@ void SV_WaterJump (void)
 
 /*
 ===================
+SV_NoclipMove -- johnfitz
+
+new, alternate noclip. old noclip is still handled in SV_AirMove
+===================
+*/
+void SV_NoclipMove(void)
+{
+	AngleVectors(sv_player->v.v_angle, forward, right, up);
+
+	velocity[0] = forward[0] * cmd.forwardmove + right[0] * cmd.sidemove;
+	velocity[1] = forward[1] * cmd.forwardmove + right[1] * cmd.sidemove;
+	velocity[2] = forward[2] * cmd.forwardmove + right[2] * cmd.sidemove;
+	velocity[2] += cmd.upmove * 2; //doubled to match running speed
+
+	if (VectorLength(velocity) > sv_maxspeed.value)
+	{
+		VectorNormalize(velocity);
+		VectorScale(velocity, sv_maxspeed.value, velocity);
+	}
+}
+
+/*
+===================
 SV_AirMove
 ===================
 */
@@ -379,13 +403,14 @@ void SV_ClientThink (void)
 		return;
 	}
 // walk
-	if ((sv_player->v.waterlevel >= 2) && (sv_player->v.movetype != MOVETYPE_NOCLIP))
-	{
-		SV_WaterMove ();
-		return;
-	}
-
-	SV_AirMove ();	
+	//johnfitz -- alternate noclip
+	if (sv_player->v.movetype == MOVETYPE_NOCLIP && sv_altnoclip.value)
+		SV_NoclipMove();
+	else if (sv_player->v.waterlevel >= 2 && sv_player->v.movetype != MOVETYPE_NOCLIP)
+		SV_WaterMove();
+	else
+		SV_AirMove();
+	//johnfitz
 }
 
 /*
