@@ -2427,7 +2427,8 @@ void R_SetupQ3Frame (entity_t *ent)
 #endif
 		}
 
-		R_SetupQ3Frame (newent);
+		if (newent->model)
+			R_SetupQ3Frame (newent);
 
 		glPopMatrix ();
 	}
