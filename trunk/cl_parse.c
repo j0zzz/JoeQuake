@@ -187,6 +187,7 @@ entity_t *CL_EntityNum (int num)
 		while (cl.num_entities <= num)
 		{
 			cl_entities[cl.num_entities].colormap = vid.colormap;
+			cl_entities[cl.num_entities].lerpflags |= LERP_RESETMOVE | LERP_RESETANIM; //johnfitz
 			cl.num_entities++;
 		}
 	}
@@ -637,6 +638,11 @@ void CL_ParseUpdate (int bits)
 
 	forcelink = (ent->msgtime != cl.mtime[1]) ? true : false;
 
+	//johnfitz -- lerping
+	if (ent->msgtime + 0.2 < cl.mtime[0]) //more than 0.2 seconds since the last message (most entities think every 0.1 sec)
+		ent->lerpflags |= LERP_RESETANIM; //if we missed a think, we'd be lerping from the wrong frame
+	//johnfitz
+
 	ent->msgtime = cl.mtime[0];
 
 	if (bits & U_MODEL)
@@ -704,8 +710,15 @@ void CL_ParseUpdate (int bits)
 #endif
 	}
 
+	//johnfitz -- lerping for movetype_step entities
 	if (bits & U_NOLERP)
+	{
+		ent->lerpflags |= LERP_MOVESTEP;
 		ent->forcelink = true;
+	}
+	else
+		ent->lerpflags &= ~LERP_MOVESTEP;
+	//johnfitz
 
 	//johnfitz -- PROTOCOL_FITZQUAKE
 	if (cl.protocol != PROTOCOL_NETQUAKE)
@@ -723,14 +736,13 @@ void CL_ParseUpdate (int bits)
 			ent->frame = (ent->frame & 0x00FF) | (MSG_ReadByte() << 8);
 		if (bits & U_MODEL2)
 			ent->modelindex = (ent->modelindex & 0x00FF) | (MSG_ReadByte() << 8);
-		if (bits & U_LERPFINISH)	//joe: lerping is not used yet
+		if (bits & U_LERPFINISH)
 		{
-			float lerpfinish = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
-			//ent->lerpfinish = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
-			//ent->lerpflags |= LERP_FINISH;
+			ent->frame_finish_time = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
+			ent->lerpflags |= LERP_FINISH;
 		}
-		//else
-		//	ent->lerpflags &= ~LERP_FINISH;
+		else
+			ent->lerpflags &= ~LERP_FINISH;
 	}
 	//johnfitz
 
@@ -747,6 +759,7 @@ void CL_ParseUpdate (int bits)
 		if (num > 0 && num <= cl.maxclients)
 			R_TranslatePlayerSkin(num - 1);
 #endif
+		ent->lerpflags |= LERP_RESETANIM; //johnfitz -- don't lerp animation across model changes
 	}
 
 	if (forcelink)
@@ -923,6 +936,14 @@ void CL_ParseClientdata ()
 	else
 		cl.viewent.transparency = 1;
 	//johnfitz
+
+	//johnfitz -- lerping
+	//ericw -- this was done before the upper 8 bits of cl.stats[STAT_WEAPON] were filled in, breaking on large maps like zendar.bsp
+	if (cl.viewent.model != cl.model_precache[cl.stats[STAT_WEAPON]])
+	{
+		cl.viewent.lerpflags |= LERP_RESETANIM; //don't lerp animation across model changes
+	}
+	//johnfitz
 }
 
 /*
@@ -982,6 +1003,7 @@ void CL_ParseStatic (int version) //johnfitz -- added a parameter
 
 // copy it to the current state
 	ent->model = cl.model_precache[ent->baseline.modelindex];
+	ent->lerpflags |= LERP_RESETANIM; //johnfitz -- lerping
 	ent->frame = ent->baseline.frame;
 	ent->colormap = vid.colormap;
 	ent->skinnum = ent->baseline.skin;

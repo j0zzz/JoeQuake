@@ -339,60 +339,43 @@ R_RotateForEntity
 void R_RotateForEntity (entity_t *ent, qboolean shadow)
 {
 	int		i;
-	float	lerpfrac, timepassed;
+	float	lerpfrac;
 	vec3_t	d, interpolated;
 
-	// positional interpolation
-	timepassed = cl.time - ent->translate_start_time;
-
-	if (ent->translate_start_time == 0 || timepassed > 1)
+	// if LERP_RESETMOVE, kill any lerps in progress
+	if (ent->lerpflags & LERP_RESETMOVE)
 	{
-		ent->translate_start_time = cl.time;
+		ent->translate_start_time = 0;
 		VectorCopy (ent->origin, ent->origin1);
 		VectorCopy (ent->origin, ent->origin2);
+		VectorCopy(ent->angles, ent->angles1);
+		VectorCopy(ent->angles, ent->angles2);
+		ent->lerpflags -= LERP_RESETMOVE;
 	}
-
-	if (!VectorCompare(ent->origin, ent->origin2))
+	else if (!VectorCompare(ent->origin, ent->origin2) || !VectorCompare(ent->angles, ent->angles2)) // origin/angles changed, start new lerp
 	{
 		ent->translate_start_time = cl.time;
 		VectorCopy (ent->origin2, ent->origin1);
 		VectorCopy (ent->origin,  ent->origin2);
-		lerpfrac = 0;
-	}
-	else
-	{
-		lerpfrac = timepassed / 0.1;
-		if (cl.paused || lerpfrac > 1)
-			lerpfrac = 1;
+		VectorCopy(ent->angles2, ent->angles1);
+		VectorCopy(ent->angles, ent->angles2);
 	}
 
+	if (ent->lerpflags & LERP_MOVESTEP)
+	{
+		if (ent->lerpflags & LERP_FINISH)
+			lerpfrac = bound(0, (cl.time - ent->translate_start_time) / (ent->frame_finish_time - ent->translate_start_time), 1);
+		else
+			lerpfrac = bound(0, (cl.time - ent->translate_start_time) / 0.1, 1);
+	}
+	else
+		lerpfrac = 1;
+
+	//translation
 	VectorInterpolate (ent->origin1, lerpfrac, ent->origin2, interpolated);
 	glTranslatef (interpolated[0], interpolated[1], interpolated[2]);
 
-	// orientation interpolation (Euler angles, yuck!)
-	timepassed = cl.time - ent->rotate_start_time; 
-
-	if (ent->rotate_start_time == 0 || timepassed > 1)
-	{
-		ent->rotate_start_time = cl.time;
-		VectorCopy (ent->angles, ent->angles1);
-		VectorCopy (ent->angles, ent->angles2);
-	}
-
-	if (!VectorCompare(ent->angles, ent->angles2))
-	{
-		ent->rotate_start_time = cl.time;
-		VectorCopy (ent->angles2, ent->angles1);
-		VectorCopy (ent->angles,  ent->angles2);
-		lerpfrac = 0;
-	}
-	else
-	{
-		lerpfrac = timepassed / 0.1;
-		if (cl.paused || lerpfrac > 1)
-			lerpfrac = 1;
-	}
-
+	//rotation
 	VectorSubtract (ent->angles2, ent->angles1, d);
 
 	// always interpolate along the shortest path
@@ -891,7 +874,7 @@ Based on code by MH from RMQEngine
 */
 void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int distance, int gl_texture, int fb_texture, qboolean islumaskin)
 {
-	int			pose, numposes;
+	int			posenum, numposes;
 
 	if ((frame >= paliashdr->numframes) || (frame < 0))
 	{
@@ -899,34 +882,38 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 		frame = 0;
 	}
 
-	pose = paliashdr->frames[frame].firstpose;
+	posenum = paliashdr->frames[frame].firstpose;
 	numposes = paliashdr->frames[frame].numposes;
 
 	if (numposes > 1)
 	{
 		ent->frame_interval = paliashdr->frames[frame].interval;
-		pose += (int)(cl.time / ent->frame_interval) % numposes;
+		posenum += (int)(cl.time / ent->frame_interval) % numposes;
 	}
 	else
 	{
 		ent->frame_interval = 0.1;
 	}
 
-	if (ent->pose2 != pose)
+	if (ent->lerpflags & LERP_RESETANIM) //kill any lerp in progress
+	{
+		ent->frame_start_time = 0;
+		ent->pose1 = posenum;
+		ent->pose2 = posenum;
+		ent->lerpflags -= LERP_RESETANIM;
+	}
+	else if (ent->pose2 != posenum) // pose changed, start new lerp
 	{
 		ent->frame_start_time = cl.time;
 		ent->pose1 = ent->pose2;
-		ent->pose2 = pose;
-		ent->framelerp = 0;
-	}
-	else
-	{
-		ent->framelerp = (cl.time - ent->frame_start_time) / ent->frame_interval;
+		ent->pose2 = posenum;
 	}
 
-	// weird things start happening if blend passes 1
-	if (cl.paused || ent->framelerp > 1)
-		ent->framelerp = 1;
+	//set up values
+	if (ent->lerpflags & LERP_FINISH && numposes == 1)
+		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+	else
+		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
 
 	if (ISTRANSPARENT(ent))
 		glEnable(GL_BLEND);
@@ -1010,7 +997,7 @@ R_DrawAliasFrame
 */
 void R_DrawAliasFrame (int frame, aliashdr_t *paliashdr, entity_t *ent, int distance)
 {
-	int			i, *order, count, pose, numposes;
+	int			i, *order, count, posenum, numposes;
 	float		l, lerpfrac;
 	vec3_t		lightvec, interpolated_verts;
 	trivertx_t	*verts1, *verts2;
@@ -1021,34 +1008,38 @@ void R_DrawAliasFrame (int frame, aliashdr_t *paliashdr, entity_t *ent, int dist
 		frame = 0;
 	}
 
-	pose = paliashdr->frames[frame].firstpose;
+	posenum = paliashdr->frames[frame].firstpose;
 	numposes = paliashdr->frames[frame].numposes;
 
 	if (numposes > 1)
 	{
 		ent->frame_interval = paliashdr->frames[frame].interval;
-		pose += (int)(cl.time / ent->frame_interval) % numposes;
+		posenum += (int)(cl.time / ent->frame_interval) % numposes;
 	}
 	else
 	{
 		ent->frame_interval = 0.1;
 	}
 
-	if (ent->pose2 != pose)
+	if (ent->lerpflags & LERP_RESETANIM) //kill any lerp in progress
+	{
+		ent->frame_start_time = 0;
+		ent->pose1 = posenum;
+		ent->pose2 = posenum;
+		ent->lerpflags -= LERP_RESETANIM;
+	}
+	else if (ent->pose2 != posenum) // pose changed, start new lerp
 	{
 		ent->frame_start_time = cl.time;
 		ent->pose1 = ent->pose2;
-		ent->pose2 = pose;
-		ent->framelerp = 0;
-	}
-	else
-	{
-		ent->framelerp = (cl.time - ent->frame_start_time) / ent->frame_interval;
+		ent->pose2 = posenum;
 	}
 
-	// weird things start happening if blend passes 1
-	if (cl.paused || ent->framelerp > 1)
-		ent->framelerp = 1;
+	//set up values
+	if (ent->lerpflags & LERP_FINISH && numposes == 1)
+		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+	else
+		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
 
 	verts1 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 	verts2 = verts1;
@@ -1975,7 +1966,7 @@ R_DrawQ3Frame
 */
 void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, entity_t *ent, int distance)
 {
-	int			i, j, numtris, pose, pose1, pose2;
+	int			i, j, numtris, posenum, numposes, pose1, pose2;
 	float		l, lerpfrac;
 	vec3_t		lightvec, interpolated_verts;
 	unsigned int *tris;
@@ -1992,7 +1983,8 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 	if (ent->pose1 >= pmd3hdr->numframes)
 		ent->pose1 = 0;
 
-	pose = frame;
+	posenum = frame;
+	numposes = pmd3hdr->numframes;
 
 	if (!strcmp(clmodel->name, cl_modelnames[mi_q3legs]))
 		ent->frame_interval = anims[legsanim].interval;
@@ -2001,21 +1993,25 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 	else
 		ent->frame_interval = 0.1;
 
-	if (ent->pose2 != pose)
+	if (ent->lerpflags & LERP_RESETANIM) //kill any lerp in progress
+	{
+		ent->frame_start_time = 0;
+		ent->pose1 = posenum;
+		ent->pose2 = posenum;
+		ent->lerpflags -= LERP_RESETANIM;
+	}
+	else if (ent->pose2 != posenum) // pose changed, start new lerp
 	{
 		ent->frame_start_time = cl.time;
 		ent->pose1 = ent->pose2;
-		ent->pose2 = pose;
-		ent->framelerp = 0;
-	}
-	else
-	{
-		ent->framelerp = (cl.time - ent->frame_start_time) / ent->frame_interval;
+		ent->pose2 = posenum;
 	}
 
-	// weird things start happening if blend passes 1
-	if (cl.paused || ent->framelerp > 1)
-		ent->framelerp = 1;
+	//set up values
+	if (ent->lerpflags & LERP_FINISH && numposes == 1)
+		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+	else
+		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
 
 	verts = (md3vert_mem_t *)((byte *)pmd3hdr + pmd3surf->ofsverts);
 	tc = (md3tc_t *)((byte *)pmd3surf + pmd3surf->ofstc);

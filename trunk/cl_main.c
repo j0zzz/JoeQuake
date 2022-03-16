@@ -747,7 +747,7 @@ void CL_RelinkEntities (void)
 		{
 			ent->model = NULL;
 #ifdef GLQUAKE
-			ent->frame_start_time = ent->translate_start_time = ent->rotate_start_time = 0;
+			ent->lerpflags |= LERP_RESETMOVE | LERP_RESETANIM; //johnfitz -- next time this entity slot is reused, the lerp will need to be reset
 #endif
 			continue;
 		}
@@ -762,17 +762,21 @@ void CL_RelinkEntities (void)
 		else
 		{	// if the delta is large, assume a teleport and don't lerp
 			f = frac;
-
 			for (j = 0 ; j < 3 ; j++)
 			{
 				delta[j] = ent->msg_origins[0][j] - ent->msg_origins[1][j];
 				if (delta[j] > 100 || delta[j] < -100)
+				{
 					f = 1;		// assume a teleportation, not a motion
+					ent->lerpflags |= LERP_RESETMOVE; //johnfitz -- don't lerp teleports
+				}
 			}
 
 #ifdef GLQUAKE
-			if (f >= 1)
-				ent->translate_start_time = ent->rotate_start_time = 0;
+			//johnfitz -- don't cl_lerp entities that will be r_lerped
+			if (ent->lerpflags & LERP_MOVESTEP)
+				f = 1;
+			//johnfitz
 #endif
 
 			// interpolate the origin and angles

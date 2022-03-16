@@ -33,6 +33,14 @@ typedef struct efrag_s
 	struct efrag_s	*entnext;
 } efrag_t;
 
+//johnfitz -- for lerping
+#define LERP_MOVESTEP	(1<<0) //this is a MOVETYPE_STEP entity, enable movement lerp
+#define LERP_RESETANIM	(1<<1) //disable anim lerping until next anim frame
+#define LERP_RESETANIM2	(1<<2) //set this and previous flag to disable anim lerping for two anim frames
+#define LERP_RESETMOVE	(1<<3) //disable movement lerping until next origin/angles change
+#define LERP_FINISH		(1<<4) //use lerpfinish time from server update instead of assuming interval of 0.1
+//johnfitz
+
 typedef struct entity_s
 {
 	qboolean forcelink;			// model changed
@@ -72,7 +80,9 @@ typedef struct entity_s
 	qboolean noshadow;
 
 	// interpolation
+	byte	lerpflags;			//johnfitz -- lerping
 	float	frame_start_time;
+	float	frame_finish_time;	//johnfitz -- lerping -- server sent us a more accurate interval, use it instead of 0.1
 	float	frame_interval;
 	int		pose1, pose2;
 	float	framelerp;
