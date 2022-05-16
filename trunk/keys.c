@@ -312,7 +312,7 @@ void Key_Console (int key)
 		// various parameter completions -- by joe
 		cmd = key_lines[edit_line] + 1;
 		if (strstr(cmd, "playdemo ") == cmd || strstr(cmd, "capture_start ") == cmd || 
-		    strstr(cmd, "capturedemo ") == cmd)
+			strstr(cmd, "capturedemo ") == cmd || strstr(cmd, "ghost "))
 			Cmd_CompleteParameter (cmd, "*.dem");
 		else if (strstr(cmd, "printtxt ") == cmd)
 			Cmd_CompleteParameter (cmd, "*.txt");

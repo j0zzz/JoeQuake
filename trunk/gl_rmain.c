@@ -3444,6 +3444,8 @@ void R_RenderScene (void)
 	// then draw the transparent ones
 	R_DrawTransEntitiesOnList ();
 
+	Ghost_Draw();
+
 	GL_DisableMultitexture ();
 }
 

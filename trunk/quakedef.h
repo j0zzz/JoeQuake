@@ -249,6 +249,7 @@ typedef struct
 
 #include "iplog.h"
 #include "cl_slist.h"
+#include "ghost/ghost.h"
 
 //=============================================================================
 

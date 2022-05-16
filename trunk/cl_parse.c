@@ -563,6 +563,8 @@ void CL_ParseServerInfo (void)
 	COM_StripExtension (COM_SkipPath(model_precache[1]), tempname);
 	R_PreMapLoad (tempname);
 
+	Ghost_Load(tempname);
+
 // now we try to load everything else until a cache allocation fails
 	for (i = 1 ; i < nummodels ; i++)
 	{
