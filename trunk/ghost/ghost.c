@@ -151,7 +151,7 @@ static void Ghost_LerpAngle(vec3_t angles1, vec3_t angles2, float frac,
 }
 
 
-static void Ghost_SetAlpha(void)
+static qboolean Ghost_SetAlpha(void)
 {
     entity_t *ent = &cl_entities[cl.viewentity];
     float alpha;
@@ -162,13 +162,15 @@ static void Ghost_SetAlpha(void)
     VectorSubtract(ent->origin, ghost_entity->origin, diff);
     dist = VectorLength(diff);
 
-    // fully opaque at range+32, fully transparent at range
-    alpha = bound(0.0f, (dist - ghost_range.value) / 32.0f, 1.0f);
+    // fully opaque at range+64, fully transparent at range
+    alpha = bound(0.0f, (dist - ghost_range.value) / 64.0f, 1.0f);
 
     // scale by cvar alpha
     alpha *= bound(0.0f, ghost_alpha.value, 1.0f);
 
     ghost_entity->transparency = alpha;
+
+    return alpha != 0.0f;
 }
 
 
@@ -203,7 +205,7 @@ static qboolean Ghost_Update (void)
                         ghost_entity->angles);
 
         // Set alpha based on distance to player.
-        Ghost_SetAlpha();
+        ghost_show = Ghost_SetAlpha();
     }
 
     return ghost_show;
