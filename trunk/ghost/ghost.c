@@ -216,31 +216,13 @@ void Ghost_Draw (void)
     /*
      * These attributes are required by R_DrawAliasModel:
      *  - model
-     *  - skinnum   set in CL_ParseUpdate
-     *  - colormap  set in CL_ParseUpdate
-     *  - transparency  set in CL_ParseUpdate
-     *  - origin    set via interpolation of msg_origins in CL_RelinkEntities
-     *  - angles    similar
-     *  - modelindex?  See R_SetupInterpolateDistance probably just set to -1 to avoid special cases
-     *  - frame     set in CL_ParseUpdate
-     *
-     *  - translate_start_time  initialize to zero
-     *  - angles1 R_RotateForEntity     ?   only set in this func so you can probably ignore
-     *  - angles2 R_RotateForEntity     ?   same
-     *  - origin1 R_RotateForEntity     ?   same
-     *  - origin2 R_RotateForEntity     ?   same
-     *  - pose1 R_DrawAliasFrame_GLSL   ?   same
-     *  - pose2 R_DrawAliasFrame_GLSL   ?   same
-     *  - frame_start_time      initialize to zero
-     *
-     *  - frame
-     *  - model
-     *  - origin
-     *  - angles
-     *  - lerpflags
-     *  - alpha
      *  - skinnum
      *  - colormap
+     *  - transparency
+     *  - origin
+     *  - angles
+     *  - modelindex
+     *  - frame
      */
     if (Ghost_Update()) {
         currententity = ghost_entity;
@@ -277,7 +259,7 @@ void Ghost_DrawGhostTime (void)
         y = vid.height - (8 * size);
     if (cl.intermission)
         y = vid.height - (2 * size);
-    y -= size;
+    y -= 2 * size;
 
     if (relative_time < 1e-3) {
         sprintf (st, "%.2f", relative_time);
