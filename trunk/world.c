@@ -503,7 +503,7 @@ int SV_HullPointContents (hull_t *hull, int num, vec3_t p)
 		node = hull->clipnodes + num;
 		plane = hull->planes + node->planenum;
 
-		d = PlaneDiff(p, plane);
+		d = (plane->type < 3) ? p[plane->type] - plane->dist : DoublePrecisionDotProduct(plane->normal, p) - plane->dist;
 		num = (d < 0) ? node->children[1] : node->children[0];
 	}
 
@@ -597,8 +597,8 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 	}
 	else
 	{
-		t1 = DotProduct(plane->normal, p1) - plane->dist;
-		t2 = DotProduct(plane->normal, p2) - plane->dist;
+		t1 = DoublePrecisionDotProduct(plane->normal, p1) - plane->dist;
+		t2 = DoublePrecisionDotProduct(plane->normal, p2) - plane->dist;
 	}
 
 	if (t1 >= 0 && t2 >= 0)
