@@ -70,25 +70,28 @@ char *svc_strings[] =
 	"svc_hidelmp",		// [string] iconlabel
 	"svc_skybox",		// [string] skyname
 //johnfitz -- new server messages 
-	"", // 38
+	"svc_botchat", // 38 (2021 RE-RELEASE)
 	"", // 39
 	"svc_bf", // 40						// no data
 	"svc_fog", // 41					// [byte] density [byte] red [byte] green [byte] blue [float] time
 	"svc_spawnbaseline2", //42			// support for large modelindex, large framenum, alpha, using flags
 	"svc_spawnstatic2", // 43			// support for large modelindex, large framenum, alpha, using flags
 	"svc_spawnstaticsound2", //	44		// [coord3] [short] samp [byte] vol [byte] aten
-	"", // 45
-	"", // 46
-	"", // 47
-	"", // 48
-	"", // 49
-	"", // 50
-	"", // 51
-	"svc_achievement", // 52 -- used by the 2021 rerelease
-	"", // 53
-	"", // 54
-	"", // 55
 //johnfitz
+
+// 2021 RE-RELEASE:
+	"svc_setviews", // 45
+	"svc_updateping", // 46
+	"svc_updatesocial", // 47
+	"svc_updateplinfo", // 48
+	"svc_rawprint", // 49
+	"svc_servervars", // 50
+	"svc_seq", // 51
+	"svc_achievement", // 52
+	"svc_chat", // 53
+	"svc_levelcompleted", // 54
+	"svc_backtolobby", // 55
+	"svc_localsound" // 56
 };
 
 //=============================================================================
@@ -243,6 +246,23 @@ void CL_ParseStartSoundPacket (void)
 
 	S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 }       
+
+/*
+==================
+CL_ParseLocalSound - for 2021 rerelease
+==================
+*/
+void CL_ParseLocalSound(void)
+{
+	int field_mask, sound_num;
+
+	field_mask = MSG_ReadByte();
+	sound_num = (field_mask&SND_LARGESOUND) ? MSG_ReadShort() : MSG_ReadByte();
+	if (sound_num >= MAX_SOUNDS)
+		Host_Error("CL_ParseLocalSound: %i > MAX_SOUNDS", sound_num);
+
+	S_LocalSound(cl.sound_precache[sound_num]->name);
+}
 
 /*
 ==================
@@ -1527,6 +1547,10 @@ void CL_ParseServerMessage (void)
 		case svc_achievement:	//used by the 2021 rerelease
 			s = MSG_ReadString();
 			Con_DPrintf("Ignoring svc_achievement (%s)\n", s);
+			break;
+
+		case svc_localsound:
+			CL_ParseLocalSound();
 			break;
 		}
 

@@ -1724,16 +1724,6 @@ void PF_changelevel (void)
 	Cbuf_AddText (va("changelevel %s\n",s));
 }
 
-/*
-==============
-PF_finalefinished -- used by 2021 release.
-==============
-*/
-void PF_finalefinished(void)
-{
-	G_FLOAT(OFS_RETURN) = 0;
-}
-
 void PF_sin (void)
 {
 	G_FLOAT(OFS_RETURN) = sin(G_FLOAT(OFS_PARM0));
@@ -1747,6 +1737,40 @@ void PF_cos (void)
 void PF_sqrt (void)
 {
 	G_FLOAT(OFS_RETURN) = sqrt(G_FLOAT(OFS_PARM0));
+}
+
+void PF_CheckPlayerEXFlags(void)
+{
+	G_FLOAT(OFS_RETURN) = 0;
+}
+
+/*
+==============
+for 2021 re-release:
+==============
+*/
+static void PF_finalefinished(void)
+{
+	G_FLOAT(OFS_RETURN) = 0;
+}
+
+static void PF_walkpathtogoal(void)
+{
+	G_FLOAT(OFS_RETURN) = 0; /* PATH_ERROR */
+}
+
+static void PF_localsound(void)
+{
+	const char	*sample;
+	int		entnum;
+
+	entnum = G_EDICTNUM(OFS_PARM0);
+	sample = G_STRING(OFS_PARM1);
+	if (entnum < 1 || entnum > svs.maxclients) {
+		Con_Printf("tried to localsound to a non-client\n");
+		return;
+	}
+	SV_LocalSound(&svs.clients[entnum - 1], sample);
 }
 
 void PF_Fixme (void)
@@ -1844,9 +1868,9 @@ PF_precache_file,
 
 PF_setspawnparms,
 
-// 2021 release
+// 2021 re-release
 PF_finalefinished,	// float() finaleFinished = #79
-PF_Fixme,			// void localsound (entity client, string sample) = #80
+PF_localsound,		// void localsound (entity client, string sample) = #80
 PF_Fixme,			// void draw_point (vector point, float colormap, float lifetime, float depthtest) = #81
 PF_Fixme,			// void draw_line (vector start, vector end, float colormap, float lifetime, float depthtest) = #82
 PF_Fixme,			// void draw_arrow (vector start, vector end, float colormap, float size, float lifetime, float depthtest) = #83
@@ -1856,9 +1880,11 @@ PF_Fixme,			// void draw_bounds (vector min, vector max, float colormap, float l
 PF_Fixme,			// void draw_worldtext (string s, vector origin, float size, float lifetime, float depthtest) = #87
 PF_Fixme,			// void draw_sphere (vector origin, float radius, float colormap, float lifetime, float depthtest) = #88
 PF_Fixme,			// void draw_cylinder (vector origin, float halfHeight, float radius, float colormap, float lifetime, float depthtest) = #89
-PF_centerprint ,	// #90
-PF_bprint,
-PF_sprint, 
+
+PF_CheckPlayerEXFlags,
+PF_walkpathtogoal,
+
+PF_Fixme,
 };
 
 builtin_t	*pr_builtins = pr_builtin;

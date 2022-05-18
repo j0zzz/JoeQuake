@@ -129,6 +129,13 @@ typedef	void (*builtin_t) (void);
 extern	builtin_t	*pr_builtins;
 extern	int		pr_numbuiltins;
 
+/* for 2021 re-release */
+typedef struct {
+	char *name;
+	int first_statement;
+	int patch_statement;
+} exbuiltin_t;
+
 extern	int		pr_argc;
 
 extern	qboolean	pr_trace;
