@@ -124,6 +124,7 @@ typedef struct glpoly_s
 	struct glpoly_s *luma_chain;		// next luma poly in chain
 	struct glpoly_s	*caustics_chain;	// next caustic poly in chain
 	struct glpoly_s	*detail_chain;		// next detail poly in chain
+	struct glpoly_s	*outline_chain;		// next outline poly in chain
 	int			numverts;
 	float		verts[4][VERTEXSIZE];	// variable sized (xyz s1t1 s2t2)
 } glpoly_t;

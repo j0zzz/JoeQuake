@@ -89,6 +89,8 @@ qboolean OnChange_r_wateralpha(cvar_t *var, char *string);
 cvar_t	r_wateralpha = {"r_wateralpha", "1", 0, OnChange_r_wateralpha };
 cvar_t	r_dynamic = {"r_dynamic", "1"};
 cvar_t	r_novis = {"r_novis", "0" };
+cvar_t	r_outline = { "r_outline", "0" };
+cvar_t	r_outline_surf = { "r_outline_surf", "0" };
 cvar_t	r_fullbrightskins = {"r_fullbrightskins", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_skycolor = {"r_skycolor", "4"};
@@ -990,6 +992,111 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 		glDisable(GL_BLEND);
 }
 
+void GL_PolygonOffset(int offset)
+{
+	if (offset > 0)
+	{
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_POLYGON_OFFSET_LINE);
+		glPolygonOffset(1, offset);
+	}
+	else if (offset < 0)
+	{
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_POLYGON_OFFSET_LINE);
+		glPolygonOffset(-1, offset);
+	}
+	else
+	{
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glDisable(GL_POLYGON_OFFSET_LINE);
+	}
+}
+
+/*
+=============
+R_DrawAliasOutlineFrame
+=============
+*/
+void R_DrawAliasOutlineFrame(int frame, aliashdr_t *paliashdr, entity_t *ent, int distance)
+{
+	int			*order, count, pose, numposes;
+	vec3_t		interpolated_verts;
+	float		lerpfrac;
+	trivertx_t	*verts1, *verts2;
+	qboolean	lerpmdl = true;
+	float		line_width = bound(1, r_outline.value, 3);
+
+	if (ent->transparency < 1.0f)
+		return;
+
+	if (ent->model->modhint == MOD_EYES)//No outlines on eyes please!
+		return;
+
+	if (ent->model->modhint == MOD_FLAME)
+		return;
+
+
+	glCullFace(GL_BACK);
+	glPolygonMode(GL_FRONT, GL_LINE);
+
+	glLineWidth(line_width);
+
+	glEnable(GL_LINE_SMOOTH);
+	GL_PolygonOffset(-0.7);
+	glDisable(GL_TEXTURE_2D);
+
+	if ((frame >= paliashdr->numframes) || (frame < 0))
+	{
+		Con_DPrintf("R_DrawAliasFrame: no such frame %d\n", frame);
+		frame = 0;
+	}
+
+	pose = paliashdr->frames[frame].firstpose;
+	numposes = paliashdr->frames[frame].numposes;
+
+	verts1 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+	verts2 = verts1;
+
+	verts1 += ent->pose1 * paliashdr->poseverts;
+	verts2 += ent->pose2 * paliashdr->poseverts;
+
+	order = (int *)((byte *)paliashdr + paliashdr->commands);
+
+	while ((count = *order++))
+	{
+		// get the vertex count and primitive type
+		if (count < 0)
+		{
+			count = -count;
+
+			glBegin(GL_TRIANGLE_FAN);
+		}
+		else
+		{
+			glBegin(GL_TRIANGLE_STRIP);
+		}
+		do
+		{
+			lerpfrac = VectorL2Compare(verts1->v, verts2->v, distance) ? ent->framelerp : 1;
+			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
+			glVertex3fv(interpolated_verts);
+
+			order += 2;
+			verts1++;
+			verts2++;
+		} while (--count);
+
+		glEnd();
+	}
+	glColor4f(1, 1, 1, 1);
+	GL_PolygonOffset(0);
+	glPolygonMode(GL_FRONT, GL_FILL);
+	glDisable(GL_LINE_SMOOTH);
+	glCullFace(GL_FRONT);
+	glEnable(GL_TEXTURE_2D);
+}
+
 /*
 =============
 R_DrawAliasFrame
@@ -1604,6 +1711,13 @@ void R_DrawAliasModel (entity_t *ent)
 		}
 	}
 	
+	if (r_outline.value)
+	{
+		glColor4f(0, 0, 0, 1);
+		R_DrawAliasOutlineFrame(ent->frame, paliashdr, ent, distance);
+		glColor4f(1, 1, 1, 1);
+	}
+
 	if (alphatest)
 		glDisable(GL_ALPHA_TEST);
 
@@ -3154,6 +3268,8 @@ void R_Init (void)
 	Cvar_Register (&r_dynamic);
 	Cvar_Register (&r_novis);
 	Cvar_Register (&r_speeds);
+	Cvar_Register (&r_outline);
+	Cvar_Register (&r_outline_surf);
 	Cvar_Register (&r_fullbrightskins);
 	Cvar_Register (&r_fastsky);
 	Cvar_Register (&r_skycolor);

@@ -53,6 +53,7 @@ glpoly_t	*luma_polys[MAX_GLTEXTURES];
 qboolean	drawfullbrights = false, drawlumas = false;
 glpoly_t	*caustics_polys = NULL;
 glpoly_t	*detail_polys = NULL;
+glpoly_t	*outline_polys = NULL;
 
 float GL_WaterAlphaForEntitySurface(entity_t *ent, msurface_t *s);
 void DrawWaterPoly(glpoly_t *p);
@@ -511,6 +512,45 @@ texture_t *R_TextureAnimation (texture_t *base)
 
 ===============================================================================
 */
+
+void EmitOutlinePolys(void)
+{
+	glpoly_t	*p;
+	int			i;
+	float		*v;
+	float		line_width = bound(1, r_outline_surf.value, 3);
+
+	if (!outline_polys)
+		return;
+
+	glColor4f(0, 0, 0, 1);
+
+	glEnable(GL_LINE_SMOOTH);
+	glDisable(GL_TEXTURE_2D);
+	glCullFace(GL_BACK);
+
+	glPolygonMode(GL_FRONT, GL_LINE);
+
+	glLineWidth(line_width);
+
+	for (p = outline_polys; p; p = p->outline_chain)
+	{
+		glBegin(GL_LINE_LOOP);
+		v = p->verts[0];
+		for (i = 0; i<p->numverts; i++, v += VERTEXSIZE)
+		{
+			glVertex3fv(v);
+		}
+		glEnd();
+	}
+	glCullFace(GL_FRONT);
+	glColor4f(1, 1, 1, 1);
+	glDisable(GL_LINE_SMOOTH);
+	glEnable(GL_TEXTURE_2D);
+	glPolygonMode(GL_FRONT, GL_FILL);
+	outline_polys = NULL;
+	glEnable(GL_TEXTURE_2D);
+}
 
 /*
 ================
@@ -1380,6 +1420,11 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 				s->polys->detail_chain = detail_polys;
 				detail_polys = s->polys;
 			}
+			if (r_outline_surf.value)
+			{
+				s->polys->outline_chain = outline_polys;
+				outline_polys = s->polys;
+			}
 			if (at->fb_texturenum && draw_fbs && !mtex_fbs)
 			{
 				if (at->isLumaTexture)
@@ -1426,6 +1471,7 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 			R_RenderFullbrights ();
 	}
 
+	EmitOutlinePolys();//R00k
 	EmitCausticsPolys();
 	EmitDetailPolys();
 }

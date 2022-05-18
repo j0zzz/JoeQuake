@@ -181,6 +181,8 @@ extern	cvar_t	r_skycolor;
 extern	cvar_t	r_drawflame;
 extern	cvar_t	r_skybox;
 extern	cvar_t	r_farclip;
+extern	cvar_t	r_outline;
+extern	cvar_t	r_outline_surf;
 extern	cvar_t	r_scale;
 
 extern	cvar_t	gl_clear;
