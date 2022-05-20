@@ -246,7 +246,7 @@ Values < 1 mean slow motion, while > 1 result fast forward.
 
 Turns on automatic demo recording.
 If cl_autodemo is 1 and cl_autodemo_name is empty, a new .dem file is recorded at
-every level start. the file naming format is `<map_name>_<date_of_recording>_<time_of_recording>.dem`
+every level start. The file naming format is `<map_name>_<date_of_recording>_<time_of_recording>.dem`
 If cl_autodemo is 1 and cl_autodemo_name is not empty, the `<cl_autodemo_name>.dem` file is recorded
 at every level start. To save the current recording session, use the 'keepdemo' command.
 This command is only valid on the intermission/finale screen and renames the temporary recording using the
@@ -391,6 +391,27 @@ than one AVI file. The used video capture module has a problem with files
 getting corrupted when reaching a size of over 2 gigabytes, so splitting them
 into smaller files is a good idea to avoid this corruption. Default is
 1900 megabytes. Setting to 0 disables splitting.
+
+### `gl_interpolate_animation`
+
+Sets lerped model animation.
+Possible values are:
+0 - Animations are not lerped (original "software" Quake behavior)
+1 - Animations are lerped except weapon muzzleflash animations
+2 - Animations are lerped including weapon muzzleflash animations
+Default value is "1".
+
+### `gl_interpolate_movement`
+
+Switches on lerped model movement, default value is "1" (on).
+
+### `gl_interpolate_distance`
+
+Sets the maximum distance between vertexes where animation lerping takes place.
+This variable was implemented exclusively for gl_interpolate_animation, when used with the value "2".
+It is rather a technical thing, it serves fine-tuning of muzzleflash animations.
+If you're not entirely familiar of this feature I recommend not adjusting it.
+Its default value is 135. It cannot be set higher than 300.
 
 ### `gl_externaltextures_world` and `gl_externaltextures_bmodels`
 
