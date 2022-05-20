@@ -774,7 +774,7 @@ void CL_RelinkEntities (void)
 
 #ifdef GLQUAKE
 			//johnfitz -- don't cl_lerp entities that will be r_lerped
-			if (ent->lerpflags & LERP_MOVESTEP)
+			if (gl_interpolate_moves.value && (ent->lerpflags & LERP_MOVESTEP))
 				f = 1;
 			//johnfitz
 #endif
@@ -865,6 +865,16 @@ void CL_RelinkEntities (void)
 			else
 				dl->type = lt_muzzleflash;
 #endif
+
+			//johnfitz -- assume muzzle flash accompanied by muzzle flare, which looks bad when lerped
+			if (gl_interpolate_anims.value == 1)
+			{
+				if (ent == &cl_entities[cl.viewentity])
+					cl.viewent.lerpflags |= LERP_RESETANIM | LERP_RESETANIM2; //no lerping for two frames
+				else
+					ent->lerpflags |= LERP_RESETANIM | LERP_RESETANIM2; //no lerping for two frames
+			}
+			//johnfitz
 
 #ifdef GLQUAKE
 			if (qmb_initialized && gl_part_muzzleflash.value)

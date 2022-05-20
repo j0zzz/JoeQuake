@@ -197,6 +197,8 @@ extern	cvar_t	gl_nocolors;
 extern	cvar_t	gl_loadlitfiles;
 extern	cvar_t	gl_doubleeyes;
 extern	cvar_t	gl_interdist;
+extern	cvar_t	gl_interpolate_anims;
+extern	cvar_t	gl_interpolate_moves;
 extern  cvar_t  gl_waterfog;		
 extern  cvar_t  gl_waterfog_density;
 extern  cvar_t  gl_detail;

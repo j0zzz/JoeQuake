@@ -117,7 +117,9 @@ cvar_t	gl_nocolors = {"gl_nocolors", "0"};
 cvar_t	gl_finish = {"gl_finish", "0"};
 cvar_t	gl_loadlitfiles = {"gl_loadlitfiles", "1"};
 cvar_t	gl_doubleeyes = {"gl_doubleeyes", "1"};
-cvar_t	gl_interdist = {"gl_interpolate_distance", "135"};
+cvar_t	gl_interdist = {"gl_interpolate_distance", "135" };
+cvar_t	gl_interpolate_anims = {"gl_interpolate_animation", "1"};
+cvar_t	gl_interpolate_moves = {"gl_interpolate_movement", "1"};
 cvar_t  gl_waterfog = {"gl_waterfog", "1"};
 cvar_t  gl_waterfog_density = {"gl_waterfog_density", "0.5"};
 cvar_t	gl_detail = {"gl_detail", "0"};
@@ -363,7 +365,7 @@ void R_RotateForEntity (entity_t *ent, qboolean shadow)
 		VectorCopy(ent->angles, ent->angles2);
 	}
 
-	if (ent->lerpflags & LERP_MOVESTEP)
+	if (gl_interpolate_moves.value && ent->lerpflags & LERP_MOVESTEP)
 	{
 		if (ent->lerpflags & LERP_FINISH)
 			lerpfrac = bound(0, (cl.time - ent->translate_start_time) / (ent->frame_finish_time - ent->translate_start_time), 1);
@@ -906,16 +908,35 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	}
 	else if (ent->pose2 != posenum) // pose changed, start new lerp
 	{
-		ent->frame_start_time = cl.time;
-		ent->pose1 = ent->pose2;
-		ent->pose2 = posenum;
+		if (ent->lerpflags & LERP_RESETANIM2) //defer lerping one more time
+		{
+			ent->frame_start_time = 0;
+			ent->pose1 = posenum;
+			ent->pose2 = posenum;
+			ent->lerpflags -= LERP_RESETANIM2;
+		}
+		else
+		{
+			ent->frame_start_time = cl.time;
+			ent->pose1 = ent->pose2;
+			ent->pose2 = posenum;
+		}
 	}
 
 	//set up values
-	if (ent->lerpflags & LERP_FINISH && numposes == 1)
-		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+	if (gl_interpolate_anims.value)
+	{
+		if (ent->lerpflags & LERP_FINISH && numposes == 1)
+			ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+		else
+			ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
+	}
 	else
-		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
+	{
+		ent->framelerp = 1;
+		ent->pose1 = posenum;
+		ent->pose2 = posenum;
+	}
 
 	if (ISTRANSPARENT(ent))
 		glEnable(GL_BLEND);
@@ -1137,16 +1158,35 @@ void R_DrawAliasFrame (int frame, aliashdr_t *paliashdr, entity_t *ent, int dist
 	}
 	else if (ent->pose2 != posenum) // pose changed, start new lerp
 	{
-		ent->frame_start_time = cl.time;
-		ent->pose1 = ent->pose2;
-		ent->pose2 = posenum;
+		if (ent->lerpflags & LERP_RESETANIM2) //defer lerping one more time
+		{
+			ent->frame_start_time = 0;
+			ent->pose1 = posenum;
+			ent->pose2 = posenum;
+			ent->lerpflags -= LERP_RESETANIM2;
+		}
+		else
+		{
+			ent->frame_start_time = cl.time;
+			ent->pose1 = ent->pose2;
+			ent->pose2 = posenum;
+		}
 	}
 
 	//set up values
-	if (ent->lerpflags & LERP_FINISH && numposes == 1)
-		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+	if (gl_interpolate_anims.value)
+	{
+		if (ent->lerpflags & LERP_FINISH && numposes == 1)
+			ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+		else
+			ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
+	}
 	else
-		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
+	{
+		ent->framelerp = 1;
+		ent->pose1 = posenum;
+		ent->pose2 = posenum;
+	}
 
 	verts1 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 	verts2 = verts1;
@@ -2116,16 +2156,35 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 	}
 	else if (ent->pose2 != posenum) // pose changed, start new lerp
 	{
-		ent->frame_start_time = cl.time;
-		ent->pose1 = ent->pose2;
-		ent->pose2 = posenum;
+		if (ent->lerpflags & LERP_RESETANIM2) //defer lerping one more time
+		{
+			ent->frame_start_time = 0;
+			ent->pose1 = posenum;
+			ent->pose2 = posenum;
+			ent->lerpflags -= LERP_RESETANIM2;
+		}
+		else
+		{
+			ent->frame_start_time = cl.time;
+			ent->pose1 = ent->pose2;
+			ent->pose2 = posenum;
+		}
 	}
 
 	//set up values
-	if (ent->lerpflags & LERP_FINISH && numposes == 1)
-		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+	if (gl_interpolate_anims.value)
+	{
+		if (ent->lerpflags & LERP_FINISH && numposes == 1)
+			ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+		else
+			ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
+	}
 	else
-		ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
+	{
+		ent->framelerp = 1;
+		ent->pose1 = posenum;
+		ent->pose2 = posenum;
+	}
 
 	verts = (md3vert_mem_t *)((byte *)pmd3hdr + pmd3surf->ofsverts);
 	tc = (md3tc_t *)((byte *)pmd3surf + pmd3surf->ofstc);
@@ -3293,6 +3352,8 @@ void R_Init (void)
 	Cvar_Register (&gl_loadlitfiles);
 	Cvar_Register (&gl_doubleeyes);
 	Cvar_Register (&gl_interdist);
+	Cvar_Register (&gl_interpolate_anims);
+	Cvar_Register (&gl_interpolate_moves);
 	Cvar_Register (&gl_waterfog);
 	Cvar_Register (&gl_waterfog_density);
 	Cvar_Register (&gl_detail);
