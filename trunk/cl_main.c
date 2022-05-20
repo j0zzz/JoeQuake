@@ -844,28 +844,8 @@ void CL_RelinkEntities (void)
 			}
 		}
 
-		if ((ent->effects & EF_MUZZLEFLASH) && cl_muzzleflash.value)
+		if (ent->effects & EF_MUZZLEFLASH)
 		{
-			vec3_t	fv;
-
-			dl = CL_AllocDlight (i);
-			VectorCopy (ent->origin, dl->origin);
-			dl->origin[2] += 16;
-			AngleVectors (ent->angles, fv, NULL, NULL);
-			VectorMA (dl->origin, 18, fv, dl->origin);
-			dl->radius = 200 + (rand() & 31);
-			dl->minlight = 32;
-			dl->die = cl.time + 0.1;
-#ifdef GLQUAKE
-			if ((ent->modelindex == cl_modelindex[mi_shambler] || (Mod_IsAnyKindOfPlayerModel(ent->model) && cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)) &&
-				qmb_initialized && gl_part_lightning.value)
-				dl->type = lt_blue;
-			else if (ent->modelindex == cl_modelindex[mi_scrag] && qmb_initialized)
-				dl->type = lt_green;
-			else
-				dl->type = lt_muzzleflash;
-#endif
-
 			//johnfitz -- assume muzzle flash accompanied by muzzle flare, which looks bad when lerped
 			if (gl_interpolate_anims.value == 1)
 			{
@@ -876,85 +856,108 @@ void CL_RelinkEntities (void)
 			}
 			//johnfitz
 
-#ifdef GLQUAKE
-			if (qmb_initialized && gl_part_muzzleflash.value)
+			if (cl_muzzleflash.value)
 			{
-				vec3_t	rv, uv, smokeorg;
+				vec3_t	fv;
 
-				if (i == cl.viewentity)
-				{
-					vec3_t	smokeorg2;
-
-					VectorCopy (cl_entities[cl.viewentity].origin, smokeorg);
-					smokeorg[2] += cl.crouch;
-
-					smokeorg[2] += 14;	// move it up
-
-					// adjust for current view angles
-					AngleVectors (cl.viewangles, fv, rv, uv);
-
-					// forward vector
-					VectorMA (smokeorg, 18, fv, smokeorg);
-
-					if (cl.stats[STAT_ACTIVEWEAPON] == IT_NAILGUN || cl.stats[STAT_ACTIVEWEAPON] == IT_SUPER_SHOTGUN)
-					{
-						VectorMA (smokeorg, -3, rv, smokeorg);
-						VectorMA (smokeorg, 6, rv, smokeorg2);
-						QMB_MuzzleFlash (smokeorg, true);					
-						QMB_MuzzleFlash (smokeorg2, true);
-					}
-					else if (cl.stats[STAT_ACTIVEWEAPON] == IT_SUPER_NAILGUN || cl.stats[STAT_ACTIVEWEAPON] == IT_SHOTGUN)
-					{
-						QMB_MuzzleFlash (smokeorg, true);
-					}
-				}
-				else if (ent->modelindex == cl_modelindex[mi_player])
-				{
-					VectorCopy (ent->origin, smokeorg);
-
-					smokeorg[2] += 14;	// move it up
-
-					// adjust for current view angles
-					AngleVectors (ent->angles, fv, rv, uv);
-
-					VectorScale(fv, 18, fv);
-					VectorMA (fv, 7, rv, fv);
-					VectorAdd(smokeorg, fv, smokeorg);
-
-					QMB_MuzzleFlash (smokeorg, false);
-				}
-				else if (ent->modelindex == cl_modelindex[mi_enforcer])
-				{
-					VectorCopy (ent->origin, smokeorg);
-
-					smokeorg[2] += 14;	// move it up
-
-					// adjust for current view angles
-					AngleVectors (ent->angles, fv, rv, uv);
-
-					VectorScale(fv, 26, fv);
-					VectorMA (fv, 9, rv, fv);
-					VectorAdd(smokeorg, fv, smokeorg);
-
-					QMB_MuzzleFlash (smokeorg, false);
-				}
-				else if (ent->modelindex == cl_modelindex[mi_soldier])
-				{
-					VectorCopy (ent->origin, smokeorg);
-
-					smokeorg[2] += 14;	// move it up
-
-					// adjust for current view angles
-					AngleVectors (ent->angles, fv, rv, uv);
-
-					VectorScale(fv, 18, fv);
-					VectorMA (fv, 7, rv, fv);
-					VectorAdd(smokeorg, fv, smokeorg);
-
-					QMB_MuzzleFlash (smokeorg, false);
-				}
-			}
+				dl = CL_AllocDlight(i);
+				VectorCopy(ent->origin, dl->origin);
+				dl->origin[2] += 16;
+				AngleVectors(ent->angles, fv, NULL, NULL);
+				VectorMA(dl->origin, 18, fv, dl->origin);
+				dl->radius = 200 + (rand() & 31);
+				dl->minlight = 32;
+				dl->die = cl.time + 0.1;
+#ifdef GLQUAKE
+				if ((ent->modelindex == cl_modelindex[mi_shambler] || (Mod_IsAnyKindOfPlayerModel(ent->model) && cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)) &&
+					qmb_initialized && gl_part_lightning.value)
+					dl->type = lt_blue;
+				else if (ent->modelindex == cl_modelindex[mi_scrag] && qmb_initialized)
+					dl->type = lt_green;
+				else
+					dl->type = lt_muzzleflash;
 #endif
+
+#ifdef GLQUAKE
+				if (qmb_initialized && gl_part_muzzleflash.value)
+				{
+					vec3_t	rv, uv, smokeorg;
+
+					if (i == cl.viewentity)
+					{
+						vec3_t	smokeorg2;
+
+						VectorCopy(cl_entities[cl.viewentity].origin, smokeorg);
+						smokeorg[2] += cl.crouch;
+
+						smokeorg[2] += 14;	// move it up
+
+											// adjust for current view angles
+						AngleVectors(cl.viewangles, fv, rv, uv);
+
+						// forward vector
+						VectorMA(smokeorg, 18, fv, smokeorg);
+
+						if (cl.stats[STAT_ACTIVEWEAPON] == IT_NAILGUN || cl.stats[STAT_ACTIVEWEAPON] == IT_SUPER_SHOTGUN)
+						{
+							VectorMA(smokeorg, -3, rv, smokeorg);
+							VectorMA(smokeorg, 6, rv, smokeorg2);
+							QMB_MuzzleFlash(smokeorg, true);
+							QMB_MuzzleFlash(smokeorg2, true);
+						}
+						else if (cl.stats[STAT_ACTIVEWEAPON] == IT_SUPER_NAILGUN || cl.stats[STAT_ACTIVEWEAPON] == IT_SHOTGUN)
+						{
+							QMB_MuzzleFlash(smokeorg, true);
+						}
+					}
+					else if (ent->modelindex == cl_modelindex[mi_player])
+					{
+						VectorCopy(ent->origin, smokeorg);
+
+						smokeorg[2] += 14;	// move it up
+
+											// adjust for current view angles
+						AngleVectors(ent->angles, fv, rv, uv);
+
+						VectorScale(fv, 18, fv);
+						VectorMA(fv, 7, rv, fv);
+						VectorAdd(smokeorg, fv, smokeorg);
+
+						QMB_MuzzleFlash(smokeorg, false);
+					}
+					else if (ent->modelindex == cl_modelindex[mi_enforcer])
+					{
+						VectorCopy(ent->origin, smokeorg);
+
+						smokeorg[2] += 14;	// move it up
+
+											// adjust for current view angles
+						AngleVectors(ent->angles, fv, rv, uv);
+
+						VectorScale(fv, 26, fv);
+						VectorMA(fv, 9, rv, fv);
+						VectorAdd(smokeorg, fv, smokeorg);
+
+						QMB_MuzzleFlash(smokeorg, false);
+					}
+					else if (ent->modelindex == cl_modelindex[mi_soldier])
+					{
+						VectorCopy(ent->origin, smokeorg);
+
+						smokeorg[2] += 14;	// move it up
+
+											// adjust for current view angles
+						AngleVectors(ent->angles, fv, rv, uv);
+
+						VectorScale(fv, 18, fv);
+						VectorMA(fv, 7, rv, fv);
+						VectorAdd(smokeorg, fv, smokeorg);
+
+						QMB_MuzzleFlash(smokeorg, false);
+					}
+				}
+#endif
+			}
 		}
 
 		if (ent->modelindex != cl_modelindex[mi_eyes] && 
