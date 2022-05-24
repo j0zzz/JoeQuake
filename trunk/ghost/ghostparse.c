@@ -163,8 +163,10 @@ Ghost_Baseline_cb (int entity_num, vec3_t origin, vec3_t angle, int frame,
         return DP_CBR_STOP;
     }
 
-    VectorCopy(origin, pctx->baseline_origin);
-    VectorCopy(angle, pctx->baseline_angle);
+    if (entity_num == pctx->view_entity) {
+        VectorCopy(origin, pctx->baseline_origin);
+        VectorCopy(angle, pctx->baseline_angle);
+    }
 
     return DP_CBR_CONTINUE;
 }
