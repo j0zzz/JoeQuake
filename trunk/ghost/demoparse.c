@@ -434,7 +434,9 @@ DP_ParseBaseline(ctx_t *ctx, qboolean static_, int version)
         CHECK_RC(DP_ParseByte(ctx, NULL));  // alpha
     }
 
-    CALL_CALLBACK(baseline, entity_num, origin, angle, frame);
+    if (!static_) {
+        CALL_CALLBACK(baseline, entity_num, origin, angle, frame);
+    }
 
     return DP_ERR_SUCCESS;
 }
