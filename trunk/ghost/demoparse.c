@@ -476,10 +476,13 @@ DP_ParseUpdate(ctx_t *ctx, byte base_flags)
     unsigned int flags;
     int entity_num;
     int frame = -1;
-    vec3_t origin = {};
-    vec3_t angle = {};
+    vec3_t origin;
+    vec3_t angle;
     byte origin_bits = 0;
     byte angle_bits = 0;
+
+    VectorClear(origin);
+    VectorClear(angle);
 
     CHECK_RC(DP_ParseUpdateFlags(ctx, base_flags, &flags));
 
