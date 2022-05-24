@@ -107,6 +107,12 @@
     <Filter Include="Source Files\Unzip">
       <UniqueIdentifier>{12143103-6799-4a01-9045-015d2da6e652}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Ghost">
+      <UniqueIdentifier>{512f4200-96b7-4b35-a2d9-71b0c6b0e8c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Ghost_h">
+      <UniqueIdentifier>{93535a27-753e-43e4-983d-0bc3e222b987}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="joequake.rc">
@@ -411,6 +417,15 @@
     <ClCompile Include="unzip.c">
       <Filter>Source Files\Unzip</Filter>
     </ClCompile>
+    <ClCompile Include="ghost\demoparse.c">
+      <Filter>Source Files\Ghost</Filter>
+    </ClCompile>
+    <ClCompile Include="ghost\ghost.c">
+      <Filter>Source Files\Ghost</Filter>
+    </ClCompile>
+    <ClCompile Include="ghost\ghostparse.c">
+      <Filter>Source Files\Ghost</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="adivtab.h">
@@ -589,6 +604,15 @@
     </ClInclude>
     <ClInclude Include="gl_warp_sin.h">
       <Filter>Header Files\OpenGL_h</Filter>
+    </ClInclude>
+    <ClInclude Include="ghost\demoparse.h">
+      <Filter>Header Files\Ghost_h</Filter>
+    </ClInclude>
+    <ClInclude Include="ghost\ghost.h">
+      <Filter>Header Files\Ghost_h</Filter>
+    </ClInclude>
+    <ClInclude Include="ghost\ghost_private.h">
+      <Filter>Header Files\Ghost_h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

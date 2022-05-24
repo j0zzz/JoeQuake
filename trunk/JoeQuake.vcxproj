@@ -389,6 +389,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fmod.c" />
+    <ClCompile Include="ghost\demoparse.c" />
+    <ClCompile Include="ghost\ghost.c" />
+    <ClCompile Include="ghost\ghostparse.c" />
     <ClCompile Include="gl_decals.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
@@ -651,6 +654,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fakegl.h" />
+    <ClInclude Include="ghost\demoparse.h" />
+    <ClInclude Include="ghost\ghost.h" />
+    <ClInclude Include="ghost\ghost_private.h" />
     <ClInclude Include="gl_model.h" />
     <ClInclude Include="glquake.h" />
     <ClInclude Include="cdaudio.h" />
