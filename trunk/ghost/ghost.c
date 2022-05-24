@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 static cvar_t ghost_delta = {"ghost_delta", "1", CVAR_ARCHIVE};
-static cvar_t ghost_range = {"ghost_range", "128", CVAR_ARCHIVE};
-static cvar_t ghost_alpha = {"ghost_alpha", "0.5", CVAR_ARCHIVE};
+static cvar_t ghost_range = {"ghost_range", "64", CVAR_ARCHIVE};
+static cvar_t ghost_alpha = {"ghost_alpha", "0.8", CVAR_ARCHIVE};
 
 
 static char         ghost_demo_path[MAX_OSPATH] = "";
