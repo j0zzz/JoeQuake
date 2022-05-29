@@ -308,6 +308,11 @@ Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
     if (ok) {
         Ghost_ListToArray(list, &ghost_info->records, &ghost_info->num_records);
         ghost_info->finish_time = pctx.finish_time;
+
+        if (ghost_info->num_records == 0) {
+            Con_Printf("ERROR: No records found in demo\n");
+            ok = false;
+        }
     }
 
     // Free everything
