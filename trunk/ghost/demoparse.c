@@ -712,6 +712,21 @@ DP_UpdateStat(ctx_t *ctx)
 
 
 static dp_err_t
+DP_ParseUpdateName(ctx_t *ctx)
+{
+    byte client_num;
+    char name[MAX_SCOREBOARDNAME];
+
+    CHECK_RC(DP_ParseByte(ctx, &client_num));
+    CHECK_RC(DP_ParseString(ctx, name, sizeof(name), NULL));
+
+    CALL_CALLBACK(update_name, client_num, name);
+
+    return DP_ERR_SUCCESS;
+}
+
+
+static dp_err_t
 DP_ParseMessage(ctx_t *ctx)
 {
     byte cmd;
@@ -766,8 +781,7 @@ DP_ParseMessage(ctx_t *ctx)
                 CHECK_RC(DP_ParseShort(ctx, NULL));
                 break;
             case svc_updatename:
-                CHECK_RC(DP_ParseByte(ctx, NULL));             // entity
-                CHECK_RC(DP_ParseString(ctx, NULL, 0, NULL));  // name
+                CHECK_RC(DP_ParseUpdateName(ctx));
                 break;
             case svc_updatefrags:
                 CHECK_RC(DP_ParseByte(ctx, NULL));    // entity

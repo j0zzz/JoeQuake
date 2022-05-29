@@ -101,7 +101,8 @@ typedef struct {
     vec3_t baseline_angle;
     int baseline_frame;
 
-    qboolean finished;
+    char (*client_names)[MAX_SCOREBOARDNAME];
+    float finish_time;
 } ghost_parse_ctx_t;
 
 
@@ -224,11 +225,25 @@ static dp_cb_response_t
 Ghost_Intermission_cb (void *ctx)
 {
     ghost_parse_ctx_t *pctx = ctx;
-    pctx->finished = true;
+    if (pctx->finish_time <= 0) {
+        pctx->finish_time = pctx->rec.time;
+    }
 
     return DP_CBR_STOP;
 }
 
+
+static dp_cb_response_t
+Ghost_UpdateName_cb (int client_num, const char *name, void *ctx)
+{
+    ghost_parse_ctx_t *pctx = ctx;
+
+    if (client_num >= 0 && client_num < GHOST_MAX_CLIENTS) {
+        Q_strncpyz(pctx->client_names[client_num], (char *)name, MAX_SCOREBOARDNAME);
+    }
+
+    return DP_CBR_CONTINUE;
+}
 
 /*
  * ENTRYPOINT
@@ -238,8 +253,8 @@ Ghost_Intermission_cb (void *ctx)
 
 
 qboolean
-Ghost_ReadDemo(const char *demo_path, ghostrec_t **records, int *num_records,
-               const char *expected_map_name)
+Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
+                const char *expected_map_name)
 {
     qboolean ok = true;
     ghostreclist_t *list = NULL;
@@ -255,11 +270,14 @@ Ghost_ReadDemo(const char *demo_path, ghostrec_t **records, int *num_records,
         .intermission = Ghost_Intermission_cb,
         .finale = Ghost_Intermission_cb,
         .cut_scene = Ghost_Intermission_cb,
+        .update_name = Ghost_UpdateName_cb,
     };
     ghost_parse_ctx_t pctx = {
         .view_entity = -1,
         .next_ptr = &list,
         .expected_map_name = expected_map_name,
+        .client_names = ghost_info->client_names,
+        .finish_time = -1,
     };
 
     COM_FOpenFile ((char *)demo_path, &pctx.demo_file);
@@ -273,7 +291,7 @@ Ghost_ReadDemo(const char *demo_path, ghostrec_t **records, int *num_records,
         dprc = DP_ReadDemo(&callbacks, &pctx);
         if (dprc == DP_ERR_CALLBACK_STOP) {
             // Errors from callbacks print their own error messages.
-            ok = pctx.finished;
+            ok = pctx.finish_time > 0;
         } else if (dprc != DP_ERR_SUCCESS) {
             Con_Printf("Error parsing demo %s: %u\n", demo_path, dprc);
             ok = false;
@@ -281,7 +299,8 @@ Ghost_ReadDemo(const char *demo_path, ghostrec_t **records, int *num_records,
     }
 
     if (ok) {
-        Ghost_ListToArray(list, records, num_records);
+        Ghost_ListToArray(list, &ghost_info->records, &ghost_info->num_records);
+        ghost_info->finish_time = pctx.finish_time;
     }
 
     // Free everything

@@ -92,20 +92,37 @@ static int Ghost_FindRecord (float time)
 }
 
 
+extern char *GetPrintedTime(double time);   // Maybe put the definition somewhere central?
 void Ghost_Load (const char *map_name)
 {
-    ghost_records = NULL;
-    ghost_num_records = 0;
+    int i;
+    ghost_info_t ghost_info;
+
+    memset(&ghost_info, 0, sizeof(ghost_info));
 
     if (ghost_demo_path[0] == '\0') {
         return;
     }
 
-    if (!Ghost_ReadDemo(ghost_demo_path, &ghost_records, &ghost_num_records, map_name)) {
+    if (!Ghost_ReadDemo(ghost_demo_path, &ghost_info, map_name)) {
         return;
     }
-    Con_Printf("Loaded %d ghost records from demo %s\n",
-               ghost_num_records, ghost_demo_path);
+    ghost_records = ghost_info.records;
+    ghost_num_records = ghost_info.num_records;
+
+    // Print player names
+    Con_Printf("Ghost player(s): ");
+    for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
+        if (ghost_info.client_names[i][0] != '\0') {
+            Con_Printf(" %s ", ghost_info.client_names[i]);
+        }
+    }
+    Con_Printf("\n");
+
+    // Print finish time
+    if (ghost_info.finish_time > 0) {
+        Con_Printf("Ghost time:       %s\n", GetPrintedTime(ghost_info.finish_time));
+    }
 
     ghost_entity = (entity_t *)Hunk_AllocName(sizeof(entity_t),
                                               "ghost_entity");

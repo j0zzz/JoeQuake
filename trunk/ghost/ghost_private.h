@@ -21,6 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __GHOST_PRIVATE
 #define __GHOST_PRIVATE
 
+#ifndef QUAKE_GAME
+#include "../quakedef.h"
+#endif
+
+
+#define GHOST_MAX_CLIENTS   8
+
 
 typedef struct {
     float time;
@@ -30,7 +37,15 @@ typedef struct {
 } ghostrec_t;
 
 
-qboolean Ghost_ReadDemo(const char *demo_path, ghostrec_t **records, int *num_records,
+typedef struct {
+    char client_names[GHOST_MAX_CLIENTS][MAX_SCOREBOARDNAME];
+    float finish_time;
+    ghostrec_t *records;
+    int num_records;
+} ghost_info_t;
+
+
+qboolean Ghost_ReadDemo(const char *demo_path, ghost_info_t *ghost_info,
                         const char *expected_map_name);
 
 #endif /* __GHOST_PRIVATE */
