@@ -109,6 +109,10 @@ void Ghost_Load (const char *map_name)
     ghost_info_t ghost_info;
 
     memset(&ghost_info, 0, sizeof(ghost_info));
+    ghost_records = NULL;
+    ghost_num_records = 0;
+    ghost_entity = NULL;
+    ghost_finish_time = -1.0f;
 
     if (ghost_demo_path[0] == '\0') {
         return;
