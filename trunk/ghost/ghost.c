@@ -32,6 +32,7 @@ static ghostrec_t  *ghost_records = NULL;
 static int          ghost_num_records = 0;
 static entity_t    *ghost_entity = NULL;
 static float        ghost_shift = 0.0f;
+static float        ghost_finish_time = -1.0f;
 
 
 // This could be done more intelligently, no doubt.
@@ -120,6 +121,7 @@ void Ghost_Load (const char *map_name)
     Con_Printf("\n");
 
     // Print finish time
+    ghost_finish_time = ghost_info.finish_time;
     if (ghost_info.finish_time > 0) {
         Con_Printf("Ghost time:       %s\n", GetPrintedTime(ghost_info.finish_time));
     }
@@ -310,6 +312,18 @@ void Ghost_DrawGhostTime (void)
 }
 
 
+void Ghost_Finish (void)
+{
+    float delta;
+    if (ghost_finish_time > 0) {
+        delta = cl.mtime[0] - ghost_finish_time;
+        Con_Printf("Finished %.3f s %s ghost\n",
+                   fabs(delta), delta > 0 ? "behind" : "ahead of");
+
+    }
+}
+
+
 static void Ghost_Command_f (void)
 {
     FILE *demo_file;
@@ -411,6 +425,7 @@ static void Ghost_ShiftResetCommand_f (void)
 
     ghost_shift = 0.0f;
 }
+
 
 
 void Ghost_Init (void)

@@ -1229,6 +1229,8 @@ void PrintFinishTime()
 
 		SV_BroadcastPrintf("\n");
 	}
+
+	Ghost_Finish ();
 }
 
 /*

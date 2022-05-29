@@ -26,6 +26,7 @@ void Ghost_Load (const char *map_name);
 void Ghost_Draw (void);
 void Ghost_DrawGhostTime (void);
 void Ghost_Init (void);
+void Ghost_Finish (void);
 
 
 #endif /* __CL_GHOST_H */
