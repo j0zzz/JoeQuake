@@ -970,7 +970,7 @@ DP_ReadDemo(dp_callbacks_t *callbacks, void *callback_ctx)
         rc = DP_ERR_SUCCESS;
     }
 
-    if (rc != DP_ERR_SUCCESS) {
+    if (rc != DP_ERR_SUCCESS && rc != DP_ERR_CALLBACK_STOP) {
         unsigned long offs = ctx.file_offset;
         if (ctx.packet_end != NULL) {
             offs -= ctx.packet_end - ctx.buf;
