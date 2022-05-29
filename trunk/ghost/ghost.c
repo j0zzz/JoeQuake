@@ -36,7 +36,7 @@ static float        ghost_finish_time = -1.0f;
 
 
 // This could be done more intelligently, no doubt.
-static float Ghost_FindClosest (vec3_t origin)
+static float Ghost_FindClosest (vec3_t origin, qboolean *match)
 {
     int idx;
     ghostrec_t *rec;
@@ -45,19 +45,28 @@ static float Ghost_FindClosest (vec3_t origin)
     float closest_dist_sqr;
     float dist_sqr;
 
+    // Ignore any matches that are not close by.
+    closest_dist_sqr = 256.0f * 256.0f;
+
     for (idx = 0, rec = ghost_records;
          idx < ghost_num_records;
          rec++, idx++) {
         VectorSubtract(origin, rec->origin, diff);
 
         dist_sqr = DotProduct(diff, diff);
-        if (closest_rec == NULL || dist_sqr < closest_dist_sqr) {
+        if (dist_sqr < closest_dist_sqr) {
             closest_dist_sqr = dist_sqr;
             closest_rec = rec;
         }
     }
 
-    return cl.time - closest_rec->time;
+    if (closest_rec != NULL) {
+        *match = true;
+        return cl.time - closest_rec->time;
+    } else {
+        *match = false;
+        return 0.0f;
+    }
 }
 
 
@@ -260,12 +269,15 @@ void Ghost_DrawGhostTime (void)
     char  st[8];
     float relative_time;
     float width;
+    qboolean match;
 
     entity_t *ent = &cl_entities[cl.viewentity];
 
     if (!ghost_delta.value || ghost_records == NULL)
         return;
-    relative_time = Ghost_FindClosest(ent->origin);
+    relative_time = Ghost_FindClosest(ent->origin, &match);
+    if (!match)
+        return;
 
 	scale = Sbar_GetScaleAmount();
 	size = Sbar_GetScaledCharacterSize();
@@ -382,6 +394,7 @@ static void Ghost_RemoveCommand_f (void)
 static void Ghost_ShiftCommand_f (void)
 {
     float delta;
+    qboolean match;
     entity_t *ent = &cl_entities[cl.viewentity];
 
     if (cmd_source != src_command) {
@@ -401,8 +414,12 @@ static void Ghost_ShiftCommand_f (void)
     }
 
 
-    delta = Ghost_FindClosest(ent->origin);
-    ghost_shift = Q_atof(Cmd_Argv(1)) - delta;
+    delta = Ghost_FindClosest(ent->origin, &match);
+    if (match) {
+        ghost_shift = Q_atof(Cmd_Argv(1)) - delta;
+    } else {
+        Con_Printf("Cannot shift: Player cannot be matched to ghost's path\n");
+    }
 }
 
 
