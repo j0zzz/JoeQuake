@@ -91,6 +91,7 @@ typedef struct {
     int view_entity;
     ghostreclist_t **next_ptr;
     ghostrec_t rec;
+    qboolean updated;  // record changed since last append
 
     FILE *demo_file;
 
@@ -208,6 +209,9 @@ Ghost_Update_cb(int entity_num, vec3_t origin, vec3_t angle,
         pctx->rec.frame = pctx->baseline_frame;
     }
 
+    pctx->updated = true;
+
+    // Nothing of interest until the next packet.
     return DP_CBR_SKIP_PACKET;
 }
 
@@ -216,7 +220,10 @@ static dp_cb_response_t
 Ghost_PacketEnd_cb (void *ctx)
 {
     ghost_parse_ctx_t *pctx = ctx;
-    Ghost_Append(&pctx->next_ptr, &pctx->rec);
+    if (pctx->updated) {
+        Ghost_Append(&pctx->next_ptr, &pctx->rec);
+        pctx->updated = false;
+    }
     return DP_CBR_CONTINUE;
 }
 
