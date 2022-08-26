@@ -1344,8 +1344,8 @@ void SCR_DrawStats (void)
 
 		if (show_stats.value == 2 || show_stats.value == 4)
 		{
-			Sbar_IntermissionNumber (vid.width - (int)(48 * scale), (int)(24 * scale), cl.stats[STAT_SECRETS], 2, 0);
-			Sbar_IntermissionNumber (vid.width - (int)(72 * scale), (int)(48 * scale), cl.stats[STAT_MONSTERS], 3, 0);
+			Sbar_IntermissionNumber (vid.width - (int)(72 * scale), (int)(24 * scale), cl.stats[STAT_SECRETS], 3, 0);
+			Sbar_IntermissionNumber (vid.width - (int)(96 * scale), (int)(48 * scale), cl.stats[STAT_MONSTERS], 4, 0);
 		}
 	}
 	else

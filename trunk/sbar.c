@@ -1383,7 +1383,7 @@ Sbar_IntermissionOverlay
 void Sbar_IntermissionOverlay (void)
 {
 	mpic_t	*pic;
-	int		dig, num, xofs;
+	int		dig, num, xofs, pos;
 	float	scale;
 
 	scr_copyeverything = 1;
@@ -1418,9 +1418,20 @@ void Sbar_IntermissionOverlay (void)
 	Sbar_IntermissionNumber (xofs + (int)(240 * scale), (int)(104 * scale), cl.stats[STAT_TOTALSECRETS], 3, 0);
 
 	// monsters
-	Sbar_IntermissionNumber (xofs + (int)(160 * scale), (int)(144 * scale), cl.stats[STAT_MONSTERS], 3, 0);
+	if (cl.stats[STAT_MONSTERS] >= 1000)
+	{
+		pos = 136;
+		dig = 4;
+	}
+	else
+	{
+		pos = 160;
+		dig = 3;
+	}
+	Sbar_IntermissionNumber (xofs + (int)(pos * scale), (int)(144 * scale), cl.stats[STAT_MONSTERS], dig, 0);
 	Draw_TransPic (xofs + (int)(232 * scale), (int)(144 * scale), sb_slash, true);
-	Sbar_IntermissionNumber (xofs + (int)(240 * scale), (int)(144 * scale), cl.stats[STAT_TOTALMONSTERS], 3, 0);
+	dig = cl.stats[STAT_TOTALMONSTERS] >= 1000 ? 4 : 3;
+	Sbar_IntermissionNumber (xofs + (int)(240 * scale), (int)(144 * scale), cl.stats[STAT_TOTALMONSTERS], dig, 0);
 }
 
 /*
