@@ -68,6 +68,7 @@ void Sbar_DeathmatchOverlay (void);
 int	sbar_xofs;
 cvar_t	scr_centersbar = {"scr_centersbar", "1"};
 cvar_t	scr_sbarscale_amount = { "scr_sbarscale_amount", "2" };
+cvar_t	scr_sbarmode = { "scr_sbarmode", "0" };
 
 /*
 ===============
@@ -272,6 +273,7 @@ void Sbar_Init (void)
 
 	Cvar_Register (&scr_centersbar);
 	Cvar_Register (&scr_sbarscale_amount);
+	Cvar_Register(&scr_sbarmode);
 
 	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
 	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
@@ -359,6 +361,37 @@ void Sbar_DrawString (int x, int y, char *str)
 	
 	scale = Sbar_GetScaleAmount();
 	Draw_String ((int)(x * scale) + sbar_xofs, (int)(y * scale) + (vid.height - Sbar_GetScaledSbarHeight()), str, true);
+}
+
+/*
+===============
+Sbar_DrawScrollString -- johnfitz
+
+scroll the string inside a glscissor region
+===============
+*/
+void Sbar_DrawScrollString(int x, int y, int width, char *str)
+{
+	float	scale;
+	int		len, ofs, left;
+
+	scale = bound(1.0, Sbar_GetScaleAmount(), (float)glwidth / 320.0);
+	left = x * scale;
+	if (cl.gametype != GAME_DEATHMATCH)
+		left += (((float)glwidth - 320.0 * scale) / 2);
+
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(left, 0, width * scale, glheight);
+
+	len = strlen(str) * 8 + 40;
+	ofs = ((int)(realtime * 30)) % len;
+	Sbar_DrawString(x - ofs, y, str);
+	Sbar_DrawCharacter(x - ofs + len - 32, y, '/');
+	Sbar_DrawCharacter(x - ofs + len - 24, y, '/');
+	Sbar_DrawCharacter(x - ofs + len - 16, y, '/');
+	Sbar_DrawString(x - ofs + len, y, str);
+
+	glDisable(GL_SCISSOR_TEST);
 }
 
 /*
@@ -501,26 +534,50 @@ Sbar_SoloScoreboard
 */
 void Sbar_SoloScoreboard (void)
 {
-	char	str[80];
-	int	l, minutes, seconds, tens, units;
+	char	str[256];
+	int		len, minutes, seconds, tens, units;
 
-	Q_snprintfz (str, sizeof(str), "Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
-	Sbar_DrawString (8, 4, str);
-
-	Q_snprintfz (str, sizeof(str), "Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
-	Sbar_DrawString (8, 12, str);
-
-// time
 	minutes = cl.time / 60;
-	seconds = cl.time - 60*minutes;
+	seconds = cl.time - 60 * minutes;
 	tens = seconds / 10;
-	units = seconds - 10*tens;
-	Q_snprintfz (str, sizeof(str), "Time :%3i:%i%i", minutes, tens, units);
-	Sbar_DrawString (184, 4, str);
+	units = seconds - 10 * tens;
 
-// draw level name
-	l = strlen (cl.levelname);
-	Sbar_DrawString (232 - l*4, 12, cl.levelname);
+	if (!scr_sbarmode.value)
+	{
+		Q_snprintfz(str, sizeof(str), "Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+		Sbar_DrawString(8, 4, str);
+
+		Q_snprintfz(str, sizeof(str), "Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
+		Sbar_DrawString(8, 12, str);
+
+		// time
+		Q_snprintfz(str, sizeof(str), "Time :%3i:%i%i", minutes, tens, units);
+		Sbar_DrawString(184, 4, str);
+
+		// draw level name
+		len = strlen(cl.levelname);
+		if (len > 22)
+			Sbar_DrawScrollString(144, 12, 176, cl.levelname);
+		else
+			Sbar_DrawString(232 - len * 4, 12, cl.levelname);
+	}
+	else
+	{
+		Q_snprintfz(str, sizeof(str), "Kills: %i/%i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+		Sbar_DrawString(8, 12, str);
+
+		Q_snprintfz(str, sizeof(str), "Secrets: %i/%i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
+		Sbar_DrawString(312 - strlen(str) * 8, 12, str);
+
+		Q_snprintfz(str, sizeof(str), "%i:%i%i", minutes, tens, units);
+		Sbar_DrawString(160 - strlen(str) * 4, 12, str);
+
+		len = strlen(cl.levelname);
+		if (len > 40)
+			Sbar_DrawScrollString(0, 4, 320, cl.levelname);
+		else
+			Sbar_DrawString(160 - len * 4, 4, cl.levelname);
+	}
 }
 
 /*
