@@ -154,6 +154,7 @@ extern	refdef_t	r_refdef;
 extern	mleaf_t		*r_viewleaf, *r_oldviewleaf;
 extern	mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
 extern	texture_t	*r_notexture_mip;
+extern	texture_t	*r_notexture_mip2;
 extern	int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 extern	int	currenttexture;
@@ -173,6 +174,7 @@ extern	cvar_t	r_fullbright;
 extern	cvar_t	r_lightmap;
 extern	cvar_t	r_shadows;
 extern	cvar_t	r_wateralpha;
+extern	cvar_t	r_litwater;
 extern	cvar_t	r_dynamic;
 extern	cvar_t	r_novis;
 extern	cvar_t	r_fullbrightskins;

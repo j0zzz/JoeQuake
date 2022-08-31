@@ -467,29 +467,35 @@ Mod_LoadTextures
 */
 void Mod_LoadTextures (lump_t *l)
 {
-	int			i, j, pixels, num, max, altmax, texture_flag, brighten_flag;
+	int			i, j, pixels, num, max, altmax, texture_flag, brighten_flag, nummiptex;
 	miptex_t	*mt;
 	texture_t	*tx, *tx2, *anims[10], *altanims[10];
 	dmiptexlump_t *m;
 	byte		*data;
 	char		bspname[64];
 
+	//johnfitz -- don't return early if no textures; still need to create dummy texture
 	if (!l->filelen)
 	{
-		loadmodel->textures = NULL;
-		return;
+		Con_Printf("Mod_LoadTextures: no textures in bsp file\n");
+		nummiptex = 0;
+		m = NULL; // avoid bogus compiler warning
 	}
+	else
+	{
+		m = (dmiptexlump_t *)(mod_base + l->fileofs);
+		m->nummiptex = LittleLong(m->nummiptex);
+		nummiptex = m->nummiptex;
+	}
+	//johnfitz
 
-	m = (dmiptexlump_t *)(mod_base + l->fileofs);
-	m->nummiptex = LittleLong (m->nummiptex);
-	
-	loadmodel->numtextures = m->nummiptex;
+	loadmodel->numtextures = nummiptex + 2; //johnfitz -- need 2 dummy texture chains for missing textures
 	loadmodel->textures = Hunk_AllocName (loadmodel->numtextures * sizeof(*loadmodel->textures), loadname);
 
 	brighten_flag = (lightmode == 2) ? TEX_BRIGHTEN : 0;
 	texture_flag = TEX_MIPMAP;
 
-	for (i = 0 ; i < m->nummiptex ; i++)
+	for (i = 0 ; i < nummiptex ; i++)
 	{
 		m->dataofs[i] = LittleLong (m->dataofs[i]);
 		if (m->dataofs[i] == -1)
@@ -574,8 +580,12 @@ void Mod_LoadTextures (lump_t *l)
 			tx->fb_texturenum = GL_LoadTexture (va("%s:@fb_%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | TEX_FULLBRIGHT, 1);
 	}
 
+	//johnfitz -- last 2 slots in array should be filled with dummy textures
+	loadmodel->textures[loadmodel->numtextures-2] = r_notexture_mip; //for lightmapped surfs
+	loadmodel->textures[loadmodel->numtextures-1] = r_notexture_mip2; //for SURF_DRAWTILED surfs
+
 // sequence the animations
-	for (i = 0 ; i < m->nummiptex ; i++)
+	for (i = 0 ; i < nummiptex; i++)
 	{
 		tx = loadmodel->textures[i];
 		if (!tx || tx->name[0] != '+')
@@ -610,7 +620,7 @@ void Mod_LoadTextures (lump_t *l)
 			Sys_Error ("Bad animating texture %s", tx->name);
 		}
 
-		for (j = i + 1 ; j < m->nummiptex ; j++)
+		for (j = i + 1 ; j < nummiptex ; j++)
 		{
 			tx2 = loadmodel->textures[j];
 			if (!tx2 || tx2->name[0] != '+')
@@ -935,7 +945,7 @@ void Mod_LoadTexinfo (lump_t *l)
 {
 	texinfo_t	*in;
 	mtexinfo_t	*out;
-	int 		i, j, count, miptex;
+	int 		i, j, count, miptex, missing = 0; //johnfitz
 
 	in = (void *)(mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -954,24 +964,28 @@ void Mod_LoadTexinfo (lump_t *l)
 
 		miptex = LittleLong (in->miptex);
 		out->flags = LittleLong (in->flags);
-	
-		if (!loadmodel->textures)
+
+		//johnfitz -- rewrote this section
+		if (miptex >= loadmodel->numtextures-1 || !loadmodel->textures[miptex])
 		{
-			out->texture = r_notexture_mip;	// checkerboard texture
-			out->flags = 0;
+			if (out->flags & TEX_SPECIAL)
+				out->texture = loadmodel->textures[loadmodel->numtextures-1];
+			else
+				out->texture = loadmodel->textures[loadmodel->numtextures-2];
+			out->flags |= TEX_MISSING;
+			missing++;
 		}
 		else
 		{
-			if (miptex >= loadmodel->numtextures)
-				Sys_Error ("Mod_LoadTexinfo: miptex >= loadmodel->numtextures");
 			out->texture = loadmodel->textures[miptex];
-			if (!out->texture)
-			{
-				out->texture = r_notexture_mip;	// texture not found
-				out->flags = 0;
-			}
 		}
+		//johnfitz
 	}
+
+	//johnfitz: report missing textures
+	if (missing && loadmodel->numtextures > 1)
+		Con_Printf("Mod_LoadTexinfo: %d texture(s) missing from BSP file\n", missing);
+	//johnfitz
 }
 
 /*
@@ -1061,7 +1075,7 @@ void Mod_PolyForUnlitSurface(msurface_t *fa)
 	if (fa->flags & (SURF_DRAWTURB | SURF_DRAWSKY))
 		texscale = (1.0 / 128.0); //warp animation repeats every 128
 	else
-		texscale = (1.0 / 32.0); //to match r_notexture_mip
+		texscale = (1.0 / 16.0); //to match r_notexture_mip
 
 	// convert edges back to a normal polygon
 	numverts = 0;
@@ -1218,7 +1232,14 @@ void Mod_LoadFaces (lump_t *l, qboolean bsp2)
 		}
 		else if (ISTURBTEX(out->texinfo->texture->name)) // warp surface
 		{
-			out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
+			out->flags |= SURF_DRAWTURB;
+			if (out->texinfo->flags & TEX_SPECIAL)
+				out->flags |= SURF_DRAWTILED;
+			else if (out->samples && !loadmodel->haslitwater)
+			{
+				Con_DPrintf("Map has lit water\n");
+				loadmodel->haslitwater = true;
+			}
 
 			// detect special liquid types
 			if (!strncmp(out->texinfo->texture->name, "*lava", 5))
@@ -1229,8 +1250,13 @@ void Mod_LoadFaces (lump_t *l, qboolean bsp2)
 				out->flags |= SURF_DRAWTELE;
 			else out->flags |= SURF_DRAWWATER;
 
-			Mod_PolyForUnlitSurface(out);
-			GL_SubdivideSurface(out);
+			// polys are only created for unlit water here.
+			// lit water is handled in BuildSurfaceDisplayList
+			if (out->flags & SURF_DRAWTILED)
+			{
+				Mod_PolyForUnlitSurface(out);
+				GL_SubdivideSurface(out);
+			}
 		}
 		else if (ISALPHATEX(out->texinfo->texture->name))
 		{

@@ -585,6 +585,7 @@ typedef struct model_s
 	char		*entities;
 
 	qboolean	isworldmodel;
+	qboolean	haslitwater;
 
 	unsigned int meshvbo;
 	unsigned int meshindexesvbo;

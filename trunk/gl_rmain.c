@@ -76,6 +76,7 @@ mleaf_t	*r_viewleaf, *r_oldviewleaf;
 mleaf_t	*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
 
 texture_t *r_notexture_mip;
+texture_t *r_notexture_mip2; //johnfitz -- used for non-lightmapped surfs with a missing texture
 
 int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
@@ -87,6 +88,7 @@ cvar_t	r_lightmap = {"r_lightmap", "0"};
 cvar_t	r_shadows = {"r_shadows", "2"};		// probably a bit rough...
 qboolean OnChange_r_wateralpha(cvar_t *var, char *string);
 cvar_t	r_wateralpha = {"r_wateralpha", "1", 0, OnChange_r_wateralpha };
+cvar_t	r_litwater = { "r_litwater", "1" };
 cvar_t	r_dynamic = {"r_dynamic", "1"};
 cvar_t	r_novis = {"r_novis", "0" };
 cvar_t	r_outline = { "r_outline", "0" };
@@ -3324,6 +3326,7 @@ void R_Init (void)
 	Cvar_Register (&r_drawviewmodel);
 	Cvar_Register (&r_shadows);
 	Cvar_Register (&r_wateralpha);
+	Cvar_Register (&r_litwater);
 	Cvar_Register (&r_dynamic);
 	Cvar_Register (&r_novis);
 	Cvar_Register (&r_speeds);

@@ -32,6 +32,20 @@ void R_InitOtherTextures (void)
 	damagetexture = GL_LoadTextureImage ("textures/particles/blood_screen", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN);
 }
 
+void CreateCheckerBoardTexture(texture_t *texture)
+{
+	int		x, y, m;
+	byte	*dest;
+
+	for (m = 0; m < 4; m++)
+	{
+		dest = (byte *)texture + texture->offsets[m];
+		for (y = 0; y < (16 >> m); y++)
+			for (x = 0; x < (16 >> m); x++)
+				*dest++ = ((y < (8 >> m)) ^ (x < (8 >> m))) ? 0 : 0x0e;
+	}
+}
+
 /*
 ==================
 R_InitTextures
@@ -39,9 +53,6 @@ R_InitTextures
 */
 void R_InitTextures (void)
 {
-	int		x, y, m;
-	byte	*dest;
-
 // create a simple checkerboard texture for the default
 	r_notexture_mip = Hunk_AllocName (sizeof(texture_t) + 16*16 + 8*8 + 4*4 + 2*2, "notexture");
 
@@ -51,13 +62,17 @@ void R_InitTextures (void)
 	r_notexture_mip->offsets[2] = r_notexture_mip->offsets[1] + 8*8;
 	r_notexture_mip->offsets[3] = r_notexture_mip->offsets[2] + 4*4;
 
-	for (m = 0 ; m < 4 ; m++)
-	{
-		dest = (byte *)r_notexture_mip + r_notexture_mip->offsets[m];
-		for (y = 0 ; y < (16>>m) ; y++)
-			for (x = 0 ; x < (16>>m) ; x++)
-				*dest++ = ((y < (8 >> m)) ^ (x < (8 >> m))) ? 0 : 0x0e;
-	}
+	CreateCheckerBoardTexture(r_notexture_mip);
+
+	r_notexture_mip2 = Hunk_AllocName (sizeof(texture_t) + 16*16 + 8*8 + 4*4 + 2*2, "notexture2");
+
+	r_notexture_mip2->width = r_notexture_mip2->height = 16;
+	r_notexture_mip2->offsets[0] = sizeof(texture_t);
+	r_notexture_mip2->offsets[1] = r_notexture_mip2->offsets[0] + 16*16;
+	r_notexture_mip2->offsets[2] = r_notexture_mip2->offsets[1] + 8*8;
+	r_notexture_mip2->offsets[3] = r_notexture_mip2->offsets[2] + 4*4;
+
+	CreateCheckerBoardTexture(r_notexture_mip2);
 }
 
 int	player_fb_skins[MAX_SCOREBOARD];
