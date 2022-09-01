@@ -1110,7 +1110,7 @@ void COM_InitArgv (int argc, char **argv)
 	if (COM_CheckParm("-rogue"))
 		rogue = 1;
 
-	if (COM_CheckParm("-hipnotic"))
+	if (COM_CheckParm("-hipnotic") || COM_CheckParm("-quoth")) //johnfitz -- "-quoth" support
 		hipnotic = 1;
 
 	if (COM_CheckParm("-machine"))
@@ -1923,6 +1923,8 @@ void COM_InitFilesystem (void)
 		COM_AddGameDirectory (va("%s/rogue", com_basedir));
 	if (COM_CheckParm("-hipnotic"))
 		COM_AddGameDirectory (va("%s/hipnotic", com_basedir));
+	if (COM_CheckParm("-quoth"))
+		COM_AddGameDirectory(va("%s/quoth", com_basedir));
 	if (COM_CheckParm("-machine"))
 		COM_AddGameDirectory(va("%s/mg1", com_basedir));
 
