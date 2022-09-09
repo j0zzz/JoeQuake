@@ -42,6 +42,9 @@ static glpoly_t	*lightmap_polys[MAX_LIGHTMAPS];
 static qboolean	lightmap_modified[MAX_LIGHTMAPS];
 static glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
 
+static glpoly_t	*world_waterlightmap_polys[MAX_LIGHTMAPS];
+static glpoly_t	*bmodel_waterlightmap_polys[MAX_LIGHTMAPS];
+
 static	int	allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
 
 // the lightmap texture data needs to be kept in
@@ -557,7 +560,7 @@ void EmitOutlinePolys(void)
 R_BlendLightmaps
 ================
 */
-void R_BlendLightmaps (void)
+void R_BlendLightmaps (glpoly_t **polys)
 {
 	int			i, j;
 	float		*v;
@@ -573,11 +576,11 @@ void R_BlendLightmaps (void)
 
 	for (i = 0 ; i < lightmap_count; i++)
 	{
-		if (!lightmap_polys[i])
+		if (!polys[i])
 			continue;
 
 		GL_Bind (lightmap_textures + i);
-		for (p = lightmap_polys[i] ; p ; p = p->chain)
+		for (p = polys[i] ; p ; p = p->chain)
 		{
 			glBegin (GL_POLYGON);
 			v = p->verts[0];
@@ -601,7 +604,7 @@ void R_BlendLightmaps (void)
 R_RenderDynamicLightmaps
 ================
 */
-void R_RenderDynamicLightmaps (msurface_t *fa)
+void R_RenderDynamicLightmaps (msurface_t *fa, texchain_t chain)
 {
 	int			maps, smax, tmax;
 	byte		*base;
@@ -614,8 +617,24 @@ void R_RenderDynamicLightmaps (msurface_t *fa)
 		return;
 
 	// add to lightmap chain
-	fa->polys->chain = lightmap_polys[fa->lightmaptexturenum];
-	lightmap_polys[fa->lightmaptexturenum] = fa->polys;
+	if (fa->flags & SURF_DRAWTURB)
+	{
+		if (chain == chain_world)
+		{
+			fa->polys->chain = world_waterlightmap_polys[fa->lightmaptexturenum];
+			world_waterlightmap_polys[fa->lightmaptexturenum] = fa->polys;
+		}
+		else if (chain == chain_model)
+		{
+			fa->polys->chain = bmodel_waterlightmap_polys[fa->lightmaptexturenum];
+			bmodel_waterlightmap_polys[fa->lightmaptexturenum] = fa->polys;
+		}
+	}
+	else
+	{
+		fa->polys->chain = lightmap_polys[fa->lightmaptexturenum];
+		lightmap_polys[fa->lightmaptexturenum] = fa->polys;
+	}
 
 	if (!r_dynamic.value)
 		return;
@@ -670,7 +689,11 @@ static void R_ClearTextureChains (model_t *clmodel, texchain_t chain)
 
 	// clear lightmap chains
 	memset (lightmap_polys, 0, sizeof(lightmap_polys));
-	
+	if (chain == chain_world)
+		memset(world_waterlightmap_polys, 0, sizeof(world_waterlightmap_polys));
+	else if (chain == chain_model)
+		memset(bmodel_waterlightmap_polys, 0, sizeof(bmodel_waterlightmap_polys));
+
 	memset (fullbright_polys, 0, sizeof(fullbright_polys));
 	memset (luma_polys, 0, sizeof(luma_polys));
 
@@ -728,6 +751,8 @@ void R_MarkSurfaces(void)
 	
 	// clear lightmap chains
 	memset(lightmap_polys, 0, sizeof(lightmap_polys));
+	memset(world_waterlightmap_polys, 0, sizeof(world_waterlightmap_polys));
+	memset(bmodel_waterlightmap_polys, 0, sizeof(bmodel_waterlightmap_polys));
 
 	// check this leaf for water portals
 	// TODO: loop through all water surfs and use distance to leaf cullbox
@@ -770,10 +795,7 @@ void R_MarkSurfaces(void)
 						if (!R_CullBox(surf->mins, surf->maxs) && !R_BackFaceCull(surf))
 						{
 							R_ChainSurface(surf, chain_world);
-							R_RenderDynamicLightmaps(surf);
-							//joe-FIXME
-							//if (surf->texinfo->texture->warpimage)
-							//	surf->texinfo->texture->update_warp = true;
+							R_RenderDynamicLightmaps(surf, chain_world);
 						}
 					}
 				}
@@ -1455,7 +1477,7 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 	if (gl_fb_bmodels.value)
 	{
 		if (render_lightmaps)
-			R_BlendLightmaps ();
+			R_BlendLightmaps (lightmap_polys);
 		if (drawfullbrights)
 			R_RenderFullbrights ();
 		if (drawlumas)
@@ -1466,7 +1488,7 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 		if (drawlumas)
 			R_RenderLumas ();
 		if (render_lightmaps)
-			R_BlendLightmaps ();
+			R_BlendLightmaps (lightmap_polys);
 		if (drawfullbrights)
 			R_RenderFullbrights ();
 	}
@@ -1515,7 +1537,7 @@ R_DrawTextureChains_Water -- johnfitz
 */
 void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 {
-	int			i, teleport, lastlightmap;
+	int			i, teleport;// , lastlightmap;
 	msurface_t	*s;
 	texture_t	*t;
 	glpoly_t	*p;
@@ -1524,88 +1546,89 @@ void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 
 	for (teleport = 1; teleport >= 0; teleport--)
 	{
-		if (cl.worldmodel->haslitwater && r_litwater.value && r_world_program != 0)
-		{
-			qglUseProgram(r_world_program);
+		//joe: I think this could be fixed by adding the WARPCALC method to GLSL
+		//if (cl.worldmodel->haslitwater && r_litwater.value && r_world_program != 0)
+		//{
+		//	qglUseProgram(r_world_program);
 
-			// Bind the buffers
-			GL_BindBuffer(GL_ARRAY_BUFFER, gl_bmodel_vbo);
-			GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		//	// Bind the buffers
+		//	GL_BindBuffer(GL_ARRAY_BUFFER, gl_bmodel_vbo);
+		//	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-			qglEnableVertexAttribArray(vertAttrIndex);
-			qglEnableVertexAttribArray(texCoordsAttrIndex);
-			qglEnableVertexAttribArray(LMCoordsAttrIndex);
+		//	qglEnableVertexAttribArray(vertAttrIndex);
+		//	qglEnableVertexAttribArray(texCoordsAttrIndex);
+		//	qglEnableVertexAttribArray(LMCoordsAttrIndex);
 
-			qglVertexAttribPointer(vertAttrIndex, 3, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0));
-			qglVertexAttribPointer(texCoordsAttrIndex, 2, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0) + 3);
-			qglVertexAttribPointer(LMCoordsAttrIndex, 2, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0) + 5);
+		//	qglVertexAttribPointer(vertAttrIndex, 3, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0));
+		//	qglVertexAttribPointer(texCoordsAttrIndex, 2, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0) + 3);
+		//	qglVertexAttribPointer(LMCoordsAttrIndex, 2, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float *)0) + 5);
 
-			// Set uniforms
-			qglUniform1i(texLoc, 0);
-			qglUniform1i(LMTexLoc, 1);
-			qglUniform1i(fullbrightTexLoc, 2);
-			qglUniform1i(useFullbrightTexLoc, 0);
-			qglUniform1i(useAlphaTestLoc, 0);
+		//	// Set uniforms
+		//	qglUniform1i(texLoc, 0);
+		//	qglUniform1i(LMTexLoc, 1);
+		//	qglUniform1i(fullbrightTexLoc, 2);
+		//	qglUniform1i(useFullbrightTexLoc, 0);
+		//	qglUniform1i(useAlphaTestLoc, 0);
 
-			for (i = 0; i<model->numtextures; i++)
-			{
-				t = model->textures[i];
-				if (!t || !t->texturechains[chain] || !(t->texturechains[chain]->flags & SURF_DRAWTURB))
-					continue;
+		//	for (i = 0; i<model->numtextures; i++)
+		//	{
+		//		t = model->textures[i];
+		//		if (!t || !t->texturechains[chain] || !(t->texturechains[chain]->flags & SURF_DRAWTURB))
+		//			continue;
 
-				bound = false;
-				entalpha = 1.0f;
-				lastlightmap = 0;
-				for (s = t->texturechains[chain]; s; s = s->texturechain)
-				{
-					isTeleportTexture = !strcmp(s->texinfo->texture->name, "*teleport") || !strcmp(s->texinfo->texture->name, "*tele01");
-					if ((teleport && isTeleportTexture) || (!teleport && !isTeleportTexture))
-					{
-						if (!bound) //only bind once we are sure we need this texture
-						{
-							// joe: Always render teleport as opaque
-							if (!isTeleportTexture)
-							{
-								glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
-								glPolygonOffset(-1, -1);			//
+		//		bound = false;
+		//		entalpha = 1.0f;
+		//		lastlightmap = 0;
+		//		for (s = t->texturechains[chain]; s; s = s->texturechain)
+		//		{
+		//			isTeleportTexture = !strcmp(s->texinfo->texture->name, "*teleport") || !strcmp(s->texinfo->texture->name, "*tele01");
+		//			if ((teleport && isTeleportTexture) || (!teleport && !isTeleportTexture))
+		//			{
+		//				if (!bound) //only bind once we are sure we need this texture
+		//				{
+		//					// joe: Always render teleport as opaque
+		//					if (!isTeleportTexture)
+		//					{
+		//						glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
+		//						glPolygonOffset(-1, -1);			//
 
-								entalpha = GL_WaterAlphaForEntitySurface(ent, s);
-								if (entalpha < 1.0f)
-								{
-									qglUniform1f(alphaLoc, entalpha);
-									R_BeginTransparentDrawing(entalpha);
-								}
-							}
+		//						entalpha = GL_WaterAlphaForEntitySurface(ent, s);
+		//						if (entalpha < 1.0f)
+		//						{
+		//							qglUniform1f(alphaLoc, entalpha);
+		//							R_BeginTransparentDrawing(entalpha);
+		//						}
+		//					}
 
-							GL_SelectTexture(GL_TEXTURE0);
-							GL_Bind(t->gl_texturenum);
+		//					GL_SelectTexture(GL_TEXTURE0);
+		//					GL_Bind(t->gl_texturenum);
 
-							bound = true;
-							lastlightmap = s->lightmaptexturenum;
-						}
+		//					bound = true;
+		//					lastlightmap = s->lightmaptexturenum;
+		//				}
 
-						if (s->lightmaptexturenum != lastlightmap)
-							R_FlushBatch(false);	//FIXME: no caustics/detail at all on water surfaces
+		//				if (s->lightmaptexturenum != lastlightmap)
+		//					R_FlushBatch(false);	//FIXME: no caustics/detail at all on water surfaces
 
-						GL_SelectTexture(GL_TEXTURE1);
-						GL_Bind(lightmap_textures + s->lightmaptexturenum);
-						lastlightmap = s->lightmaptexturenum;
-						R_BatchSurface(s, false);	//FIXME: no caustics/detail at all on water surfaces
-					}
-				}
-				R_FlushBatch(false);	//FIXME: no caustics/detail at all on water surfaces
-				R_EndTransparentDrawing(entalpha);
-				glDisable(GL_POLYGON_OFFSET_FILL);
-			}
+		//				GL_SelectTexture(GL_TEXTURE1);
+		//				GL_Bind(lightmap_textures + s->lightmaptexturenum);
+		//				lastlightmap = s->lightmaptexturenum;
+		//				R_BatchSurface(s, false);	//FIXME: no caustics/detail at all on water surfaces
+		//			}
+		//		}
+		//		R_FlushBatch(false);	//FIXME: no caustics/detail at all on water surfaces
+		//		R_EndTransparentDrawing(entalpha);
+		//		glDisable(GL_POLYGON_OFFSET_FILL);
+		//	}
 
-			// clean up
-			qglDisableVertexAttribArray(vertAttrIndex);
-			qglDisableVertexAttribArray(texCoordsAttrIndex);
-			qglDisableVertexAttribArray(LMCoordsAttrIndex);
-			qglUseProgram(0);
-			GL_SelectTexture(GL_TEXTURE0);
-		}
-		else
+		//	// clean up
+		//	qglDisableVertexAttribArray(vertAttrIndex);
+		//	qglDisableVertexAttribArray(texCoordsAttrIndex);
+		//	qglDisableVertexAttribArray(LMCoordsAttrIndex);
+		//	qglUseProgram(0);
+		//	GL_SelectTexture(GL_TEXTURE0);
+		//}
+		//else
 		{
 			for (i = 0; i < model->numtextures; i++)
 			{
@@ -1626,10 +1649,9 @@ void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 							// joe: Always render teleport as opaque
 							if (!isTeleportTexture)
 							{
-								glEnable(GL_POLYGON_OFFSET_FILL);	//joe: hack to fix z-fighting textures on jam2_lunaran
-								glPolygonOffset(-1, -1);			//
 								entalpha = GL_WaterAlphaForEntitySurface(ent, s);
 								R_BeginTransparentDrawing(entalpha);
+								glDepthMask(GL_FALSE);	// this is mandatory here for lightmaps (when r_wateralpha is 1.0)
 							}
 							GL_Bind(t->gl_texturenum);
 							bound = true;
@@ -1642,9 +1664,17 @@ void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 				}
 
 				R_EndTransparentDrawing(entalpha);
-				glDisable(GL_POLYGON_OFFSET_FILL);
+				glDepthMask(GL_TRUE);
 			}
 		}
+	}
+	
+	if (cl.worldmodel->haslitwater && r_litwater.value)
+	{
+		if (chain == chain_world)
+			R_BlendLightmaps(world_waterlightmap_polys);
+		else if (chain == chain_model)
+			R_BlendLightmaps(bmodel_waterlightmap_polys);
 	}
 }
 
@@ -1754,7 +1784,7 @@ void R_DrawBrushModel (entity_t *ent)
 			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
 		{
 			R_ChainSurface(psurf, chain_model);
-			R_RenderDynamicLightmaps(psurf);
+			R_RenderDynamicLightmaps(psurf, chain_model);
 		}
 	}
 
