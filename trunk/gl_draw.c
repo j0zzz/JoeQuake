@@ -165,6 +165,8 @@ int		numgltextures;
 
 int		currenttexture = -1;		// to avoid unnecessary texture sets
 
+canvastype currentcanvas = CANVAS_NONE; //johnfitz -- for GL_SetCanvas
+
 void GL_Bind (int texnum)
 {
 	if (currenttexture == texnum)
@@ -1482,6 +1484,39 @@ void Draw_EndDisc (void)
 
 /*
 ================
+GL_SetCanvas -- johnfitz -- support various canvas types
+================
+*/
+void GL_SetCanvas(canvastype newcanvas)
+{
+	if (newcanvas == currentcanvas)
+		return;
+
+	currentcanvas = newcanvas;
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	switch (newcanvas)
+	{
+	case CANVAS_DEFAULT:
+		glOrtho(0, glwidth, glheight, 0, -99999, 99999);
+		glViewport(glx, gly, glwidth, glheight);
+		break;
+	case CANVAS_WARPIMAGE:
+		glOrtho(0, 128, 0, 128, -99999, 99999);
+		glViewport(glx, gly + glheight - gl_warpimagesize, gl_warpimagesize, gl_warpimagesize);
+		break;
+	default:
+		Sys_Error("GL_SetCanvas: bad canvas type");
+	}
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+/*
+================
 GL_Set2D
 
 Setup as if the screen was 320*200
@@ -1489,20 +1524,13 @@ Setup as if the screen was 320*200
 */
 void GL_Set2D (void)
 {
-	glViewport (glx, gly, glwidth, glheight);
-
-	glMatrixMode (GL_PROJECTION);
-	glLoadIdentity ();
-	glOrtho (0, vid.width, vid.height, 0, -99999, 99999);
-
-	glMatrixMode (GL_MODELVIEW);
-	glLoadIdentity ();
+	currentcanvas = CANVAS_INVALID;
+	GL_SetCanvas(CANVAS_DEFAULT);
 
 	glDisable (GL_DEPTH_TEST);
 	glDisable (GL_CULL_FACE);
 	glDisable (GL_BLEND);
 	glEnable (GL_ALPHA_TEST);
-
 	glColor3ubv (color_white);
 }
 

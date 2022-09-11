@@ -155,6 +155,9 @@ cvar_t	gl_decal_bullets = {"gl_decal_bullets", "0"};
 cvar_t	gl_decal_sparks = {"gl_decal_sparks", "0"};
 cvar_t	gl_decal_explosions = {"gl_decal_explosions", "0"};
 
+extern cvar_t r_waterquality;
+extern cvar_t r_oldwater;
+
 int		lightmode = 2;
 
 float	pitch_rot;
@@ -164,6 +167,7 @@ float	q3legs_rot;
 
 void R_MarkSurfaces(void);
 void R_InitBubble (void);
+void R_Clear(void);
 
 //==============================================================================
 //
@@ -3236,6 +3240,14 @@ void R_SetupFrame (void)
 	V_CalcBlend ();
 
 	r_cache_thrash = false;
+
+	R_SetFrustum();
+
+	R_MarkSurfaces(); //johnfitz -- create texture chains from PVS
+
+	R_UpdateWarpTextures(); //johnfitz -- do this before R_Clear
+
+	R_Clear();
 }
 
 void MYgluPerspective (GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
@@ -3341,6 +3353,8 @@ void R_Init (void)
 	Cvar_Register (&r_farclip);
 	Cvar_Register (&r_skyfog);
 	Cvar_Register (&r_scale);
+	Cvar_Register(&r_waterquality);
+	Cvar_Register(&r_oldwater);
 
 	Cvar_Register (&gl_finish);
 	Cvar_Register (&gl_clear);
@@ -3423,13 +3437,7 @@ r_refdef must be set before the first call
 */
 void R_RenderScene (void)
 {
-	R_SetupFrame ();
-
-	R_SetFrustum ();
-
-	R_SetupGL ();
-
-	R_MarkSurfaces(); //johnfitz -- create texture chains from PVS
+	R_SetupGL();
 
 	Fog_EnableGFog();	//johnfitz 
 
@@ -3450,6 +3458,14 @@ void R_RenderScene (void)
 	Ghost_Draw();
 
 	GL_DisableMultitexture ();
+
+	R_RenderDlights();
+
+	R_DrawParticles();
+
+	Fog_DisableGFog(); //johnfitz
+
+	R_DrawViewModel();
 }
 
 int	gl_ztrickframe = 0;
@@ -3615,15 +3631,10 @@ void R_RenderView (void)
 	if (gl_finish.value)
 		glFinish ();
 
-	R_Clear ();
+	R_SetupFrame();
 
 	// render normal view
-
 	R_RenderScene ();
-	R_RenderDlights ();
-	R_DrawParticles ();
-	Fog_DisableGFog(); //johnfitz
-	R_DrawViewModel ();
 
 	R_ScaleView();
 

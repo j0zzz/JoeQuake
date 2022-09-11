@@ -73,6 +73,8 @@ void R_InitTextures (void)
 	r_notexture_mip2->offsets[3] = r_notexture_mip2->offsets[2] + 4*4;
 
 	CreateCheckerBoardTexture(r_notexture_mip2);
+
+	gl_warpimagesize = 512;
 }
 
 int	player_fb_skins[MAX_SCOREBOARD];

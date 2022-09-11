@@ -551,6 +551,10 @@ void Mod_LoadTextures (lump_t *l)
 			Con_DPrintf("Texture %s extends past end of lump\n", mt->name);
 			pixels = max(0, (mod_base + l->fileofs + l->filelen) - (byte*)(mt + 1));
 		}
+
+		tx->update_warp = false; //johnfitz
+		tx->warp_texturenum = 0;
+
 		memcpy(tx + 1, mt + 1, pixels);
 
 		if (loadmodel->isworldmodel && ISSKYTEX(tx->name))
@@ -560,7 +564,7 @@ void Mod_LoadTextures (lump_t *l)
 		}
 
 		if (Mod_LoadBrushModelTexture(tx, texture_flag))
-			continue;
+			goto setupwarp;
 
 		if (mt->offsets[0])
 		{
@@ -578,6 +582,14 @@ void Mod_LoadTextures (lump_t *l)
 		tx->gl_texturenum = GL_LoadTexture (va("%s:%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | brighten_flag, 1);
 		if (!ISTURBTEX(tx->name) && Img_HasFullbrights(data, tx2->width * tx2->height))
 			tx->fb_texturenum = GL_LoadTexture (va("%s:@fb_%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | TEX_FULLBRIGHT, 1);
+
+setupwarp:
+		if (ISTURBTEX(tx->name))
+		{
+			//now create the warpimage, using dummy data from the hunk to create the initial image
+			tx->warp_texturenum = GL_LoadTexture(va("%s:@warp_%s", bspname, tx2->name), gl_warpimagesize, gl_warpimagesize, data, 0, 1);
+			tx->update_warp = true;
+		}
 	}
 
 	//johnfitz -- last 2 slots in array should be filled with dummy textures

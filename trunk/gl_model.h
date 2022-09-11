@@ -76,6 +76,8 @@ typedef struct texture_s
 	unsigned	width, height;
 	int			gl_texturenum;
 	int			fb_texturenum;			// index of fullbright mask or 0
+	int			warp_texturenum;
+	qboolean	update_warp;			//johnfitz -- update warp this frame
 	struct msurface_s *texturechains[2];
 	int			anim_total;				// total tenths in sequence (0 = no)
 	int			anim_min, anim_max;		// time for this frame min <=time< max

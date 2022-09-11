@@ -33,6 +33,11 @@ qboolean	r_skyboxloaded;
 int			skybox_image_width, skybox_image_height;
 float		skyfog; // ericw 
 
+int			gl_warpimagesize;
+
+cvar_t r_oldwater = { "r_oldwater", "0", CVAR_ARCHIVE };
+cvar_t r_waterquality = { "r_waterquality", "8" };
+
 extern	cvar_t	gl_subdivide_size;
 extern	cvar_t	r_skyfog;
 
@@ -325,6 +330,68 @@ void DrawWaterPoly(glpoly_t *p)
 		}
 		glEnd();
 	}
+}
+
+//==============================================================================
+//
+//  RENDER-TO-FRAMEBUFFER WATER
+//
+//==============================================================================
+
+/*
+=============
+R_UpdateWarpTextures -- johnfitz -- each frame, update warping textures
+=============
+*/
+void R_UpdateWarpTextures(void)
+{
+	int i;
+	float x, y, x2, warptess;
+	texture_t *tx;
+
+	if (r_oldwater.value || cl.paused)
+		return;
+
+	warptess = 128.0 / bound(3.0, floor(r_waterquality.value), 64.0);
+
+	for (i = 0; i<cl.worldmodel->numtextures; i++)
+	{
+		if (!(tx = cl.worldmodel->textures[i]))
+			continue;
+
+		if (!tx->update_warp)
+			continue;
+
+		//render warp
+		GL_SetCanvas(CANVAS_WARPIMAGE);
+		GL_Bind(tx->gl_texturenum);
+		for (x = 0.0; x < 128.0; x = x2)
+		{
+			x2 = x + warptess;
+			glBegin(GL_TRIANGLE_STRIP);
+			for (y = 0.0; y < 128.01; y += warptess) // .01 for rounding errors
+			{
+				glTexCoord2f(WARPCALC(x, y), WARPCALC(y, x));
+				glVertex2f(x, y);
+				glTexCoord2f(WARPCALC(x2, y), WARPCALC(y, x2));
+				glVertex2f(x2, y);
+			}
+			glEnd();
+		}
+
+		//copy to texture
+		GL_Bind(tx->warp_texturenum);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, glx, gly + glheight - gl_warpimagesize, gl_warpimagesize, gl_warpimagesize);
+
+		tx->update_warp = false;
+	}
+
+	// ericw -- workaround for osx 10.6 driver bug when using FSAA. R_Clear only clears the warpimage part of the screen.
+	GL_SetCanvas(CANVAS_DEFAULT);
+
+	//if warp render went down into sbar territory, we need to be sure to refresh it next frame
+	if (gl_warpimagesize + sb_lines > glheight)
+		Sbar_Changed();
 }
 
 //===============================================================

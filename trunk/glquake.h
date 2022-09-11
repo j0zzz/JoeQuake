@@ -377,6 +377,8 @@ int R_SetSky (char *skyname);
 void Sky_NewMap(void);
 void R_DrawSky(void);
 void R_InitSky(texture_t *mt);		// called at level load
+void R_UpdateWarpTextures(void);
+extern int gl_warpimagesize;
 
 // gl_draw.c
 extern	cvar_t	gl_texturemode;
@@ -385,6 +387,15 @@ extern	cvar_t	gl_texturemode_sky;
 void GL_Set2D (void);
 byte *StringToRGB(char *s);
 void Draw_LoadPics(void);
+void GL_SetCanvas(int newcanvas);
+
+//johnfitz -- stuff for 2d drawing control
+typedef enum {
+	CANVAS_NONE,
+	CANVAS_DEFAULT,
+	CANVAS_WARPIMAGE,
+	CANVAS_INVALID = -1
+} canvastype;
 
 // gl_rmain.c
 qboolean R_CullBox (vec3_t mins, vec3_t maxs);
