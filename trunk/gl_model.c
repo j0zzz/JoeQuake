@@ -586,7 +586,7 @@ void Mod_LoadTextures (lump_t *l)
 		{
 			static byte	dummy[512*512];
 			//now create the warpimage, using dummy data from the hunk to create the initial image
-			tx->warp_texturenum = GL_LoadTexture(va("%s:@warp_%s", bspname, tx2->name), gl_warpimagesize, gl_warpimagesize, dummy, 0, 1);
+			tx->warp_texturenum = GL_LoadTexture(va("%s:@warp_%s", bspname, tx2->name), gl_warpimagesize, gl_warpimagesize, dummy, texture_flag, 1);
 			tx->update_warp = true;
 		}
 	}
