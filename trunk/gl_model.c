@@ -491,6 +491,7 @@ void Mod_LoadTextures (lump_t *l)
 
 	loadmodel->numtextures = nummiptex + 2; //johnfitz -- need 2 dummy texture chains for missing textures
 	loadmodel->textures = Hunk_AllocName (loadmodel->numtextures * sizeof(*loadmodel->textures), loadname);
+	COM_FileBase(loadmodel->name, bspname, sizeof(bspname));
 
 	brighten_flag = (lightmode == 2) ? TEX_BRIGHTEN : 0;
 	texture_flag = TEX_MIPMAP;
@@ -563,9 +564,6 @@ void Mod_LoadTextures (lump_t *l)
 			continue;
 		}
 
-		if (Mod_LoadBrushModelTexture(tx, texture_flag))
-			goto setupwarp;
-
 		if (mt->offsets[0])
 		{
 			data = (byte *)tx + tx->offsets[0];
@@ -577,17 +575,18 @@ void Mod_LoadTextures (lump_t *l)
 			tx2 = r_notexture_mip;
 		}
 
-		COM_FileBase(loadmodel->name, bspname, sizeof(bspname));
+		if (!Mod_LoadBrushModelTexture(tx, texture_flag))
+		{
+			tx->gl_texturenum = GL_LoadTexture(va("%s:%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | brighten_flag, 1);
+			if (!ISTURBTEX(tx->name) && Img_HasFullbrights(data, tx2->width * tx2->height))
+				tx->fb_texturenum = GL_LoadTexture(va("%s:@fb_%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | TEX_FULLBRIGHT, 1);
+		}
 
-		tx->gl_texturenum = GL_LoadTexture (va("%s:%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | brighten_flag, 1);
-		if (!ISTURBTEX(tx->name) && Img_HasFullbrights(data, tx2->width * tx2->height))
-			tx->fb_texturenum = GL_LoadTexture (va("%s:@fb_%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | TEX_FULLBRIGHT, 1);
-
-setupwarp:
 		if (ISTURBTEX(tx->name))
 		{
+			static byte	dummy[512*512];
 			//now create the warpimage, using dummy data from the hunk to create the initial image
-			tx->warp_texturenum = GL_LoadTexture(va("%s:@warp_%s", bspname, tx2->name), gl_warpimagesize, gl_warpimagesize, data, 0, 1);
+			tx->warp_texturenum = GL_LoadTexture(va("%s:@warp_%s", bspname, tx2->name), gl_warpimagesize, gl_warpimagesize, dummy, 0, 1);
 			tx->update_warp = true;
 		}
 	}
