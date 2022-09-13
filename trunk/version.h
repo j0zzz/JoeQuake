@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // version.h
 
 #define	SERVER_VERSION		1.09
-#define	JOEQUAKE_VERSION	"0.17.3"
+#define	JOEQUAKE_VERSION	"0.17.4"
 
 int build_number (void);
 void Host_Version_f (void);
