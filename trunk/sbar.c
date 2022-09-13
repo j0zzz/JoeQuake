@@ -68,7 +68,7 @@ void Sbar_DeathmatchOverlay (void);
 int	sbar_xofs;
 cvar_t	scr_centersbar = {"scr_centersbar", "1"};
 cvar_t	scr_sbarscale_amount = { "scr_sbarscale_amount", "2" };
-cvar_t	scr_sbarmode = { "scr_sbarmode", "0" };
+cvar_t	scr_scorebarmode = { "scr_scorebarmode", "0" };
 
 /*
 ===============
@@ -273,7 +273,7 @@ void Sbar_Init (void)
 
 	Cvar_Register (&scr_centersbar);
 	Cvar_Register (&scr_sbarscale_amount);
-	Cvar_Register(&scr_sbarmode);
+	Cvar_Register(&scr_scorebarmode);
 
 	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
 	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
@@ -542,7 +542,7 @@ void Sbar_SoloScoreboard (void)
 	tens = seconds / 10;
 	units = seconds - 10 * tens;
 
-	if (!scr_sbarmode.value)
+	if (!scr_scorebarmode.value)
 	{
 		Q_snprintfz(str, sizeof(str), "Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 		Sbar_DrawString(8, 4, str);
