@@ -103,6 +103,10 @@ with the specified number, "2" by default.
 
 Toggles between transparent (0), old/original (1) and alternative (2) huds, 0 by default.
 
+### `scr_scorebarmode`
+
+Toggles between vanilla (0) and QuakeSpasm (1) style scorebar layouts, 0 by default.
+
 ### `v_gunkick`
 
 Turns weapon's jarring every time when firing on/off, 0 by default.
@@ -355,6 +359,22 @@ Default value is "0.5".
 Ignores drawing shadow for mdl files added to this list.
 Default value is "" (empty list).
 
+### `r_oldwater`
+
+Since version 0.17.4 water surfaces are drawn via the frame buffer.
+Switching this setting on reverts to the original water surface rendering method.
+0 by default.
+
+### `r_litwater`
+
+When switched on, water surfaces are lit on compatible maps.
+1 by default.
+
+### `r_waterquality`
+Specifies the quality (tesselation level) of the water surfaces' warping animation.
+Can be between 3 and 64.
+8 by default.
+
 ### `capture_codec`
 
 Contains the fourcc code of video codec's, 0 by default (no compression).
@@ -598,6 +618,12 @@ address. However, on Windows this lookup seems to take a long time. Disabling it
 can therefore speed up connecting to a server significantly. As there will
 barely be any usecase for the domain names, it is "0" by default. Set to "1" to
 restore the original Quake behaviour with the lookups enabled.
+
+### `sv_altnoclip`
+
+Switches on alternative noclip movement where the player always moves towards
+the direction he's looking at.
+1 by default.
 
 ## New commands
 
@@ -847,6 +873,33 @@ The client can operate as many fps as possible, so users can for example match t
 desired max fps to their monitor's refresh rate to achieve a much smoother gameplay
 experience.
 
+### Ghost recording
+
+The ghost feature shows the player from a demo file while you are playing the
+game or watching another demo file.  This is useful for speedruns to know where
+you are relative to a reference demo, and to indicate where you could be faster.
+
+#### Commands
+
+- `ghost <demo-file>`:  Add ghost from the given demo file.  The ghost will be
+  loaded on next map load.  With no arguments it will show the current ghost's
+  demo file, if any.  Only one ghost may be added at a time.
+- `ghost_remove`: Remove the current ghost, if any is added.  The change will
+  take effect on next map load.
+- `ghost_shift <t>`: Shift the ghost to be the given number of seconds infront
+  of the player.  Useful if you lose the ghost but you still want to see its
+  route.
+- `ghost_shift_reset`: Undo the effect of `ghost_shift`, and put the ghost back
+  to its correct position.
+
+#### Cvars
+
+- `ghost_delta [0|1]`: Show how far ahead or behind the ghost you currently are.
+  This is unaffected by `ghost_shift`.
+- `ghost_range <distance>`:  Hide the ghost when it is within this distance.
+- `ghost_alpha <float>`: Change how transparent the ghost is.  `0` is fully
+  transparent, `1` is fully opaque.
+
 ## NOTE for linux GLX users
 
 You need to have GLX installed and set up correctly. To install GLX, you need
@@ -865,9 +918,15 @@ You may freely redistribute or modify JoeQuake as you wish.
 I would like to thank the following people for using their stuff:
 
 * Sphere, for his help and participation in development of JoeQuake 🖤
+* Matthew "kipi" Earl for ghost mode recording
 * A. "Fuh" Nourai, for every FuhQuake addition
 * Anton "Tonik" Gavrilov, for every ZQuake addition
-* John Fitzgibbons, Eric Wasylishen, Spike and all the QuakeSpasm devs for every QS addition
+* QuakeSpasm devs for every QS addition and their useful hints, tips
+	* John Fitzgibbons
+	* Eric Wasylishen
+	* Axel Gneiting
+	* Andrei Drexler
+	* Spike
 * Creators of the Minizip library: http://www.winimage.com/zLibDll/minizip.html
 * fenix@io.com, for alias model interpolation
 * LordHavoc, for lerping alias model textures

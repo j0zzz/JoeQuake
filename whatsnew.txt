@@ -1,4 +1,29 @@
 
+ version 0.17.4 build 7317
+ -----------------------
+
+Added framebuffer drawn water (from QuakeSpasm)
+Add support for lit water (from QuakeSpasm)
+Added -quoth command line switch to properly support Quoth mod
+Map name text is now scrolling if it doesn't fit on the scorebar
+Properly displaying monster count > 999 on intermissions
+Added ghost recording mode, done entirely by Matthew Earl
+	For a complete description about ghost recording see the JoeQuake documentation
+Improved alias model animation lerping
+Restored animation interpolation related cvars
+	Added back gl_interpolate_animation and gl_interpolate_movement cvars, so that
+	players can switch off animation interpolation if they wanted to
+Switched to QuakeSpasm's solution of not lerping such weapon frames where muzzleflash is involved.
+	This results less weapon animation lerping, but the old behavior can still be used with gl_interpolate_animation = 2
+Added alternative noclip mode from QuakeSpasm
+	The new mode is controlled by the sv_altnoclip cvar, set to 1 by default
+Added horde cvar for the 2021 remaster
+Added several small changes to keep track of the 2021 remaster updates
+Fixed bug when the screen was messed up at the end of demoplayback
+Advanced spawn parameter settings (Sphere)
+	To simplify saving and setting spawn parameters for working on segmented speedruns
+	Look for 'spawnparam' in the documentation for complete details
+
  version 0.17.3 build 7049
  -----------------------
 
