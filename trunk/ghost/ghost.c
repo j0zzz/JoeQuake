@@ -30,7 +30,7 @@ static cvar_t ghost_alpha = {"ghost_alpha", "0.8", CVAR_ARCHIVE};
 static char         ghost_demo_path[MAX_OSPATH] = "";
 static ghostrec_t  *ghost_records = NULL;
 static int          ghost_num_records = 0;
-static entity_t    *ghost_entity = NULL;
+entity_t			*ghost_entity = NULL;
 static float        ghost_shift = 0.0f;
 static float        ghost_finish_time = -1.0f;
 
@@ -143,8 +143,9 @@ void Ghost_Load (const char *map_name)
                                               "ghost_entity");
 
     ghost_entity->model = Mod_ForName ("progs/player.mdl", false);
-    ghost_entity->colormap = vid.colormap;  // TODO: Cvar for colors.
-    ghost_entity->skinnum = 0;
+	ghost_entity->colormap = cl_entities[cl.viewentity].colormap;
+	//ghost_entity->colormap = vid.colormap;  // TODO: Cvar for colors.
+	ghost_entity->skinnum = 0;
     ghost_entity->modelindex = -1;
     ghost_entity->translate_start_time = 0.0f;
     ghost_entity->frame_start_time = 0.0f;
@@ -454,7 +455,7 @@ void Ghost_Init (void)
     Cmd_AddCommand ("ghost", Ghost_Command_f);
     Cmd_AddCommand ("ghost_remove", Ghost_RemoveCommand_f);
     Cmd_AddCommand ("ghost_shift", Ghost_ShiftCommand_f);
-    Cmd_AddCommand ("ghost_shift_reset", Ghost_ShiftResetCommand_f);
+	Cmd_AddCommand ("ghost_shift_reset", Ghost_ShiftResetCommand_f);
 
     Cvar_Register (&ghost_delta);
     Cvar_Register (&ghost_range);
