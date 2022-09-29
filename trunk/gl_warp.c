@@ -383,6 +383,9 @@ void R_UpdateWarpTextures(void)
 		GL_Bind(tx->warp_texturenum);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, glx, gly + glheight - gl_warpimagesize, gl_warpimagesize, gl_warpimagesize);
 
+		if (qglGenerateMipmap)
+			qglGenerateMipmap(GL_TEXTURE_2D);
+
 		tx->update_warp = false;
 	}
 
