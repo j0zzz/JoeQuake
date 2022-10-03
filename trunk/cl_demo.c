@@ -500,31 +500,24 @@ void StartPlayingOpenedDemo (void)
 // joe: playing demos from .dz files
 static void CheckDZipCompletion (void)
 {
-#ifdef _WIN32
-	DWORD	ExitCode;
+    dzip_status_t dzip_status;
 
-	if (!hDZipProcess)
-		return;
+    dzip_status = Dzip_CheckCompletion(dzCtx);
 
-	if (!GetExitCodeProcess(hDZipProcess, &ExitCode))
-	{
-		Con_Printf ("WARNING: GetExitCodeProcess failed\n");
-		hDZipProcess = NULL;
-		dz_unpacking = dz_playback = cls.demoplayback = false;
-		StopDZPlayback ();
-		return;
-	}
-
-	if (ExitCode == STILL_ACTIVE)
-		return;
-
-	hDZipProcess = NULL;
-#else
-	if (!hDZipProcess)
-		return;
-
-	hDZipProcess = false;
-#endif
+    switch (dzip_status) {
+        case DZIP_NOT_EXTRACTING:
+        case DZIP_EXTRACT_IN_PROGRESS:
+            return;
+        case DZIP_EXTRACT_FAIL:
+            dz_unpacking = dz_playback = cls.demoplayback = false;
+            StopDZPlayback ();
+            return;
+        case DZIP_EXTRACT_SUCCESS:
+            break;
+        default:
+            Sys_Error("Invalid dzip status %d", dzip_status);
+            return;
+    }
 
 	if (!dz_unpacking || !cls.demoplayback)
 	{
