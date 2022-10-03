@@ -260,7 +260,7 @@ Ghost_UpdateName_cb (int client_num, const char *name, void *ctx)
 
 
 qboolean
-Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
+Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info,
                 const char *expected_map_name)
 {
     qboolean ok = true;
@@ -287,12 +287,7 @@ Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
         .finish_time = -1,
     };
 
-    COM_FOpenFile ((char *)demo_path, &pctx.demo_file);
-    if (!pctx.demo_file)
-    {
-        Con_Printf ("ERROR: couldn't open %s\n", demo_path);
-        ok = false;
-    }
+	pctx.demo_file = demo_file;
 
     if (ok) {
         dprc = DP_ReadDemo(&callbacks, &pctx);
@@ -300,7 +295,7 @@ Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
             // Errors from callbacks print their own error messages.
             ok = pctx.finish_time > 0;
         } else if (dprc != DP_ERR_SUCCESS) {
-            Con_Printf("Error parsing demo %s: %u\n", demo_path, dprc);
+            Con_Printf("Error parsing demo: %u\n", dprc);
             ok = false;
         }
     }

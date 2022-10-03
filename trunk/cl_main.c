@@ -1385,6 +1385,7 @@ void CL_Init (void)
 	CL_InitModelnames ();
 	CL_InitTEnts ();
 	Ghost_Init ();
+    CL_InitDemo ();
 
 // register our commands
 	Cvar_Register (&cl_name);
@@ -1436,4 +1437,6 @@ void CL_Init (void)
 	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
 	Cmd_AddCommand("keepdemo", CL_KeepDemo_f);
+
+
 }

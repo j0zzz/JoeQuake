@@ -107,6 +107,7 @@ void Ghost_Load (const char *map_name)
 {
     int i;
     ghost_info_t ghost_info;
+    FILE *demo_file;
 
     memset(&ghost_info, 0, sizeof(ghost_info));
     ghost_records = NULL;
@@ -118,7 +119,13 @@ void Ghost_Load (const char *map_name)
         return;
     }
 
-    if (!Ghost_ReadDemo(ghost_demo_path, &ghost_info, map_name)) {
+    COM_FOpenFile (ghost_demo_path, &demo_file);
+    if (!demo_file)
+    {
+        Con_Printf ("ERROR: couldn't open %s\n", ghost_demo_path);
+        return;
+    }
+    if (!Ghost_ReadDemo(demo_file, &ghost_info, map_name)) {
         return;
     }
     ghost_records = ghost_info.records;

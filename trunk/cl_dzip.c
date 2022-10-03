@@ -1,3 +1,12 @@
+#ifndef _WIN32
+#include <errno.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#endif
+
+#include "quakedef.h"
+
+
 typedef enum {
     DZIP_NOT_EXTRACTING,
     DZIP_NO_EXIST,
@@ -20,17 +29,16 @@ typedef struct {
 #ifdef _WIN32
     static HANDLE proc = NULL;
 #else
-#include <errno.h>
-#include <sys/wait.h>
-#include <unistd.h>
     static qboolean proc = false;
 #endif
 } dzip_context_t;
 
 
 void
-DZip_Init (dzip_context_t *ctx, char *prefix)
+DZip_Init (dzip_context_t *ctx, const char *prefix)
 {
+	memset(ctx, 0, sizeof(*ctx));
+
     Q_snprintfz (ctx->extract_dir, sizeof(ctx->extract_dir),
 				 "%s/%s", com_basedir, prefix);
 
@@ -111,25 +119,14 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
 	Q_snprintfz (cmdline, sizeof(cmdline), "%s/dzip.exe -x -f \"%s\"", com_basedir, name);
-	if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, dem_basedir, &si, &pi))
+	if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, ctx->extract_dir, &si, &pi))
 	{
 		Con_Printf ("Couldn't execute %s/dzip.exe\n", com_basedir);
-		return;
+		return DZIP_EXTRACT_FAIL;
 	}
 
-	hDZipProcess = pi.hProcess;
+	ctx->proc = pi.hProcess;
 #else
-	if (!realpath(com_basedir, dzipRealPath))
-	{
-		Con_Printf ("Couldn't realpath '%s'\n", com_basedir);
-		return;
-	}
-
-	if (chdir(dem_basedir) == -1)
-	{
-		Con_Printf ("Couldn't chdir to '%s'\n", dem_basedir);
-		return;
-	}
 
 	switch (pid = fork())
 	{
@@ -138,6 +135,11 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 		return;
 
 	case 0:
+		if (chdir(ctx->extract_dir) == -1)
+		{
+			Con_Printf ("Couldn't chdir to '%s'\n", ctx->extract_dir);
+			return DZIP_EXTRACT_FAIL;
+		}
 		if (execlp(va("%s/dzip-linux", dzipRealPath), "dzip-linux", "-x", "-f", dz_name, NULL) == -1)
 		{
 			Con_Printf ("Couldn't execute %s/dzip-linux\n", com_basedir);
@@ -148,20 +150,15 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 		if (waitpid(pid, NULL, 0) == -1)
 		{
 			Con_Printf ("waitpid failed\n");
-			return;
+			return DZIP_EXTRACT_FAIL;
 		}
 		break;
 	}
 
-	if (chdir(dzipRealPath) == -1)
-	{
-		Con_Printf ("Couldn't chdir to '%s'\n", dzipRealPath);
-		return;
-	}
-
-	hDZipProcess = true;
+	ctx->proc = true;
 #endif
 
+	return DZIP_EXTRACT_IN_PROGRESS;
 }
 
 
@@ -179,6 +176,8 @@ DZip_Extracting (dzip_context_t *ctx)
 dzip_status_t
 DZip_CheckCompletion (dzip_context_t *ctx)
 {
+	FILE *demo_file;
+
 	if (!DZip_Extracting(ctx)) {
 		return DZIP_NOT_EXTRACTING;
 	}
@@ -186,7 +185,7 @@ DZip_CheckCompletion (dzip_context_t *ctx)
 #ifdef _WIN32
 	DWORD	ExitCode;
 
-	if (!GetExitCodeProcess(hDZipProcess, &ExitCode))
+	if (!GetExitCodeProcess(ctx->proc, &ExitCode))
 	{
 		Con_Printf ("WARNING: GetExitCodeProcess failed\n");
 		ctx->proc = NULL;
@@ -200,6 +199,19 @@ DZip_CheckCompletion (dzip_context_t *ctx)
 #else
 	ctx->proc = false;
 #endif
+	demo_file = fopen(ctx->dem_path, "rb")
+	if (!demo_file)
+	{
+		Con_Printf ("WARNING: Could not read extracted demo file %s\n", ctx->dem_path);
+		return DZIP_EXTRACT_FAIL;
+	}
 
 	return DZIP_EXTRACT_SUCCESS;
+}
+
+
+void
+DZip_Cleanup(dzip_context_t *ctx)
+{
+	// TODO: Delete all files in `ctx->extract_dir`.
 }
