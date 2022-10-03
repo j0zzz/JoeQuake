@@ -502,7 +502,7 @@ static void CheckDZipCompletion (void)
 {
     dzip_status_t dzip_status;
 
-    dzip_status = Dzip_CheckCompletion(dzCtx);
+    dzip_status = Dzip_CheckCompletion(&dzCtx);
 
     switch (dzip_status) {
         case DZIP_NOT_EXTRACTING:
@@ -553,6 +553,39 @@ static void StopDZPlayback (void)
 		tempdem_name[0] = '\0';
 	}
 	dz_playback = false;
+}
+
+
+static void PlayDZDemo (void)
+{
+	const char *name;
+	dzip_status_t dzip_status;
+
+	name = Cmd_Argv(1);
+
+	if (Dzip_Extracting(&dzCtx)) {
+		Con_Printf ("Cannot unpack -- DZip is still running!\n");
+		return;
+	}
+
+	dzip_status = Dzip_StartExtract(&dzCtx, name, &cls.demofile);
+
+	switch (dzip_status) {
+		case DZIP_NO_EXIST:
+			Con_Printf ("ERROR: couldn't open %s\n", name);
+			return;
+		case DZIP_EXTRACT_SUCCESS:
+			Con_Printf ("Already extracted, playing demo\n");
+			StartPlayingOpenedDemo ();
+			return;
+		case DZIP_EXTRACT_FAIL:
+			// Error message printed by `Dzip_StartExtract`.
+			return;
+		case DZIP_EXTRACT_IN_PROGRESS:
+			Con_Printf ("\x02" "\nunpacking demo. please wait...\n\n");
+			key_dest = key_game;
+			return;
+	}
 }
 
 static void PlayDZDemo (void)
