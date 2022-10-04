@@ -43,7 +43,7 @@ DZip_Init (dzip_context_t *ctx, const char *prefix)
 	memset(ctx, 0, sizeof(*ctx));
 
     Q_snprintfz (ctx->extract_dir, sizeof(ctx->extract_dir),
-				 "%s/%s", com_basedir, prefix);
+				 "%s/%s/", com_basedir, prefix);
 
 #ifdef _WIN32
     ctx->proc = NULL;
