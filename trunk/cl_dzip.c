@@ -100,6 +100,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 #else
+	char	abs_basedir[PATH_MAX];
 	pid_t	pid;
 #endif
 
@@ -132,7 +133,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 		return DZIP_NO_EXIST;
 	}
 
-	Q_snprintfz (tempdir, sizeof(tempdir), "%s/%s", ctx->extract_dir, name);
+	Q_snprintfz (tempdir, sizeof(tempdir), "%s%s", ctx->extract_dir, name);
 	COM_StripExtension (tempdir, ctx->dem_path);
 	Q_strlcat(ctx->dem_path, ".dem", sizeof(ctx->dem_path));
 
@@ -175,10 +176,15 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 			Con_Printf ("Couldn't chdir to '%s'\n", ctx->extract_dir);
 			return DZIP_EXTRACT_FAIL;
 		}
-		if (execlp(va("%s/dzip-linux", com_basedir), "dzip-linux", "-x", "-f", dz_name, NULL) == -1)
+		if (!realpath(com_basedir, abs_basedir))
+		{
+			Con_Printf ("Couldn't realpath '%s'\n", com_basedir);
+			return DZIP_EXTRACT_FAIL;
+		}
+		if (execlp(va("%s/dzip-linux", abs_basedir), "dzip-linux", "-x", "-f", dz_name, NULL) == -1)
 		{
 			Con_Printf ("Couldn't execute %s/dzip-linux\n", com_basedir);
-			exit (-1);
+			return DZIP_EXTRACT_FAIL;
 		}
 
 	default:
