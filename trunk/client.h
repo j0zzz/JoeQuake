@@ -396,6 +396,40 @@ void CL_UpdateTEnts (void);
 entity_t *CL_NewTempEntity (void);
 qboolean TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal);
 
+
+// cl_dzip.c
+typedef enum {
+    DZIP_INVALID,
+    DZIP_NOT_EXTRACTING,
+    DZIP_NO_EXIST,
+    DZIP_ALREADY_EXTRACTING,
+    DZIP_EXTRACT_IN_PROGRESS,
+    DZIP_EXTRACT_FAIL,
+    DZIP_EXTRACT_SUCCESS,
+} dzip_status_t;
+typedef struct {
+    // Directory into which dzip files will be extracted.
+    const char extract_dir[MAX_OSPATH];
+
+    // Full path of the extracted demo file.
+    const char dem_path[MAX_OSPATH];
+
+	// When opened, file pointer will be put here.
+	FILE **demo_file_p;
+
+#ifdef _WIN32
+    static HANDLE proc = NULL;
+#else
+    static qboolean proc = false;
+#endif
+} dzip_context_t;
+void DZip_Init (dzip_context_t *ctx, const char *prefix);
+dzip_status_t DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p);
+bool DZip_Extracting (dzip_context_t *ctx);
+dzip_status_t DZip_CheckCompletion (dzip_context_t *ctx);
+void DZip_Cleanup(dzip_context_t *ctx);
+
+
 #ifdef GLQUAKE
 dlighttype_t SetDlightColor (float f, dlighttype_t def, qboolean random);
 #endif

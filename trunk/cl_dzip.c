@@ -16,6 +16,11 @@ typedef enum {
 } dzip_status_t;
 
 
+/*
+ * Context used for extracting dzip files.
+ *
+ * If two dzips are extracted concurrently, they must use different contexts.
+ */
 typedef struct {
     // Directory into which dzip files will be extracted.
     const char extract_dir[MAX_OSPATH];
@@ -34,6 +39,13 @@ typedef struct {
 } dzip_context_t;
 
 
+/*
+ * Initialize a dzip context.
+ *
+ * Arguments:
+ *	ctx: Dzip context to be initialized.
+ *	prefix: The directory under the base dir into which dzips will be extracted.
+ */
 void
 DZip_Init (dzip_context_t *ctx, const char *prefix)
 {
@@ -53,6 +65,27 @@ DZip_Init (dzip_context_t *ctx, const char *prefix)
 }
 
 
+/*
+ * Start extracting a demo from a dzip file.
+ *
+ * Arguments:
+ *	ctx: Dzip context.
+ *	name: Name of the dzip file to be extracted, relative to the game dir.
+ *	demo_file_p: Once the extraction is complete, the file pointer will be
+ *		stored here.
+ *
+ * Return values:
+ *	DZIP_ALREADY_EXTRACTING: An extraction is already in progress under this
+ *		context, and so no new extraction has been started.
+ *	DZIP_NO_EXIST: The dzip file specified by `name` could not be found.
+ *	DZIP_EXTRACT_SUCCESS: The dzip has previously been extracted and so has
+ *		been immediately opened.  In this case `*demo_file_p` can immediately be
+ *		read from.
+ *	DZIP_EXTRACT_FAIL: There was a problem extracting. Detailed error printed to
+ *		console.
+ *	DZIP_EXTRACT_IN_PROGRESS: Extraction started.  Call `DZip_CheckCompletion`
+ *		to poll the dzip process.
+ */
 dzip_status_t
 DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 {
@@ -69,8 +102,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 #endif
 
 	if (Dzip_Extracting(ctx)) {
-		// Caller should check DZip_Extracting first
-		Sys_Error("Already extracting");
+		return DZIP_ALREADY_EXTRACTING;
 	}
 
 	// Set `name` to the base name of the dzip, and `dem_basedir` to the rest of the path,
@@ -89,6 +121,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	Q_snprintfz (dz_name, sizeof(dz_name), "%s/%s", dem_basedir, name);
 
 	// Create directory into which dzip will be extracted.
+	// TODO: Handle errors?
 	COM_CreatePath(ctx->extract_dir);
 
 	// check if the file exists
@@ -132,7 +165,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	{
 	case -1:
 		Con_Printf ("Couldn't create subprocess\n");
-		return;
+		return DZIP_EXTRACT_FAIL;
 
 	case 0:
 		if (chdir(ctx->extract_dir) == -1)
@@ -162,7 +195,16 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 }
 
 
-bool
+/*
+ * Return true if an extraction is in progress.
+ *
+ * Arguments:
+ *	ctx: DZip context.
+ *
+ * Return:
+ *	`true` if and only if a DZip file is being extracted.
+ */
+qboolean
 DZip_Extracting (dzip_context_t *ctx)
 {
 #ifdef _WIN32
@@ -173,6 +215,25 @@ DZip_Extracting (dzip_context_t *ctx)
 }
 
 
+/*
+ * Poll whether an extraction has completed.
+ *
+ * Called after `DZip_StartExtract`.  This function should be called repeatedly
+ * until it returns either `DZIP_EXTRACT_FAIL` and `DZIP_EXTRACT_SUCCESS`.
+ *
+ * Arguments:
+ *	ctx: DZip context.
+ *
+ * Return values:
+ *	DZIP_NOT_EXTRACTING: No extraction in progress, ie. either
+ *		`DZip_StartExtract` has not been called, or its result has already been
+ *		collected with a previous call to this function.
+ *	DZIP_EXTRACT_IN_PROGRESS: The dzip process is still running.
+ *	DZIP_EXTRACT_FAIL: There was a problem extracting. Detailed error printed to
+ *		console.
+ *	DZIP_EXTRACT_SUCCESS: The dzip has been successfully extracted.
+ *		`*demo_file_p` now refers to the open file.
+ */
 dzip_status_t
 DZip_CheckCompletion (dzip_context_t *ctx)
 {
@@ -210,6 +271,12 @@ DZip_CheckCompletion (dzip_context_t *ctx)
 }
 
 
+/*
+ * Cleanup all demos that have been extracted under the given context.
+ *
+ * Arguments:
+ *	ctx: The DZip context.
+ */
 void
 DZip_Cleanup(dzip_context_t *ctx)
 {
