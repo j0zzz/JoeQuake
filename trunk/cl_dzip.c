@@ -101,7 +101,9 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	PROCESS_INFORMATION pi;
 #else
 	char	abs_basedir[PATH_MAX];
+	char	abs_dz_name[PATH_MAX];
 	pid_t	pid;
+	int		wstatus;
 #endif
 
 	if (DZip_Extracting(ctx)) {
@@ -164,6 +166,18 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	ctx->proc = pi.hProcess;
 #else
 
+	if (!realpath(com_basedir, abs_basedir))
+	{
+		Con_Printf ("Couldn't realpath '%s'\n", com_basedir);
+		return DZIP_EXTRACT_FAIL;
+	}
+
+	if (!realpath(dz_name, abs_dz_name))
+	{
+		Con_Printf ("Couldn't realpath '%s'\n", dz_name);
+		return DZIP_EXTRACT_FAIL;
+	}
+
 	switch (pid = fork())
 	{
 	case -1:
@@ -174,25 +188,33 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 		if (chdir(ctx->extract_dir) == -1)
 		{
 			Con_Printf ("Couldn't chdir to '%s'\n", ctx->extract_dir);
-			return DZIP_EXTRACT_FAIL;
+			_exit(1);
 		}
-		if (!realpath(com_basedir, abs_basedir))
+		if (execlp(va("%s/dzip-linux", abs_basedir), "dzip-linux", "-x", "-f", abs_dz_name, NULL) == -1)
 		{
-			Con_Printf ("Couldn't realpath '%s'\n", com_basedir);
-			return DZIP_EXTRACT_FAIL;
+			Con_Printf ("Couldn't execute %s/dzip-linux\n", abs_basedir);
+			_exit(1);
 		}
-		if (execlp(va("%s/dzip-linux", abs_basedir), "dzip-linux", "-x", "-f", dz_name, NULL) == -1)
-		{
-			Con_Printf ("Couldn't execute %s/dzip-linux\n", com_basedir);
-			return DZIP_EXTRACT_FAIL;
-		}
-
+		Sys_Error("Shouldn't reach here\n");
+		break;
 	default:
-		if (waitpid(pid, NULL, 0) == -1)
+		Con_Printf ("waitpid(%d)\n", pid);
+		if (waitpid(pid, &wstatus, 0) == -1)
 		{
 			Con_Printf ("waitpid failed\n");
 			return DZIP_EXTRACT_FAIL;
 		}
+
+		if (!WIFEXITED(wstatus)) {
+			Con_Printf ("dzip exited abnormally\n");
+			return DZIP_EXTRACT_FAIL;
+		}
+
+		if (WEXITSTATUS(wstatus) != 0) {
+			Con_Printf ("dzip exited with non-zero status: %d\n", WEXITSTATUS(wstatus));
+			return DZIP_EXTRACT_FAIL;
+		}
+
 		break;
 	}
 
@@ -255,6 +277,7 @@ DZip_CheckCompletion (dzip_context_t *ctx)
 		return DZIP_EXTRACT_FAIL;
 	}
 
+	*ctx->demo_file_p = demo_file;
 	return DZIP_EXTRACT_SUCCESS;
 }
 

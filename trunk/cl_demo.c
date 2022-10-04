@@ -534,14 +534,6 @@ static void CheckDZipCompletion (void)
 
 	dz_unpacking = false;
 
-	if (!(cls.demofile = fopen(tempdem_name, "rb")))
-	{
-		Con_Printf ("ERROR: couldn't open %s\n", tempdem_name);
-		dz_playback = cls.demoplayback = false;
-		cls.demonum = -1;
-		return;
-	}
-
 	// start playback
 	StartPlayingOpenedDemo ();
 }
