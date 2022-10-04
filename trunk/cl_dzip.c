@@ -1,3 +1,26 @@
+/*
+ * Async and concurrent dzip extraction.
+ *
+ * Functions to open a demo file contained with a dzip file.  The demo file that
+ * is opened matches the name of the dzip, only with changed extension, eg.
+ * opening `e1m1_029.dz` will attempt to open the file `e1m1_029.dem` within the
+ * dzip archive.
+ *
+ * Extraction is async in the sense that extraction is started by one function
+ * (`DZip_StartExtract`) and the result is polled with another
+ * (`DZip_CheckCompletion`), meaning the screen can be redrawn as dzip runs. The
+ * result of this process is a file handle referring to the open demo.
+ *
+ * Any extraction must be run in a context.  Concurrent extractions are only
+ * permitted with different contexts.  A context is initialized with
+ * `DZip_Init`.
+ *
+ * A typical calling pattern is:
+ *	- Call `DZip_Init` to initialize a context.
+ *	- Call `DZip_StartExtract` to began a dzip extraction.
+ *	- Call `DZip_CheckCompletion` repeatedly, until the extraction has finished.
+ */
+
 #ifndef _WIN32
 #include <errno.h>
 #include <sys/wait.h>
@@ -7,43 +30,11 @@
 #include "quakedef.h"
 
 
-typedef enum {
-    DZIP_NOT_EXTRACTING,
-    DZIP_NO_EXIST,
-    DZIP_EXTRACT_IN_PROGRESS,
-    DZIP_EXTRACT_FAIL,
-    DZIP_EXTRACT_SUCCESS,
-} dzip_status_t;
-
-
-/*
- * Context used for extracting dzip files.
- *
- * If two dzips are extracted concurrently, they must use different contexts.
- */
-typedef struct {
-    // Directory into which dzip files will be extracted.
-    const char extract_dir[MAX_OSPATH];
-
-    // Full path of the extracted demo file.
-    const char dem_path[MAX_OSPATH];
-
-	// When opened, file pointer will be put here.
-	FILE **demo_file_p;
-
-#ifdef _WIN32
-    static HANDLE proc = NULL;
-#else
-    static qboolean proc = false;
-#endif
-} dzip_context_t;
-
-
 /*
  * Initialize a dzip context.
  *
  * Arguments:
- *	ctx: Dzip context to be initialized.
+ *	ctx: DZip context to be initialized.
  *	prefix: The directory under the base dir into which dzips will be extracted.
  */
 void
@@ -65,11 +56,22 @@ DZip_Init (dzip_context_t *ctx, const char *prefix)
 }
 
 
+static qboolean
+DZip_Extracting (dzip_context_t *ctx)
+{
+#ifdef _WIN32
+	return ctx->proc != NULL;
+#else
+	return ctx->proc;
+#endif
+}
+
+
 /*
  * Start extracting a demo from a dzip file.
  *
  * Arguments:
- *	ctx: Dzip context.
+ *	ctx: DZip context.
  *	name: Name of the dzip file to be extracted, relative to the game dir.
  *	demo_file_p: Once the extraction is complete, the file pointer will be
  *		stored here.
@@ -101,7 +103,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	pid_t	pid;
 #endif
 
-	if (Dzip_Extracting(ctx)) {
+	if (DZip_Extracting(ctx)) {
 		return DZIP_ALREADY_EXTRACTING;
 	}
 
@@ -132,7 +134,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 
 	Q_snprintfz (tempdir, sizeof(tempdir), "%s/%s", ctx->extract_dir, name);
 	COM_StripExtension (tempdir, ctx->dem_path);
-	Q_strlcat(ctx->dem_path, sizeof(ctx->dem_path), ".dem");
+	Q_strlcat(ctx->dem_path, ".dem", sizeof(ctx->dem_path));
 
 	if ((demo_file = fopen(ctx->dem_path, "rb")))
 	{
@@ -142,7 +144,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	}
 
 	// Will be set later on if and when dzip succeeds.
-	ctx->demo_file_p = demo_file_out;
+	ctx->demo_file_p = demo_file_p;
 
 	// start DZip to unpack the demo
 #ifdef _WIN32
@@ -173,7 +175,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 			Con_Printf ("Couldn't chdir to '%s'\n", ctx->extract_dir);
 			return DZIP_EXTRACT_FAIL;
 		}
-		if (execlp(va("%s/dzip-linux", dzipRealPath), "dzip-linux", "-x", "-f", dz_name, NULL) == -1)
+		if (execlp(va("%s/dzip-linux", com_basedir), "dzip-linux", "-x", "-f", dz_name, NULL) == -1)
 		{
 			Con_Printf ("Couldn't execute %s/dzip-linux\n", com_basedir);
 			exit (-1);
@@ -192,26 +194,6 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 #endif
 
 	return DZIP_EXTRACT_IN_PROGRESS;
-}
-
-
-/*
- * Return true if an extraction is in progress.
- *
- * Arguments:
- *	ctx: DZip context.
- *
- * Return:
- *	`true` if and only if a DZip file is being extracted.
- */
-qboolean
-DZip_Extracting (dzip_context_t *ctx)
-{
-#ifdef _WIN32
-	return ctx->proc != NULL;
-#else
-	return ctx->proc;
-#endif
 }
 
 
@@ -260,7 +242,7 @@ DZip_CheckCompletion (dzip_context_t *ctx)
 #else
 	ctx->proc = false;
 #endif
-	demo_file = fopen(ctx->dem_path, "rb")
+	demo_file = fopen(ctx->dem_path, "rb");
 	if (!demo_file)
 	{
 		Con_Printf ("WARNING: Could not read extracted demo file %s\n", ctx->dem_path);

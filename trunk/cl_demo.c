@@ -509,7 +509,7 @@ static void CheckDZipCompletion (void)
 {
     dzip_status_t dzip_status;
 
-    dzip_status = Dzip_CheckCompletion(&dzCtx);
+    dzip_status = DZip_CheckCompletion(&dzCtx);
 
     switch (dzip_status) {
         case DZIP_NOT_EXTRACTING:
@@ -560,7 +560,7 @@ static void PlayDZDemo (void)
 
 	name = Cmd_Argv(1);
 
-	dzip_status = Dzip_StartExtract(&dzCtx, name, &cls.demofile);
+	dzip_status = DZip_StartExtract(&dzCtx, name, &cls.demofile);
 
 	switch (dzip_status) {
 		case DZIP_ALREADY_EXTRACTING:
@@ -574,7 +574,7 @@ static void PlayDZDemo (void)
 			StartPlayingOpenedDemo ();
 			break;
 		case DZIP_EXTRACT_FAIL:
-			// Error message printed by `Dzip_StartExtract`.
+			// Error message printed by `DZip_StartExtract`.
 			break;
 		case DZIP_EXTRACT_IN_PROGRESS:
 			Con_Printf ("\x02" "\nunpacking demo. please wait...\n\n");

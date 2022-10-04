@@ -409,23 +409,22 @@ typedef enum {
 } dzip_status_t;
 typedef struct {
     // Directory into which dzip files will be extracted.
-    const char extract_dir[MAX_OSPATH];
+    char extract_dir[MAX_OSPATH];
 
     // Full path of the extracted demo file.
-    const char dem_path[MAX_OSPATH];
+    char dem_path[MAX_OSPATH];
 
 	// When opened, file pointer will be put here.
 	FILE **demo_file_p;
 
 #ifdef _WIN32
-    static HANDLE proc = NULL;
+    HANDLE proc;
 #else
-    static qboolean proc = false;
+    qboolean proc;
 #endif
 } dzip_context_t;
 void DZip_Init (dzip_context_t *ctx, const char *prefix);
 dzip_status_t DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p);
-bool DZip_Extracting (dzip_context_t *ctx);
 dzip_status_t DZip_CheckCompletion (dzip_context_t *ctx);
 void DZip_Cleanup(dzip_context_t *ctx);
 
