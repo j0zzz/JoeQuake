@@ -225,6 +225,53 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 }
 
 
+static dzip_status_t
+DZip_CheckOrWaitCompletion (dzip_context_t *ctx, qboolean wait)
+{
+	FILE *demo_file;
+
+	if (!DZip_Extracting(ctx)) {
+		return DZIP_NOT_EXTRACTING;
+	}
+
+#ifdef _WIN32
+	DWORD	ExitCode;
+
+	if (wait && WaitForSingleObject(ctx->proc, INFINITE) != WAIT_OBJECT_0)
+	{
+		Con_Printf ("WARNING: Could not wait for process\n");
+		return DZIP_EXTRACT_FAIL;
+	}
+	if (!GetExitCodeProcess(ctx->proc, &ExitCode))
+	{
+		Con_Printf ("WARNING: GetExitCodeProcess failed\n");
+		ctx->proc = NULL;
+		return DZIP_EXTRACT_FAIL;
+	}
+
+	if (ExitCode == STILL_ACTIVE)
+	{
+		if (wait) {
+			Sys_Error("Process not finished despite waiting");
+		}
+		return DZIP_EXTRACT_IN_PROGRESS;
+	}
+
+	ctx->proc = NULL;
+#else
+	ctx->proc = false;
+#endif
+	demo_file = fopen(ctx->dem_path, "rb");
+	if (!demo_file)
+	{
+		Con_Printf ("WARNING: Could not read extracted demo file %s\n", ctx->dem_path);
+		return DZIP_EXTRACT_FAIL;
+	}
+
+	*ctx->demo_file_p = demo_file;
+	return DZIP_EXTRACT_SUCCESS;
+}
+
 /*
  * Poll whether an extraction has completed.
  *
@@ -247,38 +294,44 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 dzip_status_t
 DZip_CheckCompletion (dzip_context_t *ctx)
 {
-	FILE *demo_file;
+	return DZip_CheckOrWaitCompletion(ctx, false);
+}
 
-	if (!DZip_Extracting(ctx)) {
-		return DZIP_NOT_EXTRACTING;
-	}
 
-#ifdef _WIN32
-	DWORD	ExitCode;
+/*
+ * Synchronously open a demo from a dzip file.
+ *
+ * Arguments:
+ *	ctx: DZip context.
+ *	name: Name of the dzip file to be extracted, relative to the game dir.
+ *	demo_file_p: On success, the file pointer will be stored here.
+ *
+ * Return values:
+ *	DZIP_ALREADY_EXTRACTING: An extraction is already in progress under this
+ *		context, and so no new extraction has been started.
+ *	DZIP_NO_EXIST: The dzip file specified by `name` could not be found.
+ *	DZIP_EXTRACT_SUCCESS: The demo was successfully opened. In this case
+ *		`*demo_file_p` can be read from.
+ *	DZIP_EXTRACT_FAIL: There was a problem extracting. Detailed error printed to
+ *		console.
+ */
+dzip_status_t
+DZip_Open(dzip_context_t *ctx, const char *name, FILE **demo_file_p)
+{
+	dzip_status_t dzip_status;
 
-	if (!GetExitCodeProcess(ctx->proc, &ExitCode))
+	dzip_status = DZip_StartExtract(ctx, name, demo_file_p);
+	if (dzip_status == DZIP_EXTRACT_IN_PROGRESS)
 	{
-		Con_Printf ("WARNING: GetExitCodeProcess failed\n");
-		ctx->proc = NULL;
-		return DZIP_EXTRACT_FAIL;
+		dzip_status = DZip_CheckOrWaitCompletion(ctx, true);
+		if (dzip_status != DZIP_EXTRACT_SUCCESS
+			&& dzip_status != DZIP_EXTRACT_FAIL)
+		{
+			Sys_Error("Unexpected error from DZip_CheckOrWaitCompletion");
+		}
 	}
 
-	if (ExitCode == STILL_ACTIVE)
-		return DZIP_EXTRACT_IN_PROGRESS;
-
-	ctx->proc = NULL;
-#else
-	ctx->proc = false;
-#endif
-	demo_file = fopen(ctx->dem_path, "rb");
-	if (!demo_file)
-	{
-		Con_Printf ("WARNING: Could not read extracted demo file %s\n", ctx->dem_path);
-		return DZIP_EXTRACT_FAIL;
-	}
-
-	*ctx->demo_file_p = demo_file;
-	return DZIP_EXTRACT_SUCCESS;
+	return dzip_status;
 }
 
 
