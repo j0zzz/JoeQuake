@@ -496,6 +496,7 @@ static void Ghost_ShiftResetCommand_f (void)
 
 void Ghost_Init (void)
 {
+    DZip_Init (&ghost_dz_ctx, "dzip_ghost");
     Cmd_AddCommand ("ghost", Ghost_Command_f);
     Cmd_AddCommand ("ghost_remove", Ghost_RemoveCommand_f);
     Cmd_AddCommand ("ghost_shift", Ghost_ShiftCommand_f);
