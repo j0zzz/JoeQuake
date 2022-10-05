@@ -21,8 +21,12 @@
  *	- Call `DZip_CheckCompletion` repeatedly, until the extraction has finished.
  */
 
+
+
 #ifndef _WIN32
+#define _XOPEN_SOURCE 500	// required for nftw
 #include <errno.h>
+#include <ftw.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #endif
@@ -342,6 +346,93 @@ DZip_Open(dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 }
 
 
+#ifdef _WIN32
+static qboolean
+DZip_RecursiveDirectoryCleanup(dzip_context_t *ctx, const char *dir_path)
+{
+	qboolean ok = true;
+	char glob[MAX_PATH];
+	char child_path[MAX_PATH];
+	WIN32_FIND_DATAA find_file_data;
+	HANDLE hFind;
+
+	Q_snprintfz(glob, sizeof(glob), "%s/*", dir_path);
+
+	hFind = FindFirstFile(glob, &find_file_data)
+	do
+	{
+		if (strcmp(find_file_data.cFileName, "..") == 0
+			|| strcmp(find_file_data.cFileName, ".") == 0)
+		{
+			continue;
+		}
+
+		Q_snprintfz(child_path, sizeof(child_path), "%s/%s",
+					dir_path, find_file_data.cFileName);
+
+		if (find_file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		{
+			if (!DZip_RecursiveDirectoryCleanup (child_path))
+			{
+				ok = false;
+				break;
+			}
+		}
+
+		if (strncmp(child_path, ctx->extract_dir, strlen(ctx->extract_dir)))
+		{
+			Sys_Error("Path being deleted %s is not under %s",
+					  child_path, ctx->extract_dir);
+		}
+		if (strncmp(child_path, com_basedir, strlen(com_basedir)))
+		{
+			Sys_Error("Path being deleted %s is not under %s",
+					  child_path, com_basedir);
+		}
+		if (strstr(child_path + strlen(com_basedir), ".."))
+		{
+			Sys_Error("Parent directory found in path %s", child_path);
+		}
+		Con_Printf("Removing %s\n", child_path);
+		if (!DeleteFile(child_path))
+		{
+			Con_Printf("Failed to remove %s in dzip cleanup\n");
+			ok = false;
+			break;
+		}
+	} while (FindNextFile(hFind, &find_file_data));
+
+	FindClose(hFind);
+
+	return ok;
+}
+#else
+static int
+DZip_Cleanup_Callback(const char *fpath, const struct stat *sb, int typeflag,
+					  struct FTW *ftwbuf)
+{
+	int rc = 0;
+	if (strncmp(fpath, com_basedir, strlen(com_basedir)))
+	{
+		Sys_Error("Path being deleted %s is not under %s", fpath, com_basedir);
+	}
+	if (strstr(fpath + strlen(com_basedir), ".."))
+	{
+		Sys_Error("Parent directory found in path %s", fpath);
+	}
+
+	Con_Printf("Removing %s\n", fpath);
+	rc = remove(fpath);
+	if (rc)
+	{
+		Con_Printf("Failed to remove %s in dzip cleanup\n");
+	}
+
+	return rc;
+}
+#endif
+
+
 /*
  * Cleanup all demos that have been extracted under the given context.
  *
@@ -351,5 +442,9 @@ DZip_Open(dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 void
 DZip_Cleanup(dzip_context_t *ctx)
 {
-	// TODO: Delete all files in `ctx->extract_dir`.
+#ifdef _WIN32
+	DZip_RecursiveDirectoryCleanup(ctx, ctx->extract_dir);
+#else
+	nftw(ctx->extract_dir, DZip_Cleanup_Callback, 32, FTW_DEPTH | FTW_PHYS);
+#endif
 }
