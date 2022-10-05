@@ -541,6 +541,7 @@ static void CheckDZipCompletion (void)
 
 static void StopDZPlayback (void)
 {
+	DZip_Cleanup(&dzCtx);
 	dz_playback = false;
 }
 

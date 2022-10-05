@@ -156,6 +156,7 @@ void Ghost_Load (const char *map_name)
     ghost_finish_time = -1.0f;
 
     if (ghost_demo_path[0] == '\0') {
+        DZip_Cleanup(&ghost_dz_ctx);
         return;
     }
 
@@ -497,6 +498,7 @@ static void Ghost_ShiftResetCommand_f (void)
 void Ghost_Init (void)
 {
     DZip_Init (&ghost_dz_ctx, "dzip_ghost");
+    DZip_Cleanup(&ghost_dz_ctx);
     Cmd_AddCommand ("ghost", Ghost_Command_f);
     Cmd_AddCommand ("ghost_remove", Ghost_RemoveCommand_f);
     Cmd_AddCommand ("ghost_shift", Ghost_ShiftCommand_f);
