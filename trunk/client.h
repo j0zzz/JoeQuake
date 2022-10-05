@@ -19,6 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // client.h
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 typedef struct
 {
 	vec3_t	viewangles;
@@ -365,6 +369,7 @@ void CL_BaseMove (usercmd_t *cmd);
 float CL_KeyState (kbutton_t *key);
 
 // cl_demo.c
+void CL_InitDemo(void);
 void CL_StopPlayback (void);
 int CL_GetMessage (void);
 void CL_Stop_f (void);
