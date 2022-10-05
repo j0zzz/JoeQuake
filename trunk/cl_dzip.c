@@ -91,12 +91,13 @@ DZip_Extracting (dzip_context_t *ctx)
 dzip_status_t
 DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 {
-	char	dem_basedir[MAX_OSPATH];
-	char	*p, dz_name[MAX_OSPATH];
-	char	tempdir[MAX_OSPATH];
+	char	dem_basedir[1024];
+	char	*p, dz_name[1024];
+	char	tempdir[1024];
 	FILE    *demo_file;
 #ifdef _WIN32
-	char	cmdline[512];
+	char	cmdline[1024];
+	char	abs_dz_name[1024];
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 #else
@@ -156,7 +157,13 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	si.wShowWindow = SW_HIDE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
-	Q_snprintfz (cmdline, sizeof(cmdline), "%s/dzip.exe -x -f \"%s\"", com_basedir, name);
+	if (GetFullPathName(dz_name, sizeof(abs_dz_name), abs_dz_name, NULL) == 0)
+	{
+		Con_Printf("GetFullPathName failed on %s\n", dz_name);
+		return DZIP_EXTRACT_FAIL;
+	}
+
+	Q_snprintfz(cmdline, sizeof(cmdline), "%s/dzip.exe -x -f \"%s\"", com_basedir, abs_dz_name);
 	if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, ctx->extract_dir, &si, &pi))
 	{
 		Con_Printf ("Couldn't execute %s/dzip.exe\n", com_basedir);
