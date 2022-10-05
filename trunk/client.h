@@ -426,6 +426,7 @@ typedef struct {
 void DZip_Init (dzip_context_t *ctx, const char *prefix);
 dzip_status_t DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p);
 dzip_status_t DZip_CheckCompletion (dzip_context_t *ctx);
+dzip_status_t DZip_Open(dzip_context_t *ctx, const char *name, FILE **demo_file_p);
 void DZip_Cleanup(dzip_context_t *ctx);
 
 

@@ -107,11 +107,12 @@ static FILE *
 Ghost_OpenDemoOrDzip (const char *demo_path)
 {
     FILE *demo_file = NULL;
+    dzip_status_t dzip_status;
 
     if (strlen(demo_path) > 3
         && !Q_strcasecmp(demo_path + strlen(demo_path) - 3, ".dz"))
     {
-        dzip_status = DZip_Open(&ghost_dz_ctx, name, &demo_file);
+        dzip_status = DZip_Open(&ghost_dz_ctx, demo_path, &demo_file);
         switch (dzip_status) {
             case DZIP_ALREADY_EXTRACTING:
                 Sys_Error("Already extracting despite sync only usage");
@@ -391,7 +392,6 @@ static void Ghost_Command_f (void)
 {
     FILE *demo_file;
     char demo_path[MAX_OSPATH];
-    dzip_status_t dzip_status;
 
     if (cmd_source != src_command) {
         return;
