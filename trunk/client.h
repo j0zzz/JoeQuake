@@ -415,6 +415,8 @@ typedef enum {
     DZIP_EXTRACT_SUCCESS,
 } dzip_status_t;
 typedef struct {
+    qboolean initialized;
+
     // Directory into which dzip files will be extracted.
     char extract_dir[MAX_OSPATH];
 

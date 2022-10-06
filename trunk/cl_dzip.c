@@ -57,6 +57,17 @@ DZip_Init (dzip_context_t *ctx, const char *prefix)
 
     ctx->dem_path[0] = '\0';
 	ctx->demo_file_p = NULL;
+	ctx->initialized = true;
+}
+
+
+static void
+DZip_CheckInitialized (dzip_context_t *ctx)
+{
+	if (!ctx->initialized)
+	{
+		Sys_Error("Attempt to use uninitialized dzip context");
+	}
 }
 
 
@@ -110,6 +121,8 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	pid_t	pid;
 	int		wstatus;
 #endif
+
+	DZip_CheckInitialized (ctx);
 
 	if (DZip_Extracting(ctx)) {
 		return DZIP_ALREADY_EXTRACTING;
@@ -240,6 +253,8 @@ static dzip_status_t
 DZip_CheckOrWaitCompletion (dzip_context_t *ctx, qboolean wait)
 {
 	FILE *demo_file;
+
+	DZip_CheckInitialized (ctx);
 
 	if (!DZip_Extracting(ctx)) {
 		return DZIP_NOT_EXTRACTING;
@@ -442,6 +457,7 @@ DZip_Cleanup_Callback(const char *fpath, const struct stat *sb, int typeflag,
 void
 DZip_Cleanup(dzip_context_t *ctx)
 {
+	DZip_CheckInitialized (ctx);
 #ifdef _WIN32
 	DZip_RecursiveDirectoryCleanup(ctx, ctx->extract_dir);
 #else
