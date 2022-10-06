@@ -156,7 +156,6 @@ void Ghost_Load (const char *map_name)
     ghost_finish_time = -1.0f;
 
     if (ghost_demo_path[0] == '\0') {
-        DZip_Cleanup(&ghost_dz_ctx);
         return;
     }
 
@@ -409,8 +408,8 @@ static void Ghost_Command_f (void)
         return;
     }
 
+    DZip_Cleanup(&ghost_dz_ctx);
     Q_strlcpy(demo_path, Cmd_Argv(1), sizeof(demo_path));
-
     demo_file = Ghost_OpenDemoOrDzip(demo_path);
     if (demo_file) {
         fclose(demo_file);
@@ -437,6 +436,7 @@ static void Ghost_RemoveCommand_f (void)
     } else {
         Con_Printf("ghost %s will be removed on next map load\n", ghost_demo_path);
         ghost_demo_path[0] = '\0';
+        DZip_Cleanup(&ghost_dz_ctx);
     }
 }
 
@@ -509,3 +509,8 @@ void Ghost_Init (void)
     Cvar_Register (&ghost_alpha);
 }
 
+
+void Ghost_Shutdown (void)
+{
+    DZip_Cleanup(&ghost_dz_ctx);
+}

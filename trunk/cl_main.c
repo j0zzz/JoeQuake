@@ -1440,3 +1440,15 @@ void CL_Init (void)
 
 
 }
+
+
+/*
+=================
+CL_Shutdown
+=================
+*/
+void CL_Shutdown (void)
+{
+    Ghost_Shutdown();
+    CL_ShutdownDemo();
+}

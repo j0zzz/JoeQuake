@@ -1139,5 +1139,8 @@ void Host_Shutdown (void)
 		LOC_Shutdown();
 
 	if (cls.state != ca_dedicated)
+	{
 		VID_Shutdown ();
+		CL_Shutdown ();
+	}
 }

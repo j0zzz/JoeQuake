@@ -73,6 +73,13 @@ void CL_InitDemo (void)
 	DZip_Cleanup(&dzCtx);
 }
 
+
+void CL_ShutdownDemo (void)
+{
+	DZip_Cleanup(&dzCtx);
+}
+
+
 /*
 ==============
 CL_StopPlayback

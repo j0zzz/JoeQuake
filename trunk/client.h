@@ -308,6 +308,7 @@ dlight_t *CL_AllocDlight (int key);
 void CL_DecayLights (void);
 
 void CL_Init (void);
+void CL_Shutdown (void);
 
 void CL_EstablishConnection (char *host);
 void CL_Signon1 (void);
@@ -370,6 +371,7 @@ float CL_KeyState (kbutton_t *key);
 
 // cl_demo.c
 void CL_InitDemo(void);
+void CL_ShutdownDemo (void);
 void CL_StopPlayback (void);
 int CL_GetMessage (void);
 void CL_Stop_f (void);
