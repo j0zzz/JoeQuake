@@ -34,6 +34,8 @@
 #include "quakedef.h"
 
 
+#define DZIP_EXTRACT_DIR	"extracted_dzips"
+
 /*
  * Initialize a dzip context.
  *
@@ -47,7 +49,7 @@ DZip_Init (dzip_context_t *ctx, const char *prefix)
 	memset(ctx, 0, sizeof(*ctx));
 
     Q_snprintfz (ctx->extract_dir, sizeof(ctx->extract_dir),
-				 "%s/%s/", com_basedir, prefix);
+				 "%s/%s/%s/", com_basedir, DZIP_EXTRACT_DIR, prefix);
 
 #ifdef _WIN32
     ctx->proc = NULL;
@@ -361,9 +363,34 @@ DZip_Open(dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 }
 
 
+/*
+ * Check that the given path is safe to be deleted.
+ */
+static void
+DZip_DeletePathSanityCheck(char *path)
+{
+	char *expected_prefix[1024];
+
+	Q_snprintfz(expected_prefix, sizeof(expected_prefix), "%s/%s/",
+				com_basedir, DZIP_EXTRACT_DIR);
+
+	if (strncmp(path, expected_prefix, strlen(expected_prefix)))
+	{
+		Sys_Error("Path being deleted %s is not under %s",
+				  path, expected_prefix);
+	}
+	if (strstr(path + strlen(com_basedir), ".."))
+	{
+		Sys_Error("Parent directory found in path %s", path);
+	}
+
+	Con_Printf("Removing %s\n", path);
+}
+
+
 #ifdef _WIN32
 static qboolean
-DZip_RecursiveDirectoryCleanup(dzip_context_t *ctx, const char *dir_path)
+DZip_RecursiveDirectoryCleanup(const char *dir_path)
 {
 	qboolean ok = true;
 	char glob[MAX_PATH];
@@ -394,21 +421,7 @@ DZip_RecursiveDirectoryCleanup(dzip_context_t *ctx, const char *dir_path)
 			}
 		}
 
-		if (strncmp(child_path, ctx->extract_dir, strlen(ctx->extract_dir)))
-		{
-			Sys_Error("Path being deleted %s is not under %s",
-					  child_path, ctx->extract_dir);
-		}
-		if (strncmp(child_path, com_basedir, strlen(com_basedir)))
-		{
-			Sys_Error("Path being deleted %s is not under %s",
-					  child_path, com_basedir);
-		}
-		if (strstr(child_path + strlen(com_basedir), ".."))
-		{
-			Sys_Error("Parent directory found in path %s", child_path);
-		}
-		Con_Printf("Removing %s\n", child_path);
+		DZip_DeletePathSanityCheck(child_path);
 		if (!DeleteFile(child_path))
 		{
 			Con_Printf("Failed to remove %s in dzip cleanup\n");
@@ -427,16 +440,8 @@ DZip_Cleanup_Callback(const char *fpath, const struct stat *sb, int typeflag,
 					  struct FTW *ftwbuf)
 {
 	int rc = 0;
-	if (strncmp(fpath, com_basedir, strlen(com_basedir)))
-	{
-		Sys_Error("Path being deleted %s is not under %s", fpath, com_basedir);
-	}
-	if (strstr(fpath + strlen(com_basedir), ".."))
-	{
-		Sys_Error("Parent directory found in path %s", fpath);
-	}
 
-	Con_Printf("Removing %s\n", fpath);
+	DZip_DeletePathSanityCheck(fpath);
 	rc = remove(fpath);
 	if (rc)
 	{
@@ -459,7 +464,7 @@ DZip_Cleanup(dzip_context_t *ctx)
 {
 	DZip_CheckInitialized (ctx);
 #ifdef _WIN32
-	DZip_RecursiveDirectoryCleanup(ctx, ctx->extract_dir);
+	DZip_RecursiveDirectoryCleanup(ctx->extract_dir);
 #else
 	nftw(ctx->extract_dir, DZip_Cleanup_Callback, 32, FTW_DEPTH | FTW_PHYS);
 #endif

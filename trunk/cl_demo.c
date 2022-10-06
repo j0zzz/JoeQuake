@@ -69,7 +69,7 @@ read from the demo file.
 
 void CL_InitDemo (void)
 {
-	DZip_Init(&dzCtx, "dzip_playdemo");
+	DZip_Init(&dzCtx, "playdemo");
 	DZip_Cleanup(&dzCtx);
 }
 
