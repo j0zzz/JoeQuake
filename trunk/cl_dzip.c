@@ -155,7 +155,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 		return DZIP_NO_EXIST;
 	}
 
-	Q_snprintfz (tempdir, sizeof(tempdir), "%s%s", ctx->extract_dir, name);
+	Q_snprintfz (tempdir, sizeof(tempdir), "%s/%s", ctx->extract_dir, name);
 	COM_StripExtension (tempdir, ctx->dem_path);
 	Q_strlcat(ctx->dem_path, ".dem", sizeof(ctx->dem_path));
 
@@ -367,9 +367,9 @@ DZip_Open(dzip_context_t *ctx, const char *name, FILE **demo_file_p)
  * Check that the given path is safe to be deleted.
  */
 static void
-DZip_DeletePathSanityCheck(char *path)
+DZip_DeletePathSanityCheck(const char *path)
 {
-	char *expected_prefix[1024];
+	char expected_prefix[1024];
 
 	Q_snprintfz(expected_prefix, sizeof(expected_prefix), "%s/%s/",
 				com_basedir, DZIP_EXTRACT_DIR);
@@ -383,8 +383,6 @@ DZip_DeletePathSanityCheck(char *path)
 	{
 		Sys_Error("Parent directory found in path %s", path);
 	}
-
-	Con_Printf("Removing %s\n", path);
 }
 
 
@@ -400,7 +398,16 @@ DZip_RecursiveDirectoryCleanup(const char *dir_path)
 
 	Q_snprintfz(glob, sizeof(glob), "%s/*", dir_path);
 
-	hFind = FindFirstFile(glob, &find_file_data)
+	hFind = FindFirstFile(glob, &find_file_data);
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		DWORD err = GetLastError();
+		if (err != ERROR_PATH_NOT_FOUND)
+		{
+			Con_Printf("Failed to run FindFirstFile on %s: %d\n", glob, err);
+		}
+		return false;
+	}
 	do
 	{
 		if (strcmp(find_file_data.cFileName, "..") == 0
@@ -420,15 +427,24 @@ DZip_RecursiveDirectoryCleanup(const char *dir_path)
 				break;
 			}
 		}
-
-		DZip_DeletePathSanityCheck(child_path);
-		if (!DeleteFile(child_path))
+		else
 		{
-			Con_Printf("Failed to remove %s in dzip cleanup\n");
-			ok = false;
-			break;
+			DZip_DeletePathSanityCheck(child_path);
+			if (!DeleteFile(child_path))
+			{
+				Con_Printf("Failed to remove file %s in dzip cleanup\n");
+				ok = false;
+				break;
+			}
 		}
 	} while (FindNextFile(hFind, &find_file_data));
+
+	DZip_DeletePathSanityCheck(dir_path);
+	if (!RemoveDirectory(dir_path))
+	{
+		Con_Printf("Failed to remove directory %s in dzip cleanup\n");
+		ok = false;
+	}
 
 	FindClose(hFind);
 
