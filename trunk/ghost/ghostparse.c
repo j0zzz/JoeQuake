@@ -287,7 +287,7 @@ Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info,
         .finish_time = -1,
     };
 
-	pctx.demo_file = demo_file;
+    pctx.demo_file = demo_file;
 
     if (ok) {
         dprc = DP_ReadDemo(&callbacks, &pctx);

@@ -48,16 +48,16 @@ DZip_Init (dzip_context_t *ctx, const char *prefix)
 {
 	memset(ctx, 0, sizeof(*ctx));
 
-    Q_snprintfz (ctx->extract_dir, sizeof(ctx->extract_dir),
+	Q_snprintfz (ctx->extract_dir, sizeof(ctx->extract_dir),
 				 "%s/%s/%s/", com_basedir, DZIP_EXTRACT_DIR, prefix);
 
 #ifdef _WIN32
-    ctx->proc = NULL;
+	ctx->proc = NULL;
 #else
-    ctx->proc = false;
+	ctx->proc = false;
 #endif
 
-    ctx->dem_path[0] = '\0';
+	ctx->dem_path[0] = '\0';
 	ctx->demo_file_p = NULL;
 	ctx->initialized = true;
 }

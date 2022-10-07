@@ -1385,7 +1385,7 @@ void CL_Init (void)
 	CL_InitModelnames ();
 	CL_InitTEnts ();
 	Ghost_Init ();
-    CL_InitDemo ();
+	CL_InitDemo ();
 
 // register our commands
 	Cvar_Register (&cl_name);
