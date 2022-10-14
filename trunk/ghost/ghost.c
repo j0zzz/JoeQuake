@@ -320,7 +320,7 @@ void Ghost_DrawGhostTime (void)
     }
 
     if (relative_time < 0) {
-        Draw_Fill (x + 160 - width, y, width, 9, 100);
+        Draw_Fill (x + (160 - width) * scale, y, width, 9, 100);
     } else {
         Draw_Fill (x, y, width, 9, 100);
     }
