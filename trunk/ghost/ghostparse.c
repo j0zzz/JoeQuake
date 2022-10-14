@@ -91,6 +91,7 @@ typedef struct {
     int view_entity;
     ghostreclist_t **next_ptr;
     ghostrec_t rec;
+    qboolean map_found;
     qboolean updated;  // record changed since last append
 
     FILE *demo_file;
@@ -122,12 +123,16 @@ Ghost_ServerInfoModel_cb (const char *model, void *ctx)
     ghost_parse_ctx_t *pctx = ctx;
 
     if (pctx->model_num == 0) {
+        if (pctx->map_found) {
+            // Hit a new server info message after already having found one with
+            // the map name we want.  This means that we have fully parsed the
+            // part of the demo that we need for the ghost.
+            return DP_CBR_STOP;
+        }
 		Q_strncpyz(map_name, (char *)model, sizeof(map_name));  // truncate to MAX_OSPATH
         COM_StripExtension(COM_SkipPath(map_name), map_name);
-        if (strcmp(map_name, pctx->expected_map_name)) {
-            Con_Printf("Ghost file is for map %s but %s is being loaded\n",
-                       map_name, pctx->expected_map_name);
-            return DP_CBR_STOP;
+        if (!strcmp(map_name, pctx->expected_map_name)) {
+            pctx->map_found = true;
         }
     }
     pctx->model_num += 1;
@@ -137,9 +142,25 @@ Ghost_ServerInfoModel_cb (const char *model, void *ctx)
 
 
 static dp_cb_response_t
+Ghost_ServerInfo_cb (int protocol, unsigned int protocol_flags,
+                     const char *level_name, void *ctx)
+{
+    ghost_parse_ctx_t *pctx = ctx;
+
+    pctx->model_num = 0;
+    return DP_CBR_CONTINUE;
+}
+
+
+static dp_cb_response_t
 Ghost_Time_cb (float time, void *ctx)
 {
     ghost_parse_ctx_t *pctx = ctx;
+
+    if (!pctx->map_found) {
+        // Still scanning for map, so skip to next packet.
+        return DP_CBR_SKIP_PACKET;
+    }
     pctx->rec.time = time;
     return DP_CBR_CONTINUE;
 }
@@ -149,6 +170,11 @@ static dp_cb_response_t
 Ghost_SetView_cb (int entity_num, void *ctx)
 {
     ghost_parse_ctx_t *pctx = ctx;
+
+    if (!pctx->map_found) {
+        // Still scanning for map, so skip to next packet.
+        return DP_CBR_SKIP_PACKET;
+    }
     pctx->view_entity = entity_num;
     return DP_CBR_CONTINUE;
 }
@@ -159,6 +185,11 @@ Ghost_Baseline_cb (int entity_num, vec3_t origin, vec3_t angle, int frame,
                    void *ctx)
 {
     ghost_parse_ctx_t *pctx = ctx;
+
+    if (!pctx->map_found) {
+        // Still scanning for map, so skip to next packet.
+        return DP_CBR_SKIP_PACKET;
+    }
 
     if (pctx->view_entity == -1) {
         Con_Printf("Baseline receieved but entity num not set\n");
@@ -232,6 +263,12 @@ static dp_cb_response_t
 Ghost_Intermission_cb (void *ctx)
 {
     ghost_parse_ctx_t *pctx = ctx;
+
+    if (!pctx->map_found) {
+        // Still scanning for map, so skip to next packet.
+        return DP_CBR_SKIP_PACKET;
+    }
+
     if (pctx->finish_time <= 0) {
         pctx->finish_time = pctx->rec.time;
     }
@@ -244,6 +281,11 @@ static dp_cb_response_t
 Ghost_UpdateName_cb (int client_num, const char *name, void *ctx)
 {
     ghost_parse_ctx_t *pctx = ctx;
+
+    if (!pctx->map_found) {
+        // Still scanning for map, so skip to next packet.
+        return DP_CBR_SKIP_PACKET;
+    }
 
     if (client_num >= 0 && client_num < GHOST_MAX_CLIENTS) {
         Q_strncpyz(pctx->client_names[client_num], (char *)name, MAX_SCOREBOARDNAME);
@@ -269,6 +311,7 @@ Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
     dp_callbacks_t callbacks = {
         .read = Ghost_Read_cb,
         .server_info_model = Ghost_ServerInfoModel_cb,
+        .server_info = Ghost_ServerInfo_cb,
         .time = Ghost_Time_cb,
         .set_view = Ghost_SetView_cb,
         .baseline = Ghost_Baseline_cb,
@@ -301,6 +344,9 @@ Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
             ok = pctx.finish_time > 0;
         } else if (dprc != DP_ERR_SUCCESS) {
             Con_Printf("Error parsing demo %s: %u\n", demo_path, dprc);
+            ok = false;
+        } else if (!pctx.map_found) {
+            Con_Printf("Map %s not found in demo\n", expected_map_name);
             ok = false;
         }
     }
