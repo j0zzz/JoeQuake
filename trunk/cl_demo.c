@@ -886,3 +886,33 @@ void CL_KeepDemo_f(void)
 	else
 		Con_Printf("Renamed demo to %s\n", newname);
 }
+
+
+#define DEMO_INTERMISSION_BUFFER_SIZE 8
+struct {
+	int index;
+	int data[DEMO_INTERMISSION_BUFFER_SIZE];
+} static dem_intermission_buf = {0};
+
+static int DemoIntermissionStatePop (void) {
+	dem_intermission_buf.index -= 1;
+	if (dem_intermission_buf.index < 0)
+		dem_intermission_buf.index = DEMO_INTERMISSION_BUFFER_SIZE - 1;
+	return dem_intermission_buf.data[dem_intermission_buf.index];
+}
+
+static void DemoIntermissionStatePush (int value) {
+	dem_intermission_buf.data[dem_intermission_buf.index] = value;
+	dem_intermission_buf.index += 1;
+	if (dem_intermission_buf.index >= DEMO_INTERMISSION_BUFFER_SIZE)
+		dem_intermission_buf.index = 0;
+}
+
+int CL_DemoIntermissionState (int old_state, int new_state)
+{
+	if (cl_demorewind.value)
+		return DemoIntermissionStatePop();
+
+	DemoIntermissionStatePush(old_state);
+	return new_state;
+}
