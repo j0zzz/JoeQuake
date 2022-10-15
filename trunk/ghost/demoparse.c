@@ -727,6 +727,18 @@ DP_ParseUpdateName(ctx_t *ctx)
 
 
 static dp_err_t
+DP_ParseStuffText(ctx_t *ctx)
+{
+    char string[2048];
+
+    CHECK_RC(DP_ParseString(ctx, string, sizeof(string), NULL));
+    CALL_CALLBACK(stuff_text, string);
+
+    return DP_ERR_SUCCESS;
+}
+
+
+static dp_err_t
 DP_ParseMessage(ctx_t *ctx)
 {
     byte cmd;
@@ -752,9 +764,11 @@ DP_ParseMessage(ctx_t *ctx)
                 break;
             case svc_print:
             case svc_centerprint:
-            case svc_stufftext:
             case svc_skybox:
                 CHECK_RC(DP_ParseString(ctx, NULL, 0, NULL));
+                break;
+            case svc_stufftext:
+                CHECK_RC(DP_ParseStuffText(ctx));
                 break;
             case svc_damage:
                 CHECK_RC(DP_ParseByte(ctx, NULL));    // armor

@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ghost_private.h"
 
 
+#define MAX_CHAINED_DEMOS   64
+
+
 /*
  * RECORD LISTS
  *
@@ -105,6 +108,7 @@ typedef struct {
 
     char (*client_names)[MAX_SCOREBOARDNAME];
     float finish_time;
+    char next_demo_path[MAX_OSPATH];
 } ghost_parse_ctx_t;
 
 
@@ -294,16 +298,33 @@ Ghost_UpdateName_cb (int client_num, const char *name, void *ctx)
     return DP_CBR_CONTINUE;
 }
 
-/*
- * ENTRYPOINT
- *
- * Call the demo parse module and return record array.
- */
+
+static dp_cb_response_t
+Ghost_StuffText_cb (const char *string, void *ctx)
+{
+    int len;
+    ghost_parse_ctx_t *pctx = ctx;
+
+    // Skip to next demo if we encounter a `playdemo` stuff command.
+    if (strncmp(string, "playdemo ", 9) == 0) {
+        Q_strlcpy(pctx->next_demo_path, string + 9, sizeof(pctx->next_demo_path));
+        len = strlen(pctx->next_demo_path);
+        if (len > 0 && pctx->next_demo_path[len - 1] == '\n') {
+            pctx->next_demo_path[len - 1] = '\0';
+            COM_DefaultExtension (pctx->next_demo_path, ".dem");
+        }
+
+        return DP_CBR_STOP;
+    }
+
+    return DP_CBR_CONTINUE;
+}
 
 
-qboolean
-Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
-                const char *expected_map_name)
+static qboolean
+Ghost_ReadDemoNoChain (const char *demo_path, ghost_info_t *ghost_info,
+                       const char *expected_map_name,
+                       char *next_demo_path)
 {
     qboolean ok = true;
     ghostreclist_t *list = NULL;
@@ -321,6 +342,7 @@ Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
         .finale = Ghost_Intermission_cb,
         .cut_scene = Ghost_Intermission_cb,
         .update_name = Ghost_UpdateName_cb,
+        .stuff_text = Ghost_StuffText_cb,
     };
     ghost_parse_ctx_t pctx = {
         .view_entity = -1,
@@ -338,10 +360,20 @@ Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
     }
 
     if (ok) {
+        next_demo_path[0] = '\0';
         dprc = DP_ReadDemo(&callbacks, &pctx);
         if (dprc == DP_ERR_CALLBACK_STOP) {
-            // Errors from callbacks print their own error messages.
-            ok = pctx.finish_time > 0;
+            if (pctx.finish_time > 0) {
+                // Map was found, and intermission reached.
+                ok = true;
+            } else if (pctx.next_demo_path[0] && !pctx.map_found) {
+                // Map not found, but there's another .dem file in the chain.
+                Q_strlcpy(next_demo_path, pctx.next_demo_path, MAX_OSPATH);
+                ok = true;
+            } else {
+                // Errors from callbacks print their own error messages.
+                ok = false;
+            }
         } else if (dprc != DP_ERR_SUCCESS) {
             Con_Printf("Error parsing demo %s: %u\n", demo_path, dprc);
             ok = false;
@@ -351,7 +383,7 @@ Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
         }
     }
 
-    if (ok) {
+    if (ok && pctx.finish_time > 0) {
         Ghost_ListToArray(list, &ghost_info->records, &ghost_info->num_records);
         ghost_info->finish_time = pctx.finish_time;
 
@@ -365,7 +397,42 @@ Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
     if (pctx.demo_file) {
         fclose(pctx.demo_file);
     }
+
+    return ok;
+}
+
+
+/*
+ * ENTRYPOINT
+ *
+ * Call the demo parse module and return record array.
+ */
+
+
+qboolean
+Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
+                const char *expected_map_name)
+{
+    qboolean ok = true;
+    char next_demo_path[MAX_OSPATH];
+    int num_demos_searched = 0;
+
+    Q_strlcpy(next_demo_path, demo_path, sizeof(next_demo_path));
+    while (ok && next_demo_path[0] && num_demos_searched < MAX_CHAINED_DEMOS) {
+        ok = Ghost_ReadDemoNoChain (next_demo_path, ghost_info,
+                                    expected_map_name, next_demo_path);
+        if (ok && next_demo_path[0]) {
+            num_demos_searched ++;
+        }
+    }
     Hunk_HighMark();
+
+    if (num_demos_searched == MAX_CHAINED_DEMOS) {
+        // Best to have a limit in case we have looped demos.
+        Con_Printf("Stopped searching for ghost after %d chained demos\n",
+                   MAX_CHAINED_DEMOS);
+        ok = false;
+    }
 
     return ok;
 }
