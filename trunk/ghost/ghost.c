@@ -62,7 +62,7 @@ static float Ghost_FindClosest (vec3_t origin, qboolean *match)
 
     if (closest_rec != NULL) {
         *match = true;
-        return cl.time - closest_rec->time;
+        return cl.ctime - closest_rec->time;
     } else {
         *match = false;
         return 0.0f;
@@ -209,7 +209,7 @@ static qboolean Ghost_SetAlpha(void)
 
 static qboolean Ghost_Update (void)
 {
-    float lookup_time = cl.time + ghost_shift;
+    float lookup_time = cl.ctime + ghost_shift;
     int after_idx = Ghost_FindRecord(lookup_time);
     ghostrec_t *rec_before;
     ghostrec_t *rec_after;
