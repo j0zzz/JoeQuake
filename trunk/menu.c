@@ -6270,8 +6270,20 @@ void M_Menu_Demos_f (void)
 
 void M_Demos_Draw (void)
 {
+	int help_text_x = 28;
+	int help_text_y = 8 * (MAXLINES + 8);
+
 	M_Print (16, 16, demodir);
 	M_List_Draw ("DEMOS");
+
+	M_PrintWhite (help_text_x, help_text_y,
+			      "enter:       ctrl-enter:            ");
+	M_PrintWhite (help_text_x, help_text_y + 8,
+			      "  ctrl-shift-enter:            ");
+	M_Print(help_text_x, help_text_y,
+			      "       play              set ghost  ");
+	M_Print(help_text_x, help_text_y + 8,
+			      "                    clear ghost");
 }
 
 void M_Demos_Key (int k)
