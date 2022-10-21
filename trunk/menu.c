@@ -6321,9 +6321,20 @@ void M_Demos_Key (int k)
 		}
 		else
 		{
-			key_dest = key_game;
-			m_state = m_none;
-			Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demodir, filelist[list_base+list_cursor].name));
+			if (keydown[K_CTRL] && !keydown[K_SHIFT])
+			{
+				Cbuf_AddText (va("ghost \"..%s/%s\"\n", demodir, filelist[list_base+list_cursor].name));
+			}
+			else if (keydown[K_CTRL] && keydown[K_SHIFT])
+			{
+				Cbuf_AddText ("ghost_remove\n");
+			}
+			else
+			{
+				key_dest = key_game;
+				m_state = m_none;
+				Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demodir, filelist[list_base+list_cursor].name));
+			}
 			Q_strncpyz (prevdir, filelist[list_base+list_cursor].name, sizeof(prevdir));
 		}
 
