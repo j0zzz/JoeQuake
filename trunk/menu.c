@@ -6331,7 +6331,11 @@ void M_Demos_Key (int k)
 		if (!num_files || filelist[list_base+list_cursor].type == 3)
 			break;
 
-		if (filelist[list_cursor+list_base].type)
+		if (keydown[K_CTRL] && keydown[K_SHIFT])
+		{
+			Cbuf_AddText ("ghost_remove\n");
+		}
+		else if (filelist[list_cursor+list_base].type)
 		{
 			if (filelist[list_base+list_cursor].type == 2)
 			{
@@ -6354,10 +6358,6 @@ void M_Demos_Key (int k)
 			if (keydown[K_CTRL] && !keydown[K_SHIFT])
 			{
 				Cbuf_AddText (va("ghost \"..%s/%s\"\n", demodir, filelist[list_base+list_cursor].name));
-			}
-			else if (keydown[K_CTRL] && keydown[K_SHIFT])
-			{
-				Cbuf_AddText ("ghost_remove\n");
 			}
 			else
 			{
