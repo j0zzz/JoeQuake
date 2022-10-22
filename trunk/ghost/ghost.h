@@ -28,5 +28,6 @@ void Ghost_DrawGhostTime (void);
 void Ghost_Init (void);
 void Ghost_Finish (void);
 
+extern char         ghost_demo_path[MAX_OSPATH];
 
 #endif /* __CL_GHOST_H */

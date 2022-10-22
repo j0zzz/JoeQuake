@@ -520,27 +520,27 @@ static char *toYellow (char *s)
 	return buf;
 }
 
-void M_List_Draw (char *title)
+void M_List_Draw (char *title, int top)
 {
 	int		i, y, num_elements, num_lines, lx = 0, ly = 0;
 	direntry_t	*d;
 
-	M_Print (140, 8, title);
+	M_Print (140, top - 16, title);
 	if (nehahra)
 	{
-		M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
+		M_Print (8, top, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
 		num_elements = NUMNEHDEMOS;
 		num_lines = MAXNEHLINES;
 	}
 	else
 	{
-		M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\x1d\x1e\x1e\x1e\x1e\x1e\x1f");
+		M_Print (8, top, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\x1d\x1e\x1e\x1e\x1e\x1e\x1f");
 		d = filelist + list_base;
 		num_elements = num_files;
 		num_lines = MAXLINES;
 	}
 
-	for (i = 0, y = 32 ; i < num_elements - list_base && i < num_lines ; i++, y += 8)
+	for (i = 0, y = top + 8 ; i < num_elements - list_base && i < num_lines ; i++, y += 8)
 	{
 		if (nehahra)
 		{
@@ -579,15 +579,15 @@ void M_List_Draw (char *title)
 	list_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	list_window.h = ly - list_window.y + 8;
 
-	M_DrawCharacter (8, 32 + list_cursor*8, 12 + ((int)(realtime*4)&1));
+	M_DrawCharacter (8, top + 8 + list_cursor*8, 12 + ((int)(realtime*4)&1));
 
 	if (searchbox)
 	{
-		M_PrintWhite (24, 48 + 8*MAXLINES, "search: ");
-		M_DrawTextBox (80, 40 + 8*MAXLINES, 16, 1);
-		M_PrintWhite (88, 48 + 8*MAXLINES, searchfile);
+		M_PrintWhite (24, top + 24 + 8*MAXLINES, "search: ");
+		M_DrawTextBox (80, top + 16 + 8*MAXLINES, 16, 1);
+		M_PrintWhite (88, top + 24 + 8*MAXLINES, searchfile);
 
-		M_DrawCharacter (88 + 8*strlen(searchfile), 48 + 8*MAXLINES, ((int)(realtime*4)&1) ? 11 + (84*key_insert) : 10);
+		M_DrawCharacter (88 + 8*strlen(searchfile), top + 24 + 8*MAXLINES, ((int)(realtime*4)&1) ? 11 + (84*key_insert) : 10);
 	}
 }
 
@@ -6108,7 +6108,7 @@ void M_Menu_Maps_f (void)
 
 void M_Maps_Draw (void)
 {
-	M_List_Draw ("MAPS");
+	M_List_Draw ("MAPS", 24);
 }
 
 void M_Maps_Key (int k)
@@ -6217,7 +6217,7 @@ void M_Menu_NehDemos_f (void)
 
 void M_NehDemos_Draw (void)
 {
-	M_List_Draw ("DEMOS");
+	M_List_Draw ("DEMOS", 24);
 }
 
 void M_NehDemos_Key (int k)
@@ -6270,18 +6270,36 @@ void M_Menu_Demos_f (void)
 
 void M_Demos_Draw (void)
 {
+	int ghost_text_y = 8 * (MAXLINES + 6);
+	int ghost_text_x;
 	int help_text_x = 28;
 	int help_text_y = 8 * (MAXLINES + 8);
+	char *ghost_demo_path_short;
 
-	M_Print (16, 16, demodir);
-	M_List_Draw ("DEMOS");
+	// Current directory
+	M_Print (16, 0, demodir);
 
+	// The file list itself
+	M_List_Draw ("DEMOS", 8);
+
+	// Current ghost
+	if (ghost_demo_path[0] != '\0') {
+		ghost_demo_path_short = ghost_demo_path;
+		if (strncmp(ghost_demo_path, "../", 3) == 0) {
+			ghost_demo_path_short += 2;
+		}
+		ghost_text_x = (320 - 8 * (7 + strlen(ghost_demo_path_short))) / 2;
+		M_PrintWhite (ghost_text_x, ghost_text_y, "ghost: ");
+		M_Print (ghost_text_x + 8 * 7, ghost_text_y, ghost_demo_path_short);
+	}
+
+	// Keyboard shortcut help text
 	M_PrintWhite (help_text_x, help_text_y,
-			      "enter:       ctrl-enter:            ");
+			      "enter:       ctrl-enter:          ");
+	M_Print(help_text_x, help_text_y,
+			      "       play              set ghost");
 	M_PrintWhite (help_text_x, help_text_y + 8,
 			      "  ctrl-shift-enter:            ");
-	M_Print(help_text_x, help_text_y,
-			      "       play              set ghost  ");
 	M_Print(help_text_x, help_text_y + 8,
 			      "                    clear ghost");
 }
@@ -6427,7 +6445,7 @@ void M_Menu_Mods_f(void)
 
 void M_Mods_Draw(void)
 {
-	M_List_Draw("MODS");
+	M_List_Draw("MODS", 24);
 }
 
 void M_Mods_Key(int k)
