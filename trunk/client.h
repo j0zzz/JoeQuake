@@ -117,6 +117,15 @@ typedef enum
 	ca_connected		// valid netcon, talking to a server
 } cactive_t;
 
+
+typedef enum
+{
+	ms_unknown,		// server has not indicated
+	ms_start,		// first map in a marathon
+	ms_continue,	// non-first map in marathon
+} client_marathon_state_t;
+
+
 // the client_static_t structure is persistant through an arbitrary number
 // of server connections
 typedef struct
@@ -242,6 +251,8 @@ typedef struct
 
 	unsigned	protocol; //johnfitz
 	unsigned	protocolflags;
+
+	client_marathon_state_t marathon_state;
 } client_state_t;
 
 extern	client_state_t	cl;

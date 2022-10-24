@@ -229,6 +229,40 @@ void CL_Disconnect_f (void)
 
 /*
 =====================
+CL_Marathon_f
+
+Command sent by the server to indicate whether the current level is the first in
+a marathon, or a subsequent level.
+=====================
+*/
+void CL_Marathon_f (void)
+{
+	const char *arg;
+
+	if (Cmd_Argc() == 2)
+	{
+		arg = Cmd_Argv(1);
+		if (strcmp(arg, "start") == 0)
+		{
+			cl.marathon_state = ms_start;
+			Ghost_MarathonStart();
+		} else if (strcmp(arg, "continue") == 0)
+		{
+			cl.marathon_state = ms_continue;
+		} else
+		{
+			Con_Printf("invalid marathon argument %s\n", arg);
+		}
+	}
+	else
+	{
+		Con_Printf("marathon command is for internal use\n");
+	}
+}
+
+
+/*
+=====================
 CL_EstablishConnection
 
 Host should be either "local" or a net address to be passed on
@@ -1372,6 +1406,7 @@ char *CL_MapName (void)
 	return cl_mapname.string;
 }
 
+
 /*
 =================
 CL_Init
@@ -1436,4 +1471,5 @@ void CL_Init (void)
 	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
 	Cmd_AddCommand("keepdemo", CL_KeepDemo_f);
+	Cmd_AddCommand ("marathon", CL_Marathon_f);
 }

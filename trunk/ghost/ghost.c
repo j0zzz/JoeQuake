@@ -33,6 +33,11 @@ static int          ghost_num_records = 0;
 entity_t			*ghost_entity = NULL;
 static float        ghost_shift = 0.0f;
 static float        ghost_finish_time = -1.0f;
+static struct {
+    qboolean valid;         // has there been a ghost time for each level?
+    float ghost_total;      // total ghost time for the marathon
+    float player_total;     // total player time for the marathon
+} ghost_marathon_info;
 
 
 // This could be done more intelligently, no doubt.
@@ -332,12 +337,49 @@ void Ghost_DrawGhostTime (void)
 void Ghost_Finish (void)
 {
     float delta;
+    qboolean marathon_first;
+
     if (ghost_finish_time > 0) {
         delta = cl.mtime[0] - ghost_finish_time;
         Con_Printf("Finished %.3f s %s ghost\n",
                    fabs(delta), delta > 0 ? "behind" : "ahead of");
 
+        if (cl.marathon_state != ms_unknown
+                && ghost_marathon_info.valid) {
+            marathon_first = (ghost_marathon_info.player_total == 0.0f);
+            ghost_marathon_info.ghost_total += ghost_finish_time;
+            ghost_marathon_info.player_total += cl.mtime[0];
+
+            if (!marathon_first) {
+                delta = (ghost_marathon_info.player_total
+                         - ghost_marathon_info.ghost_total);
+                Con_Printf("Marathon time %.3f s %s ghost\n",
+                           fabs(delta), delta > 0 ? "behind" : "ahead of");
+            }
+        }
+    } else {
+        if (ghost_marathon_info.valid
+                && ghost_marathon_info.player_total >= 0.0f) {
+            Con_Printf("Ghost did not finish, marathon stopped\n");
+        }
+        ghost_marathon_info.valid = false;
     }
+}
+
+
+void Ghost_MarathonStart (void)
+{
+    if (cl.marathon_state != ms_start) {
+        Sys_Error("Invalid marathon_state %d for Ghost_MarathonStart",
+                cl.marathon_state);
+    }
+
+    if (ghost_records != NULL) {
+        Con_Printf("Ghost marathon started\n");
+    }
+    ghost_marathon_info.valid = (ghost_records != NULL);
+    ghost_marathon_info.player_total = 0.0f;
+    ghost_marathon_info.ghost_total = 0.0f;
 }
 
 
@@ -447,7 +489,6 @@ static void Ghost_ShiftResetCommand_f (void)
 
     ghost_shift = 0.0f;
 }
-
 
 
 void Ghost_Init (void)

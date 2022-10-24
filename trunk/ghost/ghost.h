@@ -27,6 +27,7 @@ void Ghost_Draw (void);
 void Ghost_DrawGhostTime (void);
 void Ghost_Init (void);
 void Ghost_Finish (void);
+void Ghost_MarathonStart (void);
 
 
 #endif /* __CL_GHOST_H */

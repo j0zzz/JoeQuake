@@ -75,6 +75,8 @@ typedef struct
 
 	unsigned	protocol; //johnfitz
 	unsigned	protocolflags;
+
+	qboolean changelevel_issued;	// whether map was loaded via changelevel trigger
 } server_t;
 
 #define	NUM_PING_TIMES		16

@@ -332,6 +332,14 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteByte (&client->message, svc_signonnum);
 	MSG_WriteByte (&client->message, 1);
 
+	// Tell client about the marathon state.
+	MSG_WriteChar (&client->message, svc_stufftext);
+	if (!sv.changelevel_issued) {
+		MSG_WriteString (&client->message, "marathon start\n");
+	} else {
+		MSG_WriteString (&client->message, "marathon continue\n");
+	}
+
 	client->sendsignon = true;
 	client->spawned = false;		// need prespawn, spawn, etc
 }
@@ -1342,6 +1350,7 @@ void SV_SpawnServer (char *server)
 	extern	void R_PreMapLoad (char *);
 	extern double sv_frametime;
 	extern double physframetime;
+	qboolean changelevel_issued;
 
 	memset(dummy, 0, sizeof(dummy));
 
@@ -1368,6 +1377,7 @@ void SV_SpawnServer (char *server)
 	}
 
 	Con_DPrintf ("SpawnServer: %s\n", server);
+	changelevel_issued = svs.changelevel_issued;
 	svs.changelevel_issued = false;		// now safe to issue another
 
 // tell all connected clients that we are going to a new level
@@ -1430,6 +1440,7 @@ void SV_SpawnServer (char *server)
 	sv.paused = false;
 
 	sv.time = 1.0;
+	sv.changelevel_issued = changelevel_issued;
 
 	R_PreMapLoad (server);
 
