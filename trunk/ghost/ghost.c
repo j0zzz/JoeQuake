@@ -33,11 +33,20 @@ static int          ghost_num_records = 0;
 entity_t			*ghost_entity = NULL;
 static float        ghost_shift = 0.0f;
 static float        ghost_finish_time = -1.0f;
-static struct {
+
+
+#define MAX_MARATHON_LEVELS     256
+typedef struct {
+    char map_name[MAX_QPATH];
+    float ghost_time;
+    float player_time;
+} ghost_marathon_level_t;
+typedef struct {
     qboolean valid;         // has there been a ghost time for each level?
-    float ghost_total;      // total ghost time for the marathon
-    float player_total;     // total player time for the marathon
-} ghost_marathon_info;
+    ghost_marathon_level_t levels[MAX_MARATHON_LEVELS];
+    int num_levels;
+} ghost_marathon_info_t;
+static ghost_marathon_info_t ghost_marathon_info;
 
 
 // This could be done more intelligently, no doubt.
@@ -336,33 +345,54 @@ void Ghost_DrawGhostTime (void)
 
 void Ghost_Finish (void)
 {
-    float delta;
-    qboolean marathon_first;
+    int i;
+    float split, total_split;
+    ghost_marathon_level_t *gml;
+    ghost_marathon_info_t *gmi = &ghost_marathon_info;
 
     if (ghost_finish_time > 0) {
-        delta = cl.mtime[0] - ghost_finish_time;
-        Con_Printf("Finished %.3f s %s ghost\n",
-                   fabs(delta), delta > 0 ? "behind" : "ahead of");
-
-        if (cl.marathon_state != ms_unknown
-                && ghost_marathon_info.valid) {
-            marathon_first = (ghost_marathon_info.player_total == 0.0f);
-            ghost_marathon_info.ghost_total += ghost_finish_time;
-            ghost_marathon_info.player_total += cl.mtime[0];
-
-            if (!marathon_first) {
-                delta = (ghost_marathon_info.player_total
-                         - ghost_marathon_info.ghost_total);
-                Con_Printf("Marathon time %.3f s %s ghost\n",
-                           fabs(delta), delta > 0 ? "behind" : "ahead of");
+        if (cl.marathon_state == ms_unknown) {
+            if (gmi->valid) {
+                Con_Printf("Server not marathon aware, marathon stopped\n");
             }
+            gmi->valid = false;
+        }
+
+        if (!gmi->valid) {
+            // If not in a marathon, just print this level's stats
+            ghost_marathon_info.num_levels = 0;
+        }
+
+        if (gmi->num_levels < MAX_MARATHON_LEVELS) {
+            gml = &gmi->levels[gmi->num_levels];
+            Q_strncpyz(gml->map_name, CL_MapName(), MAX_QPATH);
+            gml->player_time = cl.mtime[0];
+            gml->ghost_time = ghost_finish_time;
+            gmi->num_levels ++;
+        }
+
+        Con_Printf("ghost splits:\n");
+        Con_Printf("  map                time    split    total\n");
+        Con_Printf("  \x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
+                   "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
+                   "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
+                   "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f\n");
+        total_split = 0.0f;
+        for (i = 0; i < gmi->num_levels; i++) {
+            gml = &gmi->levels[i];
+            split = (gml->player_time - gml->ghost_time);
+            total_split += split;
+            Con_Printf("  %-10s %12s %8.2f %8.2f\n",
+                       gml->map_name,
+                       GetPrintedTime(gml->player_time),
+                       split,
+                       total_split);
         }
     } else {
-        if (ghost_marathon_info.valid
-                && ghost_marathon_info.player_total >= 0.0f) {
+        if (gmi->valid) {
             Con_Printf("Ghost did not finish, marathon stopped\n");
         }
-        ghost_marathon_info.valid = false;
+        gmi->valid = false;
     }
 }
 
@@ -374,12 +404,8 @@ void Ghost_MarathonStart (void)
                 cl.marathon_state);
     }
 
-    if (ghost_records != NULL) {
-        Con_Printf("Ghost marathon started\n");
-    }
-    ghost_marathon_info.valid = (ghost_records != NULL);
-    ghost_marathon_info.player_total = 0.0f;
-    ghost_marathon_info.ghost_total = 0.0f;
+    ghost_marathon_info.valid = true;
+    ghost_marathon_info.num_levels = 0;
 }
 
 
