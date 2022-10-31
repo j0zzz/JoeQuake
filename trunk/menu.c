@@ -3139,6 +3139,8 @@ menu_window_t hud_slider_consize_window;
 menu_window_t hud_slider_conspeed_window;
 menu_window_t hud_slider_conalpha_window;
 
+const float scr_sbarscale_amount_max = 6.0f;
+
 #define CONSOLE_SPEED_ITEMS 5
 float console_speed_values[CONSOLE_SPEED_ITEMS] = { 200, 500, 1000, 5000, 99999 };
 
@@ -3310,7 +3312,7 @@ void M_Hud_Draw(void)
 	M_DrawPic((320 - p->width) >> 1, 4, p);
 
 	M_Print_GetPoint(16, 32, &hud_window.x, &hud_window.y, "     Hud/Console scale", hud_cursor == 0);
-	r = (scr_sbarscale_amount.value - 1) / 3;
+	r = (scr_sbarscale_amount.value - 1) / (scr_sbarscale_amount_max - 1.0f);
 	M_DrawSliderFloat(220, 32, r, scr_sbarscale_amount.value, &hud_slider_sbarscale_window);
 
 	M_Print_GetPoint(16, 40, &lx, &ly, "             Hud style", hud_cursor == 1);
@@ -3401,7 +3403,7 @@ void M_Hud_KeyboardSlider(int dir)
 	{
 	case 0:	// sbar scale
 		scr_sbarscale_amount.value += dir * 0.5;
-		scr_sbarscale_amount.value = bound(1, scr_sbarscale_amount.value, 4);
+		scr_sbarscale_amount.value = bound(1, scr_sbarscale_amount.value, scr_sbarscale_amount_max);
 		Cvar_SetValue(&scr_sbarscale_amount, scr_sbarscale_amount.value);
 		break;
 
@@ -3612,7 +3614,7 @@ void M_Hud_MouseSlider(int k, const mouse_state_t *ms)
 		{
 		case 0:	// sbar scale
 			M_Mouse_Select_Column(&hud_slider_sbarscale_window, ms, 7, &slider_pos);
-			scr_sbarscale_amount.value = bound(1, (slider_pos * 0.5) + 1, 4);
+			scr_sbarscale_amount.value = bound(1, (slider_pos * 0.5) + 1, scr_sbarscale_amount_max);
 			Cvar_SetValue(&scr_sbarscale_amount, scr_sbarscale_amount.value);
 			break;
 
