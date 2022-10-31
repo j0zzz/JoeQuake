@@ -388,6 +388,7 @@
     <ResourceCompile Include="joequake.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cl_dzip.c" />
     <ClCompile Include="fmod.c" />
     <ClCompile Include="ghost\demoparse.c" />
     <ClCompile Include="ghost\ghost.c" />

@@ -426,6 +426,9 @@
     <ClCompile Include="ghost\ghostparse.c">
       <Filter>Source Files\Ghost</Filter>
     </ClCompile>
+    <ClCompile Include="cl_dzip.c">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="adivtab.h">

@@ -41,6 +41,7 @@ static	HANDLE	hDZipProcess = NULL;
 static qboolean hDZipProcess = false;
 #endif
 
+static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
 static	char	tempdem_name[256] = "";	// this file must be deleted after playback is finished
 static	char	dem_basedir[256] = "";
@@ -65,6 +66,19 @@ Whenever cl.time gets past the last received message, another message is
 read from the demo file.
 ==============================================================================
 */
+
+void CL_InitDemo (void)
+{
+	DZip_Init(&dzCtx, "playdemo");
+	DZip_Cleanup(&dzCtx);
+}
+
+
+void CL_ShutdownDemo (void)
+{
+	DZip_Cleanup(&dzCtx);
+}
+
 
 /*
 ==============
@@ -500,31 +514,24 @@ void StartPlayingOpenedDemo (void)
 // joe: playing demos from .dz files
 static void CheckDZipCompletion (void)
 {
-#ifdef _WIN32
-	DWORD	ExitCode;
+    dzip_status_t dzip_status;
 
-	if (!hDZipProcess)
-		return;
+    dzip_status = DZip_CheckCompletion(&dzCtx);
 
-	if (!GetExitCodeProcess(hDZipProcess, &ExitCode))
-	{
-		Con_Printf ("WARNING: GetExitCodeProcess failed\n");
-		hDZipProcess = NULL;
-		dz_unpacking = dz_playback = cls.demoplayback = false;
-		StopDZPlayback ();
-		return;
-	}
-
-	if (ExitCode == STILL_ACTIVE)
-		return;
-
-	hDZipProcess = NULL;
-#else
-	if (!hDZipProcess)
-		return;
-
-	hDZipProcess = false;
-#endif
+    switch (dzip_status) {
+        case DZIP_NOT_EXTRACTING:
+        case DZIP_EXTRACT_IN_PROGRESS:
+            return;
+        case DZIP_EXTRACT_FAIL:
+            dz_unpacking = dz_playback = cls.demoplayback = false;
+            StopDZPlayback ();
+            return;
+        case DZIP_EXTRACT_SUCCESS:
+            break;
+        default:
+            Sys_Error("Invalid dzip status %d", dzip_status);
+            return;
+    }
 
 	if (!dz_unpacking || !cls.demoplayback)
 	{
@@ -534,165 +541,56 @@ static void CheckDZipCompletion (void)
 
 	dz_unpacking = false;
 
-	if (!(cls.demofile = fopen(tempdem_name, "rb")))
-	{
-		Con_Printf ("ERROR: couldn't open %s\n", tempdem_name);
-		dz_playback = cls.demoplayback = false;
-		cls.demonum = -1;
-		return;
-	}
-
 	// start playback
 	StartPlayingOpenedDemo ();
 }
 
+
 static void StopDZPlayback (void)
 {
-	if (!hDZipProcess && tempdem_name[0])
-	{
-		char	temptxt_name[256];
-
-		COM_StripExtension (tempdem_name, temptxt_name);
-		strcat (temptxt_name, ".txt");
-		remove (temptxt_name);
-		if (remove(tempdem_name))
-			Con_Printf ("Couldn't delete %s\n", tempdem_name);
-		tempdem_name[0] = '\0';
-	}
+	DZip_Cleanup(&dzCtx);
 	dz_playback = false;
 }
 
+
 static void PlayDZDemo (void)
 {
-	char	*name, *p, dz_name[256];
-#ifdef _WIN32
-	char	cmdline[512];
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
+	const char *name;
+	dzip_status_t dzip_status;
 
-	if (hDZipProcess)
-	{
-		Con_Printf ("Cannot unpack -- DZip is still running!\n");
-		return;
+	name = Cmd_Argv(1);
+
+	dzip_status = DZip_StartExtract(&dzCtx, name, &cls.demofile);
+
+	switch (dzip_status) {
+		case DZIP_ALREADY_EXTRACTING:
+			Con_Printf ("Cannot unpack -- DZip is still running!\n");
+			break;
+		case DZIP_NO_EXIST:
+			Con_Printf ("ERROR: couldn't open %s\n", name);
+			break;
+		case DZIP_EXTRACT_SUCCESS:
+			Con_Printf ("Already extracted, playing demo\n");
+			StartPlayingOpenedDemo ();
+			break;
+		case DZIP_EXTRACT_FAIL:
+			// Error message printed by `DZip_StartExtract`.
+			break;
+		case DZIP_EXTRACT_IN_PROGRESS:
+			Con_Printf ("\x02" "\nunpacking demo. please wait...\n\n");
+			key_dest = key_game;
+
+			dz_unpacking = dz_playback = true;
+
+			// demo playback doesn't actually start yet, we just set cls.demoplayback
+			// so that CL_StopPlayback() will be called if CL_Disconnect() is issued
+			cls.demoplayback = true;
+			cls.demofile = NULL;
+			cls.state = ca_connected;
+			break;
 	}
-#else
-	char	dzipRealPath[256], tmppath[256];
-	pid_t	pid;
-#endif
-
-	name = Cmd_Argv (1);
-
-	if (strstr(name, "..") == name)
-	{
-		Q_snprintfz (dem_basedir, sizeof(dem_basedir), "%s%s", com_basedir, name + 2);
-		p = strrchr (dem_basedir, '/');
-		*p = 0;
-		name = strrchr (name, '/') + 1;	// we have to cut off the path for the name
-	}
-	else
-	{
-		Q_strncpyz (dem_basedir, com_gamedir, sizeof(dem_basedir));
-	}
-
-#ifndef _WIN32
-	if (!realpath(dem_basedir, tmppath))
-	{
-		Con_Printf ("Couldn't realpath '%s'\n", dem_basedir);
-		return;
-	}
-	Q_strncpyz (dem_basedir, tmppath, sizeof(dem_basedir));
-#endif
-
-	Q_snprintfz (dz_name, sizeof(dz_name), "%s/%s", dem_basedir, name);
-
-	// check if the file exists
-	if (Sys_FileTime(dz_name) == -1)
-	{
-		Con_Printf ("ERROR: couldn't open %s\n", name);
-		return;
-	}
-
-	COM_StripExtension (dz_name, tempdem_name);
-	strcat (tempdem_name, ".dem");
-
-	if ((cls.demofile = fopen(tempdem_name, "rb")))
-	{
-		// .dem already exists, so just play it
-		Con_Printf ("Playing demo from %s\n", tempdem_name);
-		StartPlayingOpenedDemo ();
-		return;
-	}
-
-	Con_Printf ("\x02" "\nunpacking demo. please wait...\n\n");
-	key_dest = key_game;
-
-	// start DZip to unpack the demo
-#ifdef _WIN32
-	memset (&si, 0, sizeof(si));
-	si.cb = sizeof(si);
-	si.wShowWindow = SW_HIDE;
-	si.dwFlags = STARTF_USESHOWWINDOW;
-
-	Q_snprintfz (cmdline, sizeof(cmdline), "%s/dzip.exe -x -f \"%s\"", com_basedir, name);
-	if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, dem_basedir, &si, &pi))
-	{
-		Con_Printf ("Couldn't execute %s/dzip.exe\n", com_basedir);
-		return;
-	}
-
-	hDZipProcess = pi.hProcess;
-#else
-	if (!realpath(com_basedir, dzipRealPath))
-	{
-		Con_Printf ("Couldn't realpath '%s'\n", com_basedir);
-		return;
-	}
-
-	if (chdir(dem_basedir) == -1)
-	{
-		Con_Printf ("Couldn't chdir to '%s'\n", dem_basedir);
-		return;
-	}
-
-	switch (pid = fork())
-	{
-	case -1:
-		Con_Printf ("Couldn't create subprocess\n");
-		return;
-
-	case 0:
-		if (execlp(va("%s/dzip-linux", dzipRealPath), "dzip-linux", "-x", "-f", dz_name, NULL) == -1)
-		{
-			Con_Printf ("Couldn't execute %s/dzip-linux\n", com_basedir);
-			exit (-1);
-		}
-
-	default:
-		if (waitpid(pid, NULL, 0) == -1)
-		{
-			Con_Printf ("waitpid failed\n");
-			return;
-		}
-		break;
-	}
-
-	if (chdir(dzipRealPath) == -1)
-	{
-		Con_Printf ("Couldn't chdir to '%s'\n", dzipRealPath);
-		return;
-	}
-
-	hDZipProcess = true;
-#endif
-
-	dz_unpacking = dz_playback = true;
-
-	// demo playback doesn't actually start yet, we just set cls.demoplayback
-	// so that CL_StopPlayback() will be called if CL_Disconnect() is issued
-	cls.demoplayback = true;
-	cls.demofile = NULL;
-	cls.state = ca_connected;
 }
+
 
 /*
 ====================

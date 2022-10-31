@@ -27,6 +27,7 @@ static cvar_t ghost_range = {"ghost_range", "64", CVAR_ARCHIVE};
 static cvar_t ghost_alpha = {"ghost_alpha", "0.8", CVAR_ARCHIVE};
 
 
+static dzip_context_t ghost_dz_ctx;
 static char         ghost_demo_path[MAX_OSPATH] = "";
 static ghostrec_t  *ghost_records = NULL;
 static int          ghost_num_records = 0;
@@ -102,11 +103,51 @@ static int Ghost_FindRecord (float time)
 }
 
 
+static FILE *
+Ghost_OpenDemoOrDzip (const char *demo_path)
+{
+    FILE *demo_file = NULL;
+    dzip_status_t dzip_status;
+
+    if (strlen(demo_path) > 3
+        && !Q_strcasecmp(demo_path + strlen(demo_path) - 3, ".dz"))
+    {
+        dzip_status = DZip_Open(&ghost_dz_ctx, demo_path, &demo_file);
+        switch (dzip_status) {
+            case DZIP_ALREADY_EXTRACTING:
+                Sys_Error("Already extracting despite sync only usage");
+                break;
+            case DZIP_NO_EXIST:
+                Con_Printf ("ERROR: couldn't open %s\n", demo_path);
+                break;
+            case DZIP_EXTRACT_SUCCESS:
+                break;
+            case DZIP_EXTRACT_FAIL:
+                Con_Printf ("ERROR: couldn't extract %s\n", demo_path);
+                break;
+        }
+
+    } else
+    {
+        char demo_path_with_ext[MAX_OSPATH + 4];
+        Q_strlcpy(demo_path_with_ext, demo_path, MAX_OSPATH);
+        COM_DefaultExtension (demo_path_with_ext, ".dem");
+        if (COM_FOpenFile (demo_path_with_ext, &demo_file) == -1) {
+            Con_Printf("cannot find demo %s", demo_path_with_ext);
+            demo_file = NULL;
+        }
+    }
+
+    return demo_file;
+}
+
+
 extern char *GetPrintedTime(double time);   // Maybe put the definition somewhere central?
 void Ghost_Load (const char *map_name)
 {
     int i;
     ghost_info_t ghost_info;
+    FILE *demo_file;
 
     memset(&ghost_info, 0, sizeof(ghost_info));
     ghost_records = NULL;
@@ -118,7 +159,13 @@ void Ghost_Load (const char *map_name)
         return;
     }
 
-    if (!Ghost_ReadDemo(ghost_demo_path, &ghost_info, map_name)) {
+    demo_file = Ghost_OpenDemoOrDzip(ghost_demo_path);
+    if (!demo_file)
+    {
+        Con_Printf ("ERROR: couldn't open %s\n", ghost_demo_path);
+        return;
+    }
+    if (!Ghost_ReadDemo(demo_file, &ghost_info, map_name)) {
         return;
     }
     ghost_records = ghost_info.records;
@@ -361,17 +408,14 @@ static void Ghost_Command_f (void)
         return;
     }
 
+    DZip_Cleanup(&ghost_dz_ctx);
     Q_strlcpy(demo_path, Cmd_Argv(1), sizeof(demo_path));
-    COM_DefaultExtension (demo_path, ".dem");
-
-    if (COM_FOpenFile (demo_path, &demo_file) == -1) {
-        Con_Printf("cannot find demo %s", demo_path);
-        return;
+    demo_file = Ghost_OpenDemoOrDzip(demo_path);
+    if (demo_file) {
+        fclose(demo_file);
+        Q_strlcpy(ghost_demo_path, demo_path, sizeof(ghost_demo_path));
+        Con_Printf("ghost will be loaded on next map load\n");
     }
-    fclose(demo_file);
-
-    Q_strlcpy(ghost_demo_path, demo_path, sizeof(ghost_demo_path));
-    Con_Printf("ghost will be loaded on next map load\n");
 }
 
 
@@ -392,6 +436,7 @@ static void Ghost_RemoveCommand_f (void)
     } else {
         Con_Printf("ghost %s will be removed on next map load\n", ghost_demo_path);
         ghost_demo_path[0] = '\0';
+        DZip_Cleanup(&ghost_dz_ctx);
     }
 }
 
@@ -452,6 +497,8 @@ static void Ghost_ShiftResetCommand_f (void)
 
 void Ghost_Init (void)
 {
+    DZip_Init (&ghost_dz_ctx, "ghost");
+    DZip_Cleanup(&ghost_dz_ctx);
     Cmd_AddCommand ("ghost", Ghost_Command_f);
     Cmd_AddCommand ("ghost_remove", Ghost_RemoveCommand_f);
     Cmd_AddCommand ("ghost_shift", Ghost_ShiftCommand_f);
@@ -462,3 +509,8 @@ void Ghost_Init (void)
     Cvar_Register (&ghost_alpha);
 }
 
+
+void Ghost_Shutdown (void)
+{
+    DZip_Cleanup(&ghost_dz_ctx);
+}
