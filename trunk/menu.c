@@ -6350,7 +6350,7 @@ void M_Demos_Key (int k)
 				worx = true;
 				S_LocalSound ("misc/menu1.wav");
 				list_base = i - 10;
-				if (list_base < 0)
+				if (list_base < 0 || num_files < MAXLINES)
 				{
 					list_base = 0;
 					list_cursor = i;
