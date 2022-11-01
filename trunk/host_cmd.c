@@ -1827,7 +1827,7 @@ struct spawn_params_to_write
 static void WriteNextSpawnParams (FILE *f, const struct spawn_params_to_write params, const int client_num)
 {
 	// remove items that would be removed with level change
-	const int items = params.items - (params.items & (IT_KEY1|IT_KEY2|IT_INVISIBILITY|IT_INVULNERABILITY|IT_SUIT|IT_QUAD));
+	const int items = params.items - (params.items & (IT_SUPERHEALTH|IT_KEY1|IT_KEY2|IT_INVISIBILITY|IT_INVULNERABILITY|IT_SUIT|IT_QUAD));
 	fprintf(f, "setspawnparam 0 %f %i\n", (float)items, client_num);
 	fprintf(f, "setspawnparam 1 %f %i\n", min(max(params.health, 50.0f), 100.0f), client_num);
 	fprintf(f, "setspawnparam 2 %f %i\n", params.armorvalue, client_num);
