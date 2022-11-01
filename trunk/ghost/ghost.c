@@ -28,7 +28,7 @@ static cvar_t ghost_alpha = {"ghost_alpha", "0.8", CVAR_ARCHIVE};
 
 
 static dzip_context_t ghost_dz_ctx;
-static char         ghost_demo_path[MAX_OSPATH] = "";
+char                ghost_demo_path[MAX_OSPATH] = "";
 static ghostrec_t  *ghost_records = NULL;
 static int          ghost_num_records = 0;
 entity_t			*ghost_entity = NULL;

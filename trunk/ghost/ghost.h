@@ -30,5 +30,6 @@ void Ghost_Finish (void);
 void Ghost_MarathonStart (void);
 void Ghost_Shutdown (void);
 
+extern char         ghost_demo_path[MAX_OSPATH];
 
 #endif /* __CL_GHOST_H */
