@@ -283,7 +283,7 @@ void Sbar_Init (void)
 
 float Sbar_GetScaleAmount(void)
 {
-	return bound(1, scr_sbarscale_amount.value, 4);
+	return max(1, scr_sbarscale_amount.value);
 }
 
 int Sbar_GetScaledCharacterSize(void)
