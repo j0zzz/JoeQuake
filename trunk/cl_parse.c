@@ -1481,7 +1481,10 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_intermission:
-			cl.intermission = 1;
+			if (cls.demoplayback)
+				cl.intermission = CL_DemoIntermissionState(cl.intermission, 1);
+			else
+				cl.intermission = 1;
 			cl.completed_time = cl.mtime[0];	//joe: intermission bugfix
 			vid.recalc_refdef = true;	// go to full screen
 			PrintFinishTime();
@@ -1493,7 +1496,10 @@ void CL_ParseServerMessage (void)
 				cl.completed_time = cl.mtime[0];	//joe: intermission bugfix
 				PrintFinishTime();
 			}
-			cl.intermission = 2;
+			if (cls.demoplayback)
+				cl.intermission = CL_DemoIntermissionState(cl.intermission, 2);
+			else
+				cl.intermission = 2;
 			vid.recalc_refdef = true;	// go to full screen
 			SCR_CenterPrint (MSG_ReadString());
 			break;
@@ -1504,7 +1510,10 @@ void CL_ParseServerMessage (void)
 				cl.completed_time = cl.mtime[0];	//joe: intermission bugfix
 				PrintFinishTime();
 			}
-			cl.intermission = 3;
+			if (cls.demoplayback)
+				cl.intermission = CL_DemoIntermissionState(cl.intermission, 3);
+			else
+				cl.intermission = 3;
 			vid.recalc_refdef = true;	// go to full screen
 			SCR_CenterPrint (MSG_ReadString());
 			break;
