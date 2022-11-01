@@ -15,3 +15,9 @@ trunk/.vs/*
 *.user
 *.ipch
 _shelve_*
+trunk/debug_*
+trunk/release_*
+trunk/dxsdk/*
+trunk/scitech/*
+/trunk/JoeQuake.sdf
+/trunk/joequake.aps

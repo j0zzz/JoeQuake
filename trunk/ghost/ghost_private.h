@@ -45,7 +45,7 @@ typedef struct {
 } ghost_info_t;
 
 
-qboolean Ghost_ReadDemo(const char *demo_path, ghost_info_t *ghost_info,
-                        const char *expected_map_name);
+qboolean Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info,
+                         const char *expected_map_name);
 
 #endif /* __GHOST_PRIVATE */

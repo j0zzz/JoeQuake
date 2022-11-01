@@ -322,7 +322,7 @@ Ghost_StuffText_cb (const char *string, void *ctx)
 
 
 static qboolean
-Ghost_ReadDemoNoChain (const char *demo_path, ghost_info_t *ghost_info,
+Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
                        const char *expected_map_name,
                        char *next_demo_path)
 {
@@ -352,12 +352,7 @@ Ghost_ReadDemoNoChain (const char *demo_path, ghost_info_t *ghost_info,
         .finish_time = -1,
     };
 
-    COM_FOpenFile ((char *)demo_path, &pctx.demo_file);
-    if (!pctx.demo_file)
-    {
-        Con_Printf ("ERROR: couldn't open %s\n", demo_path);
-        ok = false;
-    }
+    pctx.demo_file = demo_file;
 
     if (ok) {
         next_demo_path[0] = '\0';
@@ -375,7 +370,7 @@ Ghost_ReadDemoNoChain (const char *demo_path, ghost_info_t *ghost_info,
                 ok = false;
             }
         } else if (dprc != DP_ERR_SUCCESS) {
-            Con_Printf("Error parsing demo %s: %u\n", demo_path, dprc);
+            Con_Printf("Error parsing demo: %u\n", dprc);
             ok = false;
         } else if (!pctx.map_found) {
             Con_Printf("Map %s not found in demo\n", expected_map_name);
@@ -410,19 +405,28 @@ Ghost_ReadDemoNoChain (const char *demo_path, ghost_info_t *ghost_info,
 
 
 qboolean
-Ghost_ReadDemo (const char *demo_path, ghost_info_t *ghost_info,
+Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info,
                 const char *expected_map_name)
 {
     qboolean ok = true;
     char next_demo_path[MAX_OSPATH];
     int num_demos_searched = 0;
 
-    Q_strlcpy(next_demo_path, demo_path, sizeof(next_demo_path));
-    while (ok && next_demo_path[0] && num_demos_searched < MAX_CHAINED_DEMOS) {
-        ok = Ghost_ReadDemoNoChain (next_demo_path, ghost_info,
+    while (ok && demo_file != NULL && num_demos_searched < MAX_CHAINED_DEMOS) {
+        ok = Ghost_ReadDemoNoChain (demo_file, ghost_info,
                                     expected_map_name, next_demo_path);
-        if (ok && next_demo_path[0]) {
-            num_demos_searched ++;
+        if (ok) {
+            if (next_demo_path[0] != '\0') {
+                if (COM_FOpenFile (next_demo_path, &demo_file) == -1) {
+                    Con_Printf("Could not open demo in marathon %s\n", next_demo_path);
+                    ok = false;
+                    demo_file = NULL;
+                } else {
+                    num_demos_searched ++;
+                }
+            } else {
+                demo_file = NULL;
+            }
         }
     }
     Hunk_HighMark();

@@ -3046,6 +3046,10 @@ void Mod_LoadQ3Model (model_t *mod, void *buffer)
 	mod->radius = radiusmax;
 
 	mod->flags |= header->flags;
+	
+	//joe: there's a bug with Ruohis's Shub spike model, which results the model dropping blood trail
+	if (!strcmp(mod->name, "progs/teleport.md3"))
+		mod->flags = 0;
 
 // load the animation frames if loading the player model
 	if (!strcmp(mod->name, cl_modelnames[mi_q3legs]))

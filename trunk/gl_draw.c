@@ -1804,8 +1804,11 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode)
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 
-		// whenever texture level 0 is updated, the mipmaps will all be regenerated: https://www.khronos.org/opengl/wiki/Common_Mistakes#Legacy_Generation
-		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+		if (!qglGenerateMipmap)
+		{
+			// whenever texture level 0 is updated, the mipmaps will all be regenerated: https://www.khronos.org/opengl/wiki/Common_Mistakes#Legacy_Generation
+			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+		}
 	}
 	else
 	{

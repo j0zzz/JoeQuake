@@ -268,6 +268,9 @@ extern	const	char	*gl_extensions;
 
 void GL_Bind (int texnum);
 
+// Generate mipmaps
+typedef void (APIENTRY *lpGenerateMipmapFUNC)(GLenum);
+
 // Multitexture
 typedef void (APIENTRY *lpMTexFUNC)(GLenum, GLfloat, GLfloat);
 typedef void (APIENTRY *lpSelTexFUNC)(GLenum);
@@ -308,6 +311,8 @@ typedef void (APIENTRY *lpTexBufferFUNC) (GLenum target, GLenum internalformat, 
 typedef void (APIENTRY *lpBindBufferBaseFUNC) (GLenum target, GLuint index, GLuint buffer);
 typedef GLuint(APIENTRY *lpGetUniformBlockIndexFUNC) (GLuint program, const GLchar *uniformBlockName);
 typedef void (APIENTRY *lpUniformBlockBindingFUNC) (GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding);
+
+extern lpGenerateMipmapFUNC qglGenerateMipmap;
 
 extern lpMTexFUNC qglMultiTexCoord2f;
 extern lpSelTexFUNC qglActiveTexture;

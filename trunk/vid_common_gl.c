@@ -40,6 +40,8 @@ qboolean	gl_vbo_able = false;
 qboolean	gl_glsl_able = false;
 qboolean	gl_glsl_gamma_able = false;
 
+lpGenerateMipmapFUNC qglGenerateMipmap = NULL;
+
 lpMTexFUNC	qglMultiTexCoord2f = NULL;
 lpSelTexFUNC qglActiveTexture = NULL;
 lpBindBufFUNC qglBindBuffer = NULL;
@@ -112,6 +114,14 @@ qboolean CheckExtension (const char *extension)
 	}
 
 	return false;
+}
+
+void CheckGenerateMipmapExtension (void)
+{
+	if (gl_version_major >= 3)
+	{
+		qglGenerateMipmap = (void *)qglGetProcAddress("glGenerateMipmap");
+	}
 }
 
 void CheckMultiTextureExtensions (void)
@@ -283,6 +293,7 @@ void GL_Init (void)
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	gl_add_ext = CheckExtension("GL_ARB_texture_env_add");
+	CheckGenerateMipmapExtension();
 	CheckMultiTextureExtensions ();
 	CheckVertexBufferExtensions();
 	CheckGLSLExtensions();
