@@ -31,6 +31,7 @@ server_static_t	svs;
 char		localmodels[MAX_MODELS][LOCALMODELS_STRING_SIZE];	// inline model names for precache
 
 int			sv_protocol = PROTOCOL_NETQUAKE;
+static cvar_t		sv_marathontrack = {"sv_marathontrack", "1", CVAR_ARCHIVE};
 
 extern qboolean	pr_alpha_supported; //johnfitz 
 
@@ -60,6 +61,7 @@ void SV_Init (void)
 	Cvar_Register (&sv_aim);
 	Cvar_Register (&sv_nostep);
 	Cvar_Register (&sv_altnoclip); //johnfitz
+	Cvar_Register (&sv_marathontrack);
 
 	for (i=0 ; i<MAX_MODELS ; i++)
 		sprintf (localmodels[i], "*%i", i);
@@ -334,8 +336,12 @@ void SV_SendServerinfo (client_t *client)
 
 	// Tell client about if this level is a continuation of a marathon.
 	if (sv.changelevel_issued) {
-		MSG_WriteChar (&client->message, svc_stufftext);
-		MSG_WriteString (&client->message, "marathon continue\n");
+		if (sv_marathontrack.value) {
+			// Send a message over the net, so that ghost split times can be
+			// compared when playing back a demo.
+			MSG_WriteChar (&client->message, svc_stufftext);
+			MSG_WriteString (&client->message, "marathon continue\n");
+		}
 	}
 
 	client->sendsignon = true;
