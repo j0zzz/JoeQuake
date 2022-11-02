@@ -124,10 +124,11 @@ typedef enum
 
 typedef enum
 {
-	ms_unknown,		// initial state
-	ms_serverinfo,	// server info recieved, still reading message
-	ms_start,		// server info recieved with no `marathon continue` cmd
-	ms_continue,	// server info received with `marathon continue` cmd
+	ms_unknown,			// initial state
+	ms_serverinfo,		// server info recieved, still reading message
+	ms_continue_force, 	// set `ms_continue` next time serverinfo received
+	ms_start,			// server info recieved with no `marathon continue` cmd
+	ms_continue,		// server info received with `marathon continue` cmd
 } client_marathon_state_t;
 
 

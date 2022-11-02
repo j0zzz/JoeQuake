@@ -341,6 +341,10 @@ void SV_SendServerinfo (client_t *client)
 			// compared when playing back a demo.
 			MSG_WriteChar (&client->message, svc_stufftext);
 			MSG_WriteString (&client->message, "marathon continue\n");
+		} else if (cls.state != ca_dedicated) {
+			// Don't send a message, but make sure `ms_continue` state is set
+			// for the connected client.
+			cls.marathon_state = ms_continue_force;
 		}
 	}
 
