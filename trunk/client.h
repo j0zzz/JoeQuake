@@ -124,9 +124,10 @@ typedef enum
 
 typedef enum
 {
-	ms_unknown,		// server has not indicated
-	ms_start,		// first map in a marathon
-	ms_continue,	// non-first map in marathon
+	ms_unknown,		// initial state
+	ms_serverinfo,	// server info recieved, still reading message
+	ms_start,		// server info recieved with no `marathon continue` cmd
+	ms_continue,	// server info received with `marathon continue` cmd
 } client_marathon_state_t;
 
 
@@ -163,6 +164,8 @@ typedef struct
 	qboolean	capturedemo;
 	double		marathon_time;		// joe: adds cl.completed_time at level changes
 	int			marathon_level;
+
+	client_marathon_state_t marathon_state;
 } client_static_t;
 
 extern	client_static_t	cls;
@@ -255,8 +258,6 @@ typedef struct
 
 	unsigned	protocol; //johnfitz
 	unsigned	protocolflags;
-
-	client_marathon_state_t marathon_state;
 } client_state_t;
 
 extern	client_state_t	cl;

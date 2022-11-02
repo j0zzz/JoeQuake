@@ -611,9 +611,7 @@ void CL_ParseServerInfo (void)
 
 	noclip_anglehack = false;	// noclip is turned off at start
 
-	// Default marathon state.  On supported servers, it will be overridden by a
-	// stuffed `marathon [start|continue]` command.
-	cl.marathon_state = ms_unknown;
+	cls.marathon_state = ms_serverinfo;
 }
 
 /*

@@ -332,11 +332,9 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteByte (&client->message, svc_signonnum);
 	MSG_WriteByte (&client->message, 1);
 
-	// Tell client about the marathon state.
-	MSG_WriteChar (&client->message, svc_stufftext);
-	if (!sv.changelevel_issued) {
-		MSG_WriteString (&client->message, "marathon start\n");
-	} else {
+	// Tell client about if this level is a continuation of a marathon.
+	if (sv.changelevel_issued) {
+		MSG_WriteChar (&client->message, svc_stufftext);
 		MSG_WriteString (&client->message, "marathon continue\n");
 	}
 

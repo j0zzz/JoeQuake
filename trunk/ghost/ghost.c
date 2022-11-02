@@ -397,8 +397,14 @@ void Ghost_Finish (void)
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
 
+    if (cls.marathon_state != ms_start
+            && cls.marathon_state != ms_continue) {
+        Con_Printf("ERROR: Invalid marathon state mid-game %d\n", cls.marathon_state);
+        gmi->valid = false;
+    }
+
     if (ghost_finish_time > 0) {
-        if (cl.marathon_state == ms_unknown) {
+        if (cls.marathon_state == ms_unknown) {
             if (gmi->valid) {
                 Con_Printf("Server not marathon aware, marathon stopped\n");
             }
@@ -446,9 +452,9 @@ void Ghost_Finish (void)
 
 void Ghost_MarathonStart (void)
 {
-    if (cl.marathon_state != ms_start) {
+    if (cls.marathon_state != ms_start) {
         Sys_Error("Invalid marathon_state %d for Ghost_MarathonStart",
-                cl.marathon_state);
+                  cls.marathon_state);
     }
 
     ghost_marathon_info.valid = true;

@@ -242,13 +242,9 @@ void CL_Marathon_f (void)
 	if (Cmd_Argc() == 2)
 	{
 		arg = Cmd_Argv(1);
-		if (strcmp(arg, "start") == 0)
+		if (strcmp(arg, "continue") == 0)
 		{
-			cl.marathon_state = ms_start;
-			Ghost_MarathonStart();
-		} else if (strcmp(arg, "continue") == 0)
-		{
-			cl.marathon_state = ms_continue;
+			cls.marathon_state = ms_continue;
 		} else
 		{
 			Con_Printf("invalid marathon argument %s\n", arg);
@@ -1328,6 +1324,14 @@ Read all incoming data from the server
 void CL_ReadFromServer (void)
 {
 	int	ret;
+
+	if (cls.marathon_state == ms_serverinfo)
+	{
+		// No marathon command received after svc_serverinfo, so assume
+		// marathon start.
+		cls.marathon_state = ms_start;
+		Ghost_MarathonStart();
+	}
 
 	cl.oldtime = cl.ctime;
 	cl.time += host_frametime;
