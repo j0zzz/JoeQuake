@@ -1781,6 +1781,7 @@ void R_DrawBrushModel (entity_t *ent)
 	mplane_t	*pplane;
 	model_t		*clmodel = ent->model;
 	qboolean	rotated;
+	extern cvar_t gl_zfix; // QuakeSpasm z-fighting fix
 
 	currenttexture = -1;
 
@@ -1827,11 +1828,22 @@ void R_DrawBrushModel (entity_t *ent)
 	}
 
 	glPushMatrix ();
-
-	glTranslatef (ent->origin[0], ent->origin[1], ent->origin[2]);
-	glRotatef (ent->angles[1], 0, 0, 1);
-	glRotatef (ent->angles[0], 0, 1, 0);
-	glRotatef (ent->angles[2], 1, 0, 0);
+	if (gl_zfix.value)
+	{
+		ent->origin[0] -= DIST_EPSILON;
+		ent->origin[1] -= DIST_EPSILON;
+		ent->origin[2] -= DIST_EPSILON;
+	}
+	glTranslatef(ent->origin[0], ent->origin[1], ent->origin[2]);
+	glRotatef(ent->angles[1], 0, 0, 1);
+	glRotatef(ent->angles[0], 0, 1, 0);
+	glRotatef(ent->angles[2], 1, 0, 0);
+	if (gl_zfix.value)
+	{
+		ent->origin[0] += DIST_EPSILON;
+		ent->origin[1] += DIST_EPSILON;
+		ent->origin[2] += DIST_EPSILON;
+	}
 
 	R_ClearTextureChains (clmodel, chain_model);
 

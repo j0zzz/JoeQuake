@@ -134,6 +134,7 @@ cvar_t  gl_vertexlights = {"gl_vertexlights", "1"};
 cvar_t	gl_shownormals = {"gl_shownormals", "0"};
 cvar_t  gl_loadq3models = {"gl_loadq3models", "0"};
 cvar_t  gl_lerptextures = {"gl_lerptextures", "1"};
+cvar_t	gl_zfix = { "gl_zfix", "0" }; // QuakeSpasm z-fighting fix
 
 cvar_t	gl_part_explosions = {"gl_part_explosions", "0"};
 cvar_t	gl_part_trails = {"gl_part_trails", "0"};
@@ -3386,6 +3387,7 @@ void R_Init (void)
 	Cvar_Register (&gl_shownormals);
 	Cvar_Register (&gl_loadq3models);
 	Cvar_Register (&gl_lerptextures);
+	Cvar_Register (&gl_zfix);
 
 	Cvar_Register (&gl_part_explosions);
 	Cvar_Register (&gl_part_trails);
