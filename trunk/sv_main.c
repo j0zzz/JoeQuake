@@ -31,7 +31,7 @@ server_static_t	svs;
 char		localmodels[MAX_MODELS][LOCALMODELS_STRING_SIZE];	// inline model names for precache
 
 int			sv_protocol = PROTOCOL_NETQUAKE;
-static cvar_t		sv_marathontrack = {"sv_marathontrack", "1", CVAR_ARCHIVE};
+static cvar_t		sv_marathontrack = {"sv_marathontrack", "0", CVAR_ARCHIVE};
 
 extern qboolean	pr_alpha_supported; //johnfitz 
 

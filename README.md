@@ -627,7 +627,7 @@ the direction he's looking at.
 
 ### `sv_marathontrack`
 
-When set to 1 (the default) the server informs the client about whether the map
+When set to 1 (default 0) the server informs the client about whether the map
 being played is the first in a marathon or a subsequent map.  This is necessary
 for ghost marathon splits to work when playing back a demo.  When a demo
 recorded with this option is played on an older JoeQuake or another source port
