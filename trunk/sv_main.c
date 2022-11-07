@@ -31,6 +31,7 @@ server_static_t	svs;
 char		localmodels[MAX_MODELS][LOCALMODELS_STRING_SIZE];	// inline model names for precache
 
 int			sv_protocol = PROTOCOL_NETQUAKE;
+static cvar_t		sv_marathontrack = {"sv_marathontrack", "0", CVAR_ARCHIVE};
 
 extern qboolean	pr_alpha_supported; //johnfitz 
 
@@ -60,6 +61,7 @@ void SV_Init (void)
 	Cvar_Register (&sv_aim);
 	Cvar_Register (&sv_nostep);
 	Cvar_Register (&sv_altnoclip); //johnfitz
+	Cvar_Register (&sv_marathontrack);
 
 	for (i=0 ; i<MAX_MODELS ; i++)
 		sprintf (localmodels[i], "*%i", i);
@@ -332,12 +334,18 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteByte (&client->message, svc_signonnum);
 	MSG_WriteByte (&client->message, 1);
 
-	// Tell client about the marathon state.
-	MSG_WriteChar (&client->message, svc_stufftext);
-	if (!sv.changelevel_issued) {
-		MSG_WriteString (&client->message, "marathon start\n");
-	} else {
-		MSG_WriteString (&client->message, "marathon continue\n");
+	// Tell client about if this level is a continuation of a marathon.
+	if (sv.changelevel_issued) {
+		if (sv_marathontrack.value) {
+			// Send a message over the net, so that ghost split times can be
+			// compared when playing back a demo.
+			MSG_WriteChar (&client->message, svc_stufftext);
+			MSG_WriteString (&client->message, "marathon continue\n");
+		} else if (cls.state != ca_dedicated) {
+			// Don't send a message, but make sure `ms_continue` state is set
+			// for the connected client.
+			cls.marathon_state = ms_continue_force;
+		}
 	}
 
 	client->sendsignon = true;
