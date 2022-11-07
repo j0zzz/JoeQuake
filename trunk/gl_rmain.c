@@ -1356,7 +1356,7 @@ void R_SetupLighting (entity_t *ent)
 {
 	int		i, lnum;
 	float	add;
-	vec3_t	dist, dlight_color, lpos;
+	vec3_t	dist, dlight_color;
 	model_t	*clmodel = ent->model;
 
 	// make thunderbolt and torches full light
@@ -1383,13 +1383,18 @@ void R_SetupLighting (entity_t *ent)
 	}
 
 	// normal lighting
-	VectorCopy(ent->origin, lpos);
-	// start the light trace from slightly above the origin
-	// this helps with models whose origin is below ground level, but are otherwise visible
-	// (e.g. some of the candles in the DOTM start map, which would otherwise appear black)
-	lpos[2] += ent->model->maxs[2] * 0.5f;
-	ambientlight = shadelight = R_LightPoint(lpos);
- 	full_light = false;
+	// if the initial trace is completely black, try again from above
+	// this helps with models whose origin is slightly below ground level
+	// (e.g. some of the candles in the DOTM start map)
+	if (!R_LightPoint(ent->origin))
+	{
+		vec3_t lpos;
+		VectorCopy(ent->origin, lpos);
+		lpos[2] += ent->model->maxs[2] * 0.5f;
+		ambientlight = shadelight = R_LightPoint(lpos);
+	}
+
+	full_light = false;
 	ent->noshadow = (clmodel->flags & EF_NOSHADOW);
 
 	for (lnum = 0 ; lnum < MAX_DLIGHTS ; lnum++)

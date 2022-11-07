@@ -476,7 +476,7 @@ int R_LightPoint (vec3_t p)
 	VectorClear (lightcolor);
 	RecursiveLightPoint(lightcolor, cl.worldmodel->nodes, p, p, end, &maxdist);
 
-	return (lightcolor[0] + lightcolor[1] + lightcolor[2]) / 3.0;
+	return ((lightcolor[0] + lightcolor[1] + lightcolor[2]) * (1.0f / 3.0f));
 }
 
 /*
