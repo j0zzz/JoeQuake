@@ -105,10 +105,12 @@ typedef struct {
     vec3_t baseline_origin;
     vec3_t baseline_angle;
     int baseline_frame;
+    int baseline_model;
 
     char (*client_names)[MAX_SCOREBOARDNAME];
     float finish_time;
     char next_demo_path[MAX_OSPATH];
+    int model_indices[GHOST_MODEL_COUNT];
 } ghost_parse_ctx_t;
 
 
@@ -125,6 +127,7 @@ Ghost_ServerInfoModel_cb (const char *model, void *ctx)
 {
     char map_name[MAX_OSPATH];
     ghost_parse_ctx_t *pctx = ctx;
+    int i;
 
     if (pctx->model_num == 0) {
         if (pctx->map_found) {
@@ -139,6 +142,13 @@ Ghost_ServerInfoModel_cb (const char *model, void *ctx)
             pctx->map_found = true;
         }
     }
+
+    for (i = 0; i < GHOST_MODEL_COUNT; i++) {
+        if (strcmp(model, ghost_model_paths[i]) == 0) {
+            pctx->model_indices[i] = pctx->model_num + 1;
+        }
+    }
+
     pctx->model_num += 1;
 
     return DP_CBR_CONTINUE;
@@ -186,7 +196,7 @@ Ghost_SetView_cb (int entity_num, void *ctx)
 
 static dp_cb_response_t
 Ghost_Baseline_cb (int entity_num, vec3_t origin, vec3_t angle, int frame,
-                   void *ctx)
+                   int model, void *ctx)
 {
     ghost_parse_ctx_t *pctx = ctx;
 
@@ -203,6 +213,9 @@ Ghost_Baseline_cb (int entity_num, vec3_t origin, vec3_t angle, int frame,
     if (entity_num == pctx->view_entity) {
         VectorCopy(origin, pctx->baseline_origin);
         VectorCopy(angle, pctx->baseline_angle);
+
+        pctx->baseline_frame = frame;
+        pctx->baseline_model = model;
     }
 
     return DP_CBR_CONTINUE;
@@ -210,8 +223,8 @@ Ghost_Baseline_cb (int entity_num, vec3_t origin, vec3_t angle, int frame,
 
 
 static dp_cb_response_t
-Ghost_Update_cb(int entity_num, vec3_t origin, vec3_t angle,
-                byte origin_bits, byte angle_bits, int frame, void *ctx)
+Ghost_Update_cb(int entity_num, vec3_t origin, vec3_t angle, byte origin_bits,
+                byte angle_bits, int frame, int model, void *ctx)
 {
     int i;
     ghost_parse_ctx_t *pctx = ctx;
@@ -242,6 +255,12 @@ Ghost_Update_cb(int entity_num, vec3_t origin, vec3_t angle,
         pctx->rec.frame = frame;
     } else {
         pctx->rec.frame = pctx->baseline_frame;
+    }
+
+    if (model != -1) {
+        pctx->rec.model = model;
+    } else {
+        pctx->rec.model = pctx->baseline_model;
     }
 
     pctx->updated = true;
@@ -350,6 +369,7 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
         .expected_map_name = expected_map_name,
         .client_names = ghost_info->client_names,
         .finish_time = -1,
+        .model_indices = {0},
     };
 
     pctx.demo_file = demo_file;
@@ -381,6 +401,9 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
     if (ok && pctx.finish_time > 0) {
         Ghost_ListToArray(list, &ghost_info->records, &ghost_info->num_records);
         ghost_info->finish_time = pctx.finish_time;
+        memcpy(ghost_info->model_indices,
+               pctx.model_indices,
+               sizeof(pctx.model_indices));
 
         if (ghost_info->num_records == 0) {
             Con_Printf("ERROR: No records found in demo\n");

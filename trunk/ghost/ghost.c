@@ -34,7 +34,12 @@ static int          ghost_num_records = 0;
 entity_t			*ghost_entity = NULL;
 static float        ghost_shift = 0.0f;
 static float        ghost_finish_time = -1.0f;
+static int          ghost_model_indices[GHOST_MODEL_COUNT];
 
+const char *ghost_model_paths[GHOST_MODEL_COUNT] = {
+    "progs/player.mdl",
+    "progs/eyes.mdl",
+};
 
 #define MAX_MARATHON_LEVELS     256
 typedef struct {
@@ -184,6 +189,9 @@ void Ghost_Load (const char *map_name)
     }
     ghost_records = ghost_info.records;
     ghost_num_records = ghost_info.num_records;
+    memcpy(ghost_model_indices,
+           ghost_info.model_indices,
+           sizeof(ghost_info.model_indices));
 
     // Print player names
     Con_Printf("Ghost player(s): ");
@@ -203,7 +211,6 @@ void Ghost_Load (const char *map_name)
     ghost_entity = (entity_t *)Hunk_AllocName(sizeof(entity_t),
                                               "ghost_entity");
 
-    ghost_entity->model = Mod_ForName ("progs/player.mdl", false);
 	ghost_entity->colormap = cl_entities[cl.viewentity].colormap;
 	//ghost_entity->colormap = vid.colormap;  // TODO: Cvar for colors.
 	ghost_entity->skinnum = 0;
@@ -276,15 +283,28 @@ static qboolean Ghost_Update (void)
     ghostrec_t *rec_after;
     float frac;
     qboolean ghost_show;
+    int i;
+    const char *model_path;
 
-    if (after_idx == -1) {
-        ghost_show = false;
-    } else {
-        ghost_show = true;
+    ghost_show = (after_idx != -1);
 
+    if (ghost_show) {
         rec_after = &ghost_records[after_idx];
         rec_before = &ghost_records[after_idx - 1];
 
+        ghost_show = false;
+
+        for (i = 0; !ghost_show && i < GHOST_MODEL_COUNT; i++) {
+            if (ghost_model_indices[i] != 0
+                    && rec_after->model == ghost_model_indices[i]) {
+                ghost_show = true;
+                ghost_entity->model = Mod_ForName((char *)ghost_model_paths[i],
+                                                  false);
+            }
+        }
+    }
+
+    if (ghost_show) {
         frac = (lookup_time - rec_before->time)
                 / (rec_after->time - rec_before->time);
 

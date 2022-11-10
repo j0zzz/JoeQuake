@@ -394,6 +394,7 @@ DP_ParseBaseline(ctx_t *ctx, qboolean static_, int version)
 {
     short entity_num;
     int frame;
+    int model;
     byte bits = 0;
     vec3_t origin, angle;
     int i;
@@ -407,9 +408,13 @@ DP_ParseBaseline(ctx_t *ctx, qboolean static_, int version)
     }
 
     if (bits & B_LARGEMODEL) {
-        CHECK_RC(DP_ParseShort(ctx, NULL));  // model
+        short model_s;
+        CHECK_RC(DP_ParseShort(ctx, &model_s));
+        model = model_s;
     } else {
-        CHECK_RC(DP_ParseByte(ctx, NULL));  // model
+        byte model_b;
+        CHECK_RC(DP_ParseByte(ctx, &model_b));
+        model = model_b;
     }
 
     if (bits & B_LARGEFRAME) {
@@ -435,7 +440,7 @@ DP_ParseBaseline(ctx_t *ctx, qboolean static_, int version)
     }
 
     if (!static_) {
-        CALL_CALLBACK(baseline, entity_num, origin, angle, frame);
+        CALL_CALLBACK(baseline, entity_num, origin, angle, frame, model);
     }
 
     return DP_ERR_SUCCESS;
@@ -478,6 +483,7 @@ DP_ParseUpdate(ctx_t *ctx, byte base_flags)
     unsigned int flags;
     int entity_num;
     int frame = -1;
+    int model = -1;
     vec3_t origin;
     vec3_t angle;
     byte origin_bits = 0;
@@ -498,7 +504,9 @@ DP_ParseUpdate(ctx_t *ctx, byte base_flags)
         entity_num = entity_num_b;
     }
     if (flags & U_MODEL) {
-        CHECK_RC(DP_ParseByte(ctx, NULL));  // model
+        byte model_b;
+        CHECK_RC(DP_ParseByte(ctx, &model_b));
+        model = model_b;
     }
     if (flags & U_FRAME) {
         byte frame_b;
@@ -555,7 +563,9 @@ DP_ParseUpdate(ctx_t *ctx, byte base_flags)
             frame |= frame_upper << 8;
         }
         if (flags & U_MODEL2) {
-            CHECK_RC(DP_ParseByte(ctx, NULL));  // model upper
+            byte model_upper;
+            CHECK_RC(DP_ParseByte(ctx, &model_upper));
+            model |= model_upper << 8;
         }
         if (flags & U_LERPFINISH) {
             CHECK_RC(DP_ParseByte(ctx, NULL));  // lerp finish
@@ -571,7 +581,7 @@ DP_ParseUpdate(ctx_t *ctx, byte base_flags)
     }
 
     CALL_CALLBACK(update, entity_num, origin, angle, origin_bits, angle_bits,
-                  frame);
+                  frame, model);
 
     return DP_ERR_SUCCESS;
 }
