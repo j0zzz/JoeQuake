@@ -211,8 +211,6 @@ void Ghost_Load (const char *map_name)
     ghost_entity = (entity_t *)Hunk_AllocName(sizeof(entity_t),
                                               "ghost_entity");
 
-	ghost_entity->colormap = cl_entities[cl.viewentity].colormap;
-	//ghost_entity->colormap = vid.colormap;  // TODO: Cvar for colors.
 	ghost_entity->skinnum = 0;
     ghost_entity->modelindex = -1;
     ghost_entity->translate_start_time = 0.0f;
@@ -293,13 +291,16 @@ static qboolean Ghost_Update (void)
         rec_before = &ghost_records[after_idx - 1];
 
         ghost_show = false;
-
         for (i = 0; !ghost_show && i < GHOST_MODEL_COUNT; i++) {
             if (ghost_model_indices[i] != 0
                     && rec_after->model == ghost_model_indices[i]) {
                 ghost_show = true;
                 ghost_entity->model = Mod_ForName((char *)ghost_model_paths[i],
                                                   false);
+                ghost_entity->colormap =
+                    i == GHOST_MODEL_PLAYER
+                    ? cl_entities[cl.viewentity].colormap
+                    : vid.colormap;
             }
         }
     }
