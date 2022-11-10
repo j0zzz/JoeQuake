@@ -31,8 +31,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef enum {
     GHOST_MODEL_PLAYER = 0,
-    GHOST_MODEL_EYES = 1,
-    GHOST_MODEL_COUNT = 2,
+    GHOST_MODEL_EYES,
+    GHOST_MODEL_HEAD,
+    GHOST_MODEL_COUNT,
 } ghost_model_t;
 
 

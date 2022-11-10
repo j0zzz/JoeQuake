@@ -39,6 +39,7 @@ static int          ghost_model_indices[GHOST_MODEL_COUNT];
 const char *ghost_model_paths[GHOST_MODEL_COUNT] = {
     "progs/player.mdl",
     "progs/eyes.mdl",
+    "progs/h_player.mdl",
 };
 
 #define MAX_MARATHON_LEVELS     256
