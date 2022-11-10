@@ -283,7 +283,6 @@ static qboolean Ghost_Update (void)
     float frac;
     qboolean ghost_show;
     int i;
-    const char *model_path;
 
     ghost_show = (after_idx != -1);
 
