@@ -1247,7 +1247,7 @@ CL_ParseServerMessage
 void CL_ParseServerMessage (void)
 {
 	int		i, cmd, lastcmd;
-	char	*s;
+	char	*s, *str;
 	extern	float	drawstats_limit;
 	extern	cvar_t	show_stats, show_stats_length;
 
@@ -1324,7 +1324,11 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_centerprint:
-			SCR_CenterPrint (MSG_ReadString());
+			//johnfitz -- log centerprints to console
+			str = MSG_ReadString();
+			SCR_CenterPrint(str);
+			Con_LogCenterPrint(str);
+			//johnfitz
 			break;
 
 		case svc_stufftext:
@@ -1503,7 +1507,11 @@ void CL_ParseServerMessage (void)
 			else
 				cl.intermission = 2;
 			vid.recalc_refdef = true;	// go to full screen
-			SCR_CenterPrint (MSG_ReadString());
+			//johnfitz -- log centerprints to console
+			str = MSG_ReadString();
+			SCR_CenterPrint(str);
+			Con_LogCenterPrint(str);
+			//johnfitz
 			break;
 
 		case svc_cutscene:
@@ -1517,7 +1525,11 @@ void CL_ParseServerMessage (void)
 			else
 				cl.intermission = 3;
 			vid.recalc_refdef = true;	// go to full screen
-			SCR_CenterPrint (MSG_ReadString());
+			//johnfitz -- log centerprints to console
+			str = MSG_ReadString();
+			SCR_CenterPrint(str);
+			Con_LogCenterPrint(str);
+			//johnfitz
 			break;
 
 		case svc_sellscreen:

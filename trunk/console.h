@@ -42,3 +42,5 @@ void Con_ClearNotify (void);
 void Con_ToggleConsole_f (void);
 
 void Con_NotifyBox (char *text);	// during startup for sound / cd warnings
+
+void Con_LogCenterPrint(char* str);

@@ -49,6 +49,9 @@ char	*con_text = 0;
 cvar_t	con_notifytime = {"con_notifytime", "3"};	// seconds
 cvar_t	_con_notifylines = {"con_notifylines", "4"};
 cvar_t	con_notify_intermission = { "con_notify_intermission", "0" };	// console messages get shown in intermission
+cvar_t	con_logcenterprint = { "con_logcenterprint", "0" }; //johnfitz
+
+char	con_lastcenterstring[1024]; //johnfitz
 
 #define	NUM_CON_TIMES 16
 float	con_times[NUM_CON_TIMES];	// realtime time the line was generated for transparent notify lines
@@ -64,6 +67,37 @@ extern	int	key_linepos;
 extern	int	key_insert;
 		
 qboolean con_initialized = false;
+
+/*
+================
+Con_Quakebar -- johnfitz -- returns a bar of the desired length, but never wider than the console
+
+includes a newline, unless len >= con_linewidth.
+================
+*/
+const char* Con_Quakebar(int len)
+{
+	static char bar[42];
+	int i;
+
+	len = min(len, (int)sizeof(bar) - 2);
+	len = min(len, con_linewidth);
+
+	bar[0] = '\35';
+	for (i = 1; i < len - 1; i++)
+		bar[i] = '\36';
+	bar[len - 1] = '\37';
+
+	if (len < con_linewidth)
+	{
+		bar[len] = '\n';
+		bar[len + 1] = 0;
+	}
+	else
+		bar[len] = 0;
+
+	return bar;
+}
 
 /*
 ================
@@ -221,6 +255,7 @@ void Con_Init (void)
 	Cvar_Register (&con_notifytime);
 	Cvar_Register (&_con_notifylines);
 	Cvar_Register (&con_notify_intermission);
+	Cvar_Register(&con_logcenterprint); //johnfitz
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
@@ -393,6 +428,71 @@ void Con_DPrintf (char *fmt, ...)
 	va_end (argptr);
 
 	Con_Printf ("%s", msg);
+}
+
+/*
+================
+Con_CenterPrintf -- johnfitz -- pad each line with spaces to make it appear centered
+================
+*/
+void Con_CenterPrintf(int linewidth, char* fmt, ...)
+{
+	va_list	argptr;
+	char	msg[MAXPRINTMSG]; //the original message
+	char	line[MAXPRINTMSG]; //one line from the message
+	char	spaces[21]; //buffer for spaces
+	char	*src, *dst;
+	int		len, s;
+
+	va_start(argptr, fmt);
+	vsnprintf(msg, sizeof(msg), fmt, argptr);
+	va_end(argptr);
+
+	linewidth = min(linewidth, con_linewidth);
+	for (src = msg; *src; )
+	{
+		dst = line;
+		while (*src && *src != '\n')
+			*dst++ = *src++;
+		*dst = 0;
+		if (*src == '\n')
+			src++;
+
+		len = strlen(line);
+		if (len < linewidth)
+		{
+			s = (linewidth - len) / 2;
+			memset(spaces, ' ', s);
+			spaces[s] = 0;
+			Con_Printf("%s%s\n", spaces, line);
+		}
+		else
+			Con_Printf("%s\n", line);
+	}
+}
+
+/*
+==================
+Con_LogCenterPrint -- johnfitz -- echo centerprint message to the console
+==================
+*/
+void Con_LogCenterPrint(char* str)
+{
+	if (!strcmp(str, con_lastcenterstring))
+		return; //ignore duplicates
+
+	if (cl.gametype == GAME_DEATHMATCH && con_logcenterprint.value != 2)
+		return; //don't log in deathmatch
+
+	strcpy(con_lastcenterstring, str);
+
+	if (con_logcenterprint.value)
+	{
+		Con_Printf("%s", Con_Quakebar(40));
+		Con_CenterPrintf(40, "%s\n", str);
+		Con_Printf("%s", Con_Quakebar(40));
+		Con_ClearNotify();
+	}
 }
 
 /*
