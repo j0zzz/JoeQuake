@@ -110,6 +110,8 @@ qboolean Cvar_Command (void);
 void Cvar_WriteVariables (FILE *f);
 
 cvar_t *Cvar_FindVar (char *var_name);
+cvar_t *Cvar_FindVarAfter(char* prev_name, unsigned int with_flags);
+
 void Cvar_Init (void);
 
 extern cvar_t	*cvar_vars;

@@ -161,6 +161,9 @@ void Q_snprintfz (char *dest, size_t size, char *fmt, ...);
 size_t Q_strlcat(char *dst, const char *src, size_t siz);
 size_t Q_strlcpy(char *dst, const char *src, size_t siz);
 
+/* locale-insensitive case-insensitive alternative to strstr */
+extern char* Q_strcasestr(const char* haystack, const char* needle);
+
 static inline int Q_isdigit(int c)
 {
 	return (c >= '0' && c <= '9');

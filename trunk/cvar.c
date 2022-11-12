@@ -44,6 +44,30 @@ cvar_t *Cvar_FindVar (char *var_name)
 	return NULL;
 }
 
+cvar_t *Cvar_FindVarAfter(char *prev_name, unsigned int with_flags)
+{
+	cvar_t	*var;
+
+	if (*prev_name)
+	{
+		var = Cvar_FindVar(prev_name);
+		if (!var)
+			return NULL;
+		var = var->next;
+	}
+	else
+		var = cvar_vars;
+
+	// search for the next cvar matching the needed flags
+	while (var)
+	{
+		if ((var->flags & with_flags) || !with_flags)
+			break;
+		var = var->next;
+	}
+	return var;
+}
+
 /*
 ============
 Cvar_ResetVar
