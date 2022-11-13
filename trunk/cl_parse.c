@@ -610,12 +610,6 @@ void CL_ParseServerInfo (void)
 	Hunk_Check ();			// make sure nothing is hurt
 
 	noclip_anglehack = false;	// noclip is turned off at start
-
-	if (cls.marathon_state == ms_continue_force) {
-		cls.marathon_state = ms_continue;
-	} else {
-		cls.marathon_state = ms_serverinfo;
-	}
 }
 
 /*

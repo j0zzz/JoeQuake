@@ -31,7 +31,6 @@ server_static_t	svs;
 char		localmodels[MAX_MODELS][LOCALMODELS_STRING_SIZE];	// inline model names for precache
 
 int			sv_protocol = PROTOCOL_NETQUAKE;
-static cvar_t		sv_marathontrack = {"sv_marathontrack", "0", CVAR_ARCHIVE};
 
 extern qboolean	pr_alpha_supported; //johnfitz 
 
@@ -61,7 +60,6 @@ void SV_Init (void)
 	Cvar_Register (&sv_aim);
 	Cvar_Register (&sv_nostep);
 	Cvar_Register (&sv_altnoclip); //johnfitz
-	Cvar_Register (&sv_marathontrack);
 
 	for (i=0 ; i<MAX_MODELS ; i++)
 		sprintf (localmodels[i], "*%i", i);
@@ -333,20 +331,6 @@ void SV_SendServerinfo (client_t *client)
 
 	MSG_WriteByte (&client->message, svc_signonnum);
 	MSG_WriteByte (&client->message, 1);
-
-	// Tell client about if this level is a continuation of a marathon.
-	if (sv.changelevel_issued) {
-		if (sv_marathontrack.value) {
-			// Send a message over the net, so that ghost split times can be
-			// compared when playing back a demo.
-			MSG_WriteChar (&client->message, svc_stufftext);
-			MSG_WriteString (&client->message, "marathon continue\n");
-		} else if (cls.state != ca_dedicated) {
-			// Don't send a message, but make sure `ms_continue` state is set
-			// for the connected client.
-			cls.marathon_state = ms_continue_force;
-		}
-	}
 
 	client->sendsignon = true;
 	client->spawned = false;		// need prespawn, spawn, etc
@@ -1358,7 +1342,6 @@ void SV_SpawnServer (char *server)
 	extern	void R_PreMapLoad (char *);
 	extern double sv_frametime;
 	extern double physframetime;
-	qboolean changelevel_issued;
 
 	memset(dummy, 0, sizeof(dummy));
 
@@ -1385,7 +1368,6 @@ void SV_SpawnServer (char *server)
 	}
 
 	Con_DPrintf ("SpawnServer: %s\n", server);
-	changelevel_issued = svs.changelevel_issued;
 	svs.changelevel_issued = false;		// now safe to issue another
 
 // tell all connected clients that we are going to a new level
@@ -1448,7 +1430,6 @@ void SV_SpawnServer (char *server)
 	sv.paused = false;
 
 	sv.time = 1.0;
-	sv.changelevel_issued = changelevel_issued;
 
 	R_PreMapLoad (server);
 

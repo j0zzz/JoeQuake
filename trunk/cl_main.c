@@ -227,35 +227,6 @@ void CL_Disconnect_f (void)
 		Host_ShutdownServer (false);
 }
 
-/*
-=====================
-CL_Marathon_f
-
-Command sent by the server to indicate whether the current level is the first in
-a marathon, or a subsequent level.
-=====================
-*/
-void CL_Marathon_f (void)
-{
-	const char *arg;
-
-	if (Cmd_Argc() == 2)
-	{
-		arg = Cmd_Argv(1);
-		if (strcmp(arg, "continue") == 0)
-		{
-			cls.marathon_state = ms_continue;
-		} else
-		{
-			Con_Printf("invalid marathon argument %s\n", arg);
-		}
-	}
-	else
-	{
-		Con_Printf("marathon command is for internal use\n");
-	}
-}
-
 
 /*
 =====================
@@ -1325,14 +1296,6 @@ void CL_ReadFromServer (void)
 {
 	int	ret;
 
-	if (cls.marathon_state == ms_serverinfo)
-	{
-		// No marathon command received after svc_serverinfo, so assume
-		// marathon start.
-		cls.marathon_state = ms_start;
-		Ghost_MarathonStart();
-	}
-
 	cl.oldtime = cl.ctime;
 	cl.time += host_frametime;
 	if (!cl_demorewind.value || !cls.demoplayback)
@@ -1476,7 +1439,6 @@ void CL_Init (void)
 	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
 	Cmd_AddCommand("keepdemo", CL_KeepDemo_f);
-	Cmd_AddCommand ("marathon", CL_Marathon_f);
 
 
 }

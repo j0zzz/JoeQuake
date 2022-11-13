@@ -51,7 +51,6 @@ typedef struct {
 typedef struct {
     qboolean valid;         // has there been a ghost time for each level?
     ghost_marathon_level_t levels[MAX_MARATHON_LEVELS];
-    int num_levels;
 } ghost_marathon_info_t;
 static ghost_marathon_info_t ghost_marathon_info;
 
@@ -417,32 +416,28 @@ void Ghost_Finish (void)
     float split, total_split;
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
-
-    if (cls.marathon_state != ms_start
-            && cls.marathon_state != ms_continue) {
-        Con_Printf("ERROR: Invalid marathon state mid-game %d\n", cls.marathon_state);
-        gmi->valid = false;
-    }
+    int num_levels;
 
     if (ghost_finish_time > 0) {
-        if (cls.marathon_state == ms_unknown) {
-            if (gmi->valid) {
-                Con_Printf("Server not marathon aware, marathon stopped\n");
-            }
+        if (!sv.active) {
+            // Can't track marathons for remote servers or demos.
             gmi->valid = false;
+        } else if (cls.marathon_level == 1) {
+            gmi->valid = true;
         }
-
         if (!gmi->valid) {
-            // If not in a marathon, just print this level's stats
-            ghost_marathon_info.num_levels = 0;
+            // If the ghost did not finish one of the levels, just print this
+            // level's splits.
+            num_levels = 1;
+        } else {
+            num_levels = cls.marathon_level;
         }
 
-        if (gmi->num_levels < MAX_MARATHON_LEVELS) {
-            gml = &gmi->levels[gmi->num_levels];
+        if (num_levels - 1 < MAX_MARATHON_LEVELS) {
+            gml = &gmi->levels[num_levels - 1];
             Q_strncpyz(gml->map_name, CL_MapName(), MAX_QPATH);
             gml->player_time = cl.mtime[0];
             gml->ghost_time = ghost_finish_time;
-            gmi->num_levels ++;
         }
 
         Con_Printf("ghost splits:\n");
@@ -452,7 +447,7 @@ void Ghost_Finish (void)
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f\n");
         total_split = 0.0f;
-        for (i = 0; i < gmi->num_levels; i++) {
+        for (i = 0; i < num_levels; i++) {
             gml = &gmi->levels[i];
             split = (gml->player_time - gml->ghost_time);
             total_split += split;
@@ -468,18 +463,6 @@ void Ghost_Finish (void)
         }
         gmi->valid = false;
     }
-}
-
-
-void Ghost_MarathonStart (void)
-{
-    if (cls.marathon_state != ms_start) {
-        Sys_Error("Invalid marathon_state %d for Ghost_MarathonStart",
-                  cls.marathon_state);
-    }
-
-    ghost_marathon_info.valid = true;
-    ghost_marathon_info.num_levels = 0;
 }
 
 
