@@ -625,15 +625,6 @@ Switches on alternative noclip movement where the player always moves towards
 the direction he's looking at.
 1 by default.
 
-### `sv_marathontrack`
-
-When set to 1 (default 0) the server informs the client about whether the map
-being played is the first in a marathon or a subsequent map.  This is necessary
-for ghost marathon splits to work when playing back a demo.  When a demo
-recorded with this option is played on an older JoeQuake or another source port
-then a message `Unknown command "marathon"` will be seen on all but the first
-level.  To disable this feature set `sv_marathontrack` to 0.
-
 ## New commands
 
 ### `cmdlist`
@@ -916,12 +907,10 @@ ctrl-shift-enter to remove the ghost.
 
 #### Marathon split times
 
-When a ghost is loaded at the end of each level a split time is printed to the
-console.  If a marathon demo is loaded as the ghost, and the player is also
-running a marathon, then split times for each level are shown.  Playing a
-marathon demo while a marathon ghost is loaded will also show split times,
-however the demo being played must have been recorded with `sv_marathontrack`
-set to 1.  See the documentation for `sv_marathontrack` for more details.
+When a ghost is loaded a split time is printed to the console at the end of each
+level.  If a marathon demo is loaded as the ghost, and the player is also
+running a marathon, then split times for each level are shown.  Marathon splits
+are not shown when playing back demos.
 
 ## NOTE for linux GLX users
 
