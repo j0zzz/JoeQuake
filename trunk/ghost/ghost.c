@@ -451,7 +451,7 @@ void Ghost_Finish (void)
             gml = &gmi->levels[i];
             split = (gml->player_time - gml->ghost_time);
             total_split += split;
-            Con_Printf("  %-10s %12s %8.2f %8.2f\n",
+            Con_Printf("  %-10s %12s %+8.2f %+8.2f\n",
                        gml->map_name,
                        GetPrintedTime(gml->player_time),
                        split,
