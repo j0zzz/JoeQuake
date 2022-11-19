@@ -911,8 +911,8 @@ ctrl-shift-enter to remove the ghost.
 
 When a ghost is loaded a split time is printed to the console at the end of each
 level.  If a marathon demo is loaded as the ghost, and the player is also
-running a marathon, then split times for each level are shown.  Marathon splits
-are not shown when playing back demos.
+running a marathon, then split times for each level are shown.  Splits are also
+shown when playing a demo with a ghost loaded.
 
 ## NOTE for linux GLX users
 

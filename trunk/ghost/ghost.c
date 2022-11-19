@@ -222,7 +222,7 @@ void Ghost_Load (const char *map_name)
 
     ghost_shift = 0.0f;
     ghost_last_relative_time = 0.0f;
-    if (cls.marathon_level == 0) {
+    if ((!sv.active && !cls.demoplayback) || cls.marathon_level == 0) {
         ghost_marathon_info.total_split = 0.0f;
     }
 }
@@ -445,8 +445,8 @@ void Ghost_Finish (void)
     int num_levels;
 
     if (ghost_finish_time > 0) {
-        if (!sv.active) {
-            // Can't track marathons for remote servers or demos.
+        if (!sv.active && !cls.demoplayback) {
+            // Can't track marathons for remote servers.
             gmi->valid = false;
         } else if (cls.marathon_level == 1) {
             gmi->valid = true;

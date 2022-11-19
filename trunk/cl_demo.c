@@ -509,6 +509,12 @@ void StartPlayingOpenedDemo (void)
 
 	if (neg)
 		cls.forcetrack = -cls.forcetrack;
+
+	// Reset the marathon time here, since we're not running a server.	If it is
+	// a multi-level demo assume it is a marathon (we can't do any resets
+	// mid-demo).
+	cls.marathon_time = 0;
+	cls.marathon_level = 0;
 }
 
 // joe: playing demos from .dz files
