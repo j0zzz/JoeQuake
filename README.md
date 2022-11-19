@@ -904,6 +904,8 @@ ctrl-shift-enter to remove the ghost.
 - `ghost_range <distance>`:  Hide the ghost when it is within this distance.
 - `ghost_alpha <float>`: Change how transparent the ghost is.  `0` is fully
   transparent, `1` is fully opaque.
+- `ghost_marathon_split`: When set to `1`, show the live marathon split, rather
+  than the level split. Default `0`.
 
 #### Marathon split times
 

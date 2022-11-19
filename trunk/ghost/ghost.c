@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static cvar_t ghost_delta = {"ghost_delta", "1", CVAR_ARCHIVE};
 static cvar_t ghost_range = {"ghost_range", "64", CVAR_ARCHIVE};
 static cvar_t ghost_alpha = {"ghost_alpha", "0.8", CVAR_ARCHIVE};
+static cvar_t ghost_marathon_split = {"ghost_marathon_split", "0",
+                                      CVAR_ARCHIVE};
 
 
 static dzip_context_t ghost_dz_ctx;
@@ -52,6 +54,7 @@ typedef struct {
 typedef struct {
     qboolean valid;         // has there been a ghost time for each level?
     ghost_marathon_level_t levels[MAX_MARATHON_LEVELS];
+    float total_split;
 } ghost_marathon_info_t;
 static ghost_marathon_info_t ghost_marathon_info;
 
@@ -219,6 +222,9 @@ void Ghost_Load (const char *map_name)
 
     ghost_shift = 0.0f;
     ghost_last_relative_time = 0.0f;
+    if (cls.marathon_level == 0) {
+        ghost_marathon_info.total_split = 0.0f;
+    }
 }
 
 
@@ -372,6 +378,11 @@ void Ghost_DrawGhostTime (void)
         relative_time = ghost_last_relative_time;
     ghost_last_relative_time = relative_time;
 
+    if (ghost_marathon_split.value) {
+        // Include the marathon time in the split.
+        relative_time += ghost_marathon_info.total_split;
+    }
+
 	scale = Sbar_GetScaleAmount();
 	size = Sbar_GetScaledCharacterSize();
 
@@ -428,7 +439,7 @@ void Ghost_DrawGhostTime (void)
 void Ghost_Finish (void)
 {
     int i;
-    float split, total_split;
+    float split;
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
     int num_levels;
@@ -461,16 +472,16 @@ void Ghost_Finish (void)
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f\n");
-        total_split = 0.0f;
+        gmi->total_split = 0.0f;
         for (i = 0; i < num_levels; i++) {
             gml = &gmi->levels[i];
             split = (gml->player_time - gml->ghost_time);
-            total_split += split;
+            gmi->total_split += split;
             Con_Printf("  %-10s %12s %+8.2f %+8.2f\n",
                        gml->map_name,
                        GetPrintedTime(gml->player_time),
                        split,
-                       total_split);
+                       gmi->total_split);
         }
     } else {
         if (gmi->valid) {
@@ -599,6 +610,7 @@ void Ghost_Init (void)
     Cvar_Register (&ghost_delta);
     Cvar_Register (&ghost_range);
     Cvar_Register (&ghost_alpha);
+    Cvar_Register (&ghost_marathon_split);
 }
 
 
