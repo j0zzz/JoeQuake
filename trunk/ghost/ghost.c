@@ -35,6 +35,7 @@ entity_t			*ghost_entity = NULL;
 static float        ghost_shift = 0.0f;
 static float        ghost_finish_time = -1.0f;
 static int          ghost_model_indices[GHOST_MODEL_COUNT];
+static float        ghost_last_relative_time = 0.0f;
 
 const char *ghost_model_paths[GHOST_MODEL_COUNT] = {
     "progs/player.mdl",
@@ -217,6 +218,7 @@ void Ghost_Load (const char *map_name)
     ghost_entity->frame_start_time = 0.0f;
 
     ghost_shift = 0.0f;
+    ghost_last_relative_time = 0.0f;
 }
 
 
@@ -364,6 +366,11 @@ void Ghost_DrawGhostTime (void)
     relative_time = Ghost_FindClosest(ent->origin, &match);
     if (!match)
         return;
+
+    // Don't show small changes, to reduce flickering.
+    if (fabs(relative_time - ghost_last_relative_time) < 1e-4 + 1./72)
+        relative_time = ghost_last_relative_time;
+    ghost_last_relative_time = relative_time;
 
 	scale = Sbar_GetScaleAmount();
 	size = Sbar_GetScaledCharacterSize();
