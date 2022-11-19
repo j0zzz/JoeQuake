@@ -354,7 +354,7 @@ void Ghost_DrawGhostTime (void)
 {
     int   x, y, size, bg_color;
     float scale;
-    char  st[8];
+    char  st[10];
     float relative_time;
     float width;
     qboolean match;
@@ -388,9 +388,9 @@ void Ghost_DrawGhostTime (void)
     y -= 2 * size;
 
     if (relative_time < 1e-3) {
-        sprintf (st, "%.2f", relative_time);
+        Q_snprintfz (st, sizeof(st), "%.2f s", relative_time);
     } else {
-        sprintf (st, "+%.2f", relative_time);
+        Q_snprintfz (st, sizeof(st), "+%.2f s", relative_time);
     }
 
     bg_color = relative_time > 0 ? 251 : 10;
@@ -413,7 +413,7 @@ void Ghost_DrawGhostTime (void)
         Draw_Fill (x, y, width, 9, 100);
     }
 
-    Draw_String (x + (int)(5.5 * size) - (strlen(st) * size), y, st, true);
+    Draw_String (x + (int)(7.5 * size) - (strlen(st) * size), y, st, true);
 }
 
 
