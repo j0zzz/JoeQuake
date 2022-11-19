@@ -352,7 +352,7 @@ void Ghost_Draw (void)
 // Modified from the JoeQuake speedometer
 void Ghost_DrawGhostTime (void)
 {
-    int   x, y, size, bg_color;
+    int   x, y, size, bg_color, bar_color;
     float scale;
     char  st[10];
     float relative_time;
@@ -404,13 +404,21 @@ void Ghost_DrawGhostTime (void)
 
     width = fabs(relative_time) * 160;
     if (width > 160) {
+        // abs(relative time) > 1 second
+        width *= 0.1;
+        bar_color = 36;
+    } else {
+        // abs(relative time) < 1 second
+        bar_color = 100;
+    }
+    if (width > 160) {
         width = 160;
     }
 
     if (relative_time < 0) {
-        Draw_Fill (x + (160 - width) * scale, y, width, 9, 100);
+        Draw_Fill (x + (160 - width) * scale, y, width, 9, bar_color);
     } else {
-        Draw_Fill (x, y, width, 9, 100);
+        Draw_Fill (x, y, width, 9, bar_color);
     }
 
     Draw_String (x + (int)(7.5 * size) - (strlen(st) * size), y, st, true);
