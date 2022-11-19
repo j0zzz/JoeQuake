@@ -1238,7 +1238,7 @@ void SCR_DrawSpeed (void)
 	static	float	maxspeed = 0, display_speed = -1;
 	static	double	lastrealtime = 0;
 
-	if (!show_speed.value)
+	if (cl.intermission || !show_speed.value)
 		return;
 
 	if (lastrealtime > realtime)
@@ -1273,9 +1273,6 @@ void SCR_DrawSpeed (void)
 
 		if (scr_viewsize.value < 110)
 			y = vid.height - (8 * size);
-
-		if (cl.intermission)
-			y = vid.height - (2 * size);
 
 		Draw_Fill (x, y - (int)(1 * scale), 160, 1, 10);
 		Draw_Fill (x, y + (int)(9 * scale), 160, 1, 10);

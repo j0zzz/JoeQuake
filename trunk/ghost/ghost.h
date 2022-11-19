@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void Ghost_Load (const char *map_name);
 void Ghost_Draw (void);
-void Ghost_DrawGhostTime (void);
+void Ghost_DrawGhostTime (qboolean intermission);
 void Ghost_Init (void);
 void Ghost_Finish (void);
 void Ghost_Shutdown (void);

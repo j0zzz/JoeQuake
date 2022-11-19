@@ -1121,6 +1121,8 @@ void SCR_UpdateScreen (void)
 
 		if (con_notify_intermission.value)
 			SCR_DrawConsole();
+
+		Ghost_DrawGhostTime (true);
 	}
 	else if (cl.intermission == 2 && key_dest == key_game)
 	{
@@ -1145,7 +1147,7 @@ void SCR_UpdateScreen (void)
 		SCR_DrawClock ();
 		SCR_DrawFPS ();
 		SCR_DrawSpeed ();
-		Ghost_DrawGhostTime ();
+		Ghost_DrawGhostTime (false);
 		SCR_DrawStats ();
 		SCR_DrawVolume ();
 		SCR_DrawPlaybackStats ();

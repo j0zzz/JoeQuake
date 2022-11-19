@@ -55,6 +55,7 @@ typedef struct {
     qboolean valid;         // has there been a ghost time for each level?
     ghost_marathon_level_t levels[MAX_MARATHON_LEVELS];
     float total_split;
+    int num_levels;
 } ghost_marathon_info_t;
 static ghost_marathon_info_t ghost_marathon_info;
 
@@ -224,6 +225,7 @@ void Ghost_Load (const char *map_name)
     ghost_last_relative_time = 0.0f;
     if ((!sv.active && !cls.demoplayback) || cls.marathon_level == 0) {
         ghost_marathon_info.total_split = 0.0f;
+        ghost_marathon_info.num_levels = 0;
     }
 }
 
@@ -355,48 +357,15 @@ void Ghost_Draw (void)
 }
 
 
-// Modified from the JoeQuake speedometer
-void Ghost_DrawGhostTime (void)
+static void
+Ghost_DrawSingleTime (int y, float relative_time, char *label)
 {
-    int   x, y, size, bg_color, bar_color;
-    float scale;
+    int   x, size, bg_color, bar_color;
+    float scale, width;
     char  st[10];
-    float relative_time;
-    float width;
-    qboolean match;
-
-    entity_t *ent = &cl_entities[cl.viewentity];
-
-    if (!ghost_delta.value || ghost_records == NULL)
-        return;
-    relative_time = Ghost_FindClosest(ent->origin, &match);
-    if (!match)
-        return;
-
-    // Don't show small changes, to reduce flickering.
-    if (fabs(relative_time - ghost_last_relative_time) < 1e-4 + 1./72)
-        relative_time = ghost_last_relative_time;
-    ghost_last_relative_time = relative_time;
-
-    if (ghost_marathon_split.value) {
-        // Include the marathon time in the split.
-        relative_time += ghost_marathon_info.total_split;
-    }
 
 	scale = Sbar_GetScaleAmount();
 	size = Sbar_GetScaledCharacterSize();
-
-    // Position just above the speedo.
-    x = vid.width / 2 - (10 * size);
-    if (scr_viewsize.value >= 120)
-        y = vid.height - (2 * size);
-    if (scr_viewsize.value < 120)
-        y = vid.height - (5 * size);
-    if (scr_viewsize.value < 110)
-        y = vid.height - (8 * size);
-    if (cl.intermission)
-        y = vid.height - (2 * size);
-    y -= 2 * size;
 
     if (relative_time < 1e-3) {
         Q_snprintfz (st, sizeof(st), "%.2f s", relative_time);
@@ -405,6 +374,7 @@ void Ghost_DrawGhostTime (void)
     }
 
     bg_color = relative_time > 0 ? 251 : 10;
+    x = vid.width / 2 - (10 * size);
     Draw_Fill (x, y - (int)(1 * scale), 160, 1, bg_color);
     Draw_Fill (x, y + (int)(9 * scale), 160, 1, bg_color);
     Draw_Fill (x + (int)(32 * scale), y - (int)(2 * scale), 1, 13, bg_color);
@@ -433,6 +403,73 @@ void Ghost_DrawGhostTime (void)
     }
 
     Draw_String (x + (int)(7.5 * size) - (strlen(st) * size), y, st, true);
+    Draw_String (x - size * (2 + strlen(label)), y, label, true);
+}
+
+
+// Modified from the JoeQuake speedometer
+void Ghost_DrawGhostTime (qboolean intermission)
+{
+    int size, y, i;
+    float relative_time, scale;
+    qboolean match;
+    entity_t *ent = &cl_entities[cl.viewentity];
+    ghost_marathon_level_t *gml;
+    ghost_marathon_info_t *gmi = &ghost_marathon_info;
+
+    if (!ghost_delta.value || ghost_records == NULL)
+        return;
+
+	scale = Sbar_GetScaleAmount();
+    size = Sbar_GetScaledCharacterSize();
+    if (!intermission) {
+        if (cl.intermission) {
+            return;
+        }
+        ent = &cl_entities[cl.viewentity];
+        if (!ghost_delta.value || ghost_records == NULL)
+            return;
+        relative_time = Ghost_FindClosest(ent->origin, &match);
+        if (!match)
+            return;
+
+        // Don't show small changes, to reduce flickering.
+        if (fabs(relative_time - ghost_last_relative_time) < 1e-4 + 1./72)
+            relative_time = ghost_last_relative_time;
+        ghost_last_relative_time = relative_time;
+
+        if (ghost_marathon_split.value) {
+            // Include the marathon time in the split.
+            relative_time += ghost_marathon_info.total_split;
+        }
+
+        // Position just above the speedo.
+        if (scr_viewsize.value >= 120)
+            y = vid.height - (2 * size);
+        if (scr_viewsize.value < 120)
+            y = vid.height - (5 * size);
+        if (scr_viewsize.value < 110)
+            y = vid.height - (8 * size);
+        if (cl.intermission)
+            y = vid.height - (2 * size);
+        y -= 2 * size;
+
+        Ghost_DrawSingleTime(y, relative_time, "");
+    } else {
+        y = vid.height - 2 * size;
+        if (gmi->num_levels > 1) {
+            Ghost_DrawSingleTime(y, gmi->total_split, "total");
+        }
+        for (i = gmi->num_levels - 1; i >= 0; i--) {
+            y -= 2 * size;
+            if (y <= (174 * scale)) {
+                break;
+            }
+            gml = &gmi->levels[i];
+            relative_time = gml->player_time - gml->ghost_time;
+            Ghost_DrawSingleTime(y, relative_time, gml->map_name);
+        }
+    }
 }
 
 
@@ -442,7 +479,6 @@ void Ghost_Finish (void)
     float split;
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
-    int num_levels;
 
     if (ghost_finish_time > 0) {
         if (!sv.active && !cls.demoplayback) {
@@ -454,13 +490,13 @@ void Ghost_Finish (void)
         if (!gmi->valid) {
             // If the ghost did not finish one of the levels, just print this
             // level's splits.
-            num_levels = 1;
+            gmi->num_levels = 1;
         } else {
-            num_levels = cls.marathon_level;
+            gmi->num_levels = cls.marathon_level;
         }
 
-        if (num_levels - 1 < MAX_MARATHON_LEVELS) {
-            gml = &gmi->levels[num_levels - 1];
+        if (gmi->num_levels - 1 < MAX_MARATHON_LEVELS) {
+            gml = &gmi->levels[gmi->num_levels - 1];
             Q_strncpyz(gml->map_name, CL_MapName(), MAX_QPATH);
             gml->player_time = cl.mtime[0];
             gml->ghost_time = ghost_finish_time;
@@ -473,7 +509,7 @@ void Ghost_Finish (void)
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f\n");
         gmi->total_split = 0.0f;
-        for (i = 0; i < num_levels; i++) {
+        for (i = 0; i < gmi->num_levels; i++) {
             gml = &gmi->levels[i];
             split = (gml->player_time - gml->ghost_time);
             gmi->total_split += split;
