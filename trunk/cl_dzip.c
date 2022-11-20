@@ -42,14 +42,24 @@
  * Arguments:
  *	ctx: DZip context to be initialized.
  *	prefix: The directory under the base dir into which dzips will be extracted.
+ *		If NULL then extract into the same directory as the dzip file.  In this
+ *		case some files may be left over after the demo has finished.
  */
 void
 DZip_Init (dzip_context_t *ctx, const char *prefix)
 {
 	memset(ctx, 0, sizeof(*ctx));
 
-	Q_snprintfz (ctx->extract_dir, sizeof(ctx->extract_dir),
-				 "%s/%s/%s/", com_basedir, DZIP_EXTRACT_DIR, prefix);
+	ctx->use_temp_dir = (prefix != NULL);
+	if (ctx->use_temp_dir) {
+		// `ctx->extract_dir` needs a trailing slash for `COM_CreatePath` to
+		// work.
+		Q_snprintfz (ctx->extract_dir, sizeof(ctx->extract_dir),
+					 "%s/%s/%s/", com_basedir, DZIP_EXTRACT_DIR, prefix);
+	} else {
+		// Will be set when extraction begins.
+		ctx->extract_dir[0] = '\0';
+	}
 
 #ifdef _WIN32
 	ctx->proc = NULL;
@@ -109,8 +119,9 @@ dzip_status_t
 DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 {
 	char	dem_basedir[1024];
-	char	*p, dz_name[1024];
+	char	*p, dz_name[1024], *base_name;
 	char	tempdir[1024];
+	char	extract_dir[1024];
 	FILE    *demo_file;
 #ifdef _WIN32
 	char	cmdline[1024];
@@ -130,24 +141,32 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 		return DZIP_ALREADY_EXTRACTING;
 	}
 
-	// Set `name` to the base name of the dzip, and `dem_basedir` to the rest of the path,
-	// and `dz_name` to the concatenation of the two.
+	// Set `base_name` to the base name of the dzip, and `dem_basedir` to the
+	// rest of the path, and `dz_name` to the concatenation of the two.
 	if (strstr(name, "..") == name)
 	{
-		Q_snprintfz (dem_basedir, sizeof(dem_basedir), "%s%s", com_basedir, name + 2);
-		p = strrchr (dem_basedir, '/');
-		*p = 0;
-		name = strrchr (name, '/') + 1;	// we have to cut off the path for the name
+		Q_snprintfz (dz_name, sizeof(dz_name), "%s%s", com_basedir, name + 2);
 	}
 	else
 	{
-		Q_strncpyz (dem_basedir, com_gamedir, sizeof(dem_basedir));
+		Q_snprintfz (dz_name, sizeof(dz_name), "%s/%s", com_gamedir, name);
 	}
-	Q_snprintfz (dz_name, sizeof(dz_name), "%s/%s", dem_basedir, name);
+	Q_strncpyz (dem_basedir, dz_name, sizeof(dem_basedir));
+	p = strrchr (dem_basedir, '/');
+	*p = 0;
+	base_name = p + 1;
 
-	// Create directory into which dzip will be extracted.
-	// TODO: Handle errors?
-	COM_CreatePath(ctx->extract_dir);
+	if (ctx->use_temp_dir) {
+		// Create directory into which dzip will be extracted.
+		// TODO: Handle errors?
+		COM_CreatePath(ctx->extract_dir);
+		Q_strncpyz(extract_dir, ctx->extract_dir, sizeof(extract_dir));
+	} else {
+		// Extract into `dem_basedir`.
+		if (ctx->extract_dir[0] != '\0')
+			Sys_Error("extract dir should be \"\" when not using temp dir");
+		Q_strncpyz(extract_dir, dem_basedir, sizeof(extract_dir));
+	}
 
 	// check if the file exists
 	if (Sys_FileTime(dz_name) == -1)
@@ -155,8 +174,12 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 		return DZIP_NO_EXIST;
 	}
 
-	Q_snprintfz (tempdir, sizeof(tempdir), "%s/%s", ctx->extract_dir, name);
-	COM_StripExtension (tempdir, ctx->dem_path);
+	if (ctx->use_temp_dir) {
+		Q_snprintfz (tempdir, sizeof(tempdir), "%s%s", ctx->extract_dir, base_name);
+		COM_StripExtension (tempdir, ctx->dem_path);
+	} else {
+		COM_StripExtension (dz_name, ctx->dem_path);
+	}
 	Q_strlcat(ctx->dem_path, ".dem", sizeof(ctx->dem_path));
 
 	if ((demo_file = fopen(ctx->dem_path, "rb")))
@@ -183,7 +206,7 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	}
 
 	Q_snprintfz(cmdline, sizeof(cmdline), "%s/dzip.exe -x -f \"%s\"", com_basedir, abs_dz_name);
-	if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, ctx->extract_dir, &si, &pi))
+	if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, extract_dir, &si, &pi))
 	{
 		Con_Printf ("Couldn't execute %s/dzip.exe\n", com_basedir);
 		return DZIP_EXTRACT_FAIL;
@@ -211,9 +234,9 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 		return DZIP_EXTRACT_FAIL;
 
 	case 0:
-		if (chdir(ctx->extract_dir) == -1)
+		if (chdir(extract_dir) == -1)
 		{
-			Con_Printf ("Couldn't chdir to '%s'\n", ctx->extract_dir);
+			Con_Printf ("Couldn't chdir to '%s'\n", extract_dir);
 			_exit(1);
 		}
 		if (execlp(va("%s/dzip-linux", abs_basedir), "dzip-linux", "-x", "-f", abs_dz_name, NULL) == -1)
@@ -461,7 +484,7 @@ DZip_Cleanup_Callback(const char *fpath, const struct stat *sb, int typeflag,
 	rc = remove(fpath);
 	if (rc)
 	{
-		Con_Printf("Failed to remove %s in dzip cleanup\n");
+		Con_Printf("Failed to remove %s in dzip cleanup\n", fpath);
 	}
 
 	return rc;
@@ -479,9 +502,27 @@ void
 DZip_Cleanup(dzip_context_t *ctx)
 {
 	DZip_CheckInitialized (ctx);
+
+	// If extracting to a temporary directory, recursively delete it.
+	// Otherwise, we can only clean up any files that we know about.
+	if (ctx->use_temp_dir)
+	{
 #ifdef _WIN32
-	DZip_RecursiveDirectoryCleanup(ctx->extract_dir);
+		DZip_RecursiveDirectoryCleanup(ctx->extract_dir);
 #else
-	nftw(ctx->extract_dir, DZip_Cleanup_Callback, 32, FTW_DEPTH | FTW_PHYS);
+		nftw(ctx->extract_dir, DZip_Cleanup_Callback, 32, FTW_DEPTH | FTW_PHYS);
 #endif
+	}
+	else if (ctx->dem_path[0] != '\0')
+	{
+		char	temptxt_name[1024];
+
+		COM_StripExtension (ctx->dem_path, temptxt_name);
+		Q_strlcat (temptxt_name, ".txt", sizeof(temptxt_name));
+		remove (temptxt_name);
+		if (remove(ctx->dem_path))
+			Con_Printf ("Couldn't delete %s\n", ctx->dem_path);
+	}
+
+	ctx->dem_path[0] = '\0';
 }
