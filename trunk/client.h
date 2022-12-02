@@ -419,11 +419,15 @@ typedef enum {
 typedef struct {
 	qboolean initialized;
 
+    // If true files will be extracted into a temporary directory.  If false,
+    // files will be extracted into the same directory as the dzip file.
+    qboolean use_temp_dir;
+
 	// Directory into which dzip files will be extracted.
-	char extract_dir[MAX_OSPATH];
+	char extract_dir[1024];
 
 	// Full path of the extracted demo file.
-	char dem_path[MAX_OSPATH];
+	char dem_path[1024];
 
 	// When opened, file pointer will be put here.
 	FILE **demo_file_p;

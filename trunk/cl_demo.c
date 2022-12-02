@@ -43,8 +43,6 @@ static qboolean hDZipProcess = false;
 
 static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
-static	char	tempdem_name[256] = "";	// this file must be deleted after playback is finished
-static	char	dem_basedir[256] = "";
 qboolean	dz_unpacking = false;
 static	void CheckDZipCompletion ();
 static	void StopDZPlayback ();
@@ -69,7 +67,7 @@ read from the demo file.
 
 void CL_InitDemo (void)
 {
-	DZip_Init(&dzCtx, "playdemo");
+	DZip_Init(&dzCtx, NULL);
 	DZip_Cleanup(&dzCtx);
 }
 
