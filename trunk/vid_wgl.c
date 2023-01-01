@@ -1964,13 +1964,15 @@ void VID_MenuDraw (void)
 
 		column += 14 * 8;
 
-		if ((i % VID_ROW_SIZE) == (VID_ROW_SIZE - 1))
+		// if we are at the end of the curent row (last column), prepare for next row
+		if (((i + 1) % VID_ROW_SIZE) == 0)
 		{
 			column = 0;
 			row += 8;
 		}
 		
-		if ((i % VID_ROW_SIZE) == (VID_ROW_SIZE - 2))
+		// if we just started a new row, increment row counter
+		if (((i + 1) % VID_ROW_SIZE) == 1)
 		{
 			video_mode_rows++;
 		}
