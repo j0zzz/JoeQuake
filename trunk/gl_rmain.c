@@ -1386,7 +1386,8 @@ void R_SetupLighting (entity_t *ent)
 	// if the initial trace is completely black, try again from above
 	// this helps with models whose origin is slightly below ground level
 	// (e.g. some of the candles in the DOTM start map)
-	if (!R_LightPoint(ent->origin))
+	ambientlight = shadelight = R_LightPoint(ent->origin);
+	if (!ambientlight)
 	{
 		vec3_t lpos;
 		VectorCopy(ent->origin, lpos);
