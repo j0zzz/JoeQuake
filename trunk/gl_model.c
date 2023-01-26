@@ -44,6 +44,7 @@ model_t	mod_known[MAX_MOD_KNOWN];
 int	mod_numknown;
 
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "128", CVAR_ARCHIVE};
+cvar_t	external_ents = { "external_ents", "1", CVAR_ARCHIVE };
 
 qboolean OnChange_gl_picmip (cvar_t *var, char *string)
 {
@@ -91,6 +92,7 @@ Mod_Init
 void Mod_Init (void)
 {
 	Cvar_Register (&gl_subdivide_size);
+	Cvar_Register (&external_ents);
 }
 
 /*
@@ -813,6 +815,41 @@ Mod_LoadEntities
 */
 void Mod_LoadEntities (lump_t *l)
 {
+	char	basemapname[MAX_QPATH], entfilename[MAX_QPATH], *ents;
+	int		mark;
+	unsigned int crc = 0;
+
+	if (!external_ents.value)
+		goto _load_embedded;
+
+	mark = Hunk_LowMark();
+	if (l->filelen > 0) 
+	{
+		crc = CRC_Block(mod_base + l->fileofs, l->filelen - 1);
+	}
+
+	Q_strlcpy(basemapname, loadmodel->name, sizeof(basemapname));
+	COM_StripExtension(basemapname, basemapname);
+
+	Q_snprintfz(entfilename, sizeof(entfilename), "%s@%04x.ent", basemapname, crc);
+	Con_DPrintf("trying to load %s\n", entfilename);
+	ents = (char*)COM_LoadHunkFile(entfilename);
+
+	if (!ents)
+	{
+		Q_snprintfz(entfilename, sizeof(entfilename), "%s.ent", basemapname);
+		Con_DPrintf("trying to load %s\n", entfilename);
+		ents = (char*)COM_LoadHunkFile(entfilename);
+	}
+
+	if (ents)
+	{
+		loadmodel->entities = ents;
+		Con_DPrintf("Loaded external entity file %s\n", entfilename);
+		return;
+	}
+
+_load_embedded:
 	if (!l->filelen)
 	{
 		loadmodel->entities = NULL;
