@@ -6454,6 +6454,7 @@ void M_Mods_Key(int k)
 {
 	int		i;
 	qboolean	worx;
+	extern void Draw_ReloadPics(void);
 
 	M_List_Key(k, num_files, MAXLINES);
 
@@ -6480,6 +6481,9 @@ void M_Mods_Key(int k)
 		key_dest = key_game;
 		m_state = m_none;
 		Cbuf_AddText(va("disconnect\ngamedir %s\nexec quake.rc\n", filelist[list_base + list_cursor].name));
+		Cbuf_Execute();
+		Draw_ReloadPics();
+
 		Q_strncpyz(prevdir, filelist[list_base + list_cursor].name, sizeof(prevdir));
 
 		if (searchbox)
