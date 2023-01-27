@@ -94,6 +94,8 @@ char *svc_strings[] =
 	"svc_localsound" // 56
 };
 
+vec3_t		last_setangle;	//joe: for intermission cam fix
+
 //=============================================================================
 
 void CL_InitModelnames (void)
@@ -1342,14 +1344,9 @@ void CL_ParseServerMessage (void)
 		case svc_setangle:
 			for (i = 0 ; i < 3 ; i++)
 				cl.viewangles[i] = MSG_ReadAngle (cl.protocolflags);
-
 			//joe: intermission cam fix
 			if (cls.demoplayback)
-			{
-				VectorCopy(cl.viewangles, cl.mviewangles[0]);
-				VectorCopy(cl.mviewangles[0], cl.mviewangles[1]);
-				cl.mviewangles[0][0] = cl.mviewangles[1][0] = cl.viewangles[0] = -cl.viewangles[0];
-			}
+				VectorCopy(cl.viewangles, last_setangle);
 			break;
 
 		case svc_setview:
@@ -1482,7 +1479,10 @@ void CL_ParseServerMessage (void)
 
 		case svc_intermission:
 			if (cls.demoplayback)
+			{
 				cl.intermission = CL_DemoIntermissionState(cl.intermission, 1);
+				VectorCopy(last_setangle, cl_entities[cl.viewentity].angles);	//joe: fix view from last setangle
+			}
 			else
 				cl.intermission = 1;
 			cl.completed_time = cl.mtime[0];	//joe: intermission bugfix
@@ -1497,7 +1497,10 @@ void CL_ParseServerMessage (void)
 				PrintFinishTime();
 			}
 			if (cls.demoplayback)
+			{
 				cl.intermission = CL_DemoIntermissionState(cl.intermission, 2);
+				VectorCopy(last_setangle, cl_entities[cl.viewentity].angles);	//joe: fix view from last setangle
+			}
 			else
 				cl.intermission = 2;
 			vid.recalc_refdef = true;	// go to full screen
