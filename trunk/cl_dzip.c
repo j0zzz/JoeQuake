@@ -33,8 +33,9 @@
 
 #include "quakedef.h"
 
-
 #define DZIP_EXTRACT_DIR	"extracted_dzips"
+
+qboolean dzip_initialized = false;
 
 /*
  * Initialize a dzip context.
@@ -70,6 +71,8 @@ DZip_Init (dzip_context_t *ctx, const char *prefix)
 	ctx->dem_path[0] = '\0';
 	ctx->demo_file_p = NULL;
 	ctx->initialized = true;
+
+	dzip_initialized = true;
 }
 
 
@@ -501,6 +504,9 @@ DZip_Cleanup_Callback(const char *fpath, const struct stat *sb, int typeflag,
 void
 DZip_Cleanup(dzip_context_t *ctx)
 {
+	if (!dzip_initialized)
+		return;
+
 	DZip_CheckInitialized (ctx);
 
 	// If extracting to a temporary directory, recursively delete it.

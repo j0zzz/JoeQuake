@@ -73,7 +73,17 @@ void W_LoadWadFile (char *filename)
 		free(wad_base);
 	wad_base = COM_LoadMallocFile(filename);
 	if (!wad_base)
-		Sys_Error("W_LoadWadFile: couldn't load %s", filename);
+	{
+		if (!strcmp(filename, "gfx.wad"))
+		{
+			char* text = "Could not find Quake pak files (pak0.pak, pak1.pak).\n\nThese files should be copied to the id1 folder from a retail Quake installation (eg. Steam / GOG / CD-ROM). See the installation guide at https://speeddemosarchive.com/quake/guide.html\n\nWould you like to navigate to the page now?";
+			if (MessageBox(NULL, text, "Quake Error", MB_YESNO | MB_SETFOREGROUND | MB_ICONSTOP) == IDYES)
+				system("START https://speeddemosarchive.com/quake/guide.html");
+			Sys_Quit();
+		}
+		else
+			Sys_Error("W_LoadWadFile: couldn't load %s", filename);
+	}
 
 	header = (wadinfo_t *)wad_base;
 
