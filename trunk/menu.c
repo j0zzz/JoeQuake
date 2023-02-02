@@ -320,8 +320,8 @@ qboolean M_Mouse_Select(const menu_window_t *uw, const mouse_state_t *m, int ent
 	if (m->x < w->x || m->y < w->y || m->x > w->x + w->w || m->y > w->y + w->h)
 		return false; // no, it's not
 
-	entryheight = w->h / entries;
-	nentry = (int)(m->y - w->y) / (int)entryheight;
+	entryheight = (double)w->h / (double)entries;
+	nentry = (int)((m->y - w->y) / entryheight);
 
 	*newentry = bound(0, nentry, entries - 1);
 
@@ -347,8 +347,8 @@ qboolean M_Mouse_Select_Column(const menu_window_t *uw, const mouse_state_t *m, 
 	//if (m->x < w->x || m->y < w->y || m->x > w->x + w->w || m->y > w->y + w->h)
 	//	return false; // no, it's not
 
-	entrywidth = w->w / entries;
-	nentry = (int)(m->x - w->x) / (int)entrywidth;
+	entrywidth = (double)w->w / (double)entries;
+	nentry = (int)((m->x - w->x) / entrywidth);
 
 	*newentry = bound(0, nentry, entries - 1);
 
@@ -371,12 +371,12 @@ qboolean M_Mouse_Select_RowColumn(const menu_window_t *uw, const mouse_state_t *
 	if (m->x < w->x || m->y < w->y || m->x > w->x + w->w || m->y > w->y + w->h)
 		return false; // no, it's not
 
-	entryheight = w->h / row_entries;
-	nentry = (int)(m->y - w->y) / (int)entryheight;
+	entryheight = (double)w->h / (double)row_entries;
+	nentry = (int)((m->y - w->y) / entryheight);
 	*newentry_row = bound(0, nentry, row_entries - 1);
 
-	entrywidth = w->w / col_entries;
-	nentry = (int)(m->x - w->x) / (int)entrywidth;
+	entrywidth = (double)w->w / (double)col_entries;
+	nentry = (int)((m->x - w->x) / entrywidth);
 	*newentry_col = bound(0, nentry, col_entries - 1);
 
 	return true;

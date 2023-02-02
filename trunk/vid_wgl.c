@@ -1958,7 +1958,7 @@ void VID_MenuDraw (void)
 	for (i = 0 ; i < vid_wmodes ; i++)
 	{
 		if (modedescs[i].iscur)
-			M_Print (column, row, modedescs[i].desc);
+			M_Print_GetPoint(column, row, &lx, &ly, modedescs[i].desc, true);
 		else
 			M_Print_GetPoint(column, row, &lx, &ly, modedescs[i].desc, video_cursor_row == ((row - 32) / 8) && video_cursor_column == (column / (14 * 8)));
 
