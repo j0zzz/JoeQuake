@@ -45,6 +45,12 @@ float old_blue;
 float fade_time; //duration of fade
 float fade_done; //time when fade will be done
 
+cvar_t	fog_override = { "fog_override", "0" };
+qboolean OnChange_fog_custom(cvar_t* var, char* string);
+cvar_t	fog_custom = { "fog_custom", "0 0 0 0", 0, OnChange_fog_custom };
+
+fog_data_t fog_override_data;
+
 /*
 =============
 Fog_Update
@@ -270,20 +276,30 @@ float *Fog_GetColor (void)
 	}
 	else
 	{
-		if (fade_done > cl.time)
+		if (fog_override.value)
 		{
-			f = (fade_done - cl.time) / fade_time;
-			c[0] = f * old_red + (1.0 - f) * fog_red;
-			c[1] = f * old_green + (1.0 - f) * fog_green;
-			c[2] = f * old_blue + (1.0 - f) * fog_blue;
+			c[0] = fog_override_data.color[0];
+			c[1] = fog_override_data.color[1];
+			c[2] = fog_override_data.color[2];
 			c[3] = 1.0;
 		}
 		else
 		{
-			c[0] = fog_red;
-			c[1] = fog_green;
-			c[2] = fog_blue;
-			c[3] = 1.0;
+			if (fade_done > cl.time)
+			{
+				f = (fade_done - cl.time) / fade_time;
+				c[0] = f * old_red + (1.0 - f) * fog_red;
+				c[1] = f * old_green + (1.0 - f) * fog_green;
+				c[2] = f * old_blue + (1.0 - f) * fog_blue;
+				c[3] = 1.0;
+			}
+			else
+			{
+				c[0] = fog_red;
+				c[1] = fog_green;
+				c[2] = fog_blue;
+				c[3] = 1.0;
+			}
 		}
 
 		//find closest 24-bit RGB value, so solid-colored sky can match the fog perfectly
@@ -307,6 +323,8 @@ float Fog_GetDensity (void)
 
 	if (Fog_IsWaterFog())
 		return 1.0;		// joe: this is a hack to force all the Fog_GetDensity > 0 conditions to be true
+	else if (fog_override.value)
+		return fog_override_data.density;
 	else if (fade_done > cl.time)
 	{
 		f = (fade_done - cl.time) / fade_time;
@@ -424,6 +442,39 @@ void Fog_NewMap (void)
 	Fog_ParseWorldspawn (); //for global fog
 }
 
+void StringToFogData(char* s)
+{
+	Cmd_TokenizeString(s);
+	if (Cmd_Argc() == 4)
+	{
+		fog_override_data.density = Q_atof(Cmd_Argv(0));
+		fog_override_data.color[0] = Q_atof(Cmd_Argv(1));
+		fog_override_data.color[1] = Q_atof(Cmd_Argv(2));
+		fog_override_data.color[2] = Q_atof(Cmd_Argv(3));
+	}
+}
+
+qboolean OnChange_fog_custom(cvar_t* var, char* string)
+{
+	StringToFogData(string);
+
+	if (!fog_override.value)
+		Con_DPrintf("Warning: fog is not overridden. To make custom fog active, set fog_override 1\n");
+
+	return false;
+}
+
+void Fog_FogSet_f(void)
+{
+	Cvar_Set(&fog_custom, va("%f %f %f %f", fog_density, fog_red, fog_green, fog_blue));
+
+	Con_Printf("fog_custom was set to the following:\n");
+	Con_Printf("   \"density\" is \"%f\"\n", fog_density);
+	Con_Printf("   \"red\" is \"%f\"\n", fog_red);
+	Con_Printf("   \"green\" is \"%f\"\n", fog_green);
+	Con_Printf("   \"blue\" is \"%f\"\n", fog_blue);
+}
+
 /*
 =============
 Fog_Init
@@ -433,7 +484,10 @@ called when quake initializes
 */
 void Fog_Init (void)
 {
-	Cmd_AddCommand ("fog", Fog_FogCommand_f);
+	Cvar_Register(&fog_override);
+	Cvar_Register(&fog_custom);
+	Cmd_AddCommand("fog", Fog_FogCommand_f);
+	Cmd_AddCommand("fog_set", Fog_FogSet_f);
 
 	//set up global fog
 	fog_density = DEFAULT_DENSITY;
