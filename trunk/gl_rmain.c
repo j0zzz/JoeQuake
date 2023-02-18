@@ -1355,9 +1355,10 @@ R_SetupLighting
 void R_SetupLighting (entity_t *ent)
 {
 	int		i, lnum;
-	float	add;
+	float	add, theta;
 	vec3_t	dist, dlight_color;
 	model_t	*clmodel = ent->model;
+	static float shadescale = 0;
 
 	// make thunderbolt and torches full light
 	if (clmodel->modhint == MOD_THUNDERBOLT)
@@ -1463,6 +1464,12 @@ void R_SetupLighting (entity_t *ent)
 		if (ambientlight < 24)
 			ambientlight = shadelight = 24;
 	}
+
+	if (!shadescale)
+		shadescale = 1 / sqrt(2);
+	theta = -ent->angles[1] / 180 * M_PI;
+
+	VectorSet(shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
 
 	// never allow players to go totally black
 	if (Mod_IsAnyKindOfPlayerModel(clmodel))
@@ -1786,18 +1793,10 @@ void R_DrawAliasModel (entity_t *ent)
 	if (r_shadows.value && !ent->noshadow)
 	{
 		int		farclip;
-		float	theta;
 		vec3_t	downmove;
 		trace_t	downtrace;
-		static float shadescale = 0;
 
 		farclip = max((int)r_farclip.value, 4096);
-
-		if (!shadescale)
-			shadescale = 1 / sqrt(2);
-		theta = -ent->angles[1] / 180 * M_PI;
-
-		VectorSet (shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
 
 		glPushMatrix ();
 
@@ -2716,18 +2715,11 @@ void R_DrawQ3Model (entity_t *ent)
 	if (r_shadows.value && !ent->noshadow)
 	{
 		int			farclip;
-		float		theta, lheight, s1, c1;
+		float		lheight, s1, c1;
 		vec3_t		downmove;
 		trace_t		downtrace;
-		static float shadescale = 0;
 
 		farclip = max((int)r_farclip.value, 4096);
-
-		if (!shadescale)
-			shadescale = 1 / sqrt(2);
-		theta = -ent->angles[1] / 180 * M_PI;
-
-		VectorSet (shadevector, cos(theta) * shadescale, sin(theta) * shadescale, shadescale);
 
 		glPushMatrix ();
 
