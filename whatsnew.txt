@@ -1,4 +1,35 @@
 
+ version 0.17.5 build 7492
+ -----------------------
+
+Extended ghost recording mode for multi-level demos (marathons) (Matthew Earl)
+	Per-level marathons splits are printed in the console, new cvar: ghost_marathon_split
+Ghost recording mode now works for dzip files too (Matthew Earl)
+Ghost demos can now be set/removed from the Demos menu too (Matthew Earl)
+Ghost player model is properly set to the eyes model when invisible (Matthew Earl)
+Demo view is not screwed up when rewinding from intermission screen (Sphere)
+Higher sbar scale value is allowed from now to support higher resolutions (Sphere)
+Added graphical fix to prevent overlapping textures at some places, new cvar: gl_zfix (from QuakeSpasm)
+Models with skins higher than 480 pixels are properly loaded now
+Added 'find' command to look for commands and cvars (from QuakeSpasm)
+	Also added 'apropos' command (same as 'find') for compatiblity with MarkV engine
+Added con_logcenterprint cvar to let centerprinted messages logged in the console (from QuakeSpasm)
+Fixed bug when the mouse cursor didn't properly select resolutions in the video options menu
+	In specific lower resolutions the menu height was miscalculated
+	In rare occasions the last resolution line was not selectable at all
+Added crosshair 8 as a duplicate of crosshair 2
+	Reason: in the hipnotic mission pack, crosshair 2 is used hard-coded for player footstep sounds
+Added support for loading external .net files (from QuakeSpasm)
+Menu/hud images are explicitly forced to reload when changing Mods
+Fixed broken view when svc_cutscene server message was received
+	The bug was caused by the intermission cam fixing method, but found another to not harm cutscenes
+Added a more helpful error message if gfx.wad (i.e. pak0.pak) is missing from the /id1 folder
+	It helps navigate the user to SDA to read the 'getting started' guide
+Added option to override default fog (idea by Chambers). Fog is generally disturbing when recording speedruns.
+	New cvar: fog_custom, to set the new fog parameters (density and color)
+	New cvar: fog_override, to switch the custom values on/off
+	New command: fog_set, to save the actual fog values (set at map start) to fog_custom
+
  version 0.17.4 build 7319
  -----------------------
 

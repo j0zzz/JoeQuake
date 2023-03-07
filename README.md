@@ -312,6 +312,10 @@ Toggles between old and new style weapon bobbing, "0" by default.
 
 Console notify messages are shown on the intermission screen, "0" by default.
 
+### `con_logcenterprint`
+
+Centerprinted messages are shown in the console, "0" by default.
+
 ### `gl_fb_bmodels`
 
 Turn fullbright polys on brush models on/off, 1 by default.
@@ -602,6 +606,11 @@ default.
 Set texture filtering mode for sky textures. Valid modes: `GL_LINEAR` and
 `GL_NEAREST`, `GL_LINEAR` by default.
 
+### `gl_zfix`
+
+Tries to prevent overlapping textures (z-fighting fix).
+0 by default.
+
 ### `net_connectsearch`
 
 Allows to enable or disable the search for hosts on use of the `connect`
@@ -625,6 +634,21 @@ Switches on alternative noclip movement where the player always moves towards
 the direction he's looking at.
 1 by default.
 
+### `fog_custom`
+
+Can store custom fog parameters which are only applied if the `fog_override` variable is set to 1.
+The values must be specified the following way: `<density> <red> <green> <blue>`
+`<density>` defines the thickness of the fog.
+`<red> <green> <blue>` values define the color of the fog.
+Default value is "0 0 0 0", which means:
+0 density (invisible)
+RGB: 0 0 0 (black color)
+
+### `fog_override`
+
+Overrides the default fog parameters with the ones defined by the `fog_custom` variable.
+0 by default.
+
 ## New commands
 
 ### `cmdlist`
@@ -634,6 +658,10 @@ Lists all console commands.
 ### `cvarlist`
 
 Lists all console variables.
+
+### `find`, `apropos`
+
+Finds all relevant console commands and variables.
 
 ### `gamedir <path>`
 
@@ -736,6 +764,10 @@ Usage:
 `fog <density> <red> <green> <blue>`
 `<density>` defines the thickness of the fog.
 `<red> <green> <blue>` values define the color of the fog.
+
+### `fog_set`
+
+Saves the actual fog values (set at map start) to the `fog_custom` variable.
 
 ### `printspawnparams [clientnum]`
 
