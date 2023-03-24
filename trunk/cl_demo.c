@@ -776,7 +776,7 @@ void CL_KeepDemo_f(void)
 	finishtime = cls.marathon_level > 1 ? cls.marathon_time : cl.completed_time;
 	mins = finishtime / 60;
 	secs = finishtime - (mins * 60);
-	millisecs = (finishtime - secs) * 1000;
+	millisecs = (finishtime - floor(finishtime)) * 1000;
 	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%02i%03i_%i_%s", com_gamedir, demoname_prefix, mins, secs, millisecs, (int)skill.value, cleared_playername);
 
 	// try with a different name if this file already exists
