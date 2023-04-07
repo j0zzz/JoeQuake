@@ -59,6 +59,8 @@ static	int		r_numparticles;
 
 vec3_t			r_pright, r_pup, r_ppn;
 
+cvar_t	r_particles = { "r_particles", "1" }; //johnfitz
+
 #ifndef GLQUAKE
 #if !id386
 
@@ -208,13 +210,18 @@ void D_DrawParticle (particle_t *pparticle)
 #endif	// !defined(GLQUAKE)
 
 #ifdef GLQUAKE
-static void Classic_LoadParticleTexures (void)
+static void Classic_LoadParticleTextures (void)
 {
 	int		i, x, y;
 	unsigned int	data[32][32];
+	unsigned int	data2[32][32];
 
 	particletexture = texture_extension_number++;
 	GL_Bind (particletexture);
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// clear to transparent white
 	for (i=0 ; i<32*32 ; i++)
@@ -230,10 +237,23 @@ static void Classic_LoadParticleTexures (void)
 		}
 	}
 
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	GL_Upload32 ((unsigned *)data, 32, 32, TEX_MIPMAP | TEX_ALPHA);
+
+	particletexture2 = texture_extension_number++;
+	GL_Bind(particletexture2);
+
+	// clear to transparent white
+	for (i = 0; i < 32 * 32; i++)
+		((unsigned*)data2)[i] = 0x00FFFFFF;
+
+	// particle texture 2 -- square
+	for (x = 0; x < 16; x++)
+		for (y = 0; y < 16; y++)
+		{
+			data2[y][x] = 0xFFFFFFFF;	// solid white
+		}
+
+	GL_Upload32((unsigned *)data2, 32, 32, TEX_MIPMAP | TEX_ALPHA);
 }
 #endif
 
@@ -258,8 +278,10 @@ void Classic_InitParticles (void)
 
 	particles = (particle_t *)Hunk_AllocName (r_numparticles * sizeof(particle_t), "classic:particles");
 
+	Cvar_Register(&r_particles); //johnfitz
+
 #ifdef GLQUAKE
-	Classic_LoadParticleTexures ();
+	Classic_LoadParticleTextures ();
 #endif
 }
 
@@ -806,13 +828,19 @@ void Classic_DrawParticles (void)
 	unsigned char *at, theAlpha;
 #endif
 
+	if (!r_particles.value)
+		return;
+
 	if (!active_particles)
 		return;
 
 #ifdef GLQUAKE
 	r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 
-	GL_Bind (particletexture);
+	if (r_particles.value == 2)
+		GL_Bind(particletexture2);
+	else
+		GL_Bind (particletexture);
 
 	glEnable (GL_BLEND);
 	if (!gl_solidparticles.value)

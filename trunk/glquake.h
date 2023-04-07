@@ -159,6 +159,7 @@ extern	int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 extern	int	currenttexture;
 extern	int	particletexture;
+extern	int	particletexture2;
 extern	int	playertextures;
 extern	int	skyboxtextures;
 extern	int	underwatertexture, detailtexture;
