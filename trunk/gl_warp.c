@@ -37,6 +37,7 @@ int			gl_warpimagesize;
 
 cvar_t r_oldwater = { "r_oldwater", "0", CVAR_ARCHIVE };
 cvar_t r_waterquality = { "r_waterquality", "8" };
+cvar_t r_waterwarp = { "r_waterwarp", "0" };
 
 extern	cvar_t	gl_subdivide_size;
 extern	cvar_t	r_skyfog;

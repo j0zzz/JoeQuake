@@ -67,6 +67,8 @@ vec3_t	vpn;
 vec3_t	vright;
 vec3_t	r_origin;
 
+float	r_fovx, r_fovy; //johnfitz -- rendering fov may be different becuase of r_waterwarp
+
 float	r_world_matrix[16];
 float	r_base_world_matrix[16];
 
@@ -159,6 +161,7 @@ cvar_t	gl_decal_explosions = {"gl_decal_explosions", "0"};
 
 extern cvar_t r_waterquality;
 extern cvar_t r_oldwater;
+extern cvar_t r_waterwarp;
 
 int		lightmode = 2;
 
@@ -3159,18 +3162,18 @@ int SignbitsForPlane (mplane_t *out)
 	return bits;
 }
 
-void R_SetFrustum (void)
+void R_SetFrustum (float fovx, float fovy)
 {
 	int	i;
 
 	// rotate VPN right by FOV_X/2 degrees
-	RotatePointAroundVector (frustum[0].normal, vup, vpn, -(90 - r_refdef.fov_x / 2));
+	RotatePointAroundVector (frustum[0].normal, vup, vpn, -(90 - fovx / 2));
 	// rotate VPN left by FOV_X/2 degrees
-	RotatePointAroundVector (frustum[1].normal, vup, vpn, 90 - r_refdef.fov_x / 2);
+	RotatePointAroundVector (frustum[1].normal, vup, vpn, 90 - fovx / 2);
 	// rotate VPN up by FOV_X/2 degrees
-	RotatePointAroundVector (frustum[2].normal, vright, vpn, 90 - r_refdef.fov_y / 2);
+	RotatePointAroundVector (frustum[2].normal, vright, vpn, 90 - fovy / 2);
 	// rotate VPN down by FOV_X/2 degrees
-	RotatePointAroundVector (frustum[3].normal, vright, vpn, -(90 - r_refdef.fov_y / 2));
+	RotatePointAroundVector (frustum[3].normal, vright, vpn, -(90 - fovy / 2));
 
 	for (i = 0 ; i < 4 ; i++)
 	{
@@ -3244,7 +3247,22 @@ void R_SetupFrame (void)
 
 	r_cache_thrash = false;
 
-	R_SetFrustum();
+	//johnfitz -- calculate r_fovx and r_fovy here
+	r_fovx = r_refdef.fov_x;
+	r_fovy = r_refdef.fov_y;
+	if (r_waterwarp.value)
+	{
+		int contents = Mod_PointInLeaf(r_origin, cl.worldmodel)->contents;
+		if (contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA)
+		{
+			//variance is a percentage of width, where width = 2 * tan(fov / 2) otherwise the effect is too dramatic at high FOV and too subtle at low FOV.  what a mess!
+			r_fovx = atan(tan(DEG2RAD(r_refdef.fov_x) / 2) * (0.97 + sin(cl.time * 1.5) * 0.03)) * 2 / M_PI_DIV_180;
+			r_fovy = atan(tan(DEG2RAD(r_refdef.fov_y) / 2) * (1.03 - sin(cl.time * 1.5) * 0.03)) * 2 / M_PI_DIV_180;
+		}
+	}
+	//johnfitz
+
+	R_SetFrustum(r_fovx, r_fovy); //johnfitz -- use r_fov* vars
 
 	R_MarkSurfaces(); //johnfitz -- create texture chains from PVS
 
@@ -3268,13 +3286,27 @@ void MYgluPerspective (GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble 
 
 /*
 =============
+GL_SetFrustum -- johnfitz -- written to replace MYgluPerspective
+=============
+*/
+#define NEARCLIP 4
+void GL_SetFrustum(float fovx, float fovy)
+{
+	float xmax, ymax;
+	xmax = NEARCLIP * tan(fovx * M_PI / 360.0);
+	ymax = NEARCLIP * tan(fovy * M_PI / 360.0);
+	glFrustum(-xmax, xmax, -ymax, ymax, NEARCLIP, r_farclip.value);
+}
+
+/*
+=============
 R_SetupGL
 =============
 */
 void R_SetupGL (void)
 {
-	float	screenaspect, scale;
-	int		x, x2, y2, y, w, h, farclip;
+	float	scale;
+	int		x, x2, y2, y, w, h;
 
 	// set up viewpoint
 	glMatrixMode (GL_PROJECTION);
@@ -3290,9 +3322,7 @@ void R_SetupGL (void)
 
 	glViewport (glx + x, gly + y2, w * scale, h * scale);
 
-	screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
-	farclip = max((int)r_farclip.value, 4096);
-	MYgluPerspective (r_refdef.fov_y, screenaspect, 4, farclip);
+	GL_SetFrustum(r_fovx, r_fovy); //johnfitz -- use r_fov* vars
 
 	glCullFace (GL_FRONT);
 
@@ -3358,6 +3388,7 @@ void R_Init (void)
 	Cvar_Register (&r_scale);
 	Cvar_Register(&r_waterquality);
 	Cvar_Register(&r_oldwater);
+	Cvar_Register(&r_waterwarp);
 
 	Cvar_Register (&gl_finish);
 	Cvar_Register (&gl_clear);
