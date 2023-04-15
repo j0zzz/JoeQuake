@@ -46,9 +46,9 @@ typedef struct particle_s
 
 #endif
 
-#define DEFAULT_NUM_PARTICLES	2048
+#define DEFAULT_NUM_PARTICLES	16384
 #define ABSOLUTE_MIN_PARTICLES	512
-#define ABSOLUTE_MAX_PARTICLES	8192
+#define ABSOLUTE_MAX_PARTICLES	32768
 
 static	int	ramp1[8] = {0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61};
 static	int	ramp2[8] = {0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66};

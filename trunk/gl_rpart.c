@@ -21,8 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#define	DEFAULT_NUM_PARTICLES		4096
-#define	ABSOLUTE_MIN_PARTICLES		256
+#define	DEFAULT_NUM_PARTICLES		16384
+#define	ABSOLUTE_MIN_PARTICLES		512
 #define	ABSOLUTE_MAX_PARTICLES		32768
 
 typedef	byte	col_t[4];
