@@ -25,8 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static cvar_t ghost_delta = {"ghost_delta", "1", CVAR_ARCHIVE};
 static cvar_t ghost_range = {"ghost_range", "64", CVAR_ARCHIVE};
 static cvar_t ghost_alpha = {"ghost_alpha", "0.8", CVAR_ARCHIVE};
-static cvar_t ghost_marathon_split = {"ghost_marathon_split", "0",
-                                      CVAR_ARCHIVE};
+static cvar_t ghost_marathon_split = {"ghost_marathon_split", "0", CVAR_ARCHIVE};
+static cvar_t ghost_bar_x = { "ghost_bar_x", "0", CVAR_ARCHIVE };
+static cvar_t ghost_bar_y = { "ghost_bar_y", "-4", CVAR_ARCHIVE };
+static cvar_t ghost_bar_alpha = { "ghost_bar_alpha", "0.8", CVAR_ARCHIVE };
 
 
 static dzip_context_t ghost_dz_ctx;
@@ -361,7 +363,7 @@ static void
 Ghost_DrawSingleTime (int y, float relative_time, char *label)
 {
     int   x, size, bg_color, bar_color;
-    float scale, width;
+    float scale, width, alpha;
     char  st[10];
 
 	scale = Sbar_GetScaleAmount();
@@ -374,14 +376,11 @@ Ghost_DrawSingleTime (int y, float relative_time, char *label)
     }
 
     bg_color = relative_time > 0 ? 251 : 10;
-    x = vid.width / 2 - (10 * size);
-    Draw_Fill (x, y - (int)(1 * scale), 160, 1, bg_color);
-    Draw_Fill (x, y + (int)(9 * scale), 160, 1, bg_color);
-    Draw_Fill (x + (int)(32 * scale), y - (int)(2 * scale), 1, 13, bg_color);
-    Draw_Fill (x + (int)(64 * scale), y - (int)(2 * scale), 1, 13, bg_color);
-    Draw_Fill (x + (int)(96 * scale), y - (int)(2 * scale), 1, 13, bg_color);
-    Draw_Fill (x + (int)(128 * scale), y - (int)(2 * scale), 1, 13, bg_color);
-    Draw_Fill (x, y, 160, 9, 52);
+    x = ((vid.width - (int)(160 * scale)) / 2) + (ghost_bar_x.value * size);
+    alpha = ghost_bar_alpha.value;
+    Draw_AlphaFill(x, y - (int)(1 * scale), 160, 1, bg_color, alpha);
+    Draw_AlphaFill(x, y + (int)(9 * scale), 160, 1, bg_color, alpha);
+    Draw_AlphaFill(x, y, 160, 9, 52, alpha);
 
     width = fabs(relative_time) * 160;
     if (width > 160) {
@@ -397,9 +396,9 @@ Ghost_DrawSingleTime (int y, float relative_time, char *label)
     }
 
     if (relative_time < 0) {
-        Draw_Fill (x + (160 - width) * scale, y, width, 9, bar_color);
+        Draw_AlphaFill(x + (160 - width) * scale, y, width, 9, bar_color, alpha);
     } else {
-        Draw_Fill (x, y, width, 9, bar_color);
+        Draw_AlphaFill(x, y, width, 9, bar_color, alpha);
     }
 
     Draw_String (x + (int)(7.5 * size) - (strlen(st) * size), y, st, true);
@@ -443,16 +442,11 @@ void Ghost_DrawGhostTime (qboolean intermission)
             relative_time += ghost_marathon_info.total_split;
         }
 
-        // Position just above the speedo.
-        if (scr_viewsize.value >= 120)
-            y = vid.height - (2 * size);
-        if (scr_viewsize.value < 120)
-            y = vid.height - (5 * size);
-        if (scr_viewsize.value < 110)
-            y = vid.height - (8 * size);
+        //joe: Position can be customized by the ghost_bar_y cvar
+        // By default, it is drawn just above the speedo
+        y = ELEMENT_Y_COORD(ghost_bar);
         if (cl.intermission)
             y = vid.height - (2 * size);
-        y -= 2 * size;
 
         Ghost_DrawSingleTime(y, relative_time, "");
     } else {
@@ -647,6 +641,9 @@ void Ghost_Init (void)
     Cvar_Register (&ghost_range);
     Cvar_Register (&ghost_alpha);
     Cvar_Register (&ghost_marathon_split);
+    Cvar_Register (&ghost_bar_x);
+    Cvar_Register (&ghost_bar_y);
+    Cvar_Register (&ghost_bar_alpha);
 }
 
 

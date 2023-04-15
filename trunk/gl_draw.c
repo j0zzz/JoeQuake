@@ -1403,29 +1403,46 @@ void Draw_TileClear (int x, int y, int w, int h)
 
 /*
 =============
+Draw_AlphaFill
+
+Fills a box of pixels with a transparent color
+=============
+*/
+void Draw_AlphaFill(int x, int y, int w, int h, int c, float alpha)
+{
+	float	sbar_scale;
+	byte*	pal = (byte*)d_8to24table; //johnfitz -- use d_8to24table instead of host_basepal
+
+	sbar_scale = Sbar_GetScaleAmount();
+
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND); //johnfitz -- for alpha
+	glDisable(GL_ALPHA_TEST); //johnfitz -- for alpha
+	glColor4f(pal[c * 4] / 255.0, pal[c * 4 + 1] / 255.0, pal[c * 4 + 2] / 255.0, alpha); //johnfitz -- added alpha
+
+	glBegin(GL_QUADS);
+	glVertex2f(x, y);
+	glVertex2f(x + (int)(w * sbar_scale), y);
+	glVertex2f(x + (int)(w * sbar_scale), y + (int)(h * sbar_scale));
+	glVertex2f(x, y + (int)(h * sbar_scale));
+	glEnd();
+
+	glDisable(GL_BLEND); //johnfitz -- for alpha
+	glEnable(GL_ALPHA_TEST); //johnfitz -- for alpha
+	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
+}
+
+/*
+=============
 Draw_Fill
 
 Fills a box of pixels with a single color
 =============
 */
-void Draw_Fill (int x, int y, int w, int h, int c)
+void Draw_Fill(int x, int y, int w, int h, int c)
 {
-	float	sbar_scale;
-
-	sbar_scale = Sbar_GetScaleAmount();
-
-	glDisable (GL_TEXTURE_2D);
-	glColor3f (host_basepal[c*3] / 255.0, host_basepal[c*3+1] / 255.0, host_basepal[c*3+2] / 255.0);
-
-	glBegin (GL_QUADS);
-	glVertex2f (x, y);
-	glVertex2f (x + (int)(w * sbar_scale), y);
-	glVertex2f (x + (int)(w * sbar_scale), y + (int)(h * sbar_scale));
-	glVertex2f (x, y + (int)(h * sbar_scale));
-	glEnd ();
-
-	glEnable (GL_TEXTURE_2D);
-	glColor3ubv (color_white);
+	Draw_AlphaFill(x, y, w, h, c, 255.0);
 }
 
 //=============================================================================

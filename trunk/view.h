@@ -56,6 +56,17 @@ extern	byte	current_pal[768];
 extern	cvar_t	lcd_x, lcd_yaw;
 #endif
 
+int _view_temp_int;
+float _view_temp_float;
+
+#define	ELEMENT_X_COORD(var)	\
+(_view_temp_int = Sbar_GetScaledCharacterSize(),\
+((var##_x.value < 0) ? vid.width - strlen(str) * _view_temp_int + _view_temp_int * var##_x.value : _view_temp_int * var##_x.value))
+
+#define	ELEMENT_Y_COORD(var)	\
+(_view_temp_int = Sbar_GetScaledCharacterSize(), _view_temp_float = Sbar_GetScaleAmount(),\
+((var##_y.value < 0) ? vid.height - (int)(sb_lines * _view_temp_float) + _view_temp_int * var##_y.value : _view_temp_int * var##_y.value))
+
 void V_Init (void);
 void V_RenderView (void);
 

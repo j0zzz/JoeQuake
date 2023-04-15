@@ -45,6 +45,9 @@ cvar_t	scr_clock_x = {"cl_clock_x", "0"};
 cvar_t	scr_clock_y = {"cl_clock_y", "-1"};
 
 cvar_t	show_speed = {"show_speed", "0"};
+cvar_t  show_speed_x = { "show_speed_x", "0" }; 
+cvar_t  show_speed_y = { "show_speed_y", "-2" };
+cvar_t  show_speed_alpha = { "show_speed_alpha", "0.8" };
 /*
 CRASH FORT
 
@@ -1143,17 +1146,6 @@ void V_CalcRefdef (void)
 		Chase_Update ();
 }
 
-int _view_temp_int;
-float _view_temp_float;
-
-#define	ELEMENT_X_COORD(var)	\
-(_view_temp_int = Sbar_GetScaledCharacterSize(),\
-((var##_x.value < 0) ? vid.width - strlen(str) * _view_temp_int + _view_temp_int * var##_x.value : _view_temp_int * var##_x.value))
-
-#define	ELEMENT_Y_COORD(var)	\
-(_view_temp_int = Sbar_GetScaledCharacterSize(), _view_temp_float = Sbar_GetScaleAmount(),\
-((var##_y.value < 0) ? vid.height - (int)(sb_lines * _view_temp_float) + _view_temp_int * var##_y.value : _view_temp_int * var##_y.value))
-
 char *LocalTime (char *format)
 {
 	time_t	t;
@@ -1233,7 +1225,7 @@ void SCR_DrawSpeed (void)
 {
 	int		x, y, size;
 	char		st[8];
-	float		speed, vspeed, speedunits, scale;
+	float		speed, vspeed, speedunits, scale, alpha;
 	vec3_t		vel;
 	static	float	maxspeed = 0, display_speed = -1;
 	static	double	lastrealtime = 0;
@@ -1263,36 +1255,24 @@ void SCR_DrawSpeed (void)
 	{
 		sprintf (st, "%3d", (int)display_speed);
 
-		x = vid.width / 2 - (10 * size);
+		x = ((vid.width - (int)(160 * scale)) / 2) + (show_speed_x.value * size);
+		y = ELEMENT_Y_COORD(show_speed);
+		alpha = show_speed_alpha.value;
+		Draw_AlphaFill(x, y - (int)(1 * scale), 160, 1, 10, alpha);
+		Draw_AlphaFill(x, y + (int)(9 * scale), 160, 1, 10, alpha);
 
-		if (scr_viewsize.value >= 120)
-			y = vid.height - (2 * size);
-
-		if (scr_viewsize.value < 120)
-			y = vid.height - (5 * size);
-
-		if (scr_viewsize.value < 110)
-			y = vid.height - (8 * size);
-
-		Draw_Fill (x, y - (int)(1 * scale), 160, 1, 10);
-		Draw_Fill (x, y + (int)(9 * scale), 160, 1, 10);
-		Draw_Fill (x + (int)(32 * scale), y - (int)(2 * scale), 1, 13, 10);
-		Draw_Fill (x + (int)(64 * scale), y - (int)(2 * scale), 1, 13, 10);
-		Draw_Fill (x + (int)(96 * scale), y - (int)(2 * scale), 1, 13, 10);
-		Draw_Fill (x + (int)(128 * scale), y - (int)(2 * scale), 1, 13, 10);
-
-		Draw_Fill (x, y, 160, 9, 52);
+		Draw_AlphaFill(x, y, 160, 9, 52, alpha);
 
 		speedunits = display_speed;
 		if (display_speed <= 500)
 		{
-			Draw_Fill (x, y, (int)(display_speed / 3.125), 9, 100);
+			Draw_AlphaFill(x, y, (int)(display_speed / 3.125), 9, 100, alpha);
 		}
 		else 
 		{   
 			while (speedunits > 500)
 				speedunits -= 500;
-			Draw_Fill (x, y, (int)(speedunits / 3.125), 9, 68);
+			Draw_AlphaFill(x, y, (int)(speedunits / 3.125), 9, 68, alpha);
 		}
 		Draw_String (x + (int)(4.5 * size) - (strlen(st) * size), y, st, true);
 	}
@@ -1583,7 +1563,10 @@ void V_Init (void)
 	Cvar_Register (&scr_clock_x);
 	Cvar_Register (&scr_clock_y);
 
-	Cvar_Register (&show_speed);
+	Cvar_Register(&show_speed);
+	Cvar_Register(&show_speed_x);
+	Cvar_Register(&show_speed_y);
+	Cvar_Register(&show_speed_alpha);
 	/*
 	CRASH FORT
 	*/
