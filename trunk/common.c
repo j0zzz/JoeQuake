@@ -1885,6 +1885,9 @@ void COM_SetGameDir (char *dir)
 		search->next = com_searchpaths;
 		com_searchpaths = search;               
 	}
+
+	// initializing demodir
+	Q_snprintfz(demodir, sizeof(demodir), "/%s", com_gamedirname);
 }
 
 /*
