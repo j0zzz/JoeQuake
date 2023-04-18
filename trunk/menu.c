@@ -6279,10 +6279,10 @@ void M_Demos_Draw (void)
 	char *ghost_demo_path_short;
 
 	// Current directory
-	M_Print (16, 0, demodir);
+	M_Print (16, 16, demodir);
 
 	// The file list itself
-	M_List_Draw ("DEMOS", 8);
+	M_List_Draw ("DEMOS", 24);
 
 	// Current ghost
 	if (ghost_demo_path[0] != '\0') {
