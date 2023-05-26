@@ -1416,6 +1416,7 @@ void R_SetupLighting (entity_t *ent)
 		// joe: only allow colorlight affection if dynamic lights are on
 			if (r_dynamic.value)
 			{
+				shadelight += add;
 				VectorCopy (bubblecolor[cl_dlights[lnum].type], dlight_color);
 				for (i = 0 ; i < 3 ; i++)
 				{
@@ -1442,10 +1443,7 @@ void R_SetupLighting (entity_t *ent)
 					}
 				}
 			}
-			else
-			{
-				ambientlight += add;
-			}
+			ambientlight += add;
 		}
 	}
 
