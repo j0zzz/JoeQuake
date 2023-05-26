@@ -30,7 +30,6 @@ static	float	speedscale, speedscale2;	// for top sky and bottom sky
 static	msurface_t *warpface;
 
 qboolean	r_skyboxloaded;
-int			skybox_image_width, skybox_image_height;
 float		skyfog; // ericw 
 
 int			gl_warpimagesize;
@@ -54,6 +53,14 @@ float	turbsin_water[] =
 
 static	int		skytexorder[6] = { 0, 2, 1, 3, 4, 5 };
 static	char	*skybox_ext[6] = { "rt", "bk", "lf", "ft", "up", "dn" };
+
+typedef struct
+{
+	int		skybox_width;
+	int		skybox_height;
+} skybox_size_t;
+
+skybox_size_t skybox_images[6];
 
 #define	MAX_CLIP_VERTS	64
 
@@ -818,11 +825,12 @@ int R_SetSky(char *skyname)
 			return 1;
 		}
 
+		skybox_images[i].skybox_width = image_width;
+		skybox_images[i].skybox_height = image_height;
+
 		if (i == 0)
 			skyboxtextures = texnum;
 	}
-	skybox_image_width = image_width;
-	skybox_image_height = image_height;
 	r_skyboxloaded = true;
 
 	return 0;
@@ -852,12 +860,11 @@ Sky_SetBoxVert
 void Sky_SetBoxVert(float s, float t, int axis, vec3_t v)
 {
 	vec3_t		b;
-	int			j, k, farclip;
+	int			j, k;
 
-	farclip = max((int)r_farclip.value, 4096);
-	b[0] = s * farclip / sqrt(3.0);
-	b[1] = t * farclip / sqrt(3.0);
-	b[2] = farclip / sqrt(3.0);
+	b[0] = s * r_farclip.value / sqrt(3.0);
+	b[1] = t * r_farclip.value / sqrt(3.0);
+	b[2] = r_farclip.value / sqrt(3.0);
 
 	for (j = 0; j<3; j++)
 	{
@@ -884,8 +891,8 @@ void Sky_EmitSkyBoxVertex(float s, float t, int axis)
 	t = (t + 1)*0.5;
 
 	// avoid bilerp seam
-	w = skybox_image_width;
-	h = skybox_image_height;
+	w = skybox_images[skytexorder[axis]].skybox_width;
+	h = skybox_images[skytexorder[axis]].skybox_height;
 	s = s * (w - 1) / w + 0.5 / w;
 	t = t * (h - 1) / h + 0.5 / h;
 
