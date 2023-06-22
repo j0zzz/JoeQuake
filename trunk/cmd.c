@@ -1267,24 +1267,14 @@ end:
 	RDFlags = 0;
 }
 
-qboolean CheckRealBSP (char *bspname)
+qboolean CheckRealBSP (char *bspname, int bsplength)
 {
-	if (!strcmp(bspname, "b_batt0.bsp") ||
-	    !strcmp(bspname, "b_batt1.bsp") ||
-	    !strcmp(bspname, "b_bh10.bsp") ||
-	    !strcmp(bspname, "b_bh100.bsp") ||
-	    !strcmp(bspname, "b_bh25.bsp") ||
-	    !strcmp(bspname, "b_explob.bsp") ||
-	    !strcmp(bspname, "b_nail0.bsp") ||
-	    !strcmp(bspname, "b_nail1.bsp") ||
-	    !strcmp(bspname, "b_rock0.bsp") ||
-	    !strcmp(bspname, "b_rock1.bsp") ||
-	    !strcmp(bspname, "b_shell0.bsp") ||
-	    !strcmp(bspname, "b_shell1.bsp") ||
-	    !strcmp(bspname, "b_exbox2.bsp"))
-		return false;
+	if (bsplength > 32 * 1024 &&			// don't list files under 32k (ammo boxes etc)
+		!strncmp(bspname, "maps/", 5) &&	// don't list files outside of maps/
+		!strchr(bspname + 5, '/'))			// don't list files in subdirectories
+		return true;
 
-	return true;
+	return false;
 }
 
 int	pak_files = 0;
@@ -1298,7 +1288,7 @@ Search for files inside a PAK file
 */
 void FindFilesInPak (char *the_arg)
 {
-	int		i;
+	int		i, l;
 	searchpath_t	*search;
 	pack_t		*pak;
 	char		*myarg;
@@ -1316,6 +1306,7 @@ void FindFilesInPak (char *the_arg)
 			for (i=0 ; i<pak->numfiles ; i++)
 			{
 				s = pak->files[i].name;
+				l = pak->files[i].filelen;
 				Q_strncpyz (ext, COM_FileExtension(s), sizeof(ext));
 				Q_strncpyz (ext2, COM_FileExtension(myarg), sizeof(ext2));
 				extlen = strlen(ext2);
@@ -1327,7 +1318,7 @@ void FindFilesInPak (char *the_arg)
 						compare_length2 = compare_length;
 
 					SLASHJMP(p, s);
-					if (!Q_strcasecmp(ext, "bsp") && !CheckRealBSP(p))
+					if (!Q_strcasecmp(ext, "bsp") && !CheckRealBSP(s, l))
 						continue;
 					if (!Q_strncasecmp(s, the_arg, compare_length) ||
 					    (*myarg == '*' && !Q_strncasecmp(s, the_arg, compare_length2)))
@@ -1340,7 +1331,7 @@ void FindFilesInPak (char *the_arg)
 						if (CheckEntryName(filename))
 							continue;
 
-						AddNewEntry_unsorted (filename, 0, pak->files[i].filelen);
+						AddNewEntry_unsorted (filename, 0, l);
 						pak_files++;
 					}
 				}
