@@ -1776,35 +1776,20 @@ void R_DrawBrushModel (entity_t *ent)
 {
 	int			i, k;
 	float		dot;
-	vec3_t		mins, maxs;
 	msurface_t	*psurf;
 	mplane_t	*pplane;
 	model_t		*clmodel = ent->model;
-	qboolean	rotated;
 	extern cvar_t gl_zfix; // QuakeSpasm z-fighting fix
 
 	currenttexture = -1;
 
-	if (ent->angles[0] || ent->angles[1] || ent->angles[2])
-	{
-		rotated = true;
-		if (R_CullSphere(ent->origin, clmodel->radius))
-			return;
-	}
-	else
-	{
-		rotated = false;
-		VectorAdd (ent->origin, clmodel->mins, mins);
-		VectorAdd (ent->origin, clmodel->maxs, maxs);
-
-		if (R_CullBox(mins, maxs))
-			return;
-	}
+	if (R_CullModelForEntity(ent))
+		return;
 
 	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
 
 	VectorSubtract (r_refdef.vieworg, ent->origin, modelorg);
-	if (rotated)
+	if (ent->angles[0] || ent->angles[1] || ent->angles[2])
 	{
 		vec3_t	temp, forward, right, up;
 

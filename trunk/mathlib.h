@@ -31,6 +31,10 @@ typedef	int	fixed16_t;
 #define M_PI	3.14159265358979323846	// matches value in gcc v2 math.h
 #endif
 
+#ifndef FLT_MAX
+#define FLT_MAX	3.402823466e+38F
+#endif
+
 struct mplane_s;
 
 #define M_PI_DIV_180	(M_PI / 180.0) //johnfitz

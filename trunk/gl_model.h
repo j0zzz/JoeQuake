@@ -535,7 +535,9 @@ typedef struct model_s
 
 // volume occupied by the model graphics
 	vec3_t		mins, maxs;
-	float		radius;
+	vec3_t		ymins, ymaxs; //johnfitz -- bounds for entities with nonzero yaw
+	vec3_t		rmins, rmaxs; //johnfitz -- bounds for entities with nonzero pitch or roll
+	float		radius;		//joe: only used for quake3 models now
 
 // solid volume for clipping
 	qboolean	clipbox;

@@ -310,10 +310,11 @@ Returns true if the box is completely outside the frustum
 */
 qboolean R_CullBox (vec3_t emins, vec3_t emaxs)
 {
-	int i;
+	int		i;
 	mplane_t *p;
-	byte signbits;
-	float vec[3];
+	byte	signbits;
+	float	vec[3];
+
 	for (i = 0; i < 4; i++)
 	{
 		p = frustum + i;
@@ -344,6 +345,47 @@ qboolean R_CullSphere (vec3_t centre, float radius)
 			return true;
 
 	return false;
+}
+
+/*
+===============
+R_CullModelForEntity -- johnfitz -- uses correct bounds based on rotation
+===============
+*/
+qboolean R_CullModelForEntity(entity_t *e)
+{
+	vec3_t	mins, maxs;
+	vec_t	scalefactor, *minbounds, *maxbounds;
+
+	if (e->angles[0] || e->angles[2]) //pitch or roll
+	{
+		minbounds = e->model->rmins;
+		maxbounds = e->model->rmaxs;
+	}
+	else if (e->angles[1]) //yaw
+	{
+		minbounds = e->model->ymins;
+		maxbounds = e->model->ymaxs;
+	}
+	else //no rotation
+	{
+		minbounds = e->model->mins;
+		maxbounds = e->model->maxs;
+	}
+
+	scalefactor = ENTSCALE_DECODE(e->scale);
+	if (scalefactor != 1.0f)
+	{
+		VectorMA(e->origin, scalefactor, minbounds, mins);
+		VectorMA(e->origin, scalefactor, maxbounds, maxs);
+	}
+	else
+	{
+		VectorAdd(e->origin, minbounds, mins);
+		VectorAdd(e->origin, maxbounds, maxs);
+	}
+
+	return R_CullBox(mins, maxs);
 }
 
 /*
@@ -1572,25 +1614,16 @@ R_DrawAliasModel
 void R_DrawAliasModel (entity_t *ent)
 {
 	int			i, anim, skinnum, distance, texture, fb_texture;
-	vec3_t		mins, maxs;
+	vec3_t		mins;
 	aliashdr_t	*paliashdr;
 	model_t		*clmodel = ent->model;
 	qboolean	islumaskin, alphatest = !!(ent->model->flags & MF_HOLEY);
 	float		scalefactor = 1.0f;
 
-	VectorAdd (ent->origin, clmodel->mins, mins);
-	VectorAdd (ent->origin, clmodel->maxs, maxs);
+	VectorAdd (ent->origin, clmodel->mins, mins);	//joe: used only for shadows now
 
-	if (ent->angles[0] || ent->angles[1] || ent->angles[2])
-	{
-		if (R_CullSphere(ent->origin, clmodel->radius))
-			return;
-	}
-	else
-	{
-		if (R_CullBox(mins, maxs))
-			return;
-	}
+	if (R_CullModelForEntity(ent))
+		return;
 
 	VectorCopy (ent->origin, r_entorigin);
 	VectorSubtract (r_origin, r_entorigin, modelorg);

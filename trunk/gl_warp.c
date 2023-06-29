@@ -728,8 +728,8 @@ void Sky_ProcessEntities(void)
 		if (ent->model->type != mod_brush)
 			continue;
 
-		//if (R_CullModelForEntity(ent))
-		//	continue;
+		if (R_CullModelForEntity(ent))
+			continue;
 
 		if (ent->transparency == 0)
 			continue;
