@@ -1775,7 +1775,7 @@ R_DrawBrushModel
 void R_DrawBrushModel (entity_t *ent)
 {
 	int			i, k;
-	float		dot;
+	float		dot, scalefactor = 1.0f;
 	msurface_t	*psurf;
 	mplane_t	*pplane;
 	model_t		*clmodel = ent->model;
@@ -1823,6 +1823,11 @@ void R_DrawBrushModel (entity_t *ent)
 	glRotatef(ent->angles[1], 0, 0, 1);
 	glRotatef(ent->angles[0], 0, 1, 0);
 	glRotatef(ent->angles[2], 1, 0, 0);
+	scalefactor = ENTSCALE_DECODE(ent->scale);
+	if (scalefactor != 1.0f)
+	{
+		glScalef(scalefactor, scalefactor, scalefactor);
+	}
 	if (gl_zfix.value)
 	{
 		ent->origin[0] += DIST_EPSILON;

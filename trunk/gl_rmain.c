@@ -555,6 +555,7 @@ void R_DrawSpriteModel (entity_t *ent)
 	vec3_t		point, right, up;
 	mspriteframe_t	*frame;
 	msprite_t	*psprite;
+	float		scale = ENTSCALE_DECODE(ent->scale);
 
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache
@@ -590,23 +591,23 @@ void R_DrawSpriteModel (entity_t *ent)
 	glBegin (GL_QUADS);
 
 	glTexCoord2f (0, 1);
-	VectorMA (ent->origin, frame->down, up, point);
-	VectorMA (point, frame->left, right, point);
+	VectorMA (ent->origin, frame->down * scale, up, point);
+	VectorMA (point, frame->left * scale, right, point);
 	glVertex3fv (point);
 
 	glTexCoord2f (0, 0);
-	VectorMA (ent->origin, frame->up, up, point);
-	VectorMA (point, frame->left, right, point);
+	VectorMA (ent->origin, frame->up * scale, up, point);
+	VectorMA (point, frame->left * scale, right, point);
 	glVertex3fv (point);
 
 	glTexCoord2f (1, 0);
-	VectorMA (ent->origin, frame->up, up, point);
-	VectorMA (point, frame->right, right, point);
+	VectorMA (ent->origin, frame->up * scale, up, point);
+	VectorMA (point, frame->right * scale, right, point);
 	glVertex3fv (point);
 
 	glTexCoord2f (1, 1);
-	VectorMA (ent->origin, frame->down, up, point);
-	VectorMA (point, frame->right, right, point);
+	VectorMA (ent->origin, frame->down * scale, up, point);
+	VectorMA (point, frame->right * scale, right, point);
 	glVertex3fv (point);
 	
 	glEnd ();
