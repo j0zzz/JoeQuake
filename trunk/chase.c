@@ -39,6 +39,8 @@ void Chase_Init (void)
 	Cvar_Register (&cl_thirdperson_up);
 	Cvar_Register (&cl_thirdperson_right);
 	Cvar_Register (&cl_thirdperson);
+
+	Cmd_AddLegacyCommand("chase_active", "cl_thirdperson");
 }
 
 void TraceLine (vec3_t start, vec3_t end, vec3_t impact)
