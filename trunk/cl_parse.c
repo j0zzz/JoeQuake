@@ -193,6 +193,7 @@ entity_t *CL_EntityNum (int num)
 		{
 			cl_entities[cl.num_entities].colormap = vid.colormap;
 			cl_entities[cl.num_entities].lerpflags |= LERP_RESETMOVE | LERP_RESETANIM; //johnfitz
+			cl_entities[cl.num_entities].baseline.scale = ENTSCALE_DEFAULT;
 			cl.num_entities++;
 		}
 	}
@@ -731,6 +732,7 @@ void CL_ParseUpdate (int bits)
 		{
 			ent->transparency = 1;
 		}
+		ent->scale = ent->baseline.scale;
 #endif
 	}
 
@@ -755,7 +757,9 @@ void CL_ParseUpdate (int bits)
 		else
 			ent->transparency = ENTALPHA_DECODE(ent->baseline.alpha);
 		if (bits & U_SCALE)
-			MSG_ReadByte(); // PROTOCOL_RMQ: currently ignored
+			ent->scale = MSG_ReadByte();
+		else
+			ent->scale = ent->baseline.scale;
 		if (bits & U_FRAME2)
 			ent->frame = (ent->frame & 0x00FF) | (MSG_ReadByte() << 8);
 		if (bits & U_MODEL2)
@@ -820,6 +824,7 @@ void CL_ParseBaseline (entity_t *ent, int version) //johnfitz -- added argument
 	}
 
 	ent->baseline.alpha = (bits & B_ALPHA) ? MSG_ReadByte() : ENTALPHA_DEFAULT; //johnfitz -- PROTOCOL_FITZQUAKE
+	ent->baseline.scale = (bits & B_SCALE) ? MSG_ReadByte() : ENTSCALE_DEFAULT;
 }
 
 extern	float	cl_ideal_punchangle;
@@ -1033,6 +1038,7 @@ void CL_ParseStatic (int version) //johnfitz -- added a parameter
 	ent->skinnum = ent->baseline.skin;
 	ent->effects = ent->baseline.effects;
 	ent->transparency = ENTALPHA_DECODE(ent->baseline.alpha); //johnfitz -- alpha 
+	ent->scale = ent->baseline.scale;
 
 	VectorCopy (ent->baseline.origin, ent->origin);
 	VectorCopy (ent->baseline.angles, ent->angles);

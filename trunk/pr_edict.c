@@ -72,7 +72,7 @@ int	eval_ammo_lava_nails, eval_ammo_rockets1, eval_ammo_multi_rockets;
 int	eval_ammo_cells1, eval_ammo_plasma;
 
 // nehahra specific
-int	eval_alpha, eval_fullbright, eval_idealpitch, eval_pitch_speed;
+int	eval_alpha, eval_scale, eval_fullbright, eval_idealpitch, eval_pitch_speed;
 
 ddef_t *ED_FindField (char *name);
 
@@ -98,7 +98,8 @@ void FindEdictFieldOffsets (void)
 	eval_ammo_cells1 = FindFieldOffset ("ammo_cells1");
 	eval_ammo_plasma = FindFieldOffset ("ammo_plasma");
 
-	eval_alpha = FindFieldOffset ("alpha");
+	eval_alpha = FindFieldOffset("alpha");
+	eval_scale = FindFieldOffset ("scale");
 	eval_fullbright = FindFieldOffset ("fullbright");
 	eval_idealpitch = FindFieldOffset ("idealpitch");
 	eval_pitch_speed = FindFieldOffset ("pitch_speed");
@@ -151,6 +152,7 @@ edict_t *ED_Alloc (void)
 	sv.num_edicts++;
 	e = EDICT_NUM(i);
 	memset(e, 0, pr_edict_size); // ericw -- switched sv.edicts to malloc(), so we are accessing uninitialized memory and must fully zero it, not just ED_ClearEdict 
+	e->baseline.scale = ENTSCALE_DEFAULT;
 
 	return e;
 }
@@ -179,6 +181,7 @@ void ED_Free (edict_t *ed)
 	ed->v.nextthink = -1;
 	ed->v.solid = 0;
 	ed->alpha = ENTALPHA_DEFAULT; //johnfitz -- reset alpha for next entity 
+	ed->scale = ENTSCALE_DEFAULT;
 
 	ed->freetime = sv.time;
 }
@@ -943,6 +946,10 @@ void SwitchToHigherProtocolVersionIfNeeded(edict_t *ent)
 		))
 	{
 		sv.protocol = PROTOCOL_FITZQUAKE;
+		if (ent->scale != ENTSCALE_DEFAULT)
+		{
+			sv.protocol = PROTOCOL_RMQ;
+		}
 	}
 }
 

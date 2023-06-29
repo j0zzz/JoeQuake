@@ -80,6 +80,7 @@ typedef struct entity_s
 	qboolean noshadow;
 
 	// interpolation
+	byte	scale;
 	byte	lerpflags;			//johnfitz -- lerping
 	float	frame_start_time;
 	float	frame_finish_time;	//johnfitz -- lerping -- server sent us a more accurate interval, use it instead of 0.1

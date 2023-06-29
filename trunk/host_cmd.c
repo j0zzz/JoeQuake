@@ -686,6 +686,7 @@ void Host_Loadgame_f (void)
 			}
 			else if (entnum < sv.max_edicts) {
 				memset (ent, 0, pr_edict_size);
+				ent->baseline.scale = ENTSCALE_DEFAULT;
 			}
 			else {
 				Host_Error ("Loadgame: no free edicts (max_edicts is %i)", sv.max_edicts);

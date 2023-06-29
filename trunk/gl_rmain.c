@@ -1576,6 +1576,7 @@ void R_DrawAliasModel (entity_t *ent)
 	aliashdr_t	*paliashdr;
 	model_t		*clmodel = ent->model;
 	qboolean	islumaskin, alphatest = !!(ent->model->flags & MF_HOLEY);
+	float		scalefactor = 1.0f;
 
 	VectorAdd (ent->origin, clmodel->mins, mins);
 	VectorAdd (ent->origin, clmodel->maxs, maxs);
@@ -1614,6 +1615,12 @@ void R_DrawAliasModel (entity_t *ent)
 		R_RotateForViewEntity (ent);
 	else
 		R_RotateForEntity (ent, false);
+
+	scalefactor = ENTSCALE_DECODE(ent->scale);
+	if (scalefactor != 1.0f)
+	{
+		glScalef(scalefactor, scalefactor, scalefactor);
+	}
 
 	if (clmodel->modhint == MOD_EYES && gl_doubleeyes.value)
 	{
@@ -2629,6 +2636,7 @@ void R_DrawQ3Model (entity_t *ent)
 {
 	vec3_t		mins, maxs, md3_scale_origin = {0, 0, 0};
 	model_t		*clmodel = ent->model;
+	float		scalefactor = 1.0f;
 
 	if (clmodel->modhint == MOD_Q3TELEPORT)
 		ent->origin[2] -= 30;
@@ -2665,6 +2673,12 @@ void R_DrawQ3Model (entity_t *ent)
 		R_RotateForViewEntity (ent);
 	else
 		R_RotateForEntity (ent, false);
+
+	scalefactor = ENTSCALE_DECODE(ent->scale);
+	if (scalefactor != 1.0f)
+	{
+		glScalef(scalefactor, scalefactor, scalefactor);
+	}
 
 	if (ent == &cl.viewent)
 	{

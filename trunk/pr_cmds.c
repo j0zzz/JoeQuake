@@ -1624,6 +1624,7 @@ void PF_makestatic (void)
 {
 	int		i, bits = 0; //johnfitz -- PROTOCOL_FITZQUAKE
 	edict_t	*ent;
+	eval_t	*val;
 
 	ent = G_EDICT(OFS_PARM0);
 
@@ -1646,6 +1647,15 @@ void PF_makestatic (void)
 		bits |= B_LARGEFRAME;
 	if (ent->alpha != ENTALPHA_DEFAULT)
 		bits |= B_ALPHA;
+
+	val = GETEDICTFIELDVALUE(ent, eval_scale);
+	if (val)
+		ent->scale = ENTSCALE_ENCODE(val->_float);
+	else
+		ent->scale = ENTSCALE_DEFAULT;
+
+	if (ent->scale != ENTSCALE_DEFAULT)
+		bits |= B_SCALE;
 
 	if (bits)
 	{
@@ -1678,6 +1688,9 @@ void PF_makestatic (void)
 	if (bits & B_ALPHA)
 		MSG_WriteByte(&sv.signon, ent->alpha);
 	//johnfitz
+
+	if (bits & B_SCALE)
+		MSG_WriteByte(&sv.signon, ent->scale);
 
 // throw the entity away now
 	ED_Free (ent);

@@ -42,6 +42,7 @@ typedef struct edict_s
 
 	entity_state_t	baseline;
 	unsigned char	alpha;		/* johnfitz -- hack to support alpha since it's not part of entvars_t */
+	unsigned char	scale;
 	qboolean	sendinterval;	/* johnfitz -- send time until nextthink to client for better lerp timing */
 
 	float		freetime;		// sv.time when the object was freed
@@ -57,7 +58,7 @@ extern	int	eval_ammo_lava_nails, eval_ammo_rockets1, eval_ammo_multi_rockets;
 extern	int	eval_ammo_cells1, eval_ammo_plasma;
 
 // nehahra specific
-extern	int	eval_alpha, eval_fullbright, eval_idealpitch, eval_pitch_speed;
+extern	int	eval_alpha, eval_scale, eval_fullbright, eval_idealpitch, eval_pitch_speed;
 
 //============================================================================
 
