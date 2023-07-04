@@ -1280,6 +1280,7 @@ void CL_CopyEntity (entity_t *dst, entity_t *src, int modelindex)
 	dst->traildrawn = src->traildrawn;
 	dst->noshadow = src->noshadow;
 
+	dst->scale = src->scale;
 	dst->transparency = src->transparency;
 	dst->smokepuff_time = src->smokepuff_time;
 }
