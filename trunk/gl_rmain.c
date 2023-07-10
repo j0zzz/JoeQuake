@@ -103,7 +103,7 @@ cvar_t	r_drawflame = {"r_drawflame", "1"};
 qboolean OnChange_r_noshadow_list(cvar_t *var, char *string);
 cvar_t	r_noshadow_list = { "r_noshadow_list", "", 0, OnChange_r_noshadow_list };
 
-cvar_t	r_farclip = {"r_farclip", "16384"};
+cvar_t	r_farclip = {"r_farclip", "65536"};
 qboolean OnChange_r_skybox (cvar_t *var, char *string);
 cvar_t	r_skybox = {"r_skybox", "", 0, OnChange_r_skybox };
 qboolean OnChange_r_skyfog(cvar_t *var, char *string);

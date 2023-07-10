@@ -4160,7 +4160,7 @@ qboolean M_Sound_Mouse_Event(const mouse_state_t *ms)
 
 #ifdef GLQUAKE
 
-#define	VIEW_ITEMS	15
+#define	VIEW_ITEMS	14
 
 int	view_cursor = 0;
 
@@ -4169,7 +4169,6 @@ menu_window_t view_slider_viewsize_window;
 menu_window_t view_slider_gamma_window;
 menu_window_t view_slider_contrast_window;
 menu_window_t view_slider_fov_window;
-menu_window_t view_slider_farclip_window;
 
 void M_Menu_View_f (void)
 {
@@ -4177,9 +4176,6 @@ void M_Menu_View_f (void)
 	m_state = m_view;
 	m_entersound = true;
 }
-
-#define	FARCLIP_ITEMS	6
-float farclip_values[] = { 1024, 2048, 4096, 8192, 16384, 32768 };
 
 void M_View_Draw (void)
 {
@@ -4211,17 +4207,12 @@ void M_View_Draw (void)
 	M_Print_GetPoint(16, 72, &lx, &ly, "        Widescreen fov", view_cursor == 5);
 	M_DrawCheckbox(220, 72, scr_widescreen_fov.value);
 
-	M_Print_GetPoint(16, 80, &lx, &ly, "         View distance", view_cursor == 6);
-	//r = (r_farclip.value - farclip_values[0]) / (farclip_values[FARCLIP_ITEMS-1] - farclip_values[0]);
-	r = (float)FindSliderItemIndex(farclip_values, FARCLIP_ITEMS, &r_farclip) / (FARCLIP_ITEMS - 1);
-	M_DrawSliderInt(220, 80, r, r_farclip.value, &view_slider_farclip_window);
+	M_Print_GetPoint(16, 80, &lx, &ly, "             Solid sky", view_cursor == 6);
+	M_DrawCheckbox(220, 80, r_fastsky.value);
 
-	M_Print_GetPoint(16, 88, &lx, &ly, "             Solid sky", view_cursor == 7);
-	M_DrawCheckbox(220, 88, r_fastsky.value);
-
-	M_Print_GetPoint(16, 96, &lx, &ly, "       Solid sky color", view_cursor == 8);
+	M_Print_GetPoint(16, 88, &lx, &ly, "       Solid sky color", view_cursor == 7);
 	x = 220 + ((menuwidth - 320) >> 1);
-	y = 96 + m_yofs;
+	y = 88 + m_yofs;
 	col = StringToRGB(r_skycolor.string);
 	glDisable(GL_TEXTURE_2D);
 	glColor3ubv(col);
@@ -4234,23 +4225,23 @@ void M_View_Draw (void)
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
 
-	M_Print_GetPoint(16, 104, &lx, &ly, "          Powerup glow", view_cursor == 9);
-	M_DrawCheckbox(220, 104, r_powerupglow.value);
+	M_Print_GetPoint(16, 96, &lx, &ly, "          Powerup glow", view_cursor == 8);
+	M_DrawCheckbox(220, 96, r_powerupglow.value);
 
-	M_Print_GetPoint(16, 112, &lx, &ly, "        Show player id", view_cursor == 10);
-	M_DrawCheckbox(220, 112, scr_autoid.value);
+	M_Print_GetPoint(16, 104, &lx, &ly, "        Show player id", view_cursor == 9);
+	M_DrawCheckbox(220, 104, scr_autoid.value);
 
-	M_Print_GetPoint(16, 120, &lx, &ly, "      Fullbright skins", view_cursor == 11);
-	M_Print(220, 120, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
+	M_Print_GetPoint(16, 112, &lx, &ly, "      Fullbright skins", view_cursor == 10);
+	M_Print(220, 112, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
 
-	M_Print_GetPoint(16, 128, &lx, &ly, "Rotating items bobbing", view_cursor == 12);
-	M_DrawCheckbox(220, 128, cl_bobbing.value);
+	M_Print_GetPoint(16, 120, &lx, &ly, "Rotating items bobbing", view_cursor == 11);
+	M_DrawCheckbox(220, 120, cl_bobbing.value);
 
-	M_Print_GetPoint(16, 136, &lx, &ly, "      Hide dead bodies", view_cursor == 13);
-	M_DrawCheckbox(220, 136, cl_deadbodyfilter.value);
+	M_Print_GetPoint(16, 128, &lx, &ly, "      Hide dead bodies", view_cursor == 12);
+	M_DrawCheckbox(220, 128, cl_deadbodyfilter.value);
 
-	M_Print_GetPoint(16, 144, &lx, &ly, "             Hide gibs", view_cursor == 14);
-	M_DrawCheckbox(220, 144, cl_gibfilter.value);
+	M_Print_GetPoint(16, 136, &lx, &ly, "             Hide gibs", view_cursor == 13);
+	M_DrawCheckbox(220, 136, cl_gibfilter.value);
 
 	view_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	view_window.h = ly - view_window.y + 8;
@@ -4262,7 +4253,7 @@ void M_View_Draw (void)
 	// cursor
 	M_DrawCharacter (200, 32 + view_cursor * 8, 12+((int)(realtime*4)&1));
 
-	if (view_cursor == 10)
+	if (view_cursor == 9)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Shows the player's name on top");
@@ -4298,10 +4289,6 @@ void M_View_KeyboardSlider(int dir)
 		scr_fov.value += dir * 5;
 		scr_fov.value = bound(90, scr_fov.value, 130);
 		Cvar_SetValue(&scr_fov, scr_fov.value);
-		break;
-
-	case 6:// view distance
-		AdjustSliderBasedOnArrayOfValues(dir, farclip_values, FARCLIP_ITEMS, &r_farclip);
 		break;
 	}
 }
@@ -4362,38 +4349,38 @@ void M_View_Key (int k)
 			Cvar_SetValue(&scr_widescreen_fov, !scr_widescreen_fov.value);
 			break;
 
-		case 7:
+		case 6:
 			Cvar_SetValue(&r_fastsky, !r_fastsky.value);
 			break;
 
-		case 8:
+		case 7:
 			M_Menu_Sky_ColorChooser_f();
 			break;
 
-		case 9:
+		case 8:
 			Cvar_SetValue(&r_powerupglow, !r_powerupglow.value);
 			break;
 
-		case 10:
+		case 9:
 			Cvar_SetValue(&scr_autoid, !scr_autoid.value);
 			break;
 
-		case 11:
+		case 10:
 			newvalue = r_fullbrightskins.value + 1;
 			if (newvalue > 2)
 				newvalue = 0;
 			Cvar_SetValue(&r_fullbrightskins, newvalue);
 			break;
 
-		case 12:
+		case 11:
 			Cvar_SetValue(&cl_bobbing, !cl_bobbing.value);
 			break;
 
-		case 13:
+		case 12:
 			Cvar_SetValue(&cl_deadbodyfilter, !cl_deadbodyfilter.value);
 			break;
 
-		case 14:
+		case 13:
 			Cvar_SetValue(&cl_gibfilter, !cl_gibfilter.value);
 			break;
 
@@ -4442,11 +4429,6 @@ void M_View_MouseSlider(int k, const mouse_state_t *ms)
 			M_Mouse_Select_Column(&view_slider_fov_window, ms, 9, &slider_pos);
 			scr_fov.value = bound(90, (slider_pos * 5) + 90, 130);
 			Cvar_SetValue(&scr_fov, scr_fov.value);
-			break;
-
-		case 6:// view distance
-			M_Mouse_Select_Column(&view_slider_farclip_window, ms, FARCLIP_ITEMS, &slider_pos);
-			Cvar_SetValue(&r_farclip, farclip_values[slider_pos]);
 			break;
 
 		default:
