@@ -1093,6 +1093,16 @@ static qboolean CheckEntryName (char *ename)
 	return false;
 }
 
+qboolean CheckRealBSP(char* bspname, int bsplength)
+{
+	if (bsplength > 32 * 1024 &&			// don't list files under 32k (ammo boxes etc)
+		!strncmp(bspname, "maps/", 5) &&	// don't list files outside of maps/
+		!strchr(bspname + 5, '/'))			// don't list files in subdirectories
+		return true;
+
+	return false;
+}
+
 #define SLASHJMP(x, y)	(x = !(x = strrchr(y, '/')) ? y : x + 1)
 
 /*
@@ -1173,6 +1183,9 @@ void ReadDir (char *path, char *the_arg)
 
 			fdtype = 0;
 			fdsize = fd.nFileSizeLow;
+			if (!Q_strcasecmp(ext, "bsp") && !CheckRealBSP(fd.cFileName, fdsize))
+				continue;
+
 			if (Q_strcasecmp(ext, "dz") && RDFlags & (RD_STRIPEXT | RD_MENU_DEMOS))
 			{
 				COM_StripExtension (fd.cFileName, filename);
@@ -1265,16 +1278,6 @@ void ReadDir (char *path, char *the_arg)
 
 end:
 	RDFlags = 0;
-}
-
-qboolean CheckRealBSP (char *bspname, int bsplength)
-{
-	if (bsplength > 32 * 1024 &&			// don't list files under 32k (ammo boxes etc)
-		!strncmp(bspname, "maps/", 5) &&	// don't list files outside of maps/
-		!strchr(bspname + 5, '/'))			// don't list files in subdirectories
-		return true;
-
-	return false;
 }
 
 int	pak_files = 0;
