@@ -8543,6 +8543,12 @@ void M_Draw (void)
 		break;
 
 	case m_quit:
+		if (!cl_confirmquit.value)
+		{
+			key_dest = key_console;
+			Host_Quit();
+			return;
+		}
 		M_Quit_Draw ();
 		break;
 
