@@ -2542,7 +2542,12 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 		mod->modhint = MOD_EYES;
 	else if (!strcmp(mod->name, "progs/flame0.mdl") ||
 		 !strcmp(mod->name, "progs/flame.mdl") ||
-		 !strcmp(mod->name, "progs/flame2.mdl"))
+		 !strcmp(mod->name, "progs/flame2.mdl") ||
+		 !strcmp(mod->name, "progs/misc_flame_big.mdl") ||	//
+		 !strcmp(mod->name, "progs/misc_flame_med.mdl") ||	//
+		 !strcmp(mod->name, "progs/misc_longtrch.mdl") ||	// AD flames, torches
+		 !strcmp(mod->name, "progs/misc_braztall.mdl") ||	//
+		 !strcmp(mod->name, "progs/misc_brazshrt.mdl"))		//
 		mod->modhint = MOD_FLAME;
 	else if (!strcmp(mod->name, "progs/bolt.mdl") ||
 		 !strcmp(mod->name, "progs/bolt2.mdl") ||
