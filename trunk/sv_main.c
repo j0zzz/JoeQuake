@@ -34,6 +34,8 @@ int			sv_protocol = PROTOCOL_NETQUAKE;
 
 extern qboolean	pr_alpha_supported; //johnfitz 
 
+vec3_t		sv_velocity;	//joe: for more accurate player speed value
+
 //============================================================================
 
 /*
@@ -961,6 +963,9 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 	if (bits & SU_WEAPONALPHA)
 		MSG_WriteByte(msg, ent->alpha); //for now, weaponalpha = client entity alpha
 	//johnfitz
+
+	//joe: for more accurate player speed value
+	VectorCopy(ent->v.velocity, sv_velocity);
 }
 
 /*

@@ -1228,6 +1228,7 @@ void SCR_DrawSpeed (void)
 	char		st[8];
 	float		speed, vspeed, speedunits, scale, alpha;
 	vec3_t		vel;
+	extern	vec3_t	sv_velocity;
 	static	float	maxspeed = 0, display_speed = -1;
 	static	double	lastrealtime = 0;
 
@@ -1241,7 +1242,7 @@ void SCR_DrawSpeed (void)
 		maxspeed = 0;
 	}
 
-	VectorCopy (cl.velocity, vel);
+	VectorCopy (sv_velocity, vel);
 	vspeed = vel[2];
 	vel[2] = 0;
 	speed = VectorLength (vel);
