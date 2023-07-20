@@ -48,6 +48,7 @@ typedef struct {
 
 typedef struct {
     char client_names[GHOST_MAX_CLIENTS][MAX_SCOREBOARDNAME];
+    byte client_colors[GHOST_MAX_CLIENTS];
     float finish_time;
     ghostrec_t *records;
     int num_records;

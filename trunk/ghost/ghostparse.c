@@ -108,6 +108,7 @@ typedef struct {
     int baseline_model;
 
     char (*client_names)[MAX_SCOREBOARDNAME];
+    byte *client_colors;
     float finish_time;
     char next_demo_path[MAX_OSPATH];
     int model_indices[GHOST_MODEL_COUNT];
@@ -340,6 +341,24 @@ Ghost_StuffText_cb (const char *string, void *ctx)
 }
 
 
+static dp_cb_response_t
+Ghost_UpdateColors_cb(byte client_num, byte colors, void* ctx)
+{
+    ghost_parse_ctx_t *pctx = ctx;
+
+    if (!pctx->map_found) {
+        // Still scanning for map, so skip to next packet.
+        return DP_CBR_SKIP_PACKET;
+    }
+
+    if (client_num >= 0 && client_num < GHOST_MAX_CLIENTS) {
+        pctx->client_colors[client_num] = colors;
+    }
+
+    return DP_CBR_CONTINUE;
+}
+
+
 static qboolean
 Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
                        const char *expected_map_name,
@@ -362,12 +381,14 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
         .cut_scene = Ghost_Intermission_cb,
         .update_name = Ghost_UpdateName_cb,
         .stuff_text = Ghost_StuffText_cb,
+        .update_colors = Ghost_UpdateColors_cb,
     };
     ghost_parse_ctx_t pctx = {
         .view_entity = -1,
         .next_ptr = &list,
         .expected_map_name = expected_map_name,
         .client_names = ghost_info->client_names,
+        .client_colors = ghost_info->client_colors,
         .finish_time = -1,
         .model_indices = {0},
     };

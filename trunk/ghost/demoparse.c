@@ -749,6 +749,19 @@ DP_ParseStuffText(ctx_t *ctx)
 
 
 static dp_err_t
+DP_UpdateColors(ctx_t* ctx)
+{
+    byte client_num, colors;
+
+    CHECK_RC(DP_ParseByte(ctx, &client_num));   // entity
+    CHECK_RC(DP_ParseByte(ctx, &colors));       // colors
+    CALL_CALLBACK(update_colors, client_num, colors);
+
+    return DP_ERR_SUCCESS;
+}
+
+
+static dp_err_t
 DP_ParseMessage(ctx_t *ctx)
 {
     byte cmd;
@@ -812,8 +825,7 @@ DP_ParseMessage(ctx_t *ctx)
                 CHECK_RC(DP_ParseShort(ctx, NULL));   // frags
                 break;
             case svc_updatecolors:
-                CHECK_RC(DP_ParseByte(ctx, NULL));    // entity
-                CHECK_RC(DP_ParseByte(ctx, NULL));    // colors
+                CHECK_RC(DP_UpdateColors(ctx));
                 break;
             case svc_particle:
                 CHECK_RC(DP_ParseCoords(ctx, NULL));  // origin

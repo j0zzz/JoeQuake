@@ -80,6 +80,7 @@ typedef struct {
     dp_cb_response_t (*update_name)(int client_num, const char *name,
                                     void *ctx);
     dp_cb_response_t (*stuff_text)(const char *string, void *ctx);
+    dp_cb_response_t (*update_colors)(byte client_num, byte colors, void* ctx);
 } dp_callbacks_t;
 
 

@@ -204,7 +204,7 @@ void Ghost_Load (const char *map_name)
     Con_Printf("Ghost player(s): ");
     for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
         if (ghost_info.client_names[i][0] != '\0') {
-            Con_Printf(" %s ", ghost_info.client_names[i]);
+            Con_Printf(" %s (color: %i) ", ghost_info.client_names[i], ghost_info.client_colors[i]);
         }
     }
     Con_Printf("\n");
@@ -218,10 +218,11 @@ void Ghost_Load (const char *map_name)
     ghost_entity = (entity_t *)Hunk_AllocName(sizeof(entity_t),
                                               "ghost_entity");
 
-	ghost_entity->skinnum = 0;
+    ghost_entity->skinnum = 0;
     ghost_entity->modelindex = -1;
     ghost_entity->translate_start_time = 0.0f;
     ghost_entity->frame_start_time = 0.0f;
+    ghost_entity->scale = ENTSCALE_DEFAULT;
 
     ghost_shift = 0.0f;
     ghost_last_relative_time = 0.0f;
