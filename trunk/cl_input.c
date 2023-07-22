@@ -260,6 +260,9 @@ cvar_t	m_forward = {"m_forward", "1", CVAR_ARCHIVE};
 cvar_t	m_side = {"m_side", "0.8", CVAR_ARCHIVE};
 cvar_t	m_accel = { "m_accel", "0", CVAR_ARCHIVE };
 
+cvar_t	cl_maxpitch = { "cl_maxpitch", "80", CVAR_ARCHIVE }; //johnfitz -- variable pitch clamping
+cvar_t	cl_minpitch = { "cl_minpitch", "-70", CVAR_ARCHIVE }; //johnfitz -- variable pitch clamping
+
 qboolean OnChange_freelook (cvar_t *var, char *string)
 {   
 	if (!string[0])
@@ -306,7 +309,7 @@ void CL_AdjustAngles (void)
 	if (up || down)
 		V_StopPitchDrift ();
 
-	cl.viewangles[PITCH] = bound (-70, cl.viewangles[PITCH], 80);
+	cl.viewangles[PITCH] = bound (cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
 	cl.viewangles[ROLL] = bound (-50, cl.viewangles[ROLL], 50);		
 }
 
@@ -516,6 +519,9 @@ void CL_InitInput (void)
 	Cvar_Register (&m_forward);
 	Cvar_Register (&m_side);
 	Cvar_Register (&m_accel);
+
+	Cvar_Register(&cl_minpitch);
+	Cvar_Register(&cl_maxpitch);
 
 	Cvar_Register (&cl_smartjump);
 	Cvar_Register (&cl_lag);

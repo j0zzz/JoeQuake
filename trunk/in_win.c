@@ -106,6 +106,9 @@ cvar_t	joy_yawsensitivity = {"joyyawsensitivity", "-1.0"};
 cvar_t	joy_wwhack1 = {"joywwhack1", "0.0"};
 cvar_t	joy_wwhack2 = {"joywwhack2", "0.0"};
 
+extern cvar_t cl_maxpitch; //johnfitz -- variable pitch clamping
+extern cvar_t cl_minpitch; //johnfitz -- variable pitch clamping
+
 qboolean	joy_avail, joy_advancedinit, joy_haspov;
 DWORD		joy_oldbuttonstate, joy_oldpovstate;
 
@@ -1134,7 +1137,7 @@ void IN_MouseMove (usercmd_t *cmd)
 		if (mlook_active && !(in_strafe.state & 1))
 		{
 			cl.viewangles[PITCH] += m_pitch.value * mouse_y;
-			cl.viewangles[PITCH] = bound(-70, cl.viewangles[PITCH], 80);
+			cl.viewangles[PITCH] = bound(cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
 		}
 		else
 		{
@@ -1592,7 +1595,7 @@ void IN_JoyMove (usercmd_t *cmd)
 	}
 
 	// bounds check pitch
-	cl.viewangles[PITCH] = bound(-70, cl.viewangles[PITCH], 80);
+	cl.viewangles[PITCH] = bound(cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
 }
 
 //==========================================================================
