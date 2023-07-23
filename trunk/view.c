@@ -1250,7 +1250,10 @@ void SCR_DrawSpeed (void)
 		maxspeed = 0;
 	}
 
-	VectorCopy (sv_velocity, vel);
+	if (cls.demoplayback)
+		VectorCopy(cl.velocity, vel);
+	else
+		VectorCopy (sv_velocity, vel);
 	vspeed = vel[2];
 	vel[2] = 0;
 	speed = VectorLength (vel);
