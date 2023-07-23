@@ -1090,6 +1090,8 @@ void V_CalcRefdef (void)
 	vec3_t		forward;
 	float		bob;
 	extern cvar_t r_drawviewmodel;
+	extern cvar_t cl_maxpitch;
+	extern cvar_t cl_minpitch;
 
 	V_DriftPitch ();
 
@@ -1145,6 +1147,12 @@ void V_CalcRefdef (void)
 
 	if (cl_thirdperson.value)
 		Chase_Update ();
+
+// bound minpitch/maxpitch
+	if (cl_minpitch.value < -90)
+		Cvar_SetValue(&cl_minpitch, -90);
+	if (cl_maxpitch.value > 90)
+		Cvar_SetValue(&cl_maxpitch, 90);
 }
 
 char *LocalTime (char *format)
