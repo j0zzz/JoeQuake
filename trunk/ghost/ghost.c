@@ -33,7 +33,7 @@ static cvar_t ghost_bar_alpha = { "ghost_bar_alpha", "0.8", CVAR_ARCHIVE };
 
 static dzip_context_t ghost_dz_ctx;
 char                ghost_demo_path[MAX_OSPATH] = "";
-static ghostrec_t  *ghost_records = NULL;
+static ghostrec_t   *ghost_records = NULL;
 static int          ghost_num_records = 0;
 entity_t			*ghost_entity = NULL;
 static float        ghost_shift = 0.0f;
@@ -60,6 +60,8 @@ typedef struct {
     int num_levels;
 } ghost_marathon_info_t;
 static ghost_marathon_info_t ghost_marathon_info;
+
+ghost_color_info_t ghost_color_info[GHOST_MAX_CLIENTS];
 
 
 // This could be done more intelligently, no doubt.
@@ -168,6 +170,8 @@ Ghost_OpenDemoOrDzip (const char *demo_path)
 }
 
 
+static qboolean first_update;
+
 extern char *GetPrintedTime(double time);   // Maybe put the definition somewhere central?
 void Ghost_Load (const char *map_name)
 {
@@ -204,8 +208,9 @@ void Ghost_Load (const char *map_name)
     Con_Printf("Ghost player(s): ");
     for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
         if (ghost_info.client_names[i][0] != '\0') {
-            Con_Printf(" %s (color: %i) ", ghost_info.client_names[i], ghost_info.client_colors[i]);
+            Con_Printf(" %s ", ghost_info.client_names[i]);
         }
+        ghost_color_info[i].colors = ghost_info.client_colors[i];
     }
     Con_Printf("\n");
 
@@ -230,6 +235,8 @@ void Ghost_Load (const char *map_name)
         ghost_marathon_info.total_split = 0.0f;
         ghost_marathon_info.num_levels = 0;
     }
+
+    first_update = true;
 }
 
 
@@ -294,7 +301,7 @@ static qboolean Ghost_Update (void)
     ghostrec_t *rec_after;
     float frac;
     qboolean ghost_show;
-    int i;
+    int i, clientnum = 0;   // supporting only 1 ghost (yet)
 
     ghost_show = (after_idx != -1);
 
@@ -309,10 +316,14 @@ static qboolean Ghost_Update (void)
                 ghost_show = true;
                 ghost_entity->model = Mod_ForName((char *)ghost_model_paths[i],
                                                   false);
-                ghost_entity->colormap =
-                    i == GHOST_MODEL_PLAYER
-                    ? cl_entities[cl.viewentity].colormap
-                    : vid.colormap;
+                if (first_update) {
+                    CL_NewTranslation(clientnum, true);
+                    first_update = false;
+                }
+                if (i == GHOST_MODEL_PLAYER)
+                    ghost_entity->colormap = ghost_color_info[clientnum].translations;
+                else
+                    ghost_entity->colormap = vid.colormap;  // eyes, head
             }
         }
     }

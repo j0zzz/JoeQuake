@@ -161,6 +161,7 @@ extern	int	currenttexture;
 extern	int	particletexture;
 extern	int	particletexture2;
 extern	int	playertextures;
+extern	int	ghosttextures;
 extern	int	skyboxtextures;
 extern	int	underwatertexture, detailtexture;
 extern	int	damagetexture;

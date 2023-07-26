@@ -695,7 +695,7 @@ void CL_ParseUpdate (int bits)
 	{
 		ent->skinnum = skin;
 		if (num > 0 && num <= cl.maxclients)
-			R_TranslatePlayerSkin (num - 1);
+			R_TranslatePlayerSkin (num - 1, false);
 	}
 #else
 	ent->skinnum = (bits & U_SKIN) ? MSG_ReadByte() : ent->baseline.skin;
@@ -785,7 +785,7 @@ void CL_ParseUpdate (int bits)
 			forcelink = true;	// hack to make null model players work
 #ifdef GLQUAKE
 		if (num > 0 && num <= cl.maxclients)
-			R_TranslatePlayerSkin(num - 1);
+			R_TranslatePlayerSkin(num - 1, false);
 #endif
 		ent->lerpflags |= LERP_RESETANIM; //johnfitz -- don't lerp animation across model changes
 	}
@@ -980,7 +980,7 @@ void CL_ParseClientdata ()
 CL_NewTranslation
 =====================
 */
-void CL_NewTranslation (int slot)
+void CL_NewTranslation (int slot, qboolean ghost)
 {
 	int	i, j, top, bottom;
 	byte	*dest, *source;
@@ -988,14 +988,24 @@ void CL_NewTranslation (int slot)
 	if (slot > cl.maxclients)
 		Host_Error ("CL_NewTranslation: slot > cl.maxclients");
 
-	dest = cl.scores[slot].translations;
 	source = vid.colormap;
-	memcpy (dest, vid.colormap, sizeof(cl.scores[slot].translations));
-	top = cl.scores[slot].colors & 0xf0;
-	bottom = (cl.scores[slot].colors & 15) << 4;
+	if (ghost)
+	{
+		dest = ghost_color_info[slot].translations;
+		memcpy(dest, vid.colormap, sizeof(ghost_color_info[slot].translations));
+		top = ghost_color_info[slot].colors & 0xf0;
+		bottom = (ghost_color_info[slot].colors & 15) << 4;
+	}
+	else
+	{
+		dest = cl.scores[slot].translations;
+		memcpy(dest, vid.colormap, sizeof(cl.scores[slot].translations));
+		top = cl.scores[slot].colors & 0xf0;
+		bottom = (cl.scores[slot].colors & 15) << 4;
+	}
 
 #ifdef GLQUAKE
-	R_TranslatePlayerSkin (slot);
+	R_TranslatePlayerSkin (slot, ghost);
 #endif
 
 	for (i = 0 ; i < VID_GRADES ; i++, dest += 256, source += 256)
@@ -1398,7 +1408,7 @@ void CL_ParseServerMessage (void)
 			if (i >= cl.maxclients)
 				Host_Error ("CL_ParseServerMessage: svc_updatecolors > MAX_SCOREBOARD");
 			cl.scores[i].colors = MSG_ReadByte ();
-			CL_NewTranslation (i);
+			CL_NewTranslation (i, false);
 			break;
 
 		case svc_particle:

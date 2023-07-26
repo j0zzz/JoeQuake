@@ -384,7 +384,7 @@ int CL_DemoIntermissionState (int old_state, int new_state);
 
 // cl_parse.c
 void CL_ParseServerMessage (void);
-void CL_NewTranslation (int slot);
+void CL_NewTranslation (int slot, qboolean ghost);
 void CL_InitModelnames (void);
 void CL_SignonReply (void);
 
@@ -449,5 +449,6 @@ void DZip_Cleanup(dzip_context_t *ctx);
 dlighttype_t SetDlightColor (float f, dlighttype_t def, qboolean random);
 #endif
 
-void R_TranslatePlayerSkin (int playernum);
+void R_TranslatePlayerSkin (int playernum, qboolean ghost);
 extern	int	player_fb_skins[MAX_SCOREBOARD];
+extern	int	ghost_fb_skins[MAX_SCOREBOARD];

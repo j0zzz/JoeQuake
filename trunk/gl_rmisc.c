@@ -78,6 +78,21 @@ void R_InitTextures (void)
 }
 
 int	player_fb_skins[MAX_SCOREBOARD];
+int	ghost_fb_skins[MAX_SCOREBOARD];
+
+void BindFullbrightSkin(int playernum, qboolean ghost)
+{
+	if (ghost)
+	{
+		ghost_fb_skins[playernum] = ghosttextures + playernum + MAX_SCOREBOARD;
+		GL_Bind(ghost_fb_skins[playernum]);
+	}
+	else
+	{
+		player_fb_skins[playernum] = playertextures + playernum + MAX_SCOREBOARD;
+		GL_Bind(player_fb_skins[playernum]);
+	}
+}
 
 /*
 ===============
@@ -86,7 +101,7 @@ R_TranslatePlayerSkin
 Translates a skin texture by the per-player color lookup
 ===============
 */
-void R_TranslatePlayerSkin (int playernum)
+void R_TranslatePlayerSkin (int playernum, qboolean ghost)
 {
 	int			top, bottom, i, j, size, scaled_width, scaled_height, inwidth, inheight;
 	byte		translate[256], *original, *inrow;
@@ -97,8 +112,16 @@ void R_TranslatePlayerSkin (int playernum)
 
 	GL_DisableMultitexture ();
 
-	top = cl.scores[playernum].colors & 0xf0;
-	bottom = (cl.scores[playernum].colors & 15) << 4;
+	if (ghost)
+	{
+		top = ghost_color_info[playernum].colors & 0xf0;
+		bottom = (ghost_color_info[playernum].colors & 15) << 4;
+	}
+	else
+	{
+		top = cl.scores[playernum].colors & 0xf0;
+		bottom = (cl.scores[playernum].colors & 15) << 4;
+	}
 
 	for (i = 0 ; i < 256 ; i++)
 		translate[i] = i;
@@ -111,7 +134,7 @@ void R_TranslatePlayerSkin (int playernum)
 	}
 
 	// locate the original skin pixels
-	currententity = &cl_entities[1+playernum];
+	currententity = ghost ? ghost_entity : &cl_entities[1 + playernum];
 	if (!(model = currententity->model))
 		return;		// player doesn't have a model yet
 	if (model->type != mod_alias)
@@ -121,7 +144,7 @@ void R_TranslatePlayerSkin (int playernum)
 	size = paliashdr->skinwidth * paliashdr->skinheight;
 	if (currententity->skinnum < 0 || currententity->skinnum >= paliashdr->numskins)
 	{
-		Con_DPrintf ("(%d): Invalid player skin #%d\n", playernum, currententity->skinnum);
+		Con_DPrintf ("(%d): Invalid %s skin #%d\n", playernum, ghost ? "ghost" : "player", currententity->skinnum);
 		original = (byte *)paliashdr + paliashdr->texels[0];
 	}
 	else
@@ -137,7 +160,7 @@ void R_TranslatePlayerSkin (int playernum)
 
 	// because this happens during gameplay, do it fast
 	// instead of sending it through GL_Upload8
-	GL_Bind (playertextures + playernum);
+	GL_Bind((ghost ? ghosttextures : playertextures) + playernum);
 
 	// c'mon, it's 2006 already....
 	if (gl_lerptextures.value)
@@ -152,12 +175,14 @@ void R_TranslatePlayerSkin (int playernum)
 
 		GL_Upload8 (translated, inwidth, inheight, 0);
 
-		player_fb_skins[playernum] = 0;
+		if (ghost)
+			ghost_fb_skins[playernum] = 0;
+		else
+			player_fb_skins[playernum] = 0;
 		if (Img_HasFullbrights(original, inwidth * inheight))
 		{
-			player_fb_skins[playernum] = playertextures + playernum + MAX_SCOREBOARD;
+			BindFullbrightSkin(playernum, ghost);
 
-			GL_Bind (player_fb_skins[playernum]);
 			GL_Upload8 (translated, inwidth, inheight, TEX_FULLBRIGHT);
 		}
 
@@ -196,12 +221,13 @@ void R_TranslatePlayerSkin (int playernum)
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		player_fb_skins[playernum] = 0;
+		if (ghost)
+			ghost_fb_skins[playernum] = 0;
+		else
+			player_fb_skins[playernum] = 0;
 		if (Img_HasFullbrights(original, inwidth * inheight))
 		{
-			player_fb_skins[playernum] = playertextures + playernum + MAX_SCOREBOARD;
-
-			GL_Bind (player_fb_skins[playernum]);
+			BindFullbrightSkin(playernum, ghost);
 
 			out = pixels;
 			memset (pixels, 0, sizeof(pixels));

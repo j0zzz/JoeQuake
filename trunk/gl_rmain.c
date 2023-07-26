@@ -39,6 +39,7 @@ int		c_brush_polys, c_alias_polys, c_md3_polys;
 int		particletexture;	// little dot for particles
 int		particletexture2;	// little square for particles
 int		playertextures;		// up to 16 color translated skins
+int		ghosttextures;		// up to 16 color translated skins for the ghost entity
 int		skyboxtextures;
 int		underwatertexture, detailtexture;
 int		damagetexture;
@@ -1695,24 +1696,38 @@ void R_DrawAliasModel (entity_t *ent)
 	// seperately for the players. Heads are just uncolored.
 	if (ent->colormap != vid.colormap && !gl_nocolors.value)
 	{
-		extern entity_t	*ghost_entity;
+		extern int player_32bit_skins[14];
+		extern qboolean player_32bit_skins_loaded;
 
-		// imitate the same colors for the ghost model as the player
-		i = (ent == ghost_entity) ? 1 : ent - cl_entities;
-
-		if (i > 0 && i <= cl.maxclients)
+		if (ent == ghost_entity)
 		{
-			extern int player_32bit_skins[14];
-			extern qboolean player_32bit_skins_loaded;
+			i = 1;	// currently only supporting 1 ghost player
 
 			if (clmodel->modhint == MOD_PLAYER && player_32bit_skins_loaded && gl_externaltextures_models.value)
 			{
-				texture = player_32bit_skins[cl.scores[i-1].colors / 16];
+				texture = player_32bit_skins[ghost_color_info[i-1].colors / 16];
 			}
 			else
 			{
-				texture = playertextures - 1 + i;
-				fb_texture = player_fb_skins[i-1];
+				texture = ghosttextures - 1 + i;
+				fb_texture = ghost_fb_skins[i-1];
+			}
+		}
+		else
+		{
+			i = ent - cl_entities;
+
+			if (i > 0 && i <= cl.maxclients)
+			{
+				if (clmodel->modhint == MOD_PLAYER && player_32bit_skins_loaded && gl_externaltextures_models.value)
+				{
+					texture = player_32bit_skins[cl.scores[i-1].colors / 16];
+				}
+				else
+				{
+					texture = playertextures - 1 + i;
+					fb_texture = player_fb_skins[i-1];
+				}
 			}
 		}
 	}
@@ -3507,6 +3522,12 @@ void R_Init (void)
 
 	// fullbright skins
 	texture_extension_number += 16;
+
+	ghosttextures = texture_extension_number;
+	texture_extension_number += 16;
+
+	// fullbright skins for ghosts - in the future
+	//texture_extension_number += 16;
 }
 
 /*
