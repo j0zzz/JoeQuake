@@ -1050,7 +1050,7 @@ static void AddNewEntry (char *fname, int ftype, long fsize)
 	for (i=num_files ; i>pos ; i--)
 		filelist[i] = filelist[i-1];
 
-        filelist[i].name = Q_strdup (fname);
+    filelist[i].name = Q_strdup (fname);
 	filelist[i].type = ftype;
 	filelist[i].size = fsize;
 
@@ -1065,7 +1065,7 @@ static void AddNewEntry_unsorted (char *fname, int ftype, long fsize)
 	toLower (fname);
 	// else don't convert, linux is case sensitive
 #endif
-        filelist[num_files].name = Q_strdup (fname);
+    filelist[num_files].name = Q_strdup (fname);
 	filelist[num_files].type = ftype;
 	filelist[num_files].size = fsize;
 
@@ -1339,7 +1339,7 @@ void FindFilesInPak (char *the_arg)
 						if (CheckEntryName(filename))
 							continue;
 
-						AddNewEntry_unsorted (filename, 0, l);
+						AddNewEntry(filename, 0, l);
 						pak_files++;
 					}
 				}
