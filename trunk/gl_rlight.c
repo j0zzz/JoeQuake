@@ -263,13 +263,11 @@ loc0:
 		{
 			if (surf->dlightframe != r_dlightframecount)	// not dynamic until now
 			{
-				for (j = 0 ; j < MAX_DLIGHTS ; j += 8)
-					surf->dlightbits[(j >> 3)] = 0;
-
+				surf->dlightbits[lnum >> 5] = 1U << (lnum & 31);
 				surf->dlightframe = r_dlightframecount;
 			}
-
-			surf->dlightbits[(lnum >> 3)] |= (1 << (lnum & 7));
+			else // already dynamic
+				surf->dlightbits[lnum >> 5] |= 1U << (lnum & 31);
 		}
 	}
 

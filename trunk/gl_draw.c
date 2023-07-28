@@ -79,7 +79,7 @@ mpic_t	conback_data;
 mpic_t	*conback = &conback_data;
 
 int		gl_max_size_default;
-int		gl_lightmap_format = 3, gl_solid_format = 3, gl_alpha_format = 4;
+int		gl_lightmap_format, gl_solid_format = 3, gl_alpha_format = 4;
 
 static	int	gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 static	int	gl_filter_max = GL_LINEAR;
