@@ -34,23 +34,38 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quake.ico.h"
 
+
+#define MAX_MODE_LIST 600
 #define	WARP_WIDTH	320
 #define	WARP_HEIGHT	200
+#define WINDOW_TITLE_STRING "JoeQuake"
+#define DEFAULT_REFRESHRATE	60
 
-static SDL_Window* window = NULL;
+typedef struct
+{
+	int			width;
+	int			height;
+	int			bpp;
+	int			refreshrate;
+	qboolean	windowed;
+} vmode_t;
+
+static SDL_Window* draw_context = NULL;
 static SDL_GLContext* gl_context = NULL;
+vmode_t	modelist[MAX_MODE_LIST];
+int		nummodes;
+
 static qboolean	vid_initialized = false;
 double mouse_x, mouse_y;
 static double	mx, my, old_mouse_x, old_mouse_y;
-static qboolean fullscreen = false;
-static	int	scr_width, scr_height, scrnum;
 cvar_t	m_filter = {"m_filter", "0"};
 
 // Stubs that are used externally.
 qboolean vid_hwgamma_enabled = false;
 cvar_t	_windowed_mouse = {"_windowed_mouse", "1", 0};
 qboolean fullsbardraw = false;
-cvar_t	vid_mode = {"vid_mode", "0"};
+cvar_t vid_mode;
+qboolean gl_have_stencil = false;
 
 static int buttonremap[] =
 {
@@ -77,7 +92,6 @@ int GetCurrentFreq(void)
 int menu_bpp, menu_display_freq;
 cvar_t vid_vsync;
 float menu_vsync;
-qboolean gl_have_stencil = true;
 
 //===========================================
 
@@ -134,8 +148,8 @@ GL_BeginRendering
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
 	*x = *y = 0;
-	*width = scr_width;
-	*height = scr_height;
+	*width = vid.width;
+	*height = vid.height;
 }
 
 /*
@@ -145,9 +159,7 @@ GL_EndRendering
 */
 void GL_EndRendering (void)
 {
-	static qboolean old_hwgamma_enabled;
-
-	SDL_GL_SwapWindow(window);
+	SDL_GL_SwapWindow(draw_context);
 }
 
 void VID_Shutdown (void)
@@ -156,74 +168,298 @@ void VID_Shutdown (void)
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
+static SDL_DisplayMode *VID_SDL2_GetDisplayMode(int width, int height, int refreshrate)
+{
+	static SDL_DisplayMode mode;
+	const int sdlmodes = SDL_GetNumDisplayModes(0);
+	int i;
+
+	for (i = 0; i < sdlmodes; i++)
+	{
+		if (SDL_GetDisplayMode(0, i, &mode) != 0)
+			continue;
+
+		if (mode.w == width && mode.h == height
+			&& SDL_BITSPERPIXEL(mode.format) >= 24
+			&& mode.refresh_rate == refreshrate)
+		{
+			return &mode;
+		}
+	}
+	return NULL;
+}
+
+static int VID_GetCurrentWidth (void)
+{
+	int w = 0, h = 0;
+	SDL_GetWindowSize(draw_context, &w, &h);
+	return w;
+}
+
+static int VID_GetCurrentHeight (void)
+{
+	int w = 0, h = 0;
+	SDL_GetWindowSize(draw_context, &w, &h);
+	return h;
+}
+
+static int VID_GetCurrentBPP (void)
+{
+	const Uint32 pixelFormat = SDL_GetWindowPixelFormat(draw_context);
+	return SDL_BITSPERPIXEL(pixelFormat);
+}
+
+static int VID_GetCurrentRefreshRate (void)
+{
+	SDL_DisplayMode mode;
+	int current_display;
+
+	current_display = SDL_GetWindowDisplayIndex(draw_context);
+
+	if (0 != SDL_GetCurrentDisplayMode(current_display, &mode))
+		return DEFAULT_REFRESHRATE;
+
+	return mode.refresh_rate;
+}
+
+static qboolean VID_GetFullscreen (void)
+{
+	return (SDL_GetWindowFlags(draw_context) & SDL_WINDOW_FULLSCREEN) != 0;
+}
+
+static void ClearAllStates (void)
+{
+	int	i;
+	
+// send an up event for each key, to make sure the server clears them all
+	for (i=0 ; i<256 ; i++)
+		Key_Event (i, false);
+
+	Key_ClearStates ();
+	mx = my = old_mouse_x = old_mouse_y = 0.0;
+}
+
 extern void GL_Init (void);
+static qboolean SetMode (vmode_t *mode)
+{
+	int		temp;
+	Uint32	flags;
+	char		caption[50];
+	int		depthbits;
+	int		previous_display;
+
+	// so Con_Printfs don't mess us up by forcing vid and snd updates
+	temp = scr_disabled_for_loading;
+	scr_disabled_for_loading = true;
+
+	CDAudio_Pause ();
+	// TODO: Stop non-CD audio
+
+	/* z-buffer depth */
+	depthbits = 24;
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthbits);
+
+	snprintf(caption, sizeof(caption), "%s", WINDOW_TITLE_STRING);
+
+	/* Create the window if needed, hidden */
+	if (!draw_context)
+	{
+		flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
+		
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+		draw_context = SDL_CreateWindow (caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, mode->width, mode->height, flags);
+		if (!draw_context)
+			Sys_Error ("Couldn't create window");
+
+		SDL_SetWindowMinimumSize (draw_context, 320, 240);
+
+		previous_display = -1;
+	}
+	else
+	{
+		previous_display = SDL_GetWindowDisplayIndex(draw_context);
+	}
+
+	/* Ensure the window is not fullscreen */
+	if (VID_GetFullscreen ())
+	{
+		if (SDL_SetWindowFullscreen (draw_context, 0) != 0)
+			Sys_Error("Couldn't set fullscreen state mode");
+	}
+
+	/* Set window size and display mode */
+	SDL_SetWindowSize (draw_context, mode->width, mode->height);
+	if (previous_display >= 0)
+		SDL_SetWindowPosition (draw_context, SDL_WINDOWPOS_CENTERED_DISPLAY(previous_display), SDL_WINDOWPOS_CENTERED_DISPLAY(previous_display));
+	else
+		SDL_SetWindowPosition(draw_context, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+	SDL_SetWindowDisplayMode (draw_context, VID_SDL2_GetDisplayMode(mode->width, mode->height, mode->refreshrate));
+	SDL_SetWindowBordered (draw_context, SDL_TRUE);
+
+	/* Make window fullscreen if needed, and show the window */
+
+	if (!mode->windowed) {
+		if (SDL_SetWindowFullscreen (draw_context, SDL_WINDOW_FULLSCREEN) != 0)
+			Sys_Error ("Couldn't set fullscreen state mode");
+	}
+
+	SDL_ShowWindow (draw_context);
+	SDL_RaiseWindow (draw_context);
+
+	/* Create GL context if needed */
+	if (!gl_context) {
+		gl_context = SDL_GL_CreateContext(draw_context);
+		if (!gl_context)
+		{
+			SDL_GL_ResetAttributes();
+			Sys_Error("Couldn't create GL context");
+		}
+		GL_Init ();
+	}
+
+	vid.width = VID_GetCurrentWidth();
+	vid.height = VID_GetCurrentHeight();
+	vid.conwidth = vid.width & 0xFFFFFFF8;
+	vid.conheight = vid.conwidth * vid.height / vid.width;
+	vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+	vid.numpages = 2;
+	vid.recalc_refdef = 1;
+
+// read the obtained z-buffer depth
+	if (SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &depthbits) == -1)
+		depthbits = 0;
+
+	CDAudio_Resume ();
+	// TODO: Start non-CD audio
+	scr_disabled_for_loading = temp;
+
+// fix the leftover Alt from any Alt-Tab or the like that switched us away
+	ClearAllStates ();
+
+	Con_Printf ("Video mode: %dx%dx%d Z%d %dHz\n",
+				VID_GetCurrentWidth(),
+				VID_GetCurrentHeight(),
+				VID_GetCurrentBPP(),
+				depthbits,
+				VID_GetCurrentRefreshRate());
+}
+
+static void VID_Mode_f (void)
+{
+	vmode_t new_mode;
+
+	if (Cmd_Argc() != 6)
+	{
+		Con_Printf("Usage: vid_mode <width> <height> <bpp> <refreshrate> [fullscreen|windowed]\n");
+	}
+	else
+	{
+		new_mode.width = Q_atoi(Cmd_Argv(1));
+		new_mode.height = Q_atoi(Cmd_Argv(2));
+		new_mode.bpp = Q_atoi(Cmd_Argv(3));
+		new_mode.refreshrate = Q_atoi(Cmd_Argv(4));
+		new_mode.windowed = (strcmp(Cmd_Argv(5), "windowed") == 0);
+
+		SetMode(&new_mode);
+	}
+}
+
+static void VID_DescribeModes_f (void)
+{
+	int	i;
+	int	lastwidth, lastheight, lastbpp, count;
+
+	lastwidth = lastheight = lastbpp = count = 0;
+
+	for (i = 0; i < nummodes; i++)
+	{
+		if (lastwidth != modelist[i].width || lastheight != modelist[i].height || lastbpp != modelist[i].bpp)
+		{
+			if (count > 0)
+				Con_Printf ("\n");
+			Con_Printf ("% 3d: %4i x %4i x %i : %i", i, modelist[i].width, modelist[i].height, modelist[i].bpp, modelist[i].refreshrate);
+			lastwidth = modelist[i].width;
+			lastheight = modelist[i].height;
+			lastbpp = modelist[i].bpp;
+			count++;
+		}
+	}
+	Con_Printf ("\n%i modes\n", count);
+}
+
+static void VID_InitModelist (void)
+{
+	const int sdlmodes = SDL_GetNumDisplayModes(0);
+	int i;
+
+	nummodes = 0;
+	for (i = 0; i < sdlmodes; i++)
+	{
+		SDL_DisplayMode mode;
+
+		if (nummodes >= MAX_MODE_LIST)
+			break;
+		if (SDL_GetDisplayMode(0, i, &mode) == 0 && SDL_BITSPERPIXEL (mode.format) >= 24)
+		{
+			modelist[nummodes].width = mode.w;
+			modelist[nummodes].height = mode.h;
+			modelist[nummodes].bpp = SDL_BITSPERPIXEL(mode.format);
+			modelist[nummodes].refreshrate = mode.refresh_rate;
+			modelist[nummodes].windowed = false;
+			nummodes++;
+		}
+	}
+}
+
 void VID_Init (unsigned char *palette)
 {
-	int		i, width = 640, height = 480;
-	Uint32 flags;
+	vmode_t new_mode;
+	int		i;
 
-	Cvar_Register (&vid_mode);
 	Cvar_Register (&m_filter);
+
+	Cmd_AddCommand ("vid_mode", VID_Mode_f);
+	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
 	vid.colormap = host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 
-	if (COM_CheckParm("-fullscreen"))
-		fullscreen = true;
-
-	// set vid parameters
-    if ((i = COM_CheckParm("-width")) && i + 1 < com_argc)
-        width = Q_atoi(com_argv[i+1]);
-
-    if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
-        height = Q_atoi(com_argv[i+1]);
-
-    vid.conwidth = width;
-	vid.conheight = height;
-
 	if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
 		Sys_Error("Couldn't init SDL video: %s", SDL_GetError());
+	VID_InitModelist();
+	if (nummodes == 0)
+		Sys_Error("No valid modes");
+	// TODO: store mode in hidden cvar
+	memcpy(&new_mode, &modelist[0], sizeof(new_mode));
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+	if (COM_CheckParm("-fullscreen"))
+		new_mode.windowed = false;
+	if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
+		new_mode.windowed = true;
 
-	flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
-	if (fullscreen)
-		flags |=  SDL_WINDOW_FULLSCREEN_DESKTOP;
-	window = SDL_CreateWindow("JoeQuake", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
-	if (window == NULL)
-		Sys_Error ("Couldn't create window");
+	if ((i = COM_CheckParm("-width")) && i + 1 < com_argc)
+		new_mode.width = Q_atoi(com_argv[i+1]);
 
-	gl_context = SDL_GL_CreateContext(window);
-	if (gl_context == NULL)
-		Sys_Error("Couldn't create GL context");
+	if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
+		new_mode.height = Q_atoi(com_argv[i+1]);
+
+	if ((i = COM_CheckParm("-bpp")) && i + 1 < com_argc)
+		new_mode.bpp = Q_atoi(com_argv[i+1]);
+
+	if ((i = COM_CheckParm("-refreshrate")) && i + 1 < com_argc)
+		new_mode.refreshrate = Q_atoi(com_argv[i+1]);
+
+	SetMode(&new_mode);
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
-	scr_width = width;
-	scr_height = height;
-
-	if (vid.conheight > height)
-		vid.conheight = height;
-	if (vid.conwidth > width)
-		vid.conwidth = width;
-	vid.width = vid.conwidth;
-	vid.height = vid.conheight;
-
-	vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
-	vid.numpages = 2;
-
 	InitSig ();	// trap evil signals
-
-	GL_Init ();
 
 	VID_SetPalette (palette);
 
-	Con_Printf ("Video mode %dx%d initialized.\n", width, height);
-
-	vid.recalc_refdef = 1;			// force a surface cache flush
 	vid_initialized = true;
 }
 
