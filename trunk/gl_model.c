@@ -1050,8 +1050,8 @@ void CalcSurfaceExtents (msurface_t *s)
 	mvertex_t	*v;
 	mtexinfo_t	*tex;
 
-	mins[0] = mins[1] = 999999;
-	maxs[0] = maxs[1] = -999999;
+	mins[0] = mins[1] = FLT_MAX;
+	maxs[0] = maxs[1] = -FLT_MAX;
 
 	tex = s->texinfo;
 
@@ -1162,8 +1162,8 @@ void Mod_CalcSurfaceBounds(msurface_t *s)
 	int			i, e;
 	mvertex_t	*v;
 
-	s->mins[0] = s->mins[1] = s->mins[2] = 9999;
-	s->maxs[0] = s->maxs[1] = s->maxs[2] = -9999;
+	s->mins[0] = s->mins[1] = s->mins[2] = FLT_MAX;
+	s->maxs[0] = s->maxs[1] = s->maxs[2] = -FLT_MAX;
 
 	for (i = 0; i<s->numedges; i++)
 	{
