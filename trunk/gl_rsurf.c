@@ -433,10 +433,11 @@ store:
 					g = *bl++ >> 7;
 					b = *bl++ >> 7;
 				}
-				*dest++ = (r > 255) ? 255 : r;
-				*dest++ = (g > 255) ? 255 : g;
-				*dest++ = (b > 255) ? 255 : b;
-				*dest++ = 255;
+				r = (r > 1023) ? 1023 : r;
+				g = (g > 1023) ? 1023 : g;
+				b = (b > 1023) ? 1023 : b;
+				*(unsigned int*)dest = (r << 22) | (g << 12) | (b << 2) | 3;
+				dest += 4;
 			}
 		}
 		break;
@@ -488,7 +489,7 @@ static void R_UploadLightmap(int lmap)
 	lm->modified = false;
 
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, lm->rectchange.t, LMBLOCK_WIDTH, lm->rectchange.h, gl_lightmap_format,
-		GL_UNSIGNED_BYTE, lm->data + lm->rectchange.t * LMBLOCK_WIDTH * lightmap_bytes);
+		GL_UNSIGNED_INT_10_10_10_2, lm->data + lm->rectchange.t * LMBLOCK_WIDTH * lightmap_bytes);
 	lm->rectchange.l = LMBLOCK_WIDTH;
 	lm->rectchange.t = LMBLOCK_HEIGHT;
 	lm->rectchange.h = 0;
@@ -603,6 +604,9 @@ void R_BlendLightmaps ()
 	glpoly_t	*p;
 
 	glDepthMask (GL_FALSE);		// don't bother writing Z
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+	glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+	glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 4);
 	glBlendFunc (GL_ZERO, GL_SRC_COLOR);
 
 	if (!r_lightmap.value)
@@ -630,6 +634,7 @@ void R_BlendLightmaps ()
 	}
 
 	Fog_StopAdditive();
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable (GL_BLEND);
 	glDepthMask (GL_TRUE);		// back to normal Z buffering
@@ -1146,6 +1151,7 @@ void GLWorld_CreateShaders(void)
 		"	if (UseAlphaTest && (result.a < 0.666))\n"
 		"		discard;\n"
 		"	result *= texture2D(LMTex, gl_TexCoord[1].xy);\n"
+		"   result.rgb *= 4.0;\n"
 		"	vec4 fb = texture2D(FullbrightTex, gl_TexCoord[0].xy);\n"
 		"	if (UseFullbrightTex == 1)\n"
 		"		result = mix(result, fb, fb.a);\n"
@@ -1398,7 +1404,9 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 						doMtex2 = true;
 						GL_LIGHTMAP_TEXTURE = GL_TEXTURE2;
 						GL_EnableTMU (GL_LIGHTMAP_TEXTURE);
-						glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+						glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+						glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+						glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE, 4);
 					}
 					else
 					{
@@ -1418,7 +1426,9 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 				doMtex1 = true;
 				GL_LIGHTMAP_TEXTURE = GL_TEXTURE1;
 				GL_EnableTMU (GL_LIGHTMAP_TEXTURE);
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+				glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+				glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE, 4);
 
 				mtex_lightmaps = true;
 				mtex_fbs = at->fb_texturenum && draw_mtex_fbs;
@@ -2212,7 +2222,7 @@ void GL_BuildLightmaps (void)
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexImage2D (GL_TEXTURE_2D, 0, lightmap_bytes, LMBLOCK_WIDTH, LMBLOCK_HEIGHT, 0,
-			gl_lightmap_format, GL_UNSIGNED_BYTE, lm->data);
+			gl_lightmap_format, GL_UNSIGNED_INT_10_10_10_2, lm->data);
 	}
 
 	if (gl_mtexable)
