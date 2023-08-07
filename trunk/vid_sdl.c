@@ -330,14 +330,13 @@ static void SetMode (vmode_t *mode)
 		GL_Init ();
 	}
 
-	vid.width = VID_GetCurrentWidth();
-	vid.height = VID_GetCurrentHeight();
-	vid.conwidth = vid.width & 0xFFFFFFF8;
-	vid.conheight = vid.conwidth * vid.height / vid.width;
+	vid.width = vid.conwidth = VID_GetCurrentWidth();
+	vid.height = vid.conheight = VID_GetCurrentHeight();
 	vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
 	vid.numpages = 2;
 	vid.recalc_refdef = 1;
 	r_gamma_texture = 0;
+	Draw_AdjustConback();
 
 // read the obtained z-buffer depth
 	if (SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &depthbits) == -1)
