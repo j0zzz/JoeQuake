@@ -159,7 +159,18 @@ GL_EndRendering
 */
 void GL_EndRendering (void)
 {
+	GLenum glerr;
+	const char *sdlerr;
+
 	SDL_GL_SwapWindow(draw_context);
+
+	glerr = glGetError();
+	if (glerr)
+		Con_Printf("open gl error:%d\n", glerr);
+
+	sdlerr = SDL_GetError();
+	if (sdlerr[0])
+		Con_Printf("SDL error:%d\n", sdlerr);
 }
 
 void VID_Shutdown (void)
@@ -240,7 +251,8 @@ static void ClearAllStates (void)
 }
 
 extern void GL_Init (void);
-static qboolean SetMode (vmode_t *mode)
+extern GLuint r_gamma_texture;
+static void SetMode (vmode_t *mode)
 {
 	int		temp;
 	Uint32	flags;
@@ -325,6 +337,7 @@ static qboolean SetMode (vmode_t *mode)
 	vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
 	vid.numpages = 2;
 	vid.recalc_refdef = 1;
+	r_gamma_texture = 0;
 
 // read the obtained z-buffer depth
 	if (SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &depthbits) == -1)
