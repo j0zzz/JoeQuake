@@ -543,12 +543,12 @@ static inline int IN_SDL2_ScancodeToQuakeKey(SDL_Scancode scancode)
 	case SDL_SCANCODE_LEFT: return K_LEFTARROW;
 	case SDL_SCANCODE_RIGHT: return K_RIGHTARROW;
 
-	case SDL_SCANCODE_LALT: return K_ALT;
-	case SDL_SCANCODE_RALT: return K_ALT;
-	case SDL_SCANCODE_LCTRL: return K_CTRL;
-	case SDL_SCANCODE_RCTRL: return K_CTRL;
-	case SDL_SCANCODE_LSHIFT: return K_SHIFT;
-	case SDL_SCANCODE_RSHIFT: return K_SHIFT;
+	case SDL_SCANCODE_LALT: return K_LALT;
+	case SDL_SCANCODE_RALT: return K_RALT;
+	case SDL_SCANCODE_LCTRL: return K_LCTRL;
+	case SDL_SCANCODE_RCTRL: return K_RCTRL;
+	case SDL_SCANCODE_LSHIFT: return K_LSHIFT;
+	case SDL_SCANCODE_RSHIFT: return K_RSHIFT;
 
 	case SDL_SCANCODE_F1: return K_F1;
 	case SDL_SCANCODE_F2: return K_F2;
