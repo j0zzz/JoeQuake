@@ -473,6 +473,9 @@ void VID_Init (unsigned char *palette)
 	VID_SetPalette (palette);
 
 	vid_initialized = true;
+
+	if (SDL_GL_SetSwapInterval (0) != 0)
+		Sys_Error("Couldn't disable vsync: %s", SDL_GetError());
 }
 
 static inline int IN_SDL2_ScancodeToQuakeKey(SDL_Scancode scancode)
