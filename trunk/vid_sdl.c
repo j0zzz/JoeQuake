@@ -269,47 +269,13 @@ static qboolean VID_ValidMode (int width, int height, int refreshrate, qboolean 
 
 extern void GL_Init (void);
 extern GLuint r_gamma_texture;
-static qboolean SetMode (void)
+static void SetMode (int width, int height, int refreshrate, qboolean fullscreen)
 {
 	int		temp;
 	Uint32	flags;
 	char		caption[50];
 	int		depthbits;
 	int		previous_display;
-	int		width, height, refreshrate;
-	qboolean fullscreen;
-
-	// Decide what mode to set based on cvars, using defaults if not set.
-	if (vid_refreshrate.string[0] == '\0')
-	{
-		SDL_DisplayMode sdl_mode;
-
-		if (SDL_GetDesktopDisplayMode(0, &sdl_mode) != 0)
-			Sys_Error("Could not get desktop display mode");
-		Cvar_SetValue(&vid_refreshrate, sdl_mode.refresh_rate);
-	}
-	refreshrate = (int)vid_refreshrate.value;
-
-	if (vid_width.string[0] == '\0')
-		Cvar_SetValue(&vid_width, 800);
-	width = (int)vid_width.value;
-
-	if (vid_height.string[0] == '\0')
-		Cvar_SetValue(&vid_height, 600);
-	height = (int)vid_height.value;
-
-	if (vid_fullscreen.string[0] == '\0')
-		Cvar_SetValue(&vid_fullscreen, 0);
-	fullscreen = (int)vid_fullscreen.value;
-
-	// Check the mode set above is valid.
-	if (!VID_ValidMode(width, height, refreshrate, fullscreen))
-	{
-		Con_Printf("Invalid mode %dx%d %d Hz %s\n",
-					width, height, refreshrate,
-					fullscreen ? "fullscreen" : "windowed");
-		return false;
-	}
 
 	// so Con_Printfs don't mess us up by forcing vid and snd updates
 	temp = scr_disabled_for_loading;
@@ -406,8 +372,6 @@ static qboolean SetMode (void)
 				VID_GetCurrentBPP(),
 				depthbits,
 				VID_GetCurrentRefreshRate());
-
-	return true;
 }
 
 static void VID_DescribeModes_f (void)
@@ -441,7 +405,56 @@ static void VID_TestMode_f (void)
 
 static void VID_ForceMode_f (void)
 {
-	SetMode();
+	int		i;
+	int		width, height, refreshrate;
+	qboolean	fullscreen;
+
+	// If this is the `vid_forcemode` that is made after config.cfg is executed
+	// then read overrides from command line.
+	if (Cmd_Argc() == 2 && strcmp(Cmd_Argv(1), "post-config") == 0)
+	{
+		if (COM_CheckParm("-fullscreen"))
+			Cvar_SetValue(&vid_fullscreen, 1);
+
+		if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
+			Cvar_SetValue(&vid_fullscreen, 0);
+
+		if ((i = COM_CheckParm("-width")) && i + 1 < com_argc)
+			Cvar_SetValue(&vid_width, Q_atoi(com_argv[i+1]));
+
+		if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
+			Cvar_SetValue(&vid_height, Q_atoi(com_argv[i+1]));
+
+		if ((i = COM_CheckParm("-refreshrate")) && i + 1 < com_argc)
+			Cvar_SetValue(&vid_refreshrate, Q_atoi(com_argv[i+1]));
+	}
+
+	// Decide what mode to set based on cvars, using defaults if not set.
+	if (vid_width.string[0] == '\0')
+		Cvar_SetValue(&vid_width, 800);
+	width = (int)vid_width.value;
+
+	if (vid_height.string[0] == '\0')
+		Cvar_SetValue(&vid_height, 600);
+	height = (int)vid_height.value;
+
+	if (vid_refreshrate.string[0] == '\0')
+		Cvar_SetValue(&vid_refreshrate, VID_GetCurrentRefreshRate());
+	refreshrate = (int)vid_refreshrate.value;
+
+	if (vid_fullscreen.string[0] == '\0')
+		Cvar_SetValue(&vid_fullscreen, 0);
+	fullscreen = (int)vid_fullscreen.value;
+
+	// Check the mode set above is valid.
+	if (!VID_ValidMode(width, height, refreshrate, fullscreen))
+	{
+		Con_Printf("Invalid mode %dx%d %d Hz %s\n",
+					width, height, refreshrate,
+					fullscreen ? "fullscreen" : "windowed");
+	} else {
+		SetMode(width, height, refreshrate, fullscreen);
+	}
 }
 
 static void VID_InitModelist (void)
@@ -469,8 +482,6 @@ static void VID_InitModelist (void)
 
 void VID_Init (unsigned char *palette)
 {
-	int		i;
-
 	Cvar_Register (&m_filter);
 	Cvar_Register (&vid_width);
 	Cvar_Register (&vid_height);
@@ -492,33 +503,11 @@ void VID_Init (unsigned char *palette)
 	if (nummodes == 0)
 		Sys_Error("No valid modes");
 
-	if (COM_CheckParm("-fullscreen"))
-		Cvar_SetValue(&vid_fullscreen, 1);
-
-	if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
-		Cvar_SetValue(&vid_fullscreen, 0);
-
-	if ((i = COM_CheckParm("-width")) && i + 1 < com_argc)
-		Cvar_SetValue(&vid_width, Q_atoi(com_argv[i+1]));
-
-	if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
-		Cvar_SetValue(&vid_height, Q_atoi(com_argv[i+1]));
-
-	if ((i = COM_CheckParm("-refreshrate")) && i + 1 < com_argc)
-		Cvar_SetValue(&vid_refreshrate, Q_atoi(com_argv[i+1]));
-
-	if (!SetMode()) {
-
-		Con_Printf("Failed to set mode, reverting to defaults\n");
-
-		Cvar_Set(&vid_fullscreen, "");
-		Cvar_Set(&vid_width, "");
-		Cvar_Set(&vid_height, "");
-		Cvar_Set(&vid_refreshrate, "");
-
-		if (!SetMode())
-			Sys_Error("Failed to set mode again, quitting\n");
-	}
+	// Set a mode for maximum compatibility.  The real mode will be set once
+	// cvars have been set, via an automatic call to `vid_forcemode`.  This
+	// initial mode will only be visible fleetingly, as long as there's no
+	// problem setting the configured mode.
+	SetMode(800, 600, VID_GetCurrentRefreshRate(), false);
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	if (SDL_GL_SetSwapInterval (0) != 0)
