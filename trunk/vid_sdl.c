@@ -47,7 +47,6 @@ typedef struct
 	int			height;
 	int			bpp;
 	int			refreshrate;
-	qboolean	windowed;
 } vmode_t;
 
 static SDL_Window* draw_context = NULL;
@@ -59,6 +58,10 @@ static qboolean	vid_initialized = false;
 double mouse_x, mouse_y;
 static double	mx, my, old_mouse_x, old_mouse_y;
 cvar_t	m_filter = {"m_filter", "0"};
+cvar_t	vid_width = {"vid_width", "", CVAR_ARCHIVE};
+cvar_t	vid_height = {"vid_height", "", CVAR_ARCHIVE};
+cvar_t	vid_refreshrate = {"vid_refreshrate", "", CVAR_ARCHIVE};
+cvar_t	vid_fullscreen = {"vid_fullscreen", "", CVAR_ARCHIVE};
 
 // Stubs that are used externally.
 qboolean vid_hwgamma_enabled = false;
@@ -250,15 +253,63 @@ static void ClearAllStates (void)
 	mx = my = old_mouse_x = old_mouse_y = 0.0;
 }
 
+static qboolean VID_ValidMode (int width, int height, int refreshrate, qboolean fullscreen)
+{
+	if (width < 320)
+		return false;
+
+	if (height < 200)
+		return false;
+
+	if (fullscreen && VID_SDL2_GetDisplayMode(width, height, refreshrate) == NULL)
+		return false;
+
+	return true;
+}
+
 extern void GL_Init (void);
 extern GLuint r_gamma_texture;
-static void SetMode (vmode_t *mode)
+static qboolean SetMode (void)
 {
 	int		temp;
 	Uint32	flags;
 	char		caption[50];
 	int		depthbits;
 	int		previous_display;
+	int		width, height, refreshrate;
+	qboolean fullscreen;
+
+	// Decide what mode to set based on cvars, using defaults if not set.
+	if (vid_refreshrate.string[0] == '\0')
+	{
+		SDL_DisplayMode sdl_mode;
+
+		if (SDL_GetDesktopDisplayMode(0, &sdl_mode) != 0)
+			Sys_Error("Could not get desktop display mode");
+		Cvar_SetValue(&vid_refreshrate, sdl_mode.refresh_rate);
+	}
+	refreshrate = (int)vid_refreshrate.value;
+
+	if (vid_width.string[0] == '\0')
+		Cvar_SetValue(&vid_width, 800);
+	width = (int)vid_width.value;
+
+	if (vid_height.string[0] == '\0')
+		Cvar_SetValue(&vid_height, 600);
+	height = (int)vid_height.value;
+
+	if (vid_fullscreen.string[0] == '\0')
+		Cvar_SetValue(&vid_fullscreen, 0);
+	fullscreen = (int)vid_fullscreen.value;
+
+	// Check the mode set above is valid.
+	if (!VID_ValidMode(width, height, refreshrate, fullscreen))
+	{
+		Con_Printf("Invalid mode %dx%d %d Hz %s\n",
+					width, height, refreshrate,
+					fullscreen ? "fullscreen" : "windowed");
+		return false;
+	}
 
 	// so Con_Printfs don't mess us up by forcing vid and snd updates
 	temp = scr_disabled_for_loading;
@@ -277,10 +328,10 @@ static void SetMode (vmode_t *mode)
 	if (!draw_context)
 	{
 		flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN;
-		
+
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-		draw_context = SDL_CreateWindow (caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, mode->width, mode->height, flags);
+		draw_context = SDL_CreateWindow (caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
 		if (!draw_context)
 			Sys_Error ("Couldn't create window");
 
@@ -301,17 +352,17 @@ static void SetMode (vmode_t *mode)
 	}
 
 	/* Set window size and display mode */
-	SDL_SetWindowSize (draw_context, mode->width, mode->height);
+	SDL_SetWindowSize (draw_context, width, height);
 	if (previous_display >= 0)
 		SDL_SetWindowPosition (draw_context, SDL_WINDOWPOS_CENTERED_DISPLAY(previous_display), SDL_WINDOWPOS_CENTERED_DISPLAY(previous_display));
 	else
 		SDL_SetWindowPosition(draw_context, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-	SDL_SetWindowDisplayMode (draw_context, VID_SDL2_GetDisplayMode(mode->width, mode->height, mode->refreshrate));
+	SDL_SetWindowDisplayMode (draw_context, VID_SDL2_GetDisplayMode(width, height, refreshrate));
 	SDL_SetWindowBordered (draw_context, SDL_TRUE);
 
 	/* Make window fullscreen if needed, and show the window */
 
-	if (!mode->windowed) {
+	if (fullscreen) {
 		if (SDL_SetWindowFullscreen (draw_context, SDL_WINDOW_FULLSCREEN) != 0)
 			Sys_Error ("Couldn't set fullscreen state mode");
 	}
@@ -355,26 +406,8 @@ static void SetMode (vmode_t *mode)
 				VID_GetCurrentBPP(),
 				depthbits,
 				VID_GetCurrentRefreshRate());
-}
 
-static void VID_Mode_f (void)
-{
-	vmode_t new_mode;
-
-	if (Cmd_Argc() != 6)
-	{
-		Con_Printf("Usage: vid_mode <width> <height> <bpp> <refreshrate> [fullscreen|windowed]\n");
-	}
-	else
-	{
-		new_mode.width = Q_atoi(Cmd_Argv(1));
-		new_mode.height = Q_atoi(Cmd_Argv(2));
-		new_mode.bpp = Q_atoi(Cmd_Argv(3));
-		new_mode.refreshrate = Q_atoi(Cmd_Argv(4));
-		new_mode.windowed = (strcmp(Cmd_Argv(5), "windowed") == 0);
-
-		SetMode(&new_mode);
-	}
+	return true;
 }
 
 static void VID_DescribeModes_f (void)
@@ -384,20 +417,31 @@ static void VID_DescribeModes_f (void)
 
 	lastwidth = lastheight = lastbpp = count = 0;
 
+	Con_Printf("List of fullscreen modes:\n");
 	for (i = 0; i < nummodes; i++)
 	{
 		if (lastwidth != modelist[i].width || lastheight != modelist[i].height || lastbpp != modelist[i].bpp)
 		{
 			if (count > 0)
 				Con_Printf ("\n");
-			Con_Printf ("% 3d: %4i x %4i x %i : %i", i, modelist[i].width, modelist[i].height, modelist[i].bpp, modelist[i].refreshrate);
+			Con_Printf ("%4i x %4i x %i bpp : %i Hz", modelist[i].width, modelist[i].height, modelist[i].bpp, modelist[i].refreshrate);
 			lastwidth = modelist[i].width;
 			lastheight = modelist[i].height;
 			lastbpp = modelist[i].bpp;
 			count++;
 		}
 	}
-	Con_Printf ("\n%i modes\n", count);
+	Con_Printf ("\n%i modes.\n", count);
+}
+
+static void VID_TestMode_f (void)
+{
+	Con_Printf("vid_testmode not supported, use vid_forcemode instead.\n");
+}
+
+static void VID_ForceMode_f (void)
+{
+	SetMode();
 }
 
 static void VID_InitModelist (void)
@@ -418,7 +462,6 @@ static void VID_InitModelist (void)
 			modelist[nummodes].height = mode.h;
 			modelist[nummodes].bpp = SDL_BITSPERPIXEL(mode.format);
 			modelist[nummodes].refreshrate = mode.refresh_rate;
-			modelist[nummodes].windowed = false;
 			nummodes++;
 		}
 	}
@@ -426,13 +469,17 @@ static void VID_InitModelist (void)
 
 void VID_Init (unsigned char *palette)
 {
-	vmode_t new_mode;
 	int		i;
 
 	Cvar_Register (&m_filter);
+	Cvar_Register (&vid_width);
+	Cvar_Register (&vid_height);
+	Cvar_Register (&vid_refreshrate);
+	Cvar_Register (&vid_fullscreen);
 
-	Cmd_AddCommand ("vid_mode", VID_Mode_f);
 	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
+	Cmd_AddCommand ("vid_forcemode", VID_ForceMode_f);
+	Cmd_AddCommand ("vid_testmode", VID_TestMode_f);
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
@@ -444,38 +491,44 @@ void VID_Init (unsigned char *palette)
 	VID_InitModelist();
 	if (nummodes == 0)
 		Sys_Error("No valid modes");
-	// TODO: store mode in hidden cvar
-	memcpy(&new_mode, &modelist[0], sizeof(new_mode));
 
 	if (COM_CheckParm("-fullscreen"))
-		new_mode.windowed = false;
+		Cvar_SetValue(&vid_fullscreen, 1);
+
 	if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
-		new_mode.windowed = true;
+		Cvar_SetValue(&vid_fullscreen, 0);
 
 	if ((i = COM_CheckParm("-width")) && i + 1 < com_argc)
-		new_mode.width = Q_atoi(com_argv[i+1]);
+		Cvar_SetValue(&vid_width, Q_atoi(com_argv[i+1]));
 
 	if ((i = COM_CheckParm("-height")) && i + 1 < com_argc)
-		new_mode.height = Q_atoi(com_argv[i+1]);
-
-	if ((i = COM_CheckParm("-bpp")) && i + 1 < com_argc)
-		new_mode.bpp = Q_atoi(com_argv[i+1]);
+		Cvar_SetValue(&vid_height, Q_atoi(com_argv[i+1]));
 
 	if ((i = COM_CheckParm("-refreshrate")) && i + 1 < com_argc)
-		new_mode.refreshrate = Q_atoi(com_argv[i+1]);
+		Cvar_SetValue(&vid_refreshrate, Q_atoi(com_argv[i+1]));
 
-	SetMode(&new_mode);
+	if (!SetMode()) {
+
+		Con_Printf("Failed to set mode, reverting to defaults\n");
+
+		Cvar_Set(&vid_fullscreen, "");
+		Cvar_Set(&vid_width, "");
+		Cvar_Set(&vid_height, "");
+		Cvar_Set(&vid_refreshrate, "");
+
+		if (!SetMode())
+			Sys_Error("Failed to set mode again, quitting\n");
+	}
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
+	if (SDL_GL_SetSwapInterval (0) != 0)
+		Sys_Error("Couldn't disable vsync: %s", SDL_GetError());
 
 	InitSig ();	// trap evil signals
 
 	VID_SetPalette (palette);
 
 	vid_initialized = true;
-
-	if (SDL_GL_SetSwapInterval (0) != 0)
-		Sys_Error("Couldn't disable vsync: %s", SDL_GetError());
 }
 
 static inline int IN_SDL2_ScancodeToQuakeKey(SDL_Scancode scancode)
