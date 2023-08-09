@@ -100,7 +100,8 @@ float menu_vsync;
 // Video menu stuff
 //========================================================
 
-#define VID_ROW_SIZE	3
+#define VID_ROW_SIZE		3  // number of columns for modes
+#define VID_MENU_SPACING	2  // rows between video options and modes
 
 int	video_cursor_row = 0;
 int	video_cursor_column = 0;
@@ -804,7 +805,10 @@ void IN_Move (usercmd_t *cmd)
 
 void VID_MenuDraw (void)
 {
-	int y, row, lx, ly;
+	int i, row, x, y, lx, ly;
+	vmode_t *vmode;
+	char mode_desc[14];
+	qboolean red;
 	mpic_t		*p;
 
 	p = Draw_CachePic ("gfx/vidmodes.lmp");
@@ -821,13 +825,40 @@ void VID_MenuDraw (void)
 
 	video_items = row + 1;
 
+	x = 0;
+	y += 8 * (1 + VID_MENU_SPACING);
 	video_mode_rows = 0;
+	for (i = 0 ; i < nummodes ; i++)
+	{
+		vmode = &modelist[i];
+		red = (video_cursor_row == ((y - 32) / 8) && video_cursor_column == (x / (14 * 8)));
+		snprintf(mode_desc, sizeof(mode_desc), "%dx%d@%dHz", vmode->width, vmode->height, vmode->refreshrate);
+		M_Print_GetPoint(x, y, &lx, &ly, mode_desc, red);
+
+		x += 14 * 8;
+
+		// if we are at the end of the curent row (last column), prepare for next row
+		if (((i + 1) % VID_ROW_SIZE) == 0)
+		{
+			x = 0;
+			y += 8;
+		}
+
+		// if we just started a new row, increment row counter
+		if (((i + 1) % VID_ROW_SIZE) == 1)
+		{
+			video_mode_rows++;
+		}
+	}
 
 	video_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	video_window.h = ly - video_window.y + 8;
 
+	// cursor
 	if (video_cursor_row < video_items)
 		M_DrawCharacter(168, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
+	else // we are in the resolutions region
+		M_DrawCharacter(-8 + video_cursor_column * 14 * 8, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
 }
 
 void VID_MenuKey (int key)
@@ -844,9 +875,11 @@ void VID_MenuKey (int key)
 	case K_MWHEELUP:
 		S_LocalSound("misc/menu1.wav");
 		video_cursor_row--;
+		if (video_cursor_row == video_items + VID_MENU_SPACING - 1)
+			video_cursor_row -= VID_MENU_SPACING;
 		if (video_cursor_row < 0)
 		{
-			video_cursor_row = (video_items + video_mode_rows) - 1;
+			video_cursor_row = (video_items + video_mode_rows + VID_MENU_SPACING) - 1;
 		}
 		break;
 
@@ -854,10 +887,14 @@ void VID_MenuKey (int key)
 	case K_MWHEELDOWN:
 		S_LocalSound("misc/menu1.wav");
 		video_cursor_row++;
-		if (video_cursor_row >= (video_items + video_mode_rows))
+		if (video_cursor_row == video_items)
+			video_cursor_row += VID_MENU_SPACING;
+		if (video_cursor_row >= (video_items + video_mode_rows + VID_MENU_SPACING))
 			video_cursor_row = 0;
-		else if (video_cursor_row >= ((video_items + video_mode_rows) - 1)) // if we step down to the last row, check if we have an item below in the appropriate column
+		else if (video_cursor_row == ((video_items + video_mode_rows + VID_MENU_SPACING) - 1)) // if we step down to the last row, check if we have an item below in the appropriate column
 		{
+			if (nummodes % VID_ROW_SIZE == 1 || (nummodes % VID_ROW_SIZE == 2 && video_cursor_column == 2))
+				video_cursor_column = 0;
 		}
 		break;
 	case K_ENTER:
@@ -871,6 +908,40 @@ void VID_MenuKey (int key)
 			case 1: // apply
 				Cbuf_AddText ("vid_forcemode\n");
 				break;
+		}
+		break;
+
+	case K_LEFTARROW:
+		S_LocalSound("misc/menu1.wav");
+		if (video_cursor_row >= video_items)
+		{ 
+			video_cursor_column--;
+			if (video_cursor_column < 0)
+			{
+				if (video_cursor_row >= ((video_items + video_mode_rows + VID_MENU_SPACING) - 1)) // if we stand on the last row, check how many items we have
+				{
+					if (nummodes % VID_ROW_SIZE == 1)
+						video_cursor_column = 0;
+					else if (nummodes % VID_ROW_SIZE == 2)
+						video_cursor_column = 1;
+					else
+						video_cursor_column = 2;
+				}
+				else
+				{
+					video_cursor_column = VID_ROW_SIZE - 1;
+				}
+			}
+		}
+		break;
+
+	case K_RIGHTARROW:
+		S_LocalSound("misc/menu1.wav");
+		if (video_cursor_row >= video_items)
+		{
+			video_cursor_column++;
+			if (video_cursor_column >= VID_ROW_SIZE || ((video_cursor_row - video_items - VID_MENU_SPACING) * VID_ROW_SIZE + (video_cursor_column + 1)) > nummodes)
+				video_cursor_column = 0;
 		}
 		break;
 	}
