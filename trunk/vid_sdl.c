@@ -100,6 +100,8 @@ float menu_vsync;
 // Video menu stuff
 //========================================================
 
+#define VID_ROW_SIZE	3
+
 int	video_cursor_row = 0;
 int	video_cursor_column = 0;
 int video_items = 0;
@@ -823,6 +825,9 @@ void VID_MenuDraw (void)
 
 	video_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	video_window.h = ly - video_window.y + 8;
+
+	if (video_cursor_row < video_items)
+		M_DrawCharacter(168, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
 }
 
 void VID_MenuKey (int key)
@@ -830,8 +835,30 @@ void VID_MenuKey (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 		S_LocalSound ("misc/menu1.wav");
 		M_Menu_Options_f ();
+		break;
+
+	case K_UPARROW:
+	case K_MWHEELUP:
+		S_LocalSound("misc/menu1.wav");
+		video_cursor_row--;
+		if (video_cursor_row < 0)
+		{
+			video_cursor_row = (video_items + video_mode_rows) - 1;
+		}
+		break;
+
+	case K_DOWNARROW:
+	case K_MWHEELDOWN:
+		S_LocalSound("misc/menu1.wav");
+		video_cursor_row++;
+		if (video_cursor_row >= (video_items + video_mode_rows))
+			video_cursor_row = 0;
+		else if (video_cursor_row >= ((video_items + video_mode_rows) - 1)) // if we step down to the last row, check if we have an item below in the appropriate column
+		{
+		}
 		break;
 	case K_ENTER:
 	case K_MOUSE1:
