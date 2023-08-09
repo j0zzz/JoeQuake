@@ -96,6 +96,19 @@ int menu_bpp, menu_display_freq;
 cvar_t vid_vsync;
 float menu_vsync;
 
+//========================================================
+// Video menu stuff
+//========================================================
+
+int	video_cursor_row = 0;
+int	video_cursor_column = 0;
+int video_items = 0;
+int video_mode_rows = 0;
+
+menu_window_t video_window;
+void VID_MenuDraw (void);
+void VID_MenuKey (int key);
+
 //===========================================
 
 void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height)
@@ -517,6 +530,9 @@ void VID_Init (unsigned char *palette)
 
 	VID_SetPalette (palette);
 
+	vid_menudrawfn = VID_MenuDraw;
+	vid_menukeyfn = VID_MenuKey;
+
 	vid_initialized = true;
 }
 
@@ -784,9 +800,62 @@ void IN_Move (usercmd_t *cmd)
 	IN_MouseMove (cmd);
 }
 
+void VID_MenuDraw (void)
+{
+	int y, row, lx, ly;
+	mpic_t		*p;
+
+	p = Draw_CachePic ("gfx/vidmodes.lmp");
+	M_DrawPic ((320-p->width)/2, 4, p);
+
+	y = 32;
+	row = 0;
+	M_Print_GetPoint(16, y, &video_window.x, &video_window.y, "        Fullscreen", video_cursor_row == row);
+	video_window.x -= 16;	// adjust it slightly to the left due to the larger, 3 columns vid modes list
+	M_DrawCheckbox(188, y, vid_fullscreen.value != 0);
+
+	y += 8; row ++;
+	M_Print_GetPoint(16, y, &lx, &ly, "     Apply changes", video_cursor_row == row);
+
+	video_items = row + 1;
+
+	video_mode_rows = 0;
+
+	video_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
+	video_window.h = ly - video_window.y + 8;
+}
+
+void VID_MenuKey (int key)
+{
+	switch (key)
+	{
+	case K_ESCAPE:
+		S_LocalSound ("misc/menu1.wav");
+		M_Menu_Options_f ();
+		break;
+	case K_ENTER:
+	case K_MOUSE1:
+		S_LocalSound("misc/menu2.wav");
+		switch (video_cursor_row)
+		{
+			case 0: // fullscreen
+				Cvar_SetValue(&vid_fullscreen, vid_fullscreen.value == 0);
+				break;
+			case 1: // apply
+				Cbuf_AddText ("vid_forcemode\n");
+				break;
+		}
+		break;
+	}
+}
+
+extern qboolean M_Mouse_Select_RowColumn(const menu_window_t *uw, const mouse_state_t *m, int row_entries, int *newentry_row, int col_entries, int *newentry_col);
 qboolean M_Video_Mouse_Event(const mouse_state_t *ms)
 {
-	// We do not have the menu for switching video modes on Linux yet, so we
-	// do not need to implement this function.
+	M_Mouse_Select_RowColumn(&video_window, ms, video_items + video_mode_rows, &video_cursor_row, 1, &video_cursor_column);
+
+	if (ms->button_down == 1) VID_MenuKey(K_MOUSE1);
+	if (ms->button_down == 2) VID_MenuKey(K_MOUSE2);
+
 	return true;
 }
