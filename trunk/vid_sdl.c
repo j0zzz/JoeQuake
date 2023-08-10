@@ -36,6 +36,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #define MAX_MODE_LIST 600
+#define MAX_MENU_MODES  45
+#define MAX_REFRESH_RATES   8
 #define	WARP_WIDTH	320
 #define	WARP_HEIGHT	200
 #define WINDOW_TITLE_STRING "JoeQuake"
@@ -47,12 +49,23 @@ typedef struct
 	int			height;
 	int			bpp;
 	int			refreshrate;
-} vmode_t;
+} sdlmode_t;
+
+typedef struct
+{
+    int         width;
+    int         height;
+    int         refreshrates[MAX_REFRESH_RATES];
+    int         numrefreshrates;
+} menumode_t;
+
 
 static SDL_Window* draw_context = NULL;
 static SDL_GLContext* gl_context = NULL;
-vmode_t	modelist[MAX_MODE_LIST];
+sdlmode_t	modelist[MAX_MODE_LIST];  // Modes for showing in `vid_describemodes`
 int		nummodes;
+menumode_t menumodelist[MAX_MENU_MODES];
+int     nummenumodes;
 
 static qboolean	vid_initialized = false;
 double mouse_x, mouse_y;
@@ -473,11 +486,45 @@ static void VID_ForceMode_f (void)
 	}
 }
 
+static int CmpModes(sdlmode_t *m1, sdlmode_t *m2)
+{
+	// Sort lexicographically by (width, height, refreshrate, bpp)
+	if (m1->width < m2->width)
+		return -1;
+	if (m1->width > m2->width)
+		return 1;
+	if (m1->height < m2->height)
+		return -1;
+	if (m1->height > m2->height)
+		return 1;
+	if (m1->refreshrate < m2->refreshrate)
+		return -1;
+	if (m1->refreshrate > m2->refreshrate)
+		return 1;
+	if (m1->bpp < m2->bpp)
+		return -1;
+	if (m1->bpp > m2->bpp)
+		return 1;
+	return 0;
+}
+
+static void SwapModes(sdlmode_t *m1, sdlmode_t *m2)
+{
+	static sdlmode_t temp_mode;
+
+	temp_mode = *m1;
+	*m1 = *m2;
+	*m2 = temp_mode;
+}
+
 static void VID_InitModelist (void)
 {
 	const int sdlmodes = SDL_GetNumDisplayModes(0);
-	int i;
+	int i, j;
+	sdlmode_t *m1, *m2, *mode;
+	menumode_t *menumode;
 
+	// Fetch modes from SDL which have a valid pixel format.
 	nummodes = 0;
 	for (i = 0; i < sdlmodes; i++)
 	{
@@ -492,6 +539,46 @@ static void VID_InitModelist (void)
 			modelist[nummodes].bpp = SDL_BITSPERPIXEL(mode.format);
 			modelist[nummodes].refreshrate = mode.refresh_rate;
 			nummodes++;
+		}
+	}
+
+	if (nummodes == 0)
+		Sys_Error("No valid modes");
+
+	// Sort this array, putting the larger resolutions first.
+	for (i = 0; i < nummodes - 1; i++)
+	{
+		for (j = i + 1; j < nummodes; j++)
+		{
+			m1 = &modelist[i];
+			m2 = &modelist[j];
+			if (CmpModes(m1, m2) < 0)
+				SwapModes(m1, m2);
+		}
+	}
+
+	// Build the menu mode list.
+	nummenumodes = 0;
+	menumode = NULL;		// invariant:  menumode == menumodelist[nummenumodes - 1]
+	for (i = 0; i < nummodes && nummenumodes < MAX_MENU_MODES; i++)
+	{
+		mode = &modelist[i];
+
+		if (menumode == NULL || menumode->width != mode->width || menumode->height != mode->height)
+		{
+			// This is a resolution we haven't seen, so add a new menu mode.
+			menumode = &menumodelist[nummenumodes++];
+
+			menumode->width = mode->width;
+			menumode->height = mode->height;
+			menumode->refreshrates[0] = mode->refreshrate;
+			menumode->numrefreshrates = 1;
+		}
+		else if (menumode->refreshrates[menumode->numrefreshrates - 1] != mode->refreshrate
+					&& menumode->numrefreshrates < MAX_REFRESH_RATES)
+		{
+			// This is a refresh rate we haven't seen, add to the current menu mode.
+			menumode->refreshrates[menumode->numrefreshrates++] = mode->refreshrate;
 		}
 	}
 }
@@ -516,8 +603,6 @@ void VID_Init (unsigned char *palette)
 	if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
 		Sys_Error("Couldn't init SDL video: %s", SDL_GetError());
 	VID_InitModelist();
-	if (nummodes == 0)
-		Sys_Error("No valid modes");
 
 	// Set a mode for maximum compatibility.  The real mode will be set once
 	// cvars have been set, via an automatic call to `vid_forcemode`.  This
@@ -803,11 +888,107 @@ void IN_Move (usercmd_t *cmd)
 	IN_MouseMove (cmd);
 }
 
+static menumode_t *GetMenuMode(void)
+{
+	menumode_t *menumode;
+	int i, width, height;
+
+	width = (int)vid_width.value;
+	height = (int)vid_height.value;
+
+	for (i = 0; i < nummenumodes; i++)
+	{
+		menumode = &menumodelist[i];
+		if (width == menumode->width && height == menumode->height)
+			return menumode;
+	}
+
+	return NULL;
+}
+
+static void MenuSelectPrevRefreshRate (void)
+{
+	int i;
+	menumode_t *menumode;
+	int refreshrate;
+
+	menumode = GetMenuMode();
+	if (menumode == NULL)
+		return;  // Current video mode not in SDL list (eg. windowed mode)
+
+	refreshrate = (int)vid_refreshrate.value;
+
+	// refresh rates are in descending order
+	for (i = 0; i < menumode->numrefreshrates; i ++)
+	{
+		if (menumode->refreshrates[i] < refreshrate)
+			break;
+	}
+	if (i == menumode->numrefreshrates)
+		i = 0;		// wrapped around
+
+	Cvar_SetValue(&vid_refreshrate, menumode->refreshrates[i]);
+}
+
+static void MenuSelectNextRefreshRate (void)
+{
+	int i;
+	menumode_t *menumode;
+	int refreshrate;
+
+	menumode = GetMenuMode();
+	if (menumode == NULL)
+		return;  // Current video mode not in SDL list (eg. windowed mode)
+
+	refreshrate = (int)vid_refreshrate.value;
+
+	// refresh rates are in descending order
+	for (i = 0; i < menumode->numrefreshrates; i ++)
+	{
+		if (menumode->refreshrates[i] <= refreshrate)
+			break;
+	}
+	if (i == 0)
+		i = menumode->numrefreshrates;
+	i--;
+
+	Cvar_SetValue(&vid_refreshrate, menumode->refreshrates[i]);
+}
+
+static void MenuSelectNearestRefreshRate (void)
+{
+	int i;
+	menumode_t *menumode;
+	int refreshrate;
+
+	menumode = GetMenuMode();
+	if (menumode == NULL)
+		return;  // Current video mode not in SDL list (eg. windowed mode)
+
+	refreshrate = (int)vid_refreshrate.value;
+
+	// refresh rates are in descending order
+	for (i = 0; i < menumode->numrefreshrates; i ++)
+	{
+		if (menumode->refreshrates[i] <= refreshrate)
+			break;
+	}
+
+	if (i == menumode->numrefreshrates)
+		i = menumode->numrefreshrates - 1;	// smaller than all, pick smallest
+	else if (i > 0
+			 && abs(menumode->refreshrates[i - 1] - refreshrate)
+				< abs(menumode->refreshrates[i] - refreshrate))
+		i--;  // either larger than all, or prev value is closer.
+
+	Cvar_SetValue(&vid_refreshrate, menumode->refreshrates[i]);
+}
+
 void VID_MenuDraw (void)
 {
 	int i, row, x, y, lx, ly;
-	vmode_t *vmode;
-	char mode_desc[14];
+	menumode_t *menumode;
+	char mode_desc[14], refresh_rate_desc[8];
 	qboolean red;
 	mpic_t		*p;
 
@@ -821,6 +1002,11 @@ void VID_MenuDraw (void)
 	M_DrawCheckbox(188, y, vid_fullscreen.value != 0);
 
 	y += 8; row ++;
+	M_Print_GetPoint(16, y, &lx, &ly, "      Refresh rate", video_cursor_row == row);
+	snprintf(refresh_rate_desc, sizeof(refresh_rate_desc), "%i Hz", (int)vid_refreshrate.value);
+	M_Print(188, y, refresh_rate_desc);
+
+	y += 8; row ++;
 	M_Print_GetPoint(16, y, &lx, &ly, "     Apply changes", video_cursor_row == row);
 
 	video_items = row + 1;
@@ -828,11 +1014,11 @@ void VID_MenuDraw (void)
 	x = 0;
 	y += 8 * (1 + VID_MENU_SPACING);
 	video_mode_rows = 0;
-	for (i = 0 ; i < nummodes ; i++)
+	for (i = 0 ; i < nummenumodes ; i++)
 	{
-		vmode = &modelist[i];
-		red = (video_cursor_row == ((y - 32) / 8) && video_cursor_column == (x / (14 * 8)));
-		snprintf(mode_desc, sizeof(mode_desc), "%dx%d@%dHz", vmode->width, vmode->height, vmode->refreshrate);
+		menumode = &menumodelist[i];
+		red = (menumode->width == (int)vid_width.value && menumode->height == (int)vid_height.value);
+		snprintf(mode_desc, sizeof(mode_desc), "%dx%d", menumode->width, menumode->height);
 		M_Print_GetPoint(x, y, &lx, &ly, mode_desc, red);
 
 		x += 14 * 8;
@@ -857,7 +1043,8 @@ void VID_MenuDraw (void)
 	// cursor
 	if (video_cursor_row < video_items)
 		M_DrawCharacter(168, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
-	else // we are in the resolutions region
+	else if (video_cursor_row >= video_items + VID_MENU_SPACING
+			&& (video_cursor_row - video_items - VID_MENU_SPACING) * VID_ROW_SIZE + video_cursor_column < nummenumodes) // we are in the resolutions region
 		M_DrawCharacter(-8 + video_cursor_column * 14 * 8, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
 }
 
@@ -893,7 +1080,7 @@ void VID_MenuKey (int key)
 			video_cursor_row = 0;
 		else if (video_cursor_row == ((video_items + video_mode_rows + VID_MENU_SPACING) - 1)) // if we step down to the last row, check if we have an item below in the appropriate column
 		{
-			if (nummodes % VID_ROW_SIZE == 1 || (nummodes % VID_ROW_SIZE == 2 && video_cursor_column == 2))
+			if (nummenumodes % VID_ROW_SIZE == 1 || (nummenumodes % VID_ROW_SIZE == 2 && video_cursor_column == 2))
 				video_cursor_column = 0;
 		}
 		break;
@@ -905,24 +1092,44 @@ void VID_MenuKey (int key)
 			case 0: // fullscreen
 				Cvar_SetValue(&vid_fullscreen, vid_fullscreen.value == 0);
 				break;
-			case 1: // apply
+            case 1: // refresh rate
+				MenuSelectNextRefreshRate();
+                break;
+			case 2: // apply
 				Cbuf_AddText ("vid_forcemode\n");
 				break;
+            default:
+                if (video_cursor_row >= video_items)
+                {
+					int i = (video_cursor_row - video_items - VID_MENU_SPACING)
+										* VID_ROW_SIZE + video_cursor_column;
+					if (i < nummenumodes)
+					{
+						Cvar_SetValue(&vid_width, menumodelist[i].width);
+						Cvar_SetValue(&vid_height, menumodelist[i].height);
+						MenuSelectNearestRefreshRate();
+					}
+                }
+                break;
 		}
 		break;
 
 	case K_LEFTARROW:
 		S_LocalSound("misc/menu1.wav");
-		if (video_cursor_row >= video_items)
+		if (video_cursor_row == 1) {
+			// refresh rate
+			MenuSelectPrevRefreshRate();
+		}
+		else if (video_cursor_row >= video_items)
 		{ 
 			video_cursor_column--;
 			if (video_cursor_column < 0)
 			{
 				if (video_cursor_row >= ((video_items + video_mode_rows + VID_MENU_SPACING) - 1)) // if we stand on the last row, check how many items we have
 				{
-					if (nummodes % VID_ROW_SIZE == 1)
+					if (nummenumodes % VID_ROW_SIZE == 1)
 						video_cursor_column = 0;
-					else if (nummodes % VID_ROW_SIZE == 2)
+					else if (nummenumodes % VID_ROW_SIZE == 2)
 						video_cursor_column = 1;
 					else
 						video_cursor_column = 2;
@@ -937,10 +1144,14 @@ void VID_MenuKey (int key)
 
 	case K_RIGHTARROW:
 		S_LocalSound("misc/menu1.wav");
-		if (video_cursor_row >= video_items)
+		if (video_cursor_row == 1) {
+			// refresh rate
+			MenuSelectNextRefreshRate();
+		}
+		else if (video_cursor_row >= video_items)
 		{
 			video_cursor_column++;
-			if (video_cursor_column >= VID_ROW_SIZE || ((video_cursor_row - video_items - VID_MENU_SPACING) * VID_ROW_SIZE + (video_cursor_column + 1)) > nummodes)
+			if (video_cursor_column >= VID_ROW_SIZE || ((video_cursor_row - video_items - VID_MENU_SPACING) * VID_ROW_SIZE + (video_cursor_column + 1)) > nummenumodes)
 				video_cursor_column = 0;
 		}
 		break;
@@ -950,7 +1161,7 @@ void VID_MenuKey (int key)
 extern qboolean M_Mouse_Select_RowColumn(const menu_window_t *uw, const mouse_state_t *m, int row_entries, int *newentry_row, int col_entries, int *newentry_col);
 qboolean M_Video_Mouse_Event(const mouse_state_t *ms)
 {
-	M_Mouse_Select_RowColumn(&video_window, ms, video_items + video_mode_rows, &video_cursor_row, 1, &video_cursor_column);
+	M_Mouse_Select_RowColumn(&video_window, ms, video_items + video_mode_rows + VID_MENU_SPACING, &video_cursor_row, VID_ROW_SIZE, &video_cursor_column);
 
 	if (ms->button_down == 1) VID_MenuKey(K_MOUSE1);
 	if (ms->button_down == 2) VID_MenuKey(K_MOUSE2);
