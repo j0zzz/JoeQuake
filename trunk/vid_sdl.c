@@ -992,9 +992,11 @@ void VID_MenuDraw (void)
 	qboolean red;
 	mpic_t		*p;
 
+	// title graphic
 	p = Draw_CachePic ("gfx/vidmodes.lmp");
 	M_DrawPic ((320-p->width)/2, 4, p);
 
+	// general settings
 	y = 32;
 	row = 0;
 	M_Print_GetPoint(16, y, &video_window.x, &video_window.y, "        Fullscreen", video_cursor_row == row);
@@ -1011,6 +1013,7 @@ void VID_MenuDraw (void)
 
 	video_items = row + 1;
 
+	// resolutions
 	x = 0;
 	y += 8 * (1 + VID_MENU_SPACING);
 	video_mode_rows = 0;
@@ -1039,6 +1042,26 @@ void VID_MenuDraw (void)
 
 	video_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	video_window.h = ly - video_window.y + 8;
+
+	// help text
+	switch (video_cursor_row)
+	{
+		case 0: // fullscreen
+			break;
+		case 1: // refresh rate
+			M_Print(8 * 8, y + 16, "  Choose a refresh rate");
+			M_Print(8 * 8, y + 24, "after selecting resolution");
+			break;
+		case 2: // apply
+			M_Print(8 * 8, y + 16, "Apply selected settings");
+		default:
+			if (video_cursor_row >= video_items + VID_MENU_SPACING)
+			{
+				M_Print(8 * 8, y + 16, "  Select a resolution");
+				M_Print(8 * 8, y + 24, "then apply/test changes");
+			}
+			break;
+	}
 
 	// cursor
 	if (video_cursor_row < video_items)
