@@ -24,11 +24,16 @@ their file snd_sdl.c adapted to the JoeQuake code. Luckily barely anything had
 to be changed and seems to work quite well.
 */
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "quakedef.h"
 
 
 static int	buffersize;
+
+void S_BlockSound(void)
+{
+	// Do we need to do something here?
+}
 
 static void SDLCALL paint_audio (void *unused, Uint8 *stream, int len)
 {
@@ -73,8 +78,8 @@ static void SDLCALL paint_audio (void *unused, Uint8 *stream, int len)
 
 qboolean SNDDMA_Init (void)
 {
-	SDL_AudioSpec desired;
-	int		tmp, val, i, format_bits;
+	SDL_AudioSpec desired = { 0 };
+	int		tmp, val, i, format_bits = 0;
 	char	drivername[128];
 	char	*s;
 

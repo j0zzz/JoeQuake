@@ -19,20 +19,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // vid_sdl.c -- SDL 2 driver
 
-#include <termios.h>
-#include <sys/ioctl.h>
+//#include <termios.h>
+//#include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/vt.h>
+//#include <sys/vt.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
-#include <SDL2/SDL.h>
-
-#include <dlfcn.h>
+#include <SDL.h>
+//#include <dlfcn.h>
 
 #include "quakedef.h"
+#ifdef _WIN32
+#include "winquake.h"
+#endif
 
-#include "quake.ico.h"
+//#include "quake.ico.h"
 
 
 #define MAX_MODE_LIST 600
@@ -82,6 +84,11 @@ cvar_t	_windowed_mouse = {"_windowed_mouse", "1", 0};
 qboolean fullsbardraw = false;
 cvar_t vid_mode;
 qboolean gl_have_stencil = false;
+#ifdef _WIN32
+modestate_t   modestate;
+#endif
+qboolean    DDActive = false;
+qboolean	scr_skipupdate;
 
 static int buttonremap[] =
 {
@@ -143,26 +150,6 @@ void VID_UnlockBuffer (void)
 {
 }
 
-void signal_handler (int sig)
-{
-	printf ("Received signal %d, exiting...\n", sig);
-	Sys_Quit ();
-	exit (0);
-}
-
-void InitSig (void)
-{
-	signal (SIGHUP, signal_handler);
-	signal (SIGINT, signal_handler);
-	signal (SIGQUIT, signal_handler);
-	signal (SIGILL, signal_handler);
-	signal (SIGTRAP, signal_handler);
-	signal (SIGIOT, signal_handler);
-	signal (SIGBUS, signal_handler);
-	signal (SIGFPE, signal_handler);
-	signal (SIGSEGV, signal_handler);
-	signal (SIGTERM, signal_handler);
-}
 
 void VID_ShiftPalette (unsigned char *p)
 {
@@ -170,6 +157,11 @@ void VID_ShiftPalette (unsigned char *p)
 
 void VID_SetDeviceGammaRamp (unsigned short *ramps)
 {
+}
+
+void IN_Accumulate(void)
+{
+	// Should something go here?
 }
 
 /*
@@ -203,6 +195,11 @@ void GL_EndRendering (void)
 	sdlerr = SDL_GetError();
 	if (sdlerr[0])
 		Con_Printf("SDL error:%d\n", sdlerr);
+}
+
+void VID_SetDefaultMode(void)
+{
+	// Do we need to do anything here?
 }
 
 void VID_Shutdown (void)
@@ -613,8 +610,6 @@ void VID_Init (unsigned char *palette)
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	if (SDL_GL_SetSwapInterval (0) != 0)
 		Sys_Error("Couldn't disable vsync: %s", SDL_GetError());
-
-	InitSig ();	// trap evil signals
 
 	VID_SetPalette (palette);
 

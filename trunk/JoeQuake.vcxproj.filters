@@ -429,6 +429,15 @@
     <ClCompile Include="cl_dzip.c">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
+    <ClCompile Include="snd_linux.c">
+      <Filter>Source Files\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="vid_sdl.c">
+      <Filter>Source Files\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="cd_null.c">
+      <Filter>Source Files\Sound</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="adivtab.h">

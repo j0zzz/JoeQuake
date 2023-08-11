@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32922.545
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JoeQuake", "JoeQuake.vcxproj", "{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}"
 EndProject
@@ -9,6 +9,7 @@ Global
 		Direct3D Release|Win32 = Direct3D Release|Win32
 		GL Debug|Win32 = GL Debug|Win32
 		GL Release|Win32 = GL Release|Win32
+		SDL Release|Win32 = SDL Release|Win32
 		Software Debug|Win32 = Software Debug|Win32
 		Software Release|Win32 = Software Release|Win32
 	EndGlobalSection
@@ -19,6 +20,8 @@ Global
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.GL Debug|Win32.Build.0 = GL Debug|Win32
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.GL Release|Win32.ActiveCfg = GL Release|Win32
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.GL Release|Win32.Build.0 = GL Release|Win32
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.SDL Release|Win32.ActiveCfg = SDL Release|Win32
+		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.SDL Release|Win32.Build.0 = SDL Release|Win32
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Debug|Win32.ActiveCfg = Software Debug|Win32
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Debug|Win32.Build.0 = Software Debug|Win32
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Release|Win32.ActiveCfg = Software Release|Win32
@@ -26,5 +29,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FC0F3B7E-1FC2-496C-B939-9ECCB20CAFB2}
 	EndGlobalSection
 EndGlobal

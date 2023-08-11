@@ -526,7 +526,7 @@ void S_ClearBuffer (void)
 {
 	int	clear;
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(SDL2)
 	if (!sound_started || !shm || (!shm->buffer && !pDSBuf))
 #else
 	if (!sound_started || !shm || !shm->buffer)
@@ -535,7 +535,7 @@ void S_ClearBuffer (void)
 
 	clear = (shm->samplebits == 8) ? 0x80 : 0;
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(SDL2)
 	if (pDSBuf)
 	{
 		DWORD		dwSize, *pData;
@@ -826,8 +826,8 @@ void S_Update_ (void)
 	if (endtime - soundtime > samps)
 		endtime = soundtime + samps;
 
-#ifdef _WIN32
-// if the buffer was lost or stopped, restore it and/or restart it
+#if defined(_WIN32) && !defined(SDL2)
+	// if the buffer was lost or stopped, restore it and/or restart it
 	{
 		DWORD	dwStatus;
 
