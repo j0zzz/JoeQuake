@@ -1090,6 +1090,9 @@ void VID_MenuKey (int key)
 		if (video_cursor_row < 0)
 		{
 			video_cursor_row = (video_items + video_mode_rows + VID_MENU_SPACING) - 1;
+			// if we cycle from the top to the bottom row, check if we have an item in the appropriate column
+			if (nummenumodes % VID_ROW_SIZE == 1 || (nummenumodes % VID_ROW_SIZE == 2 && video_cursor_column == 2))
+				video_cursor_column = 0;
 		}
 		break;
 
