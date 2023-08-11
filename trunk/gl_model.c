@@ -3471,3 +3471,20 @@ qboolean Mod_IsAnyKindOfPlayerModel(model_t *mod)
 {
 	return mod ? mod->modhint == MOD_PLAYER || mod->modhint == MOD_PLAYER_DME : false;
 }
+
+qboolean Mod_IsMonsterModel(int modelindex)
+{
+	return modelindex == cl_modelindex[mi_fish] ||
+		modelindex == cl_modelindex[mi_dog] ||
+		modelindex == cl_modelindex[mi_soldier] ||
+		modelindex == cl_modelindex[mi_enforcer] ||
+		modelindex == cl_modelindex[mi_knight] ||
+		modelindex == cl_modelindex[mi_hknight] ||
+		modelindex == cl_modelindex[mi_scrag] ||
+		modelindex == cl_modelindex[mi_ogre] ||
+		modelindex == cl_modelindex[mi_fiend] ||
+		modelindex == cl_modelindex[mi_vore] ||
+		modelindex == cl_modelindex[mi_shambler] ||
+		modelindex == cl_modelindex[mi_zombie] ||
+		modelindex == cl_modelindex[mi_spawn];
+}

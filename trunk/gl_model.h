@@ -614,5 +614,6 @@ byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 byte *Mod_NoVisPVS(model_t *model);
 
 qboolean Mod_IsAnyKindOfPlayerModel(model_t *mod);
+qboolean Mod_IsMonsterModel(int modelindex);
 
 #endif	// __MODEL__
