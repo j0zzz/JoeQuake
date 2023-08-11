@@ -19,22 +19,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // vid_sdl.c -- SDL 2 driver
 
-//#include <termios.h>
-//#include <sys/ioctl.h>
 #include <sys/stat.h>
-//#include <sys/vt.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
 #include <SDL.h>
-//#include <dlfcn.h>
 
 #include "quakedef.h"
 #ifdef _WIN32
 #include "winquake.h"
 #endif
-
-//#include "quake.ico.h"
 
 
 #define MAX_MODE_LIST 600
@@ -44,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	WARP_HEIGHT	200
 #define WINDOW_TITLE_STRING "JoeQuake"
 #define DEFAULT_REFRESHRATE	60
+
 
 typedef struct
 {
