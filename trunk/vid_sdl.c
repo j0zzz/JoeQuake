@@ -65,6 +65,7 @@ static cvar_t	vid_width = {"vid_width", "", CVAR_ARCHIVE};
 static cvar_t	vid_height = {"vid_height", "", CVAR_ARCHIVE};
 static cvar_t	vid_refreshrate = {"vid_refreshrate", "", CVAR_ARCHIVE};
 static cvar_t	vid_fullscreen = {"vid_fullscreen", "", CVAR_ARCHIVE};
+static cvar_t	vid_desktopfullscreen = {"vid_desktopfullscreen", "0", CVAR_ARCHIVE};
 
 // Stubs that are used externally.
 qboolean vid_hwgamma_enabled = false;
@@ -251,6 +252,10 @@ static void ClearAllStates (void)
 
 static qboolean VID_ValidMode (int width, int height, int refreshrate, qboolean fullscreen)
 {
+// ignore width / height if vid_desktopfullscreen is enabled
+	if (fullscreen && vid_desktopfullscreen.value)
+		return true;
+
 	if (width < 320)
 		return false;
 
@@ -325,7 +330,9 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 	/* Make window fullscreen if needed, and show the window */
 
 	if (fullscreen) {
-		if (SDL_SetWindowFullscreen (draw_context, SDL_WINDOW_FULLSCREEN) != 0)
+		const Uint32 flag = vid_desktopfullscreen.value ?
+				SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN;
+		if (SDL_SetWindowFullscreen (draw_context, flag) != 0)
 			Sys_Error ("Couldn't set fullscreen state mode");
 	}
 
@@ -556,6 +563,7 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register (&vid_height);
 	Cvar_Register (&vid_refreshrate);
 	Cvar_Register (&vid_fullscreen);
+	Cvar_Register (&vid_desktopfullscreen);
 
 	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
 	Cmd_AddCommand ("vid_forcemode", VID_ForceMode_f);
