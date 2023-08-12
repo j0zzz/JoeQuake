@@ -529,6 +529,11 @@
     <ClCompile Include="cd_win.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+	<ClCompile Include="in_sdl.c">
+		<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
+		<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+		<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
+	</ClCompile>
     <ClCompile Include="ioapi.c" />
     <ClCompile Include="snd_dma.c" />
     <ClCompile Include="snd_sdl.c">
