@@ -429,7 +429,7 @@
     <ClCompile Include="cl_dzip.c">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="snd_linux.c">
+    <ClCompile Include="snd_sdl.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
     <ClCompile Include="vid_sdl.c">
