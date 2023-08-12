@@ -74,8 +74,8 @@ cvar_t vid_mode;
 qboolean gl_have_stencil = false;
 #ifdef _WIN32
 modestate_t   modestate;
-#endif
 qboolean    DDActive = false;
+#endif
 qboolean	scr_skipupdate;
 
 // Sphere --- TODO: Only copied these from in_win.c for now to get a first
@@ -166,6 +166,14 @@ void GL_EndRendering (void)
 	sdlerr = SDL_GetError();
 	if (sdlerr[0])
 		Con_Printf("SDL error:%d\n", sdlerr);
+
+#ifdef _WIN32
+	{
+		Uint32 flags = SDL_GetWindowFlags(draw_context);
+		Minimized = (flags & SDL_WINDOW_SHOWN) == 0;
+		ActiveApp = (flags & (SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS)) != 0;
+	}
+#endif
 }
 
 void VID_SetDefaultMode(void)
