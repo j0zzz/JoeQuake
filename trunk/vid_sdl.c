@@ -55,16 +55,16 @@ typedef struct
 
 static SDL_Window* draw_context = NULL;
 static SDL_GLContext* gl_context = NULL;
-sdlmode_t	modelist[MAX_MODE_LIST];  // Modes for showing in `vid_describemodes`
-int		nummodes;
-menumode_t menumodelist[MAX_MENU_MODES];
-int     nummenumodes;
+static sdlmode_t	modelist[MAX_MODE_LIST];  // Modes for showing in `vid_describemodes`
+static int		nummodes;
+static menumode_t menumodelist[MAX_MENU_MODES];
+static int     nummenumodes;
 
 static qboolean	vid_initialized = false;
-cvar_t	vid_width = {"vid_width", "", CVAR_ARCHIVE};
-cvar_t	vid_height = {"vid_height", "", CVAR_ARCHIVE};
-cvar_t	vid_refreshrate = {"vid_refreshrate", "", CVAR_ARCHIVE};
-cvar_t	vid_fullscreen = {"vid_fullscreen", "", CVAR_ARCHIVE};
+static cvar_t	vid_width = {"vid_width", "", CVAR_ARCHIVE};
+static cvar_t	vid_height = {"vid_height", "", CVAR_ARCHIVE};
+static cvar_t	vid_refreshrate = {"vid_refreshrate", "", CVAR_ARCHIVE};
+static cvar_t	vid_fullscreen = {"vid_fullscreen", "", CVAR_ARCHIVE};
 
 // Stubs that are used externally.
 qboolean vid_hwgamma_enabled = false;
@@ -99,14 +99,14 @@ float menu_vsync;
 #define VID_ROW_SIZE		3  // number of columns for modes
 #define VID_MENU_SPACING	2  // rows between video options and modes
 
-int	video_cursor_row = 0;
-int	video_cursor_column = 0;
-int video_items = 0;
-int video_mode_rows = 0;
+static int	video_cursor_row = 0;
+static int	video_cursor_column = 0;
+static int video_items = 0;
+static int video_mode_rows = 0;
 
-menu_window_t video_window;
-void VID_MenuDraw (void);
-void VID_MenuKey (int key);
+static menu_window_t video_window;
+static void VID_MenuDraw (void);
+static void VID_MenuKey (int key);
 
 //===========================================
 
@@ -125,7 +125,6 @@ void VID_LockBuffer (void)
 void VID_UnlockBuffer (void)
 {
 }
-
 
 void VID_ShiftPalette (unsigned char *p)
 {
@@ -685,7 +684,7 @@ static void MenuSelectNearestRefreshRate (void)
 	Cvar_SetValue(&vid_refreshrate, menumode->refreshrates[i]);
 }
 
-void VID_MenuDraw (void)
+static void VID_MenuDraw (void)
 {
 	int i, row, x, y, lx, ly;
 	menumode_t *menumode;
@@ -772,7 +771,7 @@ void VID_MenuDraw (void)
 		M_DrawCharacter(-8 + video_cursor_column * 14 * 8, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
 }
 
-void VID_MenuKey (int key)
+static void VID_MenuKey (int key)
 {
 	switch (key)
 	{

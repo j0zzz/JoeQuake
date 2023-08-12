@@ -231,7 +231,7 @@ void IN_Commands (void)
 {
 }
 
-void IN_MouseMove (usercmd_t *cmd)
+static void IN_MouseMove (usercmd_t *cmd)
 {
 	if (m_filter.value)
 	{
