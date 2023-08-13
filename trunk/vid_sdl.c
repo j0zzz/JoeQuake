@@ -776,8 +776,8 @@ static void VID_MenuDraw (void)
 		default:
 			if (video_cursor_row >= video_items + VID_MENU_SPACING)
 			{
-				M_Print(8 * 8, y + 16, "  Select a resolution");
-				M_Print(8 * 8, y + 24, "then apply/test changes");
+				M_Print(10 * 8, y + 16, "Select a resolution");
+				M_Print(10 * 8, y + 24, "then apply changes");
 			}
 			break;
 	}
