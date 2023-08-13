@@ -67,6 +67,7 @@ static cvar_t	vid_height = {"vid_height", "", CVAR_ARCHIVE};
 static cvar_t	vid_refreshrate = {"vid_refreshrate", "", CVAR_ARCHIVE};
 static cvar_t	vid_fullscreen = {"vid_fullscreen", "", CVAR_ARCHIVE};
 static cvar_t	vid_desktopfullscreen = {"vid_desktopfullscreen", "0", CVAR_ARCHIVE};
+static cvar_t	vid_ignoreerrors = {"vid_ignoreerrors", "0", CVAR_ARCHIVE};
 
 // Stubs that are used externally.
 qboolean vid_hwgamma_enabled = false;
@@ -160,13 +161,18 @@ void GL_EndRendering (void)
 
 	SDL_GL_SwapWindow(draw_context);
 
-	glerr = glGetError();
-	if (glerr)
-		Con_Printf("open gl error:%d\n", glerr);
+	if (vid_ignoreerrors.value == 0.0f)
+	{
+		while ((glerr = glGetError()))
+			Con_Printf("OpenGL error, please report: %d\n", glerr);
 
-	sdlerr = SDL_GetError();
-	if (sdlerr[0])
-		Con_Printf("SDL error:%d\n", sdlerr);
+		sdlerr = SDL_GetError();
+		if (sdlerr[0])
+		{
+			Con_Printf("SDL error, please report: %s\n", sdlerr);
+			SDL_ClearError();
+		}
+	}
 
 #ifdef _WIN32
 	{
@@ -196,8 +202,11 @@ static SDL_DisplayMode *VID_SDL2_GetDisplayMode(int width, int height, int refre
 
 	for (i = 0; i < sdlmodes; i++)
 	{
-		if (SDL_GetDisplayMode(displayindex, i, &mode) != 0)
+		if (SDL_GetDisplayMode(displayindex, i, &mode) < 0)
+		{
+			SDL_ClearError();
 			continue;
+		}
 
 		if (mode.w == width && mode.h == height
 			&& SDL_BITSPERPIXEL(mode.format) >= 24
@@ -292,7 +301,8 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 
 	/* z-buffer depth */
 	depthbits = 24;
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthbits);
+	if (SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthbits) < 0)
+		Sys_Error ("Couldn't set GL depth attribute: %s", SDL_GetError());
 
 	snprintf(caption, sizeof(caption), "%s", WINDOW_TITLE_STRING);
 
@@ -301,11 +311,13 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 	{
 		flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN;
 
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+		if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2) < 0)
+		Sys_Error ("Couldn't set GL major version attribute: %s", SDL_GetError());
+		if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1) < 0)
+		Sys_Error ("Couldn't set GL minor version attribute: %s", SDL_GetError());
 		draw_context = SDL_CreateWindow (caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
 		if (!draw_context)
-			Sys_Error ("Couldn't create window");
+			Sys_Error ("Couldn't create window: %s", SDL_GetError());
 
 		SDL_SetWindowMinimumSize (draw_context, 320, 240);
 	}
@@ -313,14 +325,15 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 	/* Ensure the window is not fullscreen */
 	if (VID_GetFullscreen ())
 	{
-		if (SDL_SetWindowFullscreen (draw_context, 0) != 0)
-			Sys_Error("Couldn't set fullscreen state mode");
+		if (SDL_SetWindowFullscreen (draw_context, 0) < 0)
+			Sys_Error("Couldn't set fullscreen state mode: %s", SDL_GetError());
 	}
 
 	/* Set window size and display mode */
 	SDL_SetWindowSize (draw_context, width, height);
 	SDL_SetWindowPosition (draw_context, SDL_WINDOWPOS_CENTERED_DISPLAY(displayindex), SDL_WINDOWPOS_CENTERED_DISPLAY(displayindex));
-	SDL_SetWindowDisplayMode (draw_context, VID_SDL2_GetDisplayMode(width, height, refreshrate));
+	if (SDL_SetWindowDisplayMode (draw_context, VID_SDL2_GetDisplayMode(width, height, refreshrate)) < 0)
+		Sys_Error ("Couldn't set window display mode: %s", SDL_GetError());
 	SDL_SetWindowBordered (draw_context, SDL_TRUE);
 
 	/* Make window fullscreen if needed, and show the window */
@@ -328,8 +341,8 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 	if (fullscreen) {
 		const Uint32 flag = vid_desktopfullscreen.value ?
 				SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN;
-		if (SDL_SetWindowFullscreen (draw_context, flag) != 0)
-			Sys_Error ("Couldn't set fullscreen state mode");
+		if (SDL_SetWindowFullscreen (draw_context, flag) < 0)
+			Sys_Error ("Couldn't set fullscreen state mode: %s", SDL_GetError());
 	}
 
 	SDL_ShowWindow (draw_context);
@@ -341,7 +354,7 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 		if (!gl_context)
 		{
 			SDL_GL_ResetAttributes();
-			Sys_Error("Couldn't create GL context");
+			Sys_Error("Couldn't create GL context: %s", SDL_GetError());
 		}
 		GL_Init ();
 	}
@@ -355,8 +368,11 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 	Draw_AdjustConback();
 
 // read the obtained z-buffer depth
-	if (SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &depthbits) == -1)
+	if (SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &depthbits) < 0)
+	{
 		depthbits = 0;
+		SDL_ClearError();
+	}
 
 	CDAudio_Resume ();
 	// TODO: Start non-CD audio
@@ -563,6 +579,7 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register (&vid_refreshrate);
 	Cvar_Register (&vid_fullscreen);
 	Cvar_Register (&vid_desktopfullscreen);
+	Cvar_Register (&vid_ignoreerrors);
 
 	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
 	Cmd_AddCommand ("vid_forcemode", VID_ForceMode_f);
@@ -595,8 +612,9 @@ void VID_Init (unsigned char *palette)
 	// problem setting the configured mode.
 	SetMode(800, 600, VID_GetCurrentRefreshRate(), false);
 
-	SDL_SetRelativeMouseMode(SDL_TRUE);
-	if (SDL_GL_SetSwapInterval (0) != 0)
+	if (SDL_SetRelativeMouseMode(SDL_TRUE) < 0)
+		Sys_Error("Couldn't set mouse mode: %s", SDL_GetError());
+	if (SDL_GL_SetSwapInterval (0) < 0)
 		Sys_Error("Couldn't disable vsync: %s", SDL_GetError());
 
 	VID_SetPalette (palette);
