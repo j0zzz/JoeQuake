@@ -204,6 +204,23 @@ int	wheel_dn_count = 0;
 	INPUT_CASE_DIMOFS_BUTTON(6);	\
 	INPUT_CASE_DIMOFS_BUTTON(7);
 
+void Sys_SendKeyEvents(void)
+{
+	MSG	msg;
+
+	while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+	{
+		// we always update if there are any event, even if we're paused
+		scr_skipupdate = 0;
+
+		if (!GetMessage(&msg, NULL, 0, 0))
+			Sys_Quit();
+
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+}
+
 DWORD WINAPI IN_SMouseProc (void *lpParameter)
 {
 	// read	mouse events and generate history tables

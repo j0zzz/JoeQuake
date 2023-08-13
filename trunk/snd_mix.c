@@ -58,7 +58,7 @@ void S_TransferStereo16 (int endtime)
 {
 	int	lpos, lpaintedtime;
 	DWORD	*pbuf;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(SDL2)
 	int	reps;
 	DWORD	dwSize, dwSize2, *pbuf2;
 	HRESULT	hresult;
@@ -69,7 +69,7 @@ void S_TransferStereo16 (int endtime)
 	snd_p = (int *)paintbuffer;
 	lpaintedtime = paintedtime;
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(SDL2)
 	if (pDSBuf)
 	{
 		reps = 0;
@@ -123,7 +123,7 @@ void S_TransferStereo16 (int endtime)
 #endif
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(SDL2)
 	if (pDSBuf)
 		pDSBuf->lpVtbl->Unlock(pDSBuf, pbuf, dwSize, NULL, 0);
 #endif
@@ -133,7 +133,7 @@ void S_TransferPaintBuffer(int endtime)
 {
 	int 	out_idx, count, out_mask, *p, step, val, snd_vol;
 	DWORD	*pbuf;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(SDL2)
 	int	reps;
 	DWORD	dwSize, dwSize2, *pbuf2;
 	HRESULT	hresult;
@@ -152,7 +152,7 @@ void S_TransferPaintBuffer(int endtime)
 	step = 3 - shm->channels;
 	snd_vol = s_volume.value * 256;
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(SDL2)
 	if (pDSBuf)
 	{
 		reps = 0;
@@ -214,7 +214,7 @@ void S_TransferPaintBuffer(int endtime)
 		}
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(SDL2)
 	if (pDSBuf)
 	{
 		DWORD	dwNewpos, dwWrite;

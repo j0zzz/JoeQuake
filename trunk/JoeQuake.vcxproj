@@ -13,6 +13,10 @@
       <Configuration>GL Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="SDL Release|Win32">
+      <Configuration>SDL Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Software Release|Win32">
       <Configuration>Software Release</Configuration>
       <Platform>Win32</Platform>
@@ -25,36 +29,43 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}</ProjectGuid>
     <RootNamespace>joequake</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>false</WholeProgramOptimization>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -64,6 +75,10 @@
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
@@ -91,17 +106,25 @@
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">.\release_gl\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">.\release_sdl\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">.\release_d3d\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">.\release_gl\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">.\release_sdl\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">.\release_d3d\</IntDir>
     <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">*.asm;*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;$(TargetPath)</ExtensionsToDeleteOnClean>
+    <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">*.asm;*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;$(TargetPath)</ExtensionsToDeleteOnClean>
     <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">*.asm;*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;$(TargetPath)</ExtensionsToDeleteOnClean>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">.\debug_gl\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">.\debug_gl\</IntDir>
     <ExtensionsToDeleteOnClean Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">*.asm;*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;$(TargetPath)</ExtensionsToDeleteOnClean>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\SDL2-2.28.2\include</IncludePath>
+    <LibraryPath>C:\SDL2-2.28.2\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">
     <Midl>
@@ -271,6 +294,58 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\release_gl/JoeQuake.tlb</TypeLibraryName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;id386;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;SDL2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\release_gl/joequake.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\release_gl/</AssemblerListingLocation>
+      <ObjectFileName>.\release_gl/</ObjectFileName>
+      <ProgramDataBaseFileName>.\release_gl/</ProgramDataBaseFileName>
+      <BrowseInformation>
+      </BrowseInformation>
+      <BrowseInformationFile>$(IntDir)</BrowseInformationFile>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>.\dxsdk\lib\dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>joequake-gl-sdl.exe</OutputFile>
+      <Version>
+      </Version>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>LIBC.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ProgramDatabaseFile>.\release_gl/joequake-gl.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <SetChecksum>true</SetChecksum>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">
     <Midl>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -388,6 +463,11 @@
     <ResourceCompile Include="joequake.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cd_null.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="cl_dzip.c" />
     <ClCompile Include="fmod.c" />
     <ClCompile Include="ghost\demoparse.c" />
@@ -417,6 +497,7 @@
     </ClCompile>
     <ClCompile Include="gl_rlight.c">
       <OmitFramePointers Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</OmitFramePointers>
+      <OmitFramePointers Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</OmitFramePointers>
       <OmitFramePointers Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</OmitFramePointers>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
@@ -445,14 +526,30 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="cd_win.c" />
+    <ClCompile Include="cd_win.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+	<ClCompile Include="in_sdl.c">
+		<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
+		<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+		<ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
+	</ClCompile>
     <ClCompile Include="ioapi.c" />
     <ClCompile Include="snd_dma.c" />
+    <ClCompile Include="snd_sdl.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="snd_mem.c" />
     <ClCompile Include="snd_mix.c" />
-    <ClCompile Include="snd_win.c" />
+    <ClCompile Include="snd_win.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="cl_input.c" />
-    <ClCompile Include="in_win.c" />
+    <ClCompile Include="in_win.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="keys.c" />
     <ClCompile Include="sv_main.c" />
     <ClCompile Include="sv_move.c" />
@@ -464,137 +561,164 @@
     <ClCompile Include="r_aclip.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_alias.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_bsp.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_draw.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_edge.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_efrag.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_light.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_main.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_misc.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_model.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_part.c" />
     <ClCompile Include="r_rast.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_screen.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_sky.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_sprite.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_surf.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="r_vars.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_edge.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_fill.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_init.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_modech.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_polyse.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_scan.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_sky.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_sprite.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_surf.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_vars.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="d_zpoint.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="unzip.c">
@@ -604,13 +728,20 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="vid_sdl.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="vid_wgl.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="vid_win.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="cl_demo.c" />
@@ -730,8 +861,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -742,6 +879,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -766,8 +904,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -778,6 +922,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -802,8 +947,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -814,6 +965,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -838,8 +990,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -850,6 +1008,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -874,8 +1033,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -886,6 +1051,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -910,8 +1076,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -922,6 +1094,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -946,8 +1119,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -958,6 +1137,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -985,12 +1165,18 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -1015,8 +1201,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1027,6 +1219,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -1051,8 +1244,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1063,6 +1262,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -1087,8 +1287,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1099,6 +1305,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -1123,8 +1330,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1135,6 +1348,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -1159,8 +1373,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1171,6 +1391,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -1198,12 +1419,18 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -1228,8 +1455,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1240,6 +1473,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -1267,12 +1501,18 @@ gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -1297,8 +1537,14 @@ del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
+gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
+ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
+del $(OutDir)%(FileName).spp
+</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">cl /D "GLQUAKE" /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
 ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName).asm
 del $(OutDir)%(FileName).spp
@@ -1309,6 +1555,7 @@ ml /nologo /c /Cp /coff /Fo$(OutDir)%(FileName).obj /Zm /Zi $(OutDir)%(FileName)
 del $(OutDir)%(FileName).spp
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Software Debug|Win32'">true</ExcludedFromBuild>

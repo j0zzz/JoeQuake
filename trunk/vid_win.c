@@ -1905,6 +1905,12 @@ void VID_ForceMode_f (void)
 {
 	int	modenum;
 
+	if (Cmd_Argc() == 2 && strcmp(Cmd_Argv(1), "post-config") == 0)
+	{
+		// `vid_win.c` has a different way of detecting initial cvar setting.
+		return;
+	}
+
 	if (!vid_testingmode)
 	{
 		modenum = Q_atoi(Cmd_Argv(1));
