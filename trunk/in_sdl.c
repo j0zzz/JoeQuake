@@ -142,6 +142,7 @@ static inline int IN_SDL2_ScancodeToQuakeKey(SDL_Scancode scancode)
 	case SDL_SCANCODE_END: return K_END;
 
 	case SDL_SCANCODE_PAUSE: return K_PAUSE;
+	case SDL_SCANCODE_CAPSLOCK: return K_CAPSLOCK;
 
 	default: return 0;
 	}
