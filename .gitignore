@@ -19,5 +19,6 @@ trunk/debug_*
 trunk/release_*
 trunk/dxsdk/*
 trunk/scitech/*
+trunk/SDL2/*
 /trunk/JoeQuake.sdf
 /trunk/joequake.aps

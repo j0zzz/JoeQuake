@@ -1076,7 +1076,9 @@ void Host_Init (quakeparms_t *parms)
 
 	Cbuf_AddText ("exec quake.rc\n");
 	Cbuf_AddText ("cl_warncmd 1\n");
+#if defined(GLQUAKE) && defined(SDL2)
 	Cbuf_AddText ("vid_forcemode post-config\n");  // Set the real resolution once config.cfg has been read
+#endif
 
 #ifdef GLQUAKE
 	if (nehahra)
