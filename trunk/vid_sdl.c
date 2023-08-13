@@ -76,6 +76,8 @@ static cvar_t	vid_refreshrate = {"vid_refreshrate", "", CVAR_ARCHIVE};
 static cvar_t	vid_fullscreen = {"vid_fullscreen", "", CVAR_ARCHIVE};
 static cvar_t	vid_desktopfullscreen = {"vid_desktopfullscreen", "0", CVAR_ARCHIVE};
 static cvar_t	vid_ignoreerrors = {"vid_ignoreerrors", "0", CVAR_ARCHIVE};
+static qboolean OnChange_windowed_mouse(struct cvar_s *var, char *value);
+cvar_t	_windowed_mouse = {"_windowed_mouse", "1", 0, OnChange_windowed_mouse};
 
 // Stubs that are used externally.
 qboolean vid_hwgamma_enabled = false;
@@ -382,6 +384,9 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 		SDL_ClearError();
 	}
 
+	if (SDL_SetRelativeMouseMode(VID_GetFullscreen() || _windowed_mouse.value != 0.0f) < 0)
+		Sys_Error("Couldn't set mouse mode: %s", SDL_GetError());
+
 	CDAudio_Resume ();
 	// TODO: Start non-CD audio
 	scr_disabled_for_loading = temp;
@@ -577,6 +582,13 @@ static void VID_InitModelist (void)
 	}
 }
 
+static qboolean OnChange_windowed_mouse (struct cvar_s *var, char *value)
+{
+	if (SDL_SetRelativeMouseMode(VID_GetFullscreen() || Q_atof (value) != 0.0f) < 0)
+		Sys_Error("Couldn't set mouse mode: %s", SDL_GetError());
+	return false;
+}
+
 void VID_Init (unsigned char *palette)
 {
 	int i;
@@ -588,6 +600,7 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register (&vid_fullscreen);
 	Cvar_Register (&vid_desktopfullscreen);
 	Cvar_Register (&vid_ignoreerrors);
+	Cvar_Register (&_windowed_mouse);
 
 	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
 	Cmd_AddCommand ("vid_forcemode", VID_ForceMode_f);
@@ -620,8 +633,6 @@ void VID_Init (unsigned char *palette)
 	// problem setting the configured mode.
 	SetMode(800, 600, VID_GetCurrentRefreshRate(), false);
 
-	if (SDL_SetRelativeMouseMode(SDL_TRUE) < 0)
-		Sys_Error("Couldn't set mouse mode: %s", SDL_GetError());
 	if (SDL_GL_SetSwapInterval (0) < 0)
 		Sys_Error("Couldn't disable vsync: %s", SDL_GetError());
 

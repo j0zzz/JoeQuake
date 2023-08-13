@@ -30,7 +30,6 @@ static double	mx, my, old_mouse_x, old_mouse_y;
 cvar_t	m_filter = {"m_filter", "0"};
 
 // Stubs that are used externally.
-cvar_t	_windowed_mouse = {"_windowed_mouse", "1", 0};
 qboolean use_m_smooth;
 cvar_t m_rate = {"m_rate", "60"};
 
@@ -223,6 +222,7 @@ void Force_CenterView_f (void)
 void IN_Init (void)
 {
 	Cvar_Register (&m_filter);
+	Cvar_Register (&_windowed_mouse);
 
 	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
 }
