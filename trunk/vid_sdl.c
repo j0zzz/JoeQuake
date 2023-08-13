@@ -58,7 +58,8 @@ static SDL_GLContext* gl_context = NULL;
 static sdlmode_t	modelist[MAX_MODE_LIST];  // Modes for showing in `vid_describemodes`
 static int		nummodes;
 static menumode_t menumodelist[MAX_MENU_MODES];
-static int     nummenumodes;
+static int		nummenumodes;
+static int		displayindex;
 
 static qboolean	vid_initialized = false;
 static cvar_t	vid_width = {"vid_width", "", CVAR_ARCHIVE};
@@ -190,12 +191,12 @@ void VID_Shutdown (void)
 static SDL_DisplayMode *VID_SDL2_GetDisplayMode(int width, int height, int refreshrate)
 {
 	static SDL_DisplayMode mode;
-	const int sdlmodes = SDL_GetNumDisplayModes(0);
+	const int sdlmodes = SDL_GetNumDisplayModes(displayindex);
 	int i;
 
 	for (i = 0; i < sdlmodes; i++)
 	{
-		if (SDL_GetDisplayMode(0, i, &mode) != 0)
+		if (SDL_GetDisplayMode(displayindex, i, &mode) != 0)
 			continue;
 
 		if (mode.w == width && mode.h == height
@@ -231,11 +232,8 @@ static int VID_GetCurrentBPP (void)
 static int VID_GetCurrentRefreshRate (void)
 {
 	SDL_DisplayMode mode;
-	int current_display;
 
-	current_display = SDL_GetWindowDisplayIndex(draw_context);
-
-	if (0 != SDL_GetCurrentDisplayMode(current_display, &mode))
+	if (0 != SDL_GetCurrentDisplayMode(displayindex, &mode))
 		return DEFAULT_REFRESHRATE;
 
 	return mode.refresh_rate;
@@ -284,7 +282,6 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 	Uint32	flags;
 	char		caption[50];
 	int		depthbits;
-	int		previous_display;
 
 	// so Con_Printfs don't mess us up by forcing vid and snd updates
 	temp = scr_disabled_for_loading;
@@ -311,12 +308,6 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 			Sys_Error ("Couldn't create window");
 
 		SDL_SetWindowMinimumSize (draw_context, 320, 240);
-
-		previous_display = -1;
-	}
-	else
-	{
-		previous_display = SDL_GetWindowDisplayIndex(draw_context);
 	}
 
 	/* Ensure the window is not fullscreen */
@@ -328,10 +319,7 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 
 	/* Set window size and display mode */
 	SDL_SetWindowSize (draw_context, width, height);
-	if (previous_display >= 0)
-		SDL_SetWindowPosition (draw_context, SDL_WINDOWPOS_CENTERED_DISPLAY(previous_display), SDL_WINDOWPOS_CENTERED_DISPLAY(previous_display));
-	else
-		SDL_SetWindowPosition(draw_context, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+	SDL_SetWindowPosition (draw_context, SDL_WINDOWPOS_CENTERED_DISPLAY(displayindex), SDL_WINDOWPOS_CENTERED_DISPLAY(displayindex));
 	SDL_SetWindowDisplayMode (draw_context, VID_SDL2_GetDisplayMode(width, height, refreshrate));
 	SDL_SetWindowBordered (draw_context, SDL_TRUE);
 
@@ -501,7 +489,7 @@ static void SwapModes(sdlmode_t *m1, sdlmode_t *m2)
 
 static void VID_InitModelist (void)
 {
-	const int sdlmodes = SDL_GetNumDisplayModes(0);
+	const int sdlmodes = SDL_GetNumDisplayModes(displayindex);
 	int i, j;
 	sdlmode_t *m1, *m2, *mode;
 	menumode_t *menumode;
@@ -514,7 +502,7 @@ static void VID_InitModelist (void)
 
 		if (nummodes >= MAX_MODE_LIST)
 			break;
-		if (SDL_GetDisplayMode(0, i, &mode) == 0 && SDL_BITSPERPIXEL (mode.format) >= 24)
+		if (SDL_GetDisplayMode(displayindex, i, &mode) == 0 && SDL_BITSPERPIXEL (mode.format) >= 24)
 		{
 			modelist[nummodes].width = mode.w;
 			modelist[nummodes].height = mode.h;
@@ -567,6 +555,9 @@ static void VID_InitModelist (void)
 
 void VID_Init (unsigned char *palette)
 {
+	int i;
+	int numdisplays;
+
 	Cvar_Register (&vid_width);
 	Cvar_Register (&vid_height);
 	Cvar_Register (&vid_refreshrate);
@@ -584,6 +575,18 @@ void VID_Init (unsigned char *palette)
 
 	if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
 		Sys_Error("Couldn't init SDL video: %s", SDL_GetError());
+
+	numdisplays = SDL_GetNumVideoDisplays();
+	if (numdisplays < 0)
+		Sys_Error("Couldn't get number of displays: %s", SDL_GetError());
+
+	if ((i = COM_CheckParm("-display")) && i + 1 < com_argc)
+		displayindex = Q_atoi(com_argv[i+1]);
+	else
+		displayindex = 0;
+	if (displayindex >= numdisplays || displayindex < 0)
+		Sys_Error("Invalid display index: %d, there are %d displays", displayindex, numdisplays);
+
 	VID_InitModelist();
 
 	// Set a mode for maximum compatibility.  The real mode will be set once
