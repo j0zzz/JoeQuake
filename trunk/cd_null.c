@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 
+
+extern	cvar_t	bgmvolume;
+
 void CDAudio_Play(byte track, qboolean looping)
 {
 }
@@ -41,6 +44,8 @@ void CDAudio_Resume(void)
 
 void CDAudio_Update(void)
 {
+	if (fmod_loaded)
+		FMOD_ChangeVolume(bgmvolume.value);
 }
 
 
