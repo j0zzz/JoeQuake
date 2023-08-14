@@ -152,14 +152,16 @@ statistics. 0 by deafult.
 Toggles between normal and backward demoplaying, 0 by default.
 Only works when playing a demo.
 
-### `show_speed`
+### `show_speed`, `show_speed_x`, `show_speed_y`, `show_speed_alpha`
 
 Prints the player's speed in units.
+Position can be changed with the `_x` and `_y` coordinates. 
+Transparency of the speed bar can be changed with the `_alpha` value.
 
 ### `show_fps`, `show_fps_x`, `show_fps_y`
 
-Prints the framerate in frames per second. Position can be changed with the
-`_x` and `_y` coordinates.
+Prints the framerate in frames per second.
+Position can be changed with the `_x` and `_y` coordinates.
 
 ### `r_fullbrightskins`
 
@@ -308,6 +310,16 @@ Default value is "1".
 
 Toggles between old and new style weapon bobbing, "0" by default.
 
+### `cl_minpitch`
+
+Minimum value of pitch angle. Cannot be smaller than -90.
+Default value is -70.
+
+### `cl_maxpitch`
+
+Maximum value of pitch angle. Cannot be greater than 90.
+Default value is 80.
+
 ### `con_notify_intermission`
 
 Console notify messages are shown on the intermission screen, "0" by default.
@@ -375,9 +387,24 @@ When switched on, water surfaces are lit on compatible maps.
 1 by default.
 
 ### `r_waterquality`
+
 Specifies the quality (tesselation level) of the water surfaces' warping animation.
 Can be between 3 and 64.
 8 by default.
+
+### `r_waterwarp`
+
+When switched on, puts a warp effect on the screen while underwater.
+0 by default.
+
+### `r_particles`
+
+Toggles drawing of classic particles.
+Possible values are:
+0 - No particles drawn
+1 - Circle shaped particles
+2 - Square shaped particles
+Default value is "1".
 
 ### `capture_codec`
 
@@ -634,6 +661,11 @@ Switches on alternative noclip movement where the player always moves towards
 the direction he's looking at.
 1 by default.
 
+### `sv_noclipspeed`
+
+Dedicated max speed value used only while noclip.
+320 by default.
+
 ### `fog_custom`
 
 Can store custom fog parameters which are only applied if the `fog_override` variable is set to 1.
@@ -796,6 +828,11 @@ active clients on the server.
 The name of the written config file can be given as `filename`. If not present,
 an automatic name based on current map and time is used.
 
+### `sv_protocol`
+
+Overrides the default 15 (netquake) protocol version with given value.
+This command aims to keep JoeQuake compatible with mods.
+
 ## Other features
 
 ### Parameter completion
@@ -938,6 +975,8 @@ ctrl-shift-enter to remove the ghost.
   transparent, `1` is fully opaque.
 - `ghost_marathon_split`: When set to `1`, show the live marathon split, rather
   than the level split. Default `0`.
+- `ghost_bar_x`, `ghost_bar_y`: Set the position of the ghost bar.
+- `ghost_bar_alpha`: Set the transparency of the ghost bar.
 
 #### Marathon split times
 

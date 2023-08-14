@@ -1,4 +1,51 @@
 
+ version 0.17.6 build 7652
+ -----------------------
+
+Providing BETA version of SDL build (by Matthew Earl)
+	SDL is the abbreviation of 'simple directmedia layer', an API that provides cross-platform
+	media access: audio, video and input handling.
+Added several quality-of-life improvements, done by Chambers:
+	Fix annoying float-up bug when flying into angled geometry
+	Using correct viewangles on load game (MH)
+	Introducing sv_noclipspeed cvar
+	Not picking up items anymore while noclip
+Increased MAX_DATAGRAM to 64000 to overcome packet overflow messages
+Showing ambient light color on alias models in non-vertex lighting conditions (from QuakeSpasm)
+Fixed light blending issue when orange lights were drawn with greenish color on some textures
+Added support of larger size/number of lightmaps (from QuakeSpasm)
+	This eliminates the well known "AllocBlock: full" errors on larger maps
+Added sv_protocol command to remain compatible with mods already using it
+Ghost model is now drawn using the color the player played with
+Added variable pitch clamping (from QuakeSpasm)
+	cl_maxpitch, 80 by default, has a hard limit of 90
+	cl_minpitch, -70 by default, has a hard imit of -90
+Changed show_speed calculation to be more accurate (possible for single player only)
+Add support for AD flame/torch models (gave them full light, removed animation lerping and shadows)
+Fixed bug when cl_confirmquit didn't affect the Quit menu
+Removed 'view distance' slider from View options menu as it is a rather technical setting
+	Also increased default value of r_farclip to 65536 (that should be enough for very large maps)
+Updated text on Quit screen to include Sphere and Kipi as contributors
+Added chase_active legacy command for backward compatibility
+Added entity scale support (required by newer maps, part of protocol 999)
+Smarter filtering of non-playable bsp files in the Maps menu (from QuakeSpasm/Ironwail)
+Fixed bug when alias models weren't affected by dynamic lights
+Added support for non-standard size sky/skybox textures (from QuakeSpasm)
+Demos menu directory is new properly reset after changing to another Mod
+Fixed bug when particle trails disappeared on larger maps with lots of entities
+Changed default value of r_shadows to 0
+Added additional cvars for show_speed and ghost bar
+	show_speed_x, show_speed_y: to customize position of the speedometer
+	show_speed_alpha: to customize the transparency of the speedometer
+	ghost_bar_x, ghost_bar_y: to customize position of the ghost bar
+	ghost_bar_alpha: to customize the transparency of the ghost bar
+Added r_waterwarp cvar (from QuakeSpasm)
+Added r_particles cvar to support square shaped particles (from QuakeSpasm)
+	r_particles = 0: no particles
+	r_particles = 1: circle shaped particles (default)
+	r_particles = 2: square shaped particles
+Fixed wrong decimal calculation of keepdemo command
+
  version 0.17.5 build 7492
  -----------------------
 
