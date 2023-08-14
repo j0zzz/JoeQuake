@@ -481,6 +481,9 @@ void Con_LogCenterPrint(char* str)
 	if (!strcmp(str, con_lastcenterstring))
 		return; //ignore duplicates
 
+	if (strstr(str, "Grenade ") != NULL)
+		return; //add an exception for grenade timer
+
 	if (cl.gametype == GAME_DEATHMATCH && con_logcenterprint.value != 2)
 		return; //don't log in deathmatch
 

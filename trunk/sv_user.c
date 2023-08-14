@@ -291,6 +291,7 @@ SV_NoclipMove -- johnfitz
 new, alternate noclip. old noclip is still handled in SV_AirMove
 ===================
 */
+cvar_t	sv_noclipspeed = { "sv_noclipspeed", "320" };
 void SV_NoclipMove(void)
 {
 	AngleVectors(sv_player->v.v_angle, forward, right, up);
@@ -300,10 +301,10 @@ void SV_NoclipMove(void)
 	velocity[2] = forward[2] * cmd.forwardmove + right[2] * cmd.sidemove;
 	velocity[2] += cmd.upmove * 2; //doubled to match running speed
 
-	if (VectorLength(velocity) > sv_maxspeed.value)
+	if (VectorLength(velocity) > sv_noclipspeed.value)
 	{
 		VectorNormalize(velocity);
-		VectorScale(velocity, sv_maxspeed.value, velocity);
+		VectorScale(velocity, sv_noclipspeed.value, velocity);
 	}
 }
 

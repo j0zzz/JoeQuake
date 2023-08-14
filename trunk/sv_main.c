@@ -79,6 +79,7 @@ void SV_Init (void)
 	int	i;
 	const char *p;
 	extern cvar_t sv_altnoclip; //johnfitz
+	extern cvar_t sv_noclipspeed;
 
 	sv.edicts = NULL; // ericw -- sv.edicts switched to use malloc() 
 
@@ -93,6 +94,7 @@ void SV_Init (void)
 	Cvar_Register (&sv_aim);
 	Cvar_Register (&sv_nostep);
 	Cvar_Register (&sv_altnoclip); //johnfitz
+	Cvar_Register (&sv_noclipspeed);
 
 	Cmd_AddCommand("sv_protocol", &SV_Protocol_f); //johnfitz
 

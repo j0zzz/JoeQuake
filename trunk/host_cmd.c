@@ -177,6 +177,7 @@ void Host_Noclip_f (void)
 		noclip_anglehack = true;
 		sv_player->v.movetype = MOVETYPE_NOCLIP;
 		SV_ClientPrintf ("noclip ON\n");
+		sv_player->v.waterlevel = 0;	// Chambers: Fixes annoying float-up bug when flying into angled geometry
 	}
 	else
 	{
@@ -1054,7 +1055,8 @@ void Host_Spawn_f (void)
 	client_t	*client;
 	edict_t		*ent;
 	func_t		RestoreGame;
-        dfunction_t	*f;
+    dfunction_t	*f;
+	float	*sendangle; //MH
 	extern	dfunction_t *ED_FindFunction (char *name);
 
 	if (cmd_source == src_command)
@@ -1187,8 +1189,9 @@ void Host_Spawn_f (void)
 // with a permanent head tilt
 	ent = EDICT_NUM(1 + (host_client - svs.clients));
 	MSG_WriteByte (&host_client->message, svc_setangle);
+	sendangle = sv.loadgame ? ent->v.v_angle : ent->v.angles; //MH Correct viewangles on load game(06-05-2012)
 	for (i=0 ; i<2 ; i++)
-		MSG_WriteAngle (&host_client->message, ent->v.angles[i], sv.protocolflags);
+		MSG_WriteAngle (&host_client->message, sendangle[i], sv.protocolflags); //MH updated for correct angle.
 	MSG_WriteAngle (&host_client->message, 0, sv.protocolflags);
 
 	SV_WriteClientdataToMessage (sv_player, &host_client->message);
