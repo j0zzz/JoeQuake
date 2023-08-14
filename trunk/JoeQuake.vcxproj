@@ -334,7 +334,7 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>.\dxsdk\lib\dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>release_sdl\joequake-gl-sdl.exe</OutputFile>
+      <OutputFile>.\..\..\..\..\joequake-gl-sdl.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
