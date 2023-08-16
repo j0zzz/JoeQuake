@@ -172,8 +172,10 @@ void Sys_Init (void)
 {
 	OSVERSIONINFOEXA vinfo;
 
+#ifndef GLQUAKE
 	MaskExceptions ();
 	Sys_SetFPCW ();
+#endif
 
 	Sys_InitDoubleTime ();
 
