@@ -81,7 +81,7 @@ qboolean FMOD_LoadLibrary (void)
 	fmod_loaded = false;
 
 #ifdef _WIN32
-	if (!(fmod_handle = LoadLibrary("joequake/fmod.dll")))
+	if (!(fmod_handle = LoadLibrary("fmod.dll")))
 #else
 	if (!(fmod_handle = dlopen("libfmod-3.73.so", RTLD_NOW)))
 #endif
