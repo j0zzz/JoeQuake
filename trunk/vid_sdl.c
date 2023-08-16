@@ -109,15 +109,31 @@ float menu_vsync;
 // Video menu stuff
 //========================================================
 
+typedef enum
+{
+	VID_MENU_ROW_FULLSCREEN,
+	VID_MENU_ROW_REFRESH_RATE,
+	VID_MENU_ROW_APPLY,
+	VID_MENU_ROW_SPACE1,
+	VID_MENU_ROW_RESOLUTION_SCALE,
+	VID_MENU_NUM_ITEMS,
+} vid_menu_rows_t;
+
+
 #define VID_ROW_SIZE		3  // number of columns for modes
 #define VID_MENU_SPACING	2  // rows between video options and modes
 
+#define VID_MENU_IS_SPACE(row)	( \
+	(row) == VID_MENU_ROW_SPACE1 \
+	|| ((row) >= VID_MENU_NUM_ITEMS && ((row) < VID_MENU_NUM_ITEMS + VID_MENU_SPACING)) \
+)
+
 static int	video_cursor_row = 0;
 static int	video_cursor_column = 0;
-static int video_items = 0;
 static int video_mode_rows = 0;
 
 static menu_window_t video_window;
+static menu_window_t video_slider_resscale_window;
 static void VID_MenuDraw (void);
 static void VID_MenuKey (int key);
 
@@ -753,25 +769,26 @@ static void VID_MenuDraw (void)
 	M_DrawPic ((320-p->width)/2, 4, p);
 
 	// general settings
-	y = 32;
-	row = 0;
+	row = VID_MENU_ROW_FULLSCREEN; y = 32 + 8 * row;
 	M_Print_GetPoint(16, y, &video_window.x, &video_window.y, "        Fullscreen", video_cursor_row == row);
 	video_window.x -= 16;	// adjust it slightly to the left due to the larger, 3 columns vid modes list
 	M_DrawCheckbox(188, y, vid_fullscreen.value != 0);
 
-	y += 8; row ++;
+	row = VID_MENU_ROW_REFRESH_RATE; y = 32 + 8 * row;
 	M_Print_GetPoint(16, y, &lx, &ly, "      Refresh rate", video_cursor_row == row);
 	snprintf(refresh_rate_desc, sizeof(refresh_rate_desc), "%i Hz", (int)vid_refreshrate.value);
 	M_Print(188, y, refresh_rate_desc);
 
-	y += 8; row ++;
-	M_Print_GetPoint(16, y, &lx, &ly, "     Apply changes", video_cursor_row == row);
+	row = VID_MENU_ROW_RESOLUTION_SCALE; y = 32 + 8 * row;
+	M_Print_GetPoint(16, y, &lx, &ly, "  Resolution scale", video_cursor_row == row);
+	M_DrawSliderFloat2(188, y, (r_scale.value - 0.25) / 0.75, r_scale.value, &video_slider_resscale_window);
 
-	video_items = row + 1;
+	row = VID_MENU_ROW_APPLY; y = 32 + 8 * row;
+	M_Print_GetPoint(16, y, &lx, &ly, "     Apply changes", video_cursor_row == row);
 
 	// resolutions
 	x = 0;
-	y += 8 * (1 + VID_MENU_SPACING);
+	y = 32 + 8 * (VID_MENU_NUM_ITEMS + VID_MENU_SPACING);
 	video_mode_rows = 0;
 	for (i = 0 ; i < nummenumodes ; i++)
 	{
@@ -802,16 +819,18 @@ static void VID_MenuDraw (void)
 	// help text
 	switch (video_cursor_row)
 	{
-		case 0: // fullscreen
+		case VID_MENU_ROW_FULLSCREEN:
 			break;
-		case 1: // refresh rate
+		case VID_MENU_ROW_REFRESH_RATE:
 			M_Print(8 * 8, y + 16, "  Choose a refresh rate");
 			M_Print(8 * 8, y + 24, "after selecting resolution");
 			break;
-		case 2: // apply
+		case VID_MENU_ROW_RESOLUTION_SCALE:
+			break;
+		case VID_MENU_ROW_APPLY:
 			M_Print(8 * 8, y + 16, "Apply selected settings");
 		default:
-			if (video_cursor_row >= video_items + VID_MENU_SPACING)
+			if (video_cursor_row >= VID_MENU_NUM_ITEMS + VID_MENU_SPACING)
 			{
 				M_Print(10 * 8, y + 16, "Select a resolution");
 				M_Print(10 * 8, y + 24, "then apply changes");
@@ -820,11 +839,28 @@ static void VID_MenuDraw (void)
 	}
 
 	// cursor
-	if (video_cursor_row < video_items)
+	if (video_cursor_row < VID_MENU_NUM_ITEMS && !VID_MENU_IS_SPACE(video_cursor_row))
 		M_DrawCharacter(168, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
-	else if (video_cursor_row >= video_items + VID_MENU_SPACING
-			&& (video_cursor_row - video_items - VID_MENU_SPACING) * VID_ROW_SIZE + video_cursor_column < nummenumodes) // we are in the resolutions region
+	else if (video_cursor_row >= VID_MENU_NUM_ITEMS + VID_MENU_SPACING
+			&& (video_cursor_row - VID_MENU_NUM_ITEMS - VID_MENU_SPACING) * VID_ROW_SIZE + video_cursor_column < nummenumodes) // we are in the resolutions region
 		M_DrawCharacter(-8 + video_cursor_column * 14 * 8, 32 + video_cursor_row * 8, 12 + ((int)(realtime * 4) & 1));
+}
+
+void M_Video_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (video_cursor_row)
+	{
+	case VID_MENU_ROW_RESOLUTION_SCALE:
+		r_scale.value += dir * 0.05;
+		r_scale.value = bound(0.25, r_scale.value, 1);
+		Cvar_SetValue(&r_scale, r_scale.value);
+		break;
+
+	default:
+		break;
+	}
 }
 
 static void VID_MenuKey (int key)
@@ -841,11 +877,11 @@ static void VID_MenuKey (int key)
 	case K_MWHEELUP:
 		S_LocalSound("misc/menu1.wav");
 		video_cursor_row--;
-		if (video_cursor_row == video_items + VID_MENU_SPACING - 1)
-			video_cursor_row -= VID_MENU_SPACING;
+		while (VID_MENU_IS_SPACE(video_cursor_row))
+			video_cursor_row--;
 		if (video_cursor_row < 0)
 		{
-			video_cursor_row = (video_items + video_mode_rows + VID_MENU_SPACING) - 1;
+			video_cursor_row = (VID_MENU_NUM_ITEMS + video_mode_rows + VID_MENU_SPACING) - 1;
 			// if we cycle from the top to the bottom row, check if we have an item in the appropriate column
 			if (nummenumodes % VID_ROW_SIZE == 1 || (nummenumodes % VID_ROW_SIZE == 2 && video_cursor_column == 2))
 				video_cursor_column = 0;
@@ -856,11 +892,12 @@ static void VID_MenuKey (int key)
 	case K_MWHEELDOWN:
 		S_LocalSound("misc/menu1.wav");
 		video_cursor_row++;
-		if (video_cursor_row == video_items)
-			video_cursor_row += VID_MENU_SPACING;
-		if (video_cursor_row >= (video_items + video_mode_rows + VID_MENU_SPACING))
+		while (VID_MENU_IS_SPACE(video_cursor_row))
+			video_cursor_row++;
+
+		if (video_cursor_row >= (VID_MENU_NUM_ITEMS + video_mode_rows + VID_MENU_SPACING))
 			video_cursor_row = 0;
-		else if (video_cursor_row == ((video_items + video_mode_rows + VID_MENU_SPACING) - 1)) // if we step down to the last row, check if we have an item below in the appropriate column
+		else if (video_cursor_row == ((VID_MENU_NUM_ITEMS + video_mode_rows + VID_MENU_SPACING) - 1)) // if we step down to the last row, check if we have an item below in the appropriate column
 		{
 			if (nummenumodes % VID_ROW_SIZE == 1 || (nummenumodes % VID_ROW_SIZE == 2 && video_cursor_column == 2))
 				video_cursor_column = 0;
@@ -871,19 +908,19 @@ static void VID_MenuKey (int key)
 		S_LocalSound("misc/menu2.wav");
 		switch (video_cursor_row)
 		{
-			case 0: // fullscreen
+			case VID_MENU_ROW_FULLSCREEN:
 				Cvar_SetValue(&vid_fullscreen, vid_fullscreen.value == 0);
 				break;
-            case 1: // refresh rate
+            case VID_MENU_ROW_REFRESH_RATE:
 				MenuSelectNextRefreshRate();
                 break;
-			case 2: // apply
+			case VID_MENU_ROW_APPLY:
 				Cbuf_AddText ("vid_forcemode\n");
 				break;
             default:
-                if (video_cursor_row >= video_items)
+                if (video_cursor_row >= VID_MENU_NUM_ITEMS)
                 {
-					int i = (video_cursor_row - video_items - VID_MENU_SPACING)
+					int i = (video_cursor_row - VID_MENU_NUM_ITEMS - VID_MENU_SPACING)
 										* VID_ROW_SIZE + video_cursor_column;
 					if (i < nummenumodes)
 					{
@@ -898,16 +935,20 @@ static void VID_MenuKey (int key)
 
 	case K_LEFTARROW:
 		S_LocalSound("misc/menu1.wav");
-		if (video_cursor_row == 1) {
-			// refresh rate
+		if (video_cursor_row == VID_MENU_ROW_REFRESH_RATE)
+		{
 			MenuSelectPrevRefreshRate();
 		}
-		else if (video_cursor_row >= video_items)
+		else if (video_cursor_row == VID_MENU_ROW_RESOLUTION_SCALE)
+		{
+			M_Video_KeyboardSlider(-1);
+		}
+		else if (video_cursor_row >= VID_MENU_NUM_ITEMS)
 		{ 
 			video_cursor_column--;
 			if (video_cursor_column < 0)
 			{
-				if (video_cursor_row >= ((video_items + video_mode_rows + VID_MENU_SPACING) - 1)) // if we stand on the last row, check how many items we have
+				if (video_cursor_row >= ((VID_MENU_NUM_ITEMS + video_mode_rows + VID_MENU_SPACING) - 1)) // if we stand on the last row, check how many items we have
 				{
 					if (nummenumodes % VID_ROW_SIZE == 1)
 						video_cursor_column = 0;
@@ -926,14 +967,17 @@ static void VID_MenuKey (int key)
 
 	case K_RIGHTARROW:
 		S_LocalSound("misc/menu1.wav");
-		if (video_cursor_row == 1) {
-			// refresh rate
+		if (video_cursor_row == VID_MENU_ROW_REFRESH_RATE) {
 			MenuSelectNextRefreshRate();
 		}
-		else if (video_cursor_row >= video_items)
+		else if (video_cursor_row == VID_MENU_ROW_RESOLUTION_SCALE)
+		{
+			M_Video_KeyboardSlider(1);
+		}
+		else if (video_cursor_row >= VID_MENU_NUM_ITEMS)
 		{
 			video_cursor_column++;
-			if (video_cursor_column >= VID_ROW_SIZE || ((video_cursor_row - video_items - VID_MENU_SPACING) * VID_ROW_SIZE + (video_cursor_column + 1)) > nummenumodes)
+			if (video_cursor_column >= VID_ROW_SIZE || ((video_cursor_row - VID_MENU_NUM_ITEMS - VID_MENU_SPACING) * VID_ROW_SIZE + (video_cursor_column + 1)) > nummenumodes)
 				video_cursor_column = 0;
 		}
 		break;
@@ -941,12 +985,41 @@ static void VID_MenuKey (int key)
 }
 
 extern qboolean M_Mouse_Select_RowColumn(const menu_window_t *uw, const mouse_state_t *m, int row_entries, int *newentry_row, int col_entries, int *newentry_col);
+extern qboolean M_Mouse_Select_Column(const menu_window_t *uw, const mouse_state_t *m, int entries, int *newentry);
+
+void M_Video_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (video_cursor_row)
+		{
+		case VID_MENU_ROW_RESOLUTION_SCALE:
+			M_Mouse_Select_Column(&video_slider_resscale_window, ms, 16, &slider_pos);
+			r_scale.value = bound(0.25, 0.25 + (slider_pos * 0.05), 1);
+			Cvar_SetValue(&r_scale, r_scale.value);
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_Video_Mouse_Event(const mouse_state_t *ms)
 {
-	M_Mouse_Select_RowColumn(&video_window, ms, video_items + video_mode_rows + VID_MENU_SPACING, &video_cursor_row, VID_ROW_SIZE, &video_cursor_column);
+	M_Mouse_Select_RowColumn(&video_window, ms, VID_MENU_NUM_ITEMS + video_mode_rows + VID_MENU_SPACING, &video_cursor_row, VID_ROW_SIZE, &video_cursor_column);
 
 	if (ms->button_down == 1) VID_MenuKey(K_MOUSE1);
 	if (ms->button_down == 2) VID_MenuKey(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Video_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
