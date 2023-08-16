@@ -837,6 +837,29 @@ char *COM_SkipPath (char *pathname)
 
 /*
 ============
+COM_SkipFirstSubfolder
+============
+*/
+char *COM_SkipFirstSubfolder(char *pathname)
+{
+	char	*last;
+
+	last = pathname;
+	while (*pathname)
+	{
+		if (*pathname == '/' || *pathname == '\\')
+		{
+			last = pathname + 1;
+			break;
+		}
+		pathname++;
+	}
+
+	return last;
+}
+
+/*
+============
 COM_StripExtension
 ============
 */

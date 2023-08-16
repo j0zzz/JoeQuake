@@ -202,6 +202,7 @@ void COM_InitArgv (int argc, char **argv);
 void COM_Init (char *path);
 
 char *COM_SkipPath (char *pathname);
+char *COM_SkipFirstSubfolder(char *pathname);
 void COM_StripExtension (char *in, char *out);
 char *COM_FileExtension (char *in);
 void COM_FileBase(const char *in, char *out, size_t outsize);

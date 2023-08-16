@@ -2294,7 +2294,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 
 	size = pheader->skinwidth * pheader->skinheight;
 
-	COM_StripExtension (COM_SkipPath(loadmodel->name), basename);
+	COM_StripExtension (COM_SkipFirstSubfolder(loadmodel->name), basename);
 
 	texture_flag = TEX_MIPMAP;
 	if (loadmodel->flags & MF_HOLEY)
