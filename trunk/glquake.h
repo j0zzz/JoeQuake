@@ -277,6 +277,12 @@ typedef void (APIENTRY *lpGenerateMipmapFUNC)(GLenum);
 typedef void (APIENTRY *lpMTexFUNC)(GLenum, GLfloat, GLfloat);
 typedef void (APIENTRY *lpSelTexFUNC)(GLenum);
 
+//johnfitz -- anisotropic filtering
+#define	GL_TEXTURE_MAX_ANISOTROPY_EXT		0x84FE
+#define	GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT	0x84FF
+extern	float		gl_max_anisotropy;
+extern	qboolean	gl_anisotropy_able;
+
 // VBO
 typedef void (APIENTRY *lpBindBufFUNC)(GLenum, GLuint);
 typedef void (APIENTRY *lpBufferDataFUNC) (GLenum, GLsizeiptrARB, const GLvoid *, GLenum);

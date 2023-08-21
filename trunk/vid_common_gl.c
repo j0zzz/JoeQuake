@@ -36,6 +36,8 @@ const	char	*gl_extensions;
 
 qboolean	gl_mtexable = false;
 int			gl_textureunits = 1;
+qboolean	gl_anisotropy_able = false; //johnfitz
+float		gl_max_anisotropy; //johnfitz
 qboolean	gl_vbo_able = false;
 qboolean	gl_glsl_able = false;
 qboolean	gl_glsl_gamma_able = false;
@@ -151,6 +153,48 @@ void CheckMultiTextureExtensions (void)
 		gl_textureunits = 1;
 	else
 		Con_Printf ("Enabled %i texture units on hardware\n", gl_textureunits);
+}
+
+void CheckAnisotropicFilteringExtensions(void)
+{
+	if (CheckExtension("GL_EXT_texture_filter_anisotropic"))
+	{
+		float test1, test2;
+		GLuint tex;
+
+		// test to make sure we really have control over it
+		// 1.0 and 2.0 should always be legal values
+		glGenTextures(1, &tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
+		glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, &test1);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 2.0f);
+		glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, &test2);
+		glDeleteTextures(1, &tex);
+
+		if (test1 == 1 && test2 == 2)
+		{
+			Con_Printf("Anisotropic filter extensions found\n");
+			gl_anisotropy_able = true;
+		}
+		else
+		{
+			Con_Printf("Anisotropic filtering locked by driver. Current driver setting is %.0f\n", test1);
+		}
+
+		//get max value either way, so the menu and stuff know it
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max_anisotropy);
+		if (gl_max_anisotropy < 2)
+		{
+			gl_anisotropy_able = false;
+			gl_max_anisotropy = 1;
+			Con_Printf("Anisotropic filtering broken: disabled\n");
+		}
+	}
+	else
+	{
+		gl_max_anisotropy = 1;
+	}
 }
 
 void CheckVertexBufferExtensions(void)
@@ -295,6 +339,7 @@ void GL_Init (void)
 	gl_add_ext = CheckExtension("GL_ARB_texture_env_add");
 	CheckGenerateMipmapExtension();
 	CheckMultiTextureExtensions ();
+	CheckAnisotropicFilteringExtensions();
 	CheckVertexBufferExtensions();
 	CheckGLSLExtensions();
 

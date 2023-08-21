@@ -36,9 +36,11 @@ cvar_t	gl_max_size = {"gl_max_size", "1024", 0, OnChange_gl_max_size};
 qboolean OnChange_gl_texturemode (cvar_t *var, char *string);
 qboolean OnChange_gl_texturemode_hud (cvar_t *var, char *string);
 extern qboolean OnChange_gl_texturemode_sky (cvar_t *var, char *string);
+qboolean OnChange_gl_texture_anisotropy(cvar_t* var, char* string);
 cvar_t	gl_texturemode = {"gl_texturemode", "GL_LINEAR_MIPMAP_NEAREST", 0, OnChange_gl_texturemode};
 cvar_t	gl_texturemode_hud = {"gl_texturemode_hud", "GL_LINEAR", 0, OnChange_gl_texturemode_hud};
 cvar_t	gl_texturemode_sky = {"gl_texturemode_sky", "GL_LINEAR", 0, OnChange_gl_texturemode_sky};
+cvar_t	gl_texture_anisotropy = { "gl_texture_anisotropy", "1", 0, OnChange_gl_texture_anisotropy };
 
 cvar_t	gl_externaltextures_world = {"gl_externaltextures_world", "0"};
 cvar_t	gl_externaltextures_bmodels = {"gl_externaltextures_bmodels", "0"};
@@ -570,6 +572,42 @@ qboolean OnChange_gl_texturemode_hud (cvar_t *var, char *string)
 	return false;
 }
 
+qboolean OnChange_gl_texture_anisotropy(cvar_t *var, char *string)
+{
+	int		i;
+	float	newval = Q_atof(string);
+	
+	if (newval < 1)
+	{
+		Con_Printf("The minimum anisotropic filtering value must be 1\n");
+		Cvar_SetValue(&gl_texture_anisotropy, 1);
+		return true;
+	}
+	else if (newval > gl_max_anisotropy)
+	{
+		Con_Printf("The maximum anisotropic filtering value supported by your hardware is %.0f\n", gl_max_anisotropy);
+		Cvar_SetValue(&gl_texture_anisotropy, gl_max_anisotropy);
+		return true;
+	}
+	else
+	{
+		gltexture_t *glt;
+
+		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++)
+		{
+			if (glt->texmode & TEX_MIPMAP)
+			{
+				GL_Bind(glt->texnum);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, newval);
+			}
+		}
+	}
+
+	return false;
+}
+
 static qboolean Draw_LoadCharset (char *name)
 {
 	int	texnum;
@@ -745,10 +783,11 @@ void Draw_Init (void)
 	Cvar_Register (&gl_texturemode);
 	Cvar_Register (&gl_texturemode_hud);
 	Cvar_Register (&gl_texturemode_sky);
+	Cvar_Register (&gl_texture_anisotropy);
 	Cvar_Register (&gl_externaltextures_world);
 	Cvar_Register (&gl_externaltextures_bmodels);
 	Cvar_Register (&gl_externaltextures_models);
-	Cvar_Register(&gl_externaltextures_gfx);
+	Cvar_Register (&gl_externaltextures_gfx);
 
 	glGetIntegerv (GL_MAX_TEXTURE_SIZE, &gl_max_size_default);
 	Cvar_SetDefault (&gl_max_size, gl_max_size_default);
@@ -1829,6 +1868,7 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode)
 
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_anisotropy.value);
 
 		if (!qglGenerateMipmap)
 		{

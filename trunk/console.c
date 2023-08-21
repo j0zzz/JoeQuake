@@ -191,43 +191,33 @@ void Con_CheckResize (void)
 	if (width == con_linewidth)
 		return;
 
-	if (width < 1)			// video hasn't been initialized yet
+	oldwidth = con_linewidth;
+	con_linewidth = width;
+	oldtotallines = con_totallines;
+	con_totallines = CON_TEXTSIZE / con_linewidth;
+	numlines = oldtotallines;
+
+	if (con_totallines < numlines)
+		numlines = con_totallines;
+
+	numchars = oldwidth;
+
+	if (con_linewidth < numchars)
+		numchars = con_linewidth;
+
+	memcpy(tbuf, con_text, CON_TEXTSIZE);
+	memset(con_text, ' ', CON_TEXTSIZE);
+
+	for (i = 0; i < numlines; i++)
 	{
-		width = 38;
-		con_linewidth = width;
-		con_totallines = CON_TEXTSIZE / con_linewidth;
-		memset (con_text, ' ', CON_TEXTSIZE);
-	}
-	else
-	{
-		oldwidth = con_linewidth;
-		con_linewidth = width;
-		oldtotallines = con_totallines;
-		con_totallines = CON_TEXTSIZE / con_linewidth;
-		numlines = oldtotallines;
-
-		if (con_totallines < numlines)
-			numlines = con_totallines;
-
-		numchars = oldwidth;
-
-		if (con_linewidth < numchars)
-			numchars = con_linewidth;
-
-		memcpy (tbuf, con_text, CON_TEXTSIZE);
-		memset (con_text, ' ', CON_TEXTSIZE);
-
-		for (i = 0 ; i < numlines ; i++)
+		for (j = 0; j < numchars; j++)
 		{
-			for (j = 0 ; j < numchars ; j++)
-			{
-				con_text[(con_totallines - 1 - i) * con_linewidth + j] =
-					tbuf[((con_current - i + oldtotallines) % oldtotallines) * oldwidth + j];
-			}
+			con_text[(con_totallines - 1 - i) * con_linewidth + j] =
+				tbuf[((con_current - i + oldtotallines) % oldtotallines) * oldwidth + j];
 		}
-
-		Con_ClearNotify ();
 	}
+
+	Con_ClearNotify();
 
 	con_backscroll = 0;
 	con_current = con_totallines - 1;
@@ -249,13 +239,19 @@ void Con_Init (void)
 	con_text = Hunk_AllocName (CON_TEXTSIZE, "context");
 	memset (con_text, ' ', CON_TEXTSIZE);
 	con_linewidth = -1;
-	Con_CheckResize ();
+
+	//johnfitz -- no need to run Con_CheckResize here
+	con_linewidth = 38;
+	con_totallines = CON_TEXTSIZE / con_linewidth;
+	con_backscroll = 0;
+	con_current = con_totallines - 1;
+	//johnfitz
 
 // register our commands
 	Cvar_Register (&con_notifytime);
 	Cvar_Register (&_con_notifylines);
 	Cvar_Register (&con_notify_intermission);
-	Cvar_Register(&con_logcenterprint); //johnfitz
+	Cvar_Register (&con_logcenterprint); //johnfitz
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
