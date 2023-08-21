@@ -1250,7 +1250,7 @@ void SCR_DrawSpeed (void)
 		maxspeed = 0;
 	}
 
-	if (cls.demoplayback)
+	if (cls.demoplayback || coop.value)
 		VectorCopy(cl.velocity, vel);
 	else
 		VectorCopy (sv_velocity, vel);
