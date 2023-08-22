@@ -146,6 +146,24 @@ static inline int IN_SDL2_ScancodeToQuakeKey(SDL_Scancode scancode)
 	case SDL_SCANCODE_PAUSE: return K_PAUSE;
 	case SDL_SCANCODE_CAPSLOCK: return K_CAPSLOCK;
 
+	case SDL_SCANCODE_NUMLOCKCLEAR: return KP_NUMLOCK;
+	case SDL_SCANCODE_KP_DIVIDE: return KP_SLASH;
+	case SDL_SCANCODE_KP_MULTIPLY: return KP_STAR;
+	case SDL_SCANCODE_KP_7: return KP_HOME;
+	case SDL_SCANCODE_KP_8: return KP_UPARROW;
+	case SDL_SCANCODE_KP_9: return KP_PGUP;
+	case SDL_SCANCODE_KP_MINUS: return KP_MINUS;
+	case SDL_SCANCODE_KP_4: return KP_LEFTARROW;
+	case SDL_SCANCODE_KP_5: return KP_5;
+	case SDL_SCANCODE_KP_6: return KP_RIGHTARROW;
+	case SDL_SCANCODE_KP_PLUS: return KP_PLUS;
+	case SDL_SCANCODE_KP_1: return KP_END;
+	case SDL_SCANCODE_KP_2: return KP_DOWNARROW;
+	case SDL_SCANCODE_KP_3: return KP_PGDN;
+	case SDL_SCANCODE_KP_0: return KP_INS;
+	case SDL_SCANCODE_KP_PERIOD: return KP_DEL;
+	case SDL_SCANCODE_KP_ENTER: return KP_ENTER;
+
 	default: return 0;
 	}
 }
