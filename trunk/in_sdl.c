@@ -243,7 +243,6 @@ void Force_CenterView_f (void)
 void IN_Init (void)
 {
 	Cvar_Register (&m_filter);
-	Cvar_Register (&_windowed_mouse);
 
 	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
 }
