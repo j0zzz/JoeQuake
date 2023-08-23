@@ -604,7 +604,7 @@ as low as possible (1.40), but I couldn't make it work with AMD/ATI cards
 */
 void GL_BuildShaderStorageBufferWithLightData(void)
 {
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+	if (!gl_glsl_alias_able)
 		return;
 
 	qglGenBuffers(1, &ssbo_vlighttable);

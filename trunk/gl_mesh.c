@@ -450,7 +450,7 @@ void GL_MakeAliasModelDisplayLists_VBO(void)
 	unsigned short *indexes;
 	aliasmesh_t *desc;
 
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+	if (!gl_glsl_alias_able)
 		return;
 
 	// first, copy the verts onto the hunk
@@ -536,7 +536,7 @@ static void GLMesh_LoadVertexBuffer(model_t *m, const aliashdr_t *hdr)
 	byte *vbodata;
 	int f;
 
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+	if (!gl_glsl_alias_able)
 		return;
 
 	// count the sizes we need

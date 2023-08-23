@@ -1185,7 +1185,7 @@ void GLWorld_CreateShaders(void)
 		"	gl_FragColor = result;\n"
 		"}\n";
 
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+	if (!gl_glsl_alias_able)
 		return;
 
 	r_world_program = GL_CreateProgram(vertSource, fragSource, sizeof(bindings) / sizeof(bindings[0]), bindings);

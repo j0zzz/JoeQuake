@@ -866,7 +866,7 @@ void GLAlias_CreateShaders(void)
 		"	FragColor = result;\n"
 		"}\n";
 
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+	if (!gl_glsl_alias_able)
 		return;
 
 	r_alias_program = GL_CreateProgram(vertSource, fragSource, sizeof(bindings) / sizeof(bindings[0]), bindings);

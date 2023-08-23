@@ -364,6 +364,7 @@ extern int gl_textureunits;
 extern qboolean	gl_vbo_able;
 extern qboolean	gl_glsl_able;
 extern qboolean gl_glsl_gamma_able;
+extern qboolean gl_glsl_alias_able;
 
 typedef struct glsl_attrib_binding_s {
 	const char *name;
