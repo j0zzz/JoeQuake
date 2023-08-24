@@ -1392,24 +1392,7 @@ void R_SetupLighting (entity_t *ent)
 	model_t	*clmodel = ent->model;
 	static float shadescale = 0;
 
-	// make thunderbolt and torches full light
-	if (clmodel->modhint == MOD_THUNDERBOLT)
-	{
-		lightcolor[0] = 210.0f;
-		lightcolor[1] = 210.0f;
-		lightcolor[2] = 210.0f;
-		full_light = ent->noshadow = true;
-		goto end;
-	}
-	else if (clmodel->modhint == MOD_FLAME)
-	{
-		lightcolor[0] = 256.0f;
-		lightcolor[1] = 256.0f;
-		lightcolor[2] = 256.0f;
-		full_light = ent->noshadow = true;
-		goto end;
-	}
-	else if (clmodel->modhint == MOD_Q3GUNSHOT || clmodel->modhint == MOD_Q3TELEPORT || clmodel->modhint == MOD_QLTELEPORT)
+	if (clmodel->modhint == MOD_Q3GUNSHOT || clmodel->modhint == MOD_Q3TELEPORT || clmodel->modhint == MOD_QLTELEPORT)
 	{
 		lightcolor[0] = 128.0f;
 		lightcolor[1] = 128.0f;
@@ -1466,6 +1449,10 @@ void R_SetupLighting (entity_t *ent)
 		if (add < 1.0f)
 			VectorScale(lightcolor, add, lightcolor);
 	}
+
+	// don't draw shadows of thunderbolt and torches
+	if (clmodel->modhint == MOD_THUNDERBOLT || clmodel->modhint == MOD_FLAME)
+		ent->noshadow = true;
 
 	// always give the gun some light
 	if (ent == &cl.viewent)
