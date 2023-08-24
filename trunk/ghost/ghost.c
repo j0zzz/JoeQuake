@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../quakedef.h"
 #include "ghost_private.h"
+#include "demosummary.h"
 
 
 static cvar_t ghost_delta = {"ghost_delta", "1", CVAR_ARCHIVE};
@@ -40,6 +41,7 @@ static float        ghost_shift = 0.0f;
 static float        ghost_finish_time = -1.0f;
 static int          ghost_model_indices[GHOST_MODEL_COUNT];
 static float        ghost_last_relative_time = 0.0f;
+static demo_summary_t ghost_demo_summary;
 
 const char *ghost_model_paths[GHOST_MODEL_COUNT] = {
     "progs/player.mdl",
@@ -534,21 +536,32 @@ void Ghost_Finish (void)
 }
 
 
+static void Ghost_PrintSummary (void)
+{
+    Con_Printf("ghost %s has been added\n", ghost_demo_path);
+    if (ghost_demo_summary.total_time != 0.) {
+        Con_Printf("  finish time: %s\n",
+                   GetPrintedTime(ghost_demo_summary.total_time));
+    }
+    Con_Printf("\n");
+}
+
+
 static void Ghost_Command_f (void)
 {
-    FILE *demo_file;
+    qboolean ok = true;
+    FILE *demo_file = NULL;
     char demo_path[MAX_OSPATH];
 
     if (cmd_source != src_command) {
         return;
     }
 
-    if (Cmd_Argc() != 2)
-    {
+    if (Cmd_Argc() != 2) {
         if (ghost_demo_path[0] == '\0') {
             Con_Printf("no ghost has been added\n");
         } else {
-            Con_Printf("ghost %s has been added\n", ghost_demo_path);
+            Ghost_PrintSummary();
         }
         Con_Printf("ghost <demoname> : add a ghost\n");
         return;
@@ -557,10 +570,25 @@ static void Ghost_Command_f (void)
     DZip_Cleanup(&ghost_dz_ctx);
     Q_strlcpy(demo_path, Cmd_Argv(1), sizeof(demo_path));
     demo_file = Ghost_OpenDemoOrDzip(demo_path);
+    ok = (demo_file != NULL);
+
+    if (ok) {
+        ok = DS_GetDemoSummary(demo_file, &ghost_demo_summary);
+    }
+
+    if (ok) {
+        Q_strlcpy(ghost_demo_path, demo_path, sizeof(ghost_demo_path));
+        Ghost_PrintSummary();
+        Con_Printf("ghost will be loaded on next map load\n");
+    }
+
+    if (!ok) {
+        ghost_demo_path[0] = '\0';
+        DZip_Cleanup(&ghost_dz_ctx);
+    }
+
     if (demo_file) {
         fclose(demo_file);
-        Q_strlcpy(ghost_demo_path, demo_path, sizeof(ghost_demo_path));
-        Con_Printf("ghost will be loaded on next map load\n");
     }
 }
 
