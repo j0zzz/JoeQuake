@@ -85,6 +85,7 @@ typedef struct {
 
 
 dp_err_t DP_ReadDemo(dp_callbacks_t *callbacks, void *callback_ctx);
+const char *DP_StrError(dp_err_t rc);
 
 
 #endif /* __DEMOPARSE_H */

@@ -411,7 +411,7 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
                 ok = false;
             }
         } else if (dprc != DP_ERR_SUCCESS) {
-            Con_Printf("Error parsing demo: %u\n", dprc);
+            Con_Printf("Error parsing demo: %s\n", DP_StrError(dprc));
             ok = false;
         } else if (!pctx.map_found) {
             Con_Printf("Map %s not found in demo\n", expected_map_name);
