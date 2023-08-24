@@ -987,6 +987,21 @@ static const char *dp_err_strings[] = {
 };
 
 
+const char *
+DP_StrError(dp_err_t rc)
+{
+    static char buf[512];
+
+    if (rc < 0 || rc >= sizeof(dp_err_strings) / sizeof(char *)) {
+        Q_snprintfz(buf, sizeof(buf), "Unknown error (%d)", rc);
+    } else {
+        Q_snprintfz(buf, sizeof(buf), "%s (%d)", dp_err_strings[rc], rc);
+    }
+
+    return buf;
+}
+
+
 dp_err_t
 DP_ReadDemo(dp_callbacks_t *callbacks, void *callback_ctx)
 {
