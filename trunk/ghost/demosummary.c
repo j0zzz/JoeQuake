@@ -27,6 +27,8 @@ typedef struct
     FILE *demo_file;
     float level_time;
     demo_summary_t *demo_summary;
+    int model_num;
+    qboolean level_ended;
 } ds_ctx_t;
 
 
@@ -39,12 +41,37 @@ DS_Read_cb (void *dest, unsigned int size, void *ctx)
 
 
 static dp_cb_response_t
+DS_ServerInfoModel_cb (const char *model, void *ctx)
+{
+    char *map_name;
+    ds_ctx_t *pctx = ctx;
+    demo_summary_t *ds = pctx->demo_summary;
+    int i;
+
+    if (pctx->model_num == 0 && ds->num_maps < DS_MAX_MAP_NAMES) {
+        map_name = ds->maps[ds->num_maps];
+		Q_strncpyz(map_name, (char *)model, DS_MAP_NAME_SIZE);
+        COM_StripExtension(COM_SkipPath(map_name), map_name);
+
+        // `num_maps` is incremented on intermission, so that we don't list
+        // start map.
+    }
+
+    pctx->model_num ++;
+
+    return DP_CBR_CONTINUE;
+}
+
+
+static dp_cb_response_t
 DS_ServerInfo_cb (int protocol, unsigned int protocol_flags,
                   const char *level_name, void *ctx)
 {
     ds_ctx_t *pctx = ctx;
 
+    pctx->model_num = 0;
     pctx->level_time = 0.0;
+    pctx->level_ended = false;
     return DP_CBR_CONTINUE;
 }
 
@@ -64,7 +91,11 @@ DS_Intermission_cb (void *ctx)
 {
     ds_ctx_t *pctx = ctx;
 
-    pctx->demo_summary->total_time += pctx->level_time;
+    if (!pctx->level_ended) {
+        pctx->demo_summary->total_time += pctx->level_time;
+        pctx->demo_summary->num_maps ++;
+        pctx->level_ended = true;
+    }
 
     return DP_CBR_CONTINUE;
 }
@@ -78,6 +109,7 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
     dp_err_t dprc;
     dp_callbacks_t callbacks = {
         .read = DS_Read_cb,
+        .server_info_model = DS_ServerInfoModel_cb,
         .server_info = DS_ServerInfo_cb,
         .time = DS_Time_cb,
         .intermission = DS_Intermission_cb,

@@ -21,12 +21,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __DEMO_SUMMARY_H
 
 
-#define MAX_MAPS            128
-#define MAP_NAME_LENGTH     64
+#define DS_MAX_MAP_NAMES   128
+#define DS_MAP_NAME_SIZE   64
 
 typedef struct
 {
-    char maps[MAX_MAPS][MAP_NAME_LENGTH];
+    char maps[DS_MAX_MAP_NAMES][DS_MAP_NAME_SIZE];
     int num_maps;
     float total_time;
 } demo_summary_t;

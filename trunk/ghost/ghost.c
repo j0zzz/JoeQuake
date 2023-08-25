@@ -538,8 +538,18 @@ void Ghost_Finish (void)
 
 static void Ghost_PrintSummary (void)
 {
+    int i;
+
     Con_Printf("ghost %s has been added\n", ghost_demo_path);
     if (ghost_demo_summary.total_time != 0.) {
+        Con_Printf("       map(s):");
+        for (i = 0; i < ghost_demo_summary.num_maps && i < 4; i++) {
+            Con_Printf(" %s", ghost_demo_summary.maps[i]);
+        }
+        if (i < ghost_demo_summary.num_maps) {
+            Con_Printf("... (%d more)", ghost_demo_summary.num_maps - i);
+        }
+        Con_Printf("\n");
         Con_Printf("  finish time: %s\n",
                    GetPrintedTime(ghost_demo_summary.total_time));
     }
