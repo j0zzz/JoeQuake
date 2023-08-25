@@ -20,15 +20,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __DEMO_SUMMARY_H
 #define __DEMO_SUMMARY_H
 
+#ifndef QUAKE_GAME
+#include "../quakedef.h"
+#endif
 
 #define DS_MAX_MAP_NAMES   128
 #define DS_MAP_NAME_SIZE   64
+#define DS_MAX_CLIENTS   8
 
 typedef struct
 {
     char maps[DS_MAX_MAP_NAMES][DS_MAP_NAME_SIZE];
     int num_maps;
     float total_time;
+    char client_names[DS_MAX_CLIENTS][MAX_SCOREBOARDNAME];
 } demo_summary_t;
 
 qboolean DS_GetDemoSummary(FILE *demo_file, demo_summary_t *demo_summary);

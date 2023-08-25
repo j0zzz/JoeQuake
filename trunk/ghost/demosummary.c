@@ -28,7 +28,8 @@ typedef struct
     float level_time;
     demo_summary_t *demo_summary;
     int model_num;
-    qboolean level_ended;
+    qboolean intermission_seen;
+    qboolean any_intermission_seen;
 } ds_ctx_t;
 
 
@@ -71,7 +72,28 @@ DS_ServerInfo_cb (int protocol, unsigned int protocol_flags,
 
     pctx->model_num = 0;
     pctx->level_time = 0.0;
-    pctx->level_ended = false;
+    pctx->intermission_seen = false;
+
+    if (!pctx->any_intermission_seen) {
+        memset(pctx->demo_summary->client_names, 0,
+               sizeof(pctx->demo_summary->client_names));
+    }
+    return DP_CBR_CONTINUE;
+}
+
+
+static dp_cb_response_t
+DS_UpdateName_cb (int client_num, const char *name, void *ctx)
+{
+    ds_ctx_t *pctx = ctx;
+
+    // Take client names from the first level with an intermission.
+    if (!pctx->any_intermission_seen
+            && client_num >= 0 && client_num < DS_MAX_CLIENTS) {
+        Q_strncpyz(pctx->demo_summary->client_names[client_num], (char *)name,
+                   MAX_SCOREBOARDNAME);
+    }
+
     return DP_CBR_CONTINUE;
 }
 
@@ -91,10 +113,11 @@ DS_Intermission_cb (void *ctx)
 {
     ds_ctx_t *pctx = ctx;
 
-    if (!pctx->level_ended) {
+    if (!pctx->intermission_seen) {
         pctx->demo_summary->total_time += pctx->level_time;
         pctx->demo_summary->num_maps ++;
-        pctx->level_ended = true;
+        pctx->intermission_seen = true;
+        pctx->any_intermission_seen = true;
     }
 
     return DP_CBR_CONTINUE;
@@ -111,6 +134,7 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
         .read = DS_Read_cb,
         .server_info_model = DS_ServerInfoModel_cb,
         .server_info = DS_ServerInfo_cb,
+        .update_name = DS_UpdateName_cb,
         .time = DS_Time_cb,
         .intermission = DS_Intermission_cb,
         .finale = DS_Intermission_cb,
@@ -121,7 +145,7 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
         .demo_summary = demo_summary,
     };
 
-    memset(demo_summary, 0, sizeof(demo_summary));
+    memset(demo_summary, 0, sizeof(*demo_summary));
 
     dprc = DP_ReadDemo(&callbacks, &ctx);
 

@@ -542,7 +542,14 @@ static void Ghost_PrintSummary (void)
 
     Con_Printf("ghost %s has been added\n", ghost_demo_path);
     if (ghost_demo_summary.total_time != 0.) {
-        Con_Printf("       map(s):");
+        Con_Printf("    Player(s):");
+        for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
+            if (ghost_demo_summary.client_names[i][0] != '\0') {
+                Con_Printf(" %s ", ghost_demo_summary.client_names[i]);
+            }
+        }
+        Con_Printf("\n");
+        Con_Printf("       Map(s):");
         for (i = 0; i < ghost_demo_summary.num_maps && i < 4; i++) {
             Con_Printf(" %s", ghost_demo_summary.maps[i]);
         }
@@ -550,7 +557,7 @@ static void Ghost_PrintSummary (void)
             Con_Printf("... (%d more)", ghost_demo_summary.num_maps - i);
         }
         Con_Printf("\n");
-        Con_Printf("  finish time: %s\n",
+        Con_Printf("  Finish Time: %s\n",
                    GetPrintedTime(ghost_demo_summary.total_time));
     }
     Con_Printf("\n");
