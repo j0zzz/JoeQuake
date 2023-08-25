@@ -17,10 +17,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+
 #include "../quakedef.h"
 #include "demoparse.h"
 #include "demosummary.h"
 
+#define DS_PRINT_BUFFER_SIZE    256
 
 typedef struct
 {
@@ -30,6 +32,9 @@ typedef struct
     int model_num;
     qboolean intermission_seen;
     qboolean any_intermission_seen;
+
+    char print_buffer[DS_PRINT_BUFFER_SIZE];
+    int print_buffer_len;
 } ds_ctx_t;
 
 
@@ -73,11 +78,59 @@ DS_ServerInfo_cb (int protocol, unsigned int protocol_flags,
     pctx->model_num = 0;
     pctx->level_time = 0.0;
     pctx->intermission_seen = false;
+    pctx->print_buffer_len = 0;
 
     if (!pctx->any_intermission_seen) {
         memset(pctx->demo_summary->client_names, 0,
                sizeof(pctx->demo_summary->client_names));
     }
+    return DP_CBR_CONTINUE;
+}
+
+
+static void
+DS_OnPrintLine (ds_ctx_t *pctx, const char *line)
+{
+    if (!pctx->any_intermission_seen) {
+        if (!strcmp(line, "Playing on Easy skill")) {
+            pctx->demo_summary->skill = 0;
+        } else if (!strcmp(line, "Playing on Normal skill")) {
+            pctx->demo_summary->skill = 1;
+        } else if (!strcmp(line, "Playing on Hard skill")) {
+            pctx->demo_summary->skill = 2;
+        } else if (!strcmp(line, "Playing on Nightmare skill")) {
+            pctx->demo_summary->skill = 3;
+        }
+    }
+}
+
+
+static dp_cb_response_t
+DS_Print_cb (const char *string, void *ctx)
+{
+    const char *src;
+    ds_ctx_t *pctx = ctx;
+
+    src = string;
+
+    while (*src != '\0') {
+        if (*src == '\n') {
+            if (pctx->print_buffer_len < sizeof(pctx->print_buffer)) {
+                pctx->print_buffer[pctx->print_buffer_len] = '\0';
+                DS_OnPrintLine(pctx, pctx->print_buffer);
+            }
+
+            pctx->print_buffer_len = 0;
+        } else {
+            if (pctx->print_buffer_len < sizeof(pctx->print_buffer) - 1) {
+                pctx->print_buffer[pctx->print_buffer_len] = *src;
+            }
+            pctx->print_buffer_len ++;
+        }
+
+        src ++;
+    }
+
     return DP_CBR_CONTINUE;
 }
 
@@ -134,6 +187,7 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
         .read = DS_Read_cb,
         .server_info_model = DS_ServerInfoModel_cb,
         .server_info = DS_ServerInfo_cb,
+        .print = DS_Print_cb,
         .update_name = DS_UpdateName_cb,
         .time = DS_Time_cb,
         .intermission = DS_Intermission_cb,
@@ -146,6 +200,7 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
     };
 
     memset(demo_summary, 0, sizeof(*demo_summary));
+    demo_summary->skill = -1;
 
     dprc = DP_ReadDemo(&callbacks, &ctx);
 

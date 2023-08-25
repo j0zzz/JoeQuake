@@ -536,6 +536,7 @@ void Ghost_Finish (void)
 }
 
 
+extern char *skill_modes[];
 static void Ghost_PrintSummary (void)
 {
     int i;
@@ -557,8 +558,13 @@ static void Ghost_PrintSummary (void)
             Con_Printf("... (%d more)", ghost_demo_summary.num_maps - i);
         }
         Con_Printf("\n");
-        Con_Printf("  Finish Time: %s\n",
-                   GetPrintedTime(ghost_demo_summary.total_time));
+        if (ghost_demo_summary.skill >= 0 && ghost_demo_summary.skill <= 3) {
+            Con_Printf("        Skill: %s\n", skill_modes[ghost_demo_summary.skill]);
+        }
+        if (ghost_demo_summary.total_time > 0) {
+            Con_Printf("  Finish Time: %s\n",
+                       GetPrintedTime(ghost_demo_summary.total_time));
+        }
     }
     Con_Printf("\n");
 }
