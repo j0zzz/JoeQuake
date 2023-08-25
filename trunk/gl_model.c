@@ -579,7 +579,11 @@ void Mod_LoadTextures (lump_t *l)
 
 		if (!Mod_LoadBrushModelTexture(tx, texture_flag))
 		{
-			tx->gl_texturenum = GL_LoadTexture(va("%s:%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | brighten_flag, 1);
+			if (ISTURBTEX(tx->name))	//joe: do not brighten turbulent textures
+				tx->gl_texturenum = GL_LoadTexture(va("%s:%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag, 1);
+			else
+				tx->gl_texturenum = GL_LoadTexture(va("%s:%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | brighten_flag, 1);
+
 			if (!ISTURBTEX(tx->name) && Img_HasFullbrights(data, tx2->width * tx2->height))
 				tx->fb_texturenum = GL_LoadTexture(va("%s:@fb_%s", bspname, tx2->name), tx2->width, tx2->height, data, texture_flag | TEX_FULLBRIGHT, 1);
 		}

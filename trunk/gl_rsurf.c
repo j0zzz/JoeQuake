@@ -607,7 +607,7 @@ void R_BlendLightmaps ()
 	glDepthMask (GL_FALSE);		// don't bother writing Z
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 	glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-	glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 4);
+	glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 4.0f);
 	glBlendFunc (GL_ZERO, GL_SRC_COLOR);
 
 	if (!r_lightmap.value)
@@ -635,6 +635,7 @@ void R_BlendLightmaps ()
 	}
 
 	Fog_StopAdditive();
+	glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0f);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable (GL_BLEND);
@@ -1056,6 +1057,7 @@ static GLuint fullbrightTexLoc;
 static GLuint detailTexLoc;
 static GLuint causticsTexLoc;
 static GLuint useFullbrightTexLoc;
+static GLuint useOverbrightLoc;
 static GLuint useAlphaTestLoc;
 static GLuint useWaterFogLoc;
 static GLuint alphaLoc;
@@ -1114,6 +1116,7 @@ void GLWorld_CreateShaders(void)
 		"uniform int UseFullbrightTex;\n"
 		"uniform bool UseDetailTex;\n"
 		"uniform bool UseCausticsTex;\n"
+		"uniform bool UseOverbright;\n"
 		"uniform bool UseAlphaTest;\n"
 		"uniform int UseWaterFog;\n"
 		"uniform float Alpha;\n"
@@ -1153,6 +1156,8 @@ void GLWorld_CreateShaders(void)
 		"		discard;\n"
 		"	result *= texture2D(LMTex, gl_TexCoord[1].xy);\n"
 		"   result.rgb *= 4.0;\n"
+		"	if (UseOverbright)\n"
+		"		result.rgb *= 2.0;\n"
 		"	vec4 fb = texture2D(FullbrightTex, gl_TexCoord[0].xy);\n"
 		"	if (UseFullbrightTex == 1)\n"
 		"		result = mix(result, fb, fb.a);\n"
@@ -1202,6 +1207,7 @@ void GLWorld_CreateShaders(void)
 		useFullbrightTexLoc = GL_GetUniformLocation(&r_world_program, "UseFullbrightTex");
 		useDetailTexLoc = GL_GetUniformLocation(&r_world_program, "UseDetailTex");
 		useCausticsTexLoc = GL_GetUniformLocation(&r_world_program, "UseCausticsTex");
+		useOverbrightLoc = GL_GetUniformLocation(&r_world_program, "UseOverbright");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_world_program, "UseAlphaTest");
 		useWaterFogLoc = GL_GetUniformLocation(&r_world_program, "UseWaterFog");
 		alphaLoc = GL_GetUniformLocation(&r_world_program, "Alpha");
@@ -1256,6 +1262,7 @@ void R_DrawTextureChains_GLSL(model_t *model, texchain_t chain)
 	qglUniform1i(useFullbrightTexLoc, 0);
 	qglUniform1i(useDetailTexLoc, 0);
 	qglUniform1i(useCausticsTexLoc, 0);
+	qglUniform1i(useOverbrightLoc, 0);
 	qglUniform1i(useAlphaTestLoc, 0);
 	qglUniform1i(useWaterFogLoc, (r_viewleaf->contents != CONTENTS_EMPTY && r_viewleaf->contents != CONTENTS_SOLID) ? (int)gl_waterfog.value : 0);
 	qglUniform1f(alphaLoc, ent->transparency == 0 ? 1 : ent->transparency);
@@ -1407,7 +1414,7 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 						GL_EnableTMU (GL_LIGHTMAP_TEXTURE);
 						glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 						glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-						glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE, 4);
+						glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE, 4.0f);
 					}
 					else
 					{
@@ -1429,7 +1436,7 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 				GL_EnableTMU (GL_LIGHTMAP_TEXTURE);
 				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 				glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-				glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE, 4);
+				glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE, 4.0f);
 
 				mtex_lightmaps = true;
 				mtex_fbs = at->fb_texturenum && draw_mtex_fbs;
@@ -1667,6 +1674,7 @@ void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 			qglUniform1i(useFullbrightTexLoc, 0);
 			qglUniform1i(useDetailTexLoc, 0);
 			qglUniform1i(useCausticsTexLoc, 0);
+			qglUniform1i(useOverbrightLoc, 1);
 			qglUniform1i(useAlphaTestLoc, 0);
 			qglUniform1i(useWaterFogLoc, 0);
 			qglUniform1f(clTimeLoc, cl.time);
