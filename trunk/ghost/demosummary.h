@@ -35,6 +35,9 @@ typedef struct
     float total_time;
     char client_names[DS_MAX_CLIENTS][MAX_SCOREBOARDNAME];
     int skill;
+
+    int kills, total_kills;
+    int secrets, total_secrets;
 } demo_summary_t;
 
 qboolean DS_GetDemoSummary(FILE *demo_file, demo_summary_t *demo_summary);

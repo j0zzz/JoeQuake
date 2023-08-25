@@ -35,6 +35,9 @@ typedef struct
 
     char print_buffer[DS_PRINT_BUFFER_SIZE];
     int print_buffer_len;
+
+    int kills, total_kills;
+    int secrets, total_secrets;
 } ds_ctx_t;
 
 
@@ -68,12 +71,30 @@ DS_ServerInfoModel_cb (const char *model, void *ctx)
     return DP_CBR_CONTINUE;
 }
 
+static void
+DS_UpdateStats (ds_ctx_t *pctx)
+{
+    if (pctx->intermission_seen) {
+        pctx->demo_summary->kills += pctx->kills;
+        pctx->demo_summary->total_kills += pctx->total_kills;
+        pctx->demo_summary->secrets += pctx->secrets;
+        pctx->demo_summary->total_secrets += pctx->total_secrets;
+    }
+}
 
 static dp_cb_response_t
 DS_ServerInfo_cb (int protocol, unsigned int protocol_flags,
                   const char *level_name, void *ctx)
 {
     ds_ctx_t *pctx = ctx;
+
+    if (pctx->intermission_seen) {
+        DS_UpdateStats(pctx);
+    }
+    pctx->kills = 0;
+    pctx->total_kills = 0;
+    pctx->secrets = 0;
+    pctx->total_secrets = 0;
 
     pctx->model_num = 0;
     pctx->level_time = 0.0;
@@ -176,6 +197,42 @@ DS_Intermission_cb (void *ctx)
     return DP_CBR_CONTINUE;
 }
 
+static dp_cb_response_t
+DS_UpdateStat_cb (byte stat, int count, void *ctx)
+{
+    ds_ctx_t *pctx = ctx;
+
+    switch (stat) {
+        case STAT_SECRETS: pctx->secrets = count; break;
+        case STAT_TOTALSECRETS: pctx->total_secrets = count; break;
+        case STAT_MONSTERS: pctx->kills = count; break;
+        case STAT_TOTALMONSTERS: pctx->total_kills = count; break;
+        default: break;
+    }
+
+    return DP_CBR_CONTINUE;
+}
+
+
+static dp_cb_response_t
+DS_KilledMonster_cb (void *ctx)
+{
+    ds_ctx_t *pctx = ctx;
+
+    pctx->kills ++;
+    return DP_CBR_CONTINUE;
+}
+
+
+static dp_cb_response_t
+DS_FoundSecret_cb (void *ctx)
+{
+    ds_ctx_t *pctx = ctx;
+
+    pctx->secrets ++;
+    return DP_CBR_CONTINUE;
+}
+
 
 qboolean
 DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
@@ -192,6 +249,9 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
         .time = DS_Time_cb,
         .intermission = DS_Intermission_cb,
         .finale = DS_Intermission_cb,
+        .update_stat = DS_UpdateStat_cb,
+        .killed_monster = DS_KilledMonster_cb,
+        .found_secret = DS_FoundSecret_cb,
     };
     ds_ctx_t ctx = {
         .demo_file = demo_file,
@@ -203,6 +263,7 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
     demo_summary->skill = -1;
 
     dprc = DP_ReadDemo(&callbacks, &ctx);
+    DS_UpdateStats(&ctx);
 
     if (dprc != DP_ERR_SUCCESS) {
         Con_Printf("Error parsing demo: %u\n", dprc);

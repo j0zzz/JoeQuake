@@ -559,11 +559,19 @@ static void Ghost_PrintSummary (void)
         }
         Con_Printf("\n");
         if (ghost_demo_summary.skill >= 0 && ghost_demo_summary.skill <= 3) {
-            Con_Printf("        Skill: %s\n", skill_modes[ghost_demo_summary.skill]);
+            Con_Printf("        Skill: %s\n",
+                       skill_modes[ghost_demo_summary.skill]);
         }
         if (ghost_demo_summary.total_time > 0) {
-            Con_Printf("  Finish Time: %s\n",
+            Con_Printf("         Time: %s\n",
                        GetPrintedTime(ghost_demo_summary.total_time));
+            Con_Printf("        Kills: %d / %d\n",
+                       ghost_demo_summary.kills,
+                       ghost_demo_summary.total_kills);
+            Con_Printf("      Secrets: %d / %d\n",
+                       ghost_demo_summary.secrets,
+                       ghost_demo_summary.total_secrets);
+
         }
     }
     Con_Printf("\n");
