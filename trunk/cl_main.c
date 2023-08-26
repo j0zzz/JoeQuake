@@ -33,6 +33,7 @@ cvar_t	cl_nolerp = {"cl_nolerp", "0"};
 
 cvar_t	cl_truelightning = {"cl_truelightning", "0"};
 cvar_t	cl_sbar = {"cl_sbar", "0", CVAR_ARCHIVE};
+cvar_t	cl_sbar_offset = { "cl_sbar_offset", "0" };
 cvar_t	cl_rocket2grenade = {"cl_r2g", "0"};
 cvar_t	cl_mapname = {"mapname", "", CVAR_ROM};
 cvar_t	cl_muzzleflash = {"cl_muzzleflash", "1"};
@@ -1417,6 +1418,7 @@ void CL_Init (void)
 
 	Cvar_Register (&cl_truelightning);
 	Cvar_Register (&cl_sbar);
+	Cvar_Register (&cl_sbar_offset);
 	Cvar_Register (&cl_rocket2grenade);
 	Cvar_Register (&cl_mapname);
 	Cvar_Register (&cl_muzzleflash);

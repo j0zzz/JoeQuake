@@ -1042,7 +1042,7 @@ Sbar_DrawNormal
 */
 void Sbar_DrawNormal (void)
 {
-	int iconxpos, iconypos, numxpos, numypos;
+	int iconxpos, iconypos, numxpos, numypos, sbar_offset;
 	float scale;
 
 	if (cl_sbar.value == 1 || scr_viewsize.value < 100)
@@ -1059,21 +1059,27 @@ void Sbar_DrawNormal (void)
 	}
 
 	scale = Sbar_GetScaleAmount();
+	sbar_offset = bound(0, cl_sbar_offset.value, 8);
 
 // armor
-	if (cl_sbar.value == 2 && scr_viewsize.value >= 100)
+	iconxpos = 0;
+	iconypos = 0;
+	numxpos = SBAR_HEIGHT;
+	numypos = 0;
+	if (scr_viewsize.value >= 100)
 	{
-		iconxpos = (int)((-sbar_xofs + (int)(24 * scale)) / scale);
-		iconypos = -SBAR_HEIGHT;
-		numxpos = (int)((-sbar_xofs + (int)(48 * scale)) / scale);
-		numypos = -SBAR_HEIGHT;
-	}
-	else
-	{
-		iconxpos = 0;
-		iconypos = 0;
-		numxpos = SBAR_HEIGHT;
-		numypos = 0;
+		if (cl_sbar.value == 0)
+		{
+			iconypos = -(3 * sbar_offset);
+			numypos = -(3 * sbar_offset);
+		}
+		else if (cl_sbar.value == 2)
+		{
+			iconxpos = (int)((-sbar_xofs + (int)(24 * scale)) / scale);
+			iconypos = -SBAR_HEIGHT - (3 * sbar_offset);
+			numxpos = (int)((-sbar_xofs + (int)(48 * scale)) / scale);
+			numypos = -SBAR_HEIGHT - (3 * sbar_offset);
+		}
 	}
 
 	if (cl.items & IT_INVULNERABILITY)
@@ -1105,40 +1111,51 @@ void Sbar_DrawNormal (void)
 		}
 	}
 
-	if (cl_sbar.value == 2 && scr_viewsize.value >= 100)
+// health
+	iconxpos = 112;
+	iconypos = 0;
+	numxpos = 136;
+	numypos = 0;
+	if (scr_viewsize.value >= 100)
 	{
-		iconxpos = (int)((-sbar_xofs + (int)(24 * scale)) / scale);
-		iconypos = 0;
-		numxpos = (int)((-sbar_xofs + (int)(48 * scale)) / scale);
-		numypos = 0;
-	}
-	else
-	{
-		iconxpos = 112;
-		iconypos = 0;
-		numxpos = 136;
-		numypos = 0;
+		if (cl_sbar.value == 0)
+		{
+			iconypos = -(3 * sbar_offset);
+			numypos = -(3 * sbar_offset);
+		}
+		else if (cl_sbar.value == 2)
+		{
+			iconxpos = (int)((-sbar_xofs + (int)(24 * scale)) / scale);
+			iconypos = -(3 * sbar_offset);
+			numxpos = (int)((-sbar_xofs + (int)(48 * scale)) / scale);
+			numypos = -(3 * sbar_offset);
+		}
 	}
 
-// face
+// face icon
 	Sbar_DrawFace (iconxpos, iconypos);
 
-// health
 	Sbar_DrawNum(numxpos, numypos, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
 
-	if (cl_sbar.value == 2 && scr_viewsize.value >= 100)
+// ammo
+	iconxpos = 224;
+	iconypos = 0;
+	numxpos = 248;
+	numypos = 0;
+	if (scr_viewsize.value >= 100)
 	{
-		iconxpos = (int)((-sbar_xofs + vid.width - (120 * scale)) / scale);
-		iconypos = 0;
-		numxpos = (int)((-sbar_xofs + vid.width - (96 * scale)) / scale);
-		numypos = 0;
-	}
-	else
-	{
-		iconxpos = 224;
-		iconypos = 0;
-		numxpos = 248;
-		numypos = 0;
+		if (cl_sbar.value == 0)
+		{
+			iconypos = -(3 * sbar_offset);
+			numypos = -(3 * sbar_offset);
+		}
+		else if (cl_sbar.value == 2)
+		{
+			iconxpos = (int)((-sbar_xofs + vid.width - (int)(48 * scale)) / scale);
+			iconypos = -(3 * sbar_offset);
+			numxpos = (int)((-sbar_xofs + vid.width - (int)(120 * scale)) / scale);
+			numypos = -(3 * sbar_offset);
+		}
 	}
 
 // ammo icon

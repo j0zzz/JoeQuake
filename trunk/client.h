@@ -261,6 +261,7 @@ extern	cvar_t	cl_nolerp;
 extern	cvar_t	cl_truelightning;
 extern	cvar_t	cl_muzzleflash;
 extern	cvar_t	cl_sbar;
+extern	cvar_t	cl_sbar_offset;
 extern	cvar_t	cl_rocket2grenade;
 extern	cvar_t	vid_mode;
 extern	cvar_t	cl_demorewind;
