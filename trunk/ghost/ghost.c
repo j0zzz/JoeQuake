@@ -548,10 +548,13 @@ static int Ghost_DrawDemoSummary (void)
     return y;
 }
 
+
 static void Ghost_DrawIntermissionTimes (void)
 {
-    int size, y, i;
+    int size, x, y, i;
     float relative_time, scale;
+    float total;
+    char st[16];
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
 
@@ -560,10 +563,7 @@ static void Ghost_DrawIntermissionTimes (void)
 
     y = Ghost_DrawDemoSummary();
 
-    if (gmi->num_levels > 1) {
-        y -= 2 * size;
-        Ghost_DrawSingleTime(y, gmi->total_split, "total");
-    }
+    total = gmi->total_split;
     for (i = gmi->num_levels - 1; i >= 0; i--) {
         y -= 2 * size;
         if (y <= (174 * scale)) {
@@ -572,6 +572,22 @@ static void Ghost_DrawIntermissionTimes (void)
         gml = &gmi->levels[i];
         relative_time = gml->player_time - gml->ghost_time;
         Ghost_DrawSingleTime(y, relative_time, gml->map_name);
+
+        if (i > 0) {
+            if (total < 1e-3) {
+                Q_snprintfz (st, sizeof(st), "%.2f s", total);
+            } else {
+                Q_snprintfz (st, sizeof(st), "+%.2f s", total);
+            }
+            total -= relative_time;
+        } else {
+            Q_snprintfz (st, sizeof(st), "%s", RedString("Total"));
+        }
+
+        if (gmi->num_levels > 1) {
+            x = ((vid.width + (int)(184 * scale)) / 2) + (ghost_bar_x.value * size);
+            Draw_String (x, y, st, true);
+        }
     }
 }
 
