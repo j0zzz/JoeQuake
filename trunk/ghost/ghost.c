@@ -438,47 +438,112 @@ static const char *RedString(char *str)
 }
 
 
+#define GHOST_MAX_SUMMARY_DESCS 8
+#define GHOST_MAX_SUMMARY_LINES 4
+
 static int Ghost_DrawDemoSummary (void)
 {
     extern char *skill_modes[];
-    char desc[256];
-    int size, y;
+    char stat_descs[GHOST_MAX_SUMMARY_DESCS][32];
+    char lines[GHOST_MAX_SUMMARY_LINES][256];
+    int num_lines;
+    int num_descs = 0;
+    int size, y, i, col, max_line_width;
 
     size = Sbar_GetScaledCharacterSize();
+    max_line_width = (vid.width / size) + 1;
+    if (max_line_width > sizeof(lines[0])) {
+        max_line_width = sizeof(lines[0]);
+    }
 
-    y = vid.height - (int)(1.25 * size);
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%s %s",
+                    RedString("Ghost:"),
+                    ghost_demo_summary.client_names[0]);
+        num_descs ++;
+    }
 
-    Q_snprintfz(desc,
-                sizeof(desc),
-                "%s %s \x8f %s",
-                RedString("Ghost:"),
-                ghost_demo_summary.client_names[0],
-                GetPrintedTime(ghost_demo_summary.total_time));
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%s",
+                    GetPrintedTime(ghost_demo_summary.total_time));
+        num_descs ++;
+    }
 
     if (ghost_demo_summary.skill >= 0 && ghost_demo_summary.skill <= 3) {
-        Q_snprintfz(desc + strlen(desc),
-                    sizeof(desc) - strlen(desc),
-                    " \x8f %s",
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%s",
                     skill_modes[ghost_demo_summary.skill]);
+        num_descs ++;
     }
 
     if (ghost_demo_summary.num_maps > 1) {
-        Q_snprintfz(desc + strlen(desc),
-                    sizeof(desc) - strlen(desc),
-                    " \x8f %d maps",
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%d maps",
                     ghost_demo_summary.num_maps);
+        num_descs ++;
     }
 
-    Q_snprintfz(desc + strlen(desc),
-                sizeof(desc) - strlen(desc),
-                " \x8f %.1f%% kills \x8f %.1f%% secrets",
-                100.0f * ghost_demo_summary.kills
-                    / ghost_demo_summary.total_kills,
-                100.0f * ghost_demo_summary.secrets
-                    / ghost_demo_summary.total_secrets);
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%.1f%% kills",
+                    100.0f * ghost_demo_summary.kills
+                        / ghost_demo_summary.total_kills);
+        num_descs ++;
+    }
 
-    Draw_String ((vid.width - size * strlen(desc)) / 2,
-                 y, desc, true);
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%.1f%% secrets",
+                    100.0f * ghost_demo_summary.secrets
+                        / ghost_demo_summary.total_secrets);
+        num_descs ++;
+    }
+
+    col = 0;
+    num_lines = 0;
+    for (i = 0; i < num_descs && num_lines < GHOST_MAX_SUMMARY_LINES; i++) {
+        if (col != 0
+            && strlen(stat_descs[i]) + col + 3 >= max_line_width) {
+            num_lines ++;
+            col = 0;
+        }
+
+        if (num_lines < GHOST_MAX_SUMMARY_LINES) {
+            if (col != 0) {
+                Q_snprintfz(lines[num_lines] + col,
+                            max_line_width - col,
+                            " \x8f ");
+                col += 3;
+            }
+            Q_snprintfz(lines[num_lines] + col,
+                        max_line_width - col,
+                        "%s",
+                        stat_descs[i]);
+            col += strlen(stat_descs[i]);
+        }
+    }
+
+    if (col != 0) {
+        num_lines++;
+    }
+
+    y = vid.height - (int)(1.25 * size);
+    for (i = num_lines - 1; i >= 0; i--) {
+        Draw_String ((vid.width - size * strlen(lines[i])) / 2,
+                     y, lines[i], true);
+
+        if (i > 0) {
+            y -= size;
+        }
+    }
 
     return y;
 }
