@@ -420,21 +420,108 @@ Ghost_DrawSingleTime (int y, float relative_time, char *label)
 }
 
 
-// Modified from the JoeQuake speedometer
-void Ghost_DrawGhostTime (qboolean intermission)
+static const char *RedString(char *str)
+{
+    static char out[256];
+    int i;
+
+    for (i = 0; i < sizeof(out) - 1 && str[i] != '\0'; i++) {
+        if (str[i] >= 0x20) {
+            out[i] = str[i] | 0x80;
+        } else {
+            out[i] = str[i];
+        }
+    }
+    out[i] = '\0';
+
+    return out;
+}
+
+
+static int Ghost_DrawDemoSummary (void)
+{
+    extern char *skill_modes[];
+    char desc[256];
+    int size, y;
+
+    size = Sbar_GetScaledCharacterSize();
+
+    y = vid.height - (int)(1.25 * size);
+
+    Q_snprintfz(desc,
+                sizeof(desc),
+                "%s %s \x8f %s",
+                RedString("Ghost:"),
+                ghost_demo_summary.client_names[0],
+                GetPrintedTime(ghost_demo_summary.total_time));
+
+    if (ghost_demo_summary.skill >= 0 && ghost_demo_summary.skill <= 3) {
+        Q_snprintfz(desc + strlen(desc),
+                    sizeof(desc) - strlen(desc),
+                    " \x8f %s",
+                    skill_modes[ghost_demo_summary.skill]);
+    }
+
+    if (ghost_demo_summary.num_maps > 1) {
+        Q_snprintfz(desc + strlen(desc),
+                    sizeof(desc) - strlen(desc),
+                    " \x8f %d maps",
+                    ghost_demo_summary.num_maps);
+    }
+
+    Q_snprintfz(desc + strlen(desc),
+                sizeof(desc) - strlen(desc),
+                " \x8f %.1f%% kills \x8f %.1f%% secrets",
+                100.0f * ghost_demo_summary.kills
+                    / ghost_demo_summary.total_kills,
+                100.0f * ghost_demo_summary.secrets
+                    / ghost_demo_summary.total_secrets);
+
+    Draw_String ((vid.width - size * strlen(desc)) / 2,
+                 y, desc, true);
+
+    return y;
+}
+
+static void Ghost_DrawIntermissionTimes (void)
 {
     int size, y, i;
     float relative_time, scale;
-    qboolean match;
-    entity_t *ent = &cl_entities[cl.viewentity];
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
+
+    scale = Sbar_GetScaleAmount();
+    size = Sbar_GetScaledCharacterSize();
+
+    y = Ghost_DrawDemoSummary();
+
+    if (gmi->num_levels > 1) {
+        y -= 2 * size;
+        Ghost_DrawSingleTime(y, gmi->total_split, "total");
+    }
+    for (i = gmi->num_levels - 1; i >= 0; i--) {
+        y -= 2 * size;
+        if (y <= (174 * scale)) {
+            break;
+        }
+        gml = &gmi->levels[i];
+        relative_time = gml->player_time - gml->ghost_time;
+        Ghost_DrawSingleTime(y, relative_time, gml->map_name);
+    }
+}
+
+
+// Modified from the JoeQuake speedometer
+void Ghost_DrawGhostTime (qboolean intermission)
+{
+    int size, y;
+    float relative_time;
+    qboolean match;
+    entity_t *ent = &cl_entities[cl.viewentity];
 
     if (!ghost_delta.value || ghost_records == NULL)
         return;
 
-	scale = Sbar_GetScaleAmount();
-    size = Sbar_GetScaledCharacterSize();
     if (!intermission) {
         if (cl.intermission) {
             return;
@@ -445,6 +532,8 @@ void Ghost_DrawGhostTime (qboolean intermission)
         relative_time = Ghost_FindClosest(ent->origin, &match);
         if (!match)
             return;
+
+        size = Sbar_GetScaledCharacterSize();
 
         // Don't show small changes, to reduce flickering.
         if (fabs(relative_time - ghost_last_relative_time) < 1e-4 + 1./72)
@@ -464,19 +553,7 @@ void Ghost_DrawGhostTime (qboolean intermission)
 
         Ghost_DrawSingleTime(y, relative_time, "");
     } else {
-        y = vid.height - 2 * size;
-        if (gmi->num_levels > 1) {
-            Ghost_DrawSingleTime(y, gmi->total_split, "total");
-        }
-        for (i = gmi->num_levels - 1; i >= 0; i--) {
-            y -= 2 * size;
-            if (y <= (174 * scale)) {
-                break;
-            }
-            gml = &gmi->levels[i];
-            relative_time = gml->player_time - gml->ghost_time;
-            Ghost_DrawSingleTime(y, relative_time, gml->map_name);
-        }
+        Ghost_DrawIntermissionTimes();
     }
 }
 
@@ -536,9 +613,9 @@ void Ghost_Finish (void)
 }
 
 
-extern char *skill_modes[];
 static void Ghost_PrintSummary (void)
 {
+    extern char *skill_modes[];
     int i;
 
     Con_Printf("ghost %s has been added\n", ghost_demo_path);
