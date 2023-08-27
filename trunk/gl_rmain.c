@@ -70,9 +70,6 @@ vec3_t	r_origin;
 
 float	r_fovx, r_fovy; //johnfitz -- rendering fov may be different becuase of r_waterwarp
 
-float	r_world_matrix[16];
-float	r_base_world_matrix[16];
-
 // screen size info
 refdef_t r_refdef;
 
@@ -657,18 +654,9 @@ static GLuint texLoc;
 static GLuint fullbrightTexLoc;
 static GLuint useFullbrightTexLoc;
 static GLuint useAlphaTestLoc;
-
-typedef struct
-{
-	float modelViewMatrix[16];
-	float projectionMatrix[16];
-} modelViewProjectionMatrix_data_t;
-
-static modelViewProjectionMatrix_data_t modelViewProjectionMatrix_data;
-GLuint	ubo_modelViewProjectionMatrix;
+static GLuint useWaterFogLoc;
 
 fog_data_t fog_data;
-GLuint	ubo_fog;
 
 #define pose1VertexAttrIndex 0
 #define pose1NormalAttrIndex 1
@@ -720,7 +708,7 @@ void GLAlias_CreateShaders(void)
 	};
 
 	const GLchar *vertSource = \
-		"#version 430\n"
+		"#version 150 compatibility\n"
 		"\n"
 		"#define NUMVERTEXNORMALS	162\n"
 		"\n"
@@ -729,28 +717,23 @@ void GLAlias_CreateShaders(void)
 		"uniform vec3 ShadeVector;\n"
 		"uniform vec4 LightColor;\n"
 		"uniform bool UseVertexLighting;\n"
+		"uniform float ShadeLight;\n"
+		"uniform float AmbientLight;\n"
 		"uniform float APitch;\n"
 		"uniform float AYaw;\n"
-		"layout(std140, binding = 0) uniform ModelViewProjectionMatrix\n"
+		"uniform VlightData\n"
 		"{\n"
-		"	mat4 ModelViewMatrix;\n"
-		"	mat4 ProjectionMatrix;\n"
-		"};\n"
-		"layout(std430, binding = 0) buffer VlightTable\n"
-		"{\n"
-		"	int VlightTableData[256][256];\n"
 		"	int AnormPitch[NUMVERTEXNORMALS];\n"
 		"	int AnormYaw[NUMVERTEXNORMALS];\n"
 		"};\n"
-		"in vec4 TexCoords; // only xy are used\n"
-		"in vec4 Pose1Vert;\n"
-		"in vec3 Pose1Normal;\n"
-		"in vec4 Pose2Vert;\n"
-		"in vec3 Pose2Normal;\n"
+		"uniform usamplerBuffer VlightTable;\n"
+		"attribute vec4 TexCoords; // only xy are used \n"
+		"attribute vec4 Pose1Vert;\n"
+		"attribute vec3 Pose1Normal;\n"
+		"attribute vec4 Pose2Vert;\n"
+		"attribute vec3 Pose2Normal;\n"
 		"\n"
-		"out vec2 TexCoordsOut;\n"
-		"out vec4 ColorOut;\n"
-		"out float FogFragCoord;\n"
+		"varying float FogFragCoord;\n"
 		"\n"
 		"float r_avertexnormal_dot(vec3 vertexnormal) // from MH \n"
 		"{\n"
@@ -777,7 +760,7 @@ void GLAlias_CreateShaders(void)
 		"	while (yawofs < 0)\n"
 		"		yawofs += 256;\n"
 		"\n"
-		"	retval = VlightTableData[pitchofs][yawofs];\n"
+		"	retval = texelFetch(VlightTable, pitchofs * 256 + yawofs).r;\n"
 		"\n"
 		"	return retval / 256;\n"
 		"}\n"
@@ -794,14 +777,14 @@ void GLAlias_CreateShaders(void)
 		"}\n"
 		"void main()\n"
 		"{\n"
-		"	TexCoordsOut = TexCoords.xy;\n"
+		"	gl_TexCoord[0] = TexCoords;\n"
 		"	float lerpfrac;"
 		"	if (distance(Pose1Vert.xyz, Pose2Vert.xyz) < LerpDist)\n"
 		"		lerpfrac = Blend;\n"
 		"	else\n"
 		"		lerpfrac = 1.0;\n"
 		"	vec4 lerpedVert = mix(vec4(Pose1Vert.xyz, 1.0), vec4(Pose2Vert.xyz, 1.0), lerpfrac);\n"
-		"	gl_Position = ProjectionMatrix * ModelViewMatrix * lerpedVert;\n"
+		"	gl_Position = gl_ModelViewProjectionMatrix * lerpedVert;\n"
 		"	FogFragCoord = gl_Position.w;\n"
 		"	if (UseVertexLighting)\n"
 		"	{\n"
@@ -809,45 +792,34 @@ void GLAlias_CreateShaders(void)
 		"		int pose2_lni = int(Pose2Vert.w);\n"
 		"		float l = R_LerpVertexLight(AnormPitch[pose1_lni], AnormYaw[pose1_lni], AnormPitch[pose2_lni], AnormYaw[pose2_lni], Blend, APitch, AYaw);\n"
 		"		l = min(l, 1.0);\n"
-		"		ColorOut = vec4(vec3(LightColor.xyz * (200.0 / 256.0) + l), LightColor.w);\n"
+		"		gl_FrontColor = vec4(vec3(LightColor.xyz * (200.0 / 256.0) + l), LightColor.w);\n"
 		"	}\n"
 		"	else\n"
 		"	{\n"
 		"		float dot1 = r_avertexnormal_dot(Pose1Normal.xyz);\n"
 		"		float dot2 = r_avertexnormal_dot(Pose2Normal.xyz);\n"
-		"		ColorOut = LightColor * vec4(vec3(mix(dot1, dot2, Blend)), 1.0);\n"
+		"		gl_FrontColor = LightColor * vec4(vec3(mix(dot1, dot2, Blend)), 1.0);\n"
 		"	}\n"
 		"}\n";
 
 	const GLchar *fragSource = \
-		"#version 430\n"
+		"#version 130\n"
 		"\n"
 		"uniform sampler2D Tex;\n"
 		"uniform sampler2D FullbrightTex;\n"
 		"uniform int UseFullbrightTex;\n"
 		"uniform bool UseAlphaTest;\n"
-		"layout(std140, binding = 1) uniform FogData\n"
-		"{\n"
-		"	int UseWaterFog;\n"
-		"	float FogDensity;\n"
-		"	float FogStart;\n"
-		"	float FogEnd;\n"
-		"	vec4 FogColor;\n"
-		"};\n"
+		"uniform int UseWaterFog;\n"
 		"\n"
-		"in vec2 TexCoordsOut;\n"
-		"in vec4 ColorOut;\n"
-		"in float FogFragCoord;\n"
-		"\n"
-		"out vec4 FragColor;\n"
+		"varying float FogFragCoord;\n"
 		"\n"
 		"void main()\n"
 		"{\n"
-		"	vec4 result = texture2D(Tex, TexCoordsOut.xy);\n"
+		"	vec4 result = texture2D(Tex, gl_TexCoord[0].xy);\n"
 		"	if (UseAlphaTest && (result.a < 0.666))\n"
 		"		discard;\n"
-		"	result *= ColorOut;\n"
-		"	vec4 fb = texture2D(FullbrightTex, TexCoordsOut.xy);\n"
+		"	result *= gl_Color;\n"
+		"	vec4 fb = texture2D(FullbrightTex, gl_TexCoord[0].xy);\n"
 		"	if (UseFullbrightTex == 1)\n"
 		"		result = mix(result, fb, fb.a);\n"
 		"	else if (UseFullbrightTex == 2)\n"
@@ -855,15 +827,15 @@ void GLAlias_CreateShaders(void)
 		"	result = clamp(result, 0.0, 1.0);\n"
 		"	float fog = 0.0;\n"
 		"	if (UseWaterFog == 1)\n"
-		"		fog = (FogEnd - FogFragCoord) / (FogEnd - FogStart);\n"
+		"		fog = (gl_Fog.end - FogFragCoord) / (gl_Fog.end - gl_Fog.start);\n"
 		"	else if (UseWaterFog == 2)\n"
-		"		fog = exp(-FogDensity * FogFragCoord);\n"
+		"		fog = exp(-gl_Fog.density * FogFragCoord);\n"
 		"	else\n"
-		"		fog = exp(-FogDensity * FogDensity * FogFragCoord * FogFragCoord);\n"
+		"		fog = exp(-gl_Fog.density * gl_Fog.density * FogFragCoord * FogFragCoord);\n"
 		"	fog = clamp(fog, 0.0, 1.0);\n"
-		"	result = mix(FogColor, result, fog);\n"
-		"	result.a = ColorOut.a;\n" // FIXME: This will make almost transparent things cut holes though heavy fog
-		"	FragColor = result;\n"
+		"	result = mix(gl_Fog.color, result, fog);\n"
+		"	result.a = gl_Color.a;\n" // FIXME: This will make almost transparent things cut holes though heavy fog
+		"	gl_FragColor = result;\n"
 		"}\n";
 
 	if (!gl_glsl_alias_able)
@@ -885,24 +857,11 @@ void GLAlias_CreateShaders(void)
 		fullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "FullbrightTex");
 		useFullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "UseFullbrightTex");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_alias_program, "UseAlphaTest");
+		useWaterFogLoc = GL_GetUniformLocation(&r_alias_program, "UseWaterFog");
 
-		GLuint modelViewProjectionMatrixLoc = qglGetUniformBlockIndex(r_alias_program, "ModelViewProjectionMatrix");
-		qglUniformBlockBinding(r_alias_program, modelViewProjectionMatrixLoc, 0);
-
-		qglGenBuffers(1, &ubo_modelViewProjectionMatrix);
-		qglBindBuffer(GL_UNIFORM_BUFFER, ubo_modelViewProjectionMatrix);
-		qglBufferData(GL_UNIFORM_BUFFER, sizeof(modelViewProjectionMatrix_data_t), NULL, GL_STATIC_DRAW);
-		qglBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo_modelViewProjectionMatrix);
-		qglBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-		GLuint fogDataLoc = qglGetUniformBlockIndex(r_alias_program, "FogData");
-		qglUniformBlockBinding(r_alias_program, fogDataLoc, 1);
-
-		qglGenBuffers(1, &ubo_fog);
-		qglBindBuffer(GL_UNIFORM_BUFFER, ubo_fog);
-		qglBufferData(GL_UNIFORM_BUFFER, sizeof(fog_data_t), NULL, GL_STATIC_DRAW);
-		qglBindBufferBase(GL_UNIFORM_BUFFER, 1, ubo_fog);
-		qglBindBuffer(GL_UNIFORM_BUFFER, 0);
+		// joe: bind uniform buffer here, only once
+		GLuint vlightDataLoc = qglGetUniformBlockIndex(r_alias_program, "VlightData");
+		qglUniformBlockBinding(r_alias_program, vlightDataLoc, 0);
 	}
 }
 
@@ -1011,22 +970,11 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1i(useVertexLightingLoc, (gl_vertexlights.value && !full_light) ? 1 : 0);
 	qglUniform1f(aPitchLoc, apitch);
 	qglUniform1f(aYawLoc, ayaw);
-	
-	glGetFloatv(GL_MODELVIEW_MATRIX, modelViewProjectionMatrix_data.modelViewMatrix);
-	glGetFloatv(GL_PROJECTION_MATRIX, modelViewProjectionMatrix_data.projectionMatrix);
-
-	qglBindBuffer(GL_UNIFORM_BUFFER, ubo_modelViewProjectionMatrix);
-	qglBufferData(GL_UNIFORM_BUFFER, sizeof(modelViewProjectionMatrix_data_t), &modelViewProjectionMatrix_data, GL_STATIC_DRAW);
-	qglBindBuffer(GL_UNIFORM_BUFFER, 0);
-
 	qglUniform1i(texLoc, 0);
 	qglUniform1i(fullbrightTexLoc, 1);
 	qglUniform1i(useFullbrightTexLoc, (fb_texture != 0) ? (islumaskin ? 2 : 1) : 0);
 	qglUniform1i(useAlphaTestLoc, (currententity->model->flags & MF_HOLEY) ? 1 : 0);
-
-	qglBindBuffer(GL_UNIFORM_BUFFER, ubo_fog);
-	qglBufferData(GL_UNIFORM_BUFFER, sizeof(fog_data_t), &fog_data, GL_STATIC_DRAW);
-	qglBindBuffer(GL_UNIFORM_BUFFER, 0);
+	qglUniform1i(useWaterFogLoc, fog_data.useWaterFog);
 
 	// set textures
 	GL_SelectTexture(GL_TEXTURE0);
@@ -3364,8 +3312,6 @@ void R_SetupGL (void)
 	glRotatef (-r_refdef.viewangles[0], 0, 1, 0);
 	glRotatef (-r_refdef.viewangles[1], 0, 0, 1);
 	glTranslatef (-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]);
-
-	glGetFloatv (GL_MODELVIEW_MATRIX, r_world_matrix);
 
 	// set drawing parms
 	if (gl_cull.value)

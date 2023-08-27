@@ -493,7 +493,7 @@ float	vlight_lowcut = 60;
 int		anorm_pitch[NUMVERTEXNORMALS];
 int		anorm_yaw[NUMVERTEXNORMALS];
 
-int		vlighttable[256][256];
+byte	vlighttable[256][256];
 
 float R_GetVertexLightValue (byte ppitch, byte pyaw, float apitch, float ayaw)
 {
@@ -585,43 +585,63 @@ void R_ResetAnormTable (void)
 	}
 }
 
-GLuint	ssbo_vlighttable;
+GLuint	tbo, tbo_tex;
+GLuint	ubo;
 
 /*
 ==================
-GL_BuildShaderStorageBufferWithLightData
+GL_BuildTextureBufferWithLightData
 
-vlighttable is a huge array to use in GLSL
+joe: vlighttable is a huge array to use in GLSL
 uniform arrays and uniform buffers don't enable that much data to be sent
-the best solution I found is to load it to the shader storage buffer
-
-anorm_pitch and anorm_yaw arrays only set at startup
-so let's also load them to the shader storage buffer instead of sending it to the shader every frame
-
-Originally I used the texture buffer to keep the supported GLSL version 
-as low as possible (1.40), but I couldn't make it work with AMD/ATI cards
+the best solution I found is to load it to the texture buffer
 ==================
 */
-void GL_BuildShaderStorageBufferWithLightData(void)
+void GL_BuildTextureBufferWithLightData(void)
 {
-	if (!gl_glsl_alias_able)
+	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
 		return;
 
-	qglGenBuffers(1, &ssbo_vlighttable);
-	qglBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vlighttable);
-	qglBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vlighttable) + sizeof(anorm_pitch) + sizeof(anorm_yaw), NULL, GL_STATIC_DRAW);
-	qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_vlighttable);
+	qglGenBuffers(1, &tbo);
+	qglBindBuffer(GL_TEXTURE_BUFFER, tbo);
+	qglBufferData(GL_TEXTURE_BUFFER, sizeof(vlighttable), vlighttable, GL_STATIC_DRAW);
+	qglBindBuffer(GL_TEXTURE_BUFFER, 0);
 
-	qglBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vlighttable), vlighttable);
-	qglBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(vlighttable), sizeof(anorm_pitch), anorm_pitch);
-	qglBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(vlighttable) + sizeof(anorm_pitch), sizeof(anorm_yaw), anorm_yaw);
+	tbo_tex = texture_extension_number++;
+	glBindTexture(GL_TEXTURE_BUFFER, tbo_tex);
+	qglTexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, tbo);
+}
 
-	qglBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+/*
+==================
+GL_BuildUniformBufferWithAnormData
+
+joe: anorm_pitch and anorm_yaw arrays only set at startup
+so let's load them to a uniform buffer instead of sending it to the shader every frame
+==================
+*/
+void GL_BuildUniformBufferWithAnormData(void)
+{
+	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+		return;
+
+	qglGenBuffers(1, &ubo);
+	qglBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	qglBufferData(GL_UNIFORM_BUFFER, sizeof(anorm_pitch) + sizeof(anorm_yaw), NULL, GL_STATIC_DRAW);
+	//qglBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	qglBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo);
+
+	//qglBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	qglBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(anorm_pitch), anorm_pitch);
+	qglBufferSubData(GL_UNIFORM_BUFFER, sizeof(anorm_pitch), sizeof(anorm_yaw), anorm_yaw);
+	qglBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void R_InitVertexLights (void)
 {
 	R_ResetAnormTable ();
 
-	GL_BuildShaderStorageBufferWithLightData();
+	GL_BuildTextureBufferWithLightData();
+	GL_BuildUniformBufferWithAnormData();
 }
