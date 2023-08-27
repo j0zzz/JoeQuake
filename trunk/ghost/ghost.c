@@ -778,6 +778,9 @@ static void Ghost_PrintSummary (void)
                        gds->total_secrets);
 
         }
+    } else {
+        Con_Printf("%s Ghost demo does not contain an intermission screen\n",
+                   RedString("WARNING:"));
     }
     if (possible_recam) {
         Con_Printf("%s Ghost demo appears to be a recam\n",
