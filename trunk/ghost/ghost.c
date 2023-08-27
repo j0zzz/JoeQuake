@@ -630,7 +630,7 @@ void Ghost_DrawGhostTime (qboolean intermission)
     int size, y;
     float relative_time;
     qboolean match;
-    entity_t *ent = &cl_entities[cl.viewentity];
+    entity_t *ent;
 
     if (!ghost_delta.value || ghost_records == NULL)
         return;
