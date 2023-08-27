@@ -738,19 +738,20 @@ static void Ghost_PrintSummary (void)
         if (gds->view_entity - 1 >= 0
                 && gds->view_entity - 1 < GHOST_MAX_CLIENTS
                 && gds->client_names[gds->view_entity - 1][0] != '\0') {
-            Con_Printf("  View Player: %s\n",
+            Con_Printf("  %s %s\n",
+                       RedString("View Player"),
                        gds->client_names[gds->view_entity - 1]);
         } else {
             possible_recam = true;
         }
-        Con_Printf("    Player(s):");
+        Con_Printf("    %s", RedString("Player(s)"));
         for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
             if (gds->client_names[i][0] != '\0') {
                 Con_Printf(" %s ", gds->client_names[i]);
             }
         }
         Con_Printf("\n");
-        Con_Printf("       Map(s):");
+        Con_Printf("       %s", RedString("Map(s)"));
         for (i = 0; i < gds->num_maps && i < 4; i++) {
             Con_Printf(" %s", gds->maps[i]);
         }
@@ -759,23 +760,28 @@ static void Ghost_PrintSummary (void)
         }
         Con_Printf("\n");
         if (gds->skill >= 0 && gds->skill <= 3) {
-            Con_Printf("        Skill: %s\n",
+            Con_Printf("        %s %s\n",
+                       RedString("Skill"),
                        skill_modes[gds->skill]);
         }
         if (gds->total_time > 0) {
-            Con_Printf("         Time: %s\n",
+            Con_Printf("         %s %s\n",
+                       RedString("Time"),
                        GetPrintedTime(gds->total_time));
-            Con_Printf("        Kills: %d / %d\n",
+            Con_Printf("        %s %d / %d\n",
+                       RedString("Kills"),
                        gds->kills,
                        gds->total_kills);
-            Con_Printf("      Secrets: %d / %d\n",
+            Con_Printf("      %s %d / %d\n",
+                       RedString("Secrets"),
                        gds->secrets,
                        gds->total_secrets);
 
         }
     }
     if (possible_recam) {
-        Con_Printf("WARNING: Ghost demo appears to be a recam\n");
+        Con_Printf("%s Ghost demo appears to be a recam\n",
+                   RedString("WARNING:"));
     }
     Con_Printf("\n");
 }
