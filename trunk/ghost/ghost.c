@@ -444,69 +444,101 @@ static const char *RedString(char *str)
 static int Ghost_DrawDemoSummary (void)
 {
     extern char *skill_modes[];
+    demo_summary_t *gds = &ghost_demo_summary;
     char stat_descs[GHOST_MAX_SUMMARY_DESCS][32];
     char lines[GHOST_MAX_SUMMARY_LINES][256];
     int num_lines;
+    int num_players;
     int num_descs = 0;
     int size, y, i, col, max_line_width;
 
+    // Player name(s).
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        num_players = 0;
+        for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
+            if (gds->client_names[i][0] != '\0') {
+                num_players ++;
+            }
+        }
+        if (num_players == 1) {
+            // Single player.
+            Q_snprintfz(stat_descs[num_descs],
+                        sizeof(stat_descs[num_descs]),
+                        "%s %s",
+                        RedString("Ghost:"),
+                        gds->client_names[0]);
+        } else if (gds->view_entity - 1 >= 0
+                       && gds->view_entity - 1 < GHOST_MAX_CLIENTS
+                       && gds->client_names[gds->view_entity - 1][0] != '\0') {
+            // Normal co-op demo.
+            Q_snprintfz(stat_descs[num_descs],
+                        sizeof(stat_descs[num_descs]),
+                        "%s %s +%d",
+                        RedString("Ghost:"),
+                        gds->client_names[gds->view_entity - 1],
+                        num_players - 1);
+        } else {
+            // Co-op demo recam, or something weird.
+            Q_snprintfz(stat_descs[num_descs],
+                        sizeof(stat_descs[num_descs]),
+                        "%s %d players",
+                        RedString("Ghost:"),
+                        num_players);
+        }
+        num_descs ++;
+    }
+
+    // Total finish time.
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%s",
+                    GetPrintedTime(gds->total_time));
+        num_descs ++;
+    }
+
+    // Skill.
+    if (gds->skill >= 0 && gds->skill <= 3) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%s",
+                    skill_modes[gds->skill]);
+        num_descs ++;
+    }
+
+    // Number of maps in demo.
+    if (gds->num_maps > 1) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%d maps",
+                    gds->num_maps);
+        num_descs ++;
+    }
+
+    // Kills.
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%.1f%% kills",
+                    100.0f * gds->kills / gds->total_kills);
+        num_descs ++;
+    }
+
+    // Secrets.
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%.1f%% secrets",
+                    100.0f * gds->secrets / gds->total_secrets);
+        num_descs ++;
+    }
+
+    // Format each stat into lines that do not wrap.
     size = Sbar_GetScaledCharacterSize();
     max_line_width = (vid.width / size) + 1;
     if (max_line_width > sizeof(lines[0])) {
         max_line_width = sizeof(lines[0]);
     }
-
-    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
-        Q_snprintfz(stat_descs[num_descs],
-                    sizeof(stat_descs[num_descs]),
-                    "%s %s",
-                    RedString("Ghost:"),
-                    ghost_demo_summary.client_names[0]);
-        num_descs ++;
-    }
-
-    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
-        Q_snprintfz(stat_descs[num_descs],
-                    sizeof(stat_descs[num_descs]),
-                    "%s",
-                    GetPrintedTime(ghost_demo_summary.total_time));
-        num_descs ++;
-    }
-
-    if (ghost_demo_summary.skill >= 0 && ghost_demo_summary.skill <= 3) {
-        Q_snprintfz(stat_descs[num_descs],
-                    sizeof(stat_descs[num_descs]),
-                    "%s",
-                    skill_modes[ghost_demo_summary.skill]);
-        num_descs ++;
-    }
-
-    if (ghost_demo_summary.num_maps > 1) {
-        Q_snprintfz(stat_descs[num_descs],
-                    sizeof(stat_descs[num_descs]),
-                    "%d maps",
-                    ghost_demo_summary.num_maps);
-        num_descs ++;
-    }
-
-    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
-        Q_snprintfz(stat_descs[num_descs],
-                    sizeof(stat_descs[num_descs]),
-                    "%.1f%% kills",
-                    100.0f * ghost_demo_summary.kills
-                        / ghost_demo_summary.total_kills);
-        num_descs ++;
-    }
-
-    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
-        Q_snprintfz(stat_descs[num_descs],
-                    sizeof(stat_descs[num_descs]),
-                    "%.1f%% secrets",
-                    100.0f * ghost_demo_summary.secrets
-                        / ghost_demo_summary.total_secrets);
-        num_descs ++;
-    }
-
     col = 0;
     num_lines = 0;
     for (i = 0; i < num_descs && num_lines < GHOST_MAX_SUMMARY_LINES; i++) {
@@ -530,11 +562,11 @@ static int Ghost_DrawDemoSummary (void)
             col += strlen(stat_descs[i]);
         }
     }
-
     if (col != 0) {
         num_lines++;
     }
 
+    // Draw the lines onto the screen, centred at the bottom.
     y = vid.height - (int)(1.25 * size);
     for (i = num_lines - 1; i >= 0; i--) {
         Draw_String ((vid.width - size * strlen(lines[i])) / 2,
@@ -697,40 +729,53 @@ void Ghost_Finish (void)
 static void Ghost_PrintSummary (void)
 {
     extern char *skill_modes[];
+    demo_summary_t *gds = &ghost_demo_summary;
     int i;
+    qboolean possible_recam = false;
 
     Con_Printf("ghost %s has been added\n", ghost_demo_path);
-    if (ghost_demo_summary.total_time != 0.) {
+    if (gds->total_time != 0.) {
+        if (gds->view_entity - 1 >= 0
+                && gds->view_entity - 1 < GHOST_MAX_CLIENTS
+                && gds->client_names[gds->view_entity - 1][0] != '\0') {
+            Con_Printf("  View Player: %s\n",
+                       gds->client_names[gds->view_entity - 1]);
+        } else {
+            possible_recam = true;
+        }
         Con_Printf("    Player(s):");
         for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
-            if (ghost_demo_summary.client_names[i][0] != '\0') {
-                Con_Printf(" %s ", ghost_demo_summary.client_names[i]);
+            if (gds->client_names[i][0] != '\0') {
+                Con_Printf(" %s ", gds->client_names[i]);
             }
         }
         Con_Printf("\n");
         Con_Printf("       Map(s):");
-        for (i = 0; i < ghost_demo_summary.num_maps && i < 4; i++) {
-            Con_Printf(" %s", ghost_demo_summary.maps[i]);
+        for (i = 0; i < gds->num_maps && i < 4; i++) {
+            Con_Printf(" %s", gds->maps[i]);
         }
-        if (i < ghost_demo_summary.num_maps) {
-            Con_Printf("... (%d more)", ghost_demo_summary.num_maps - i);
+        if (i < gds->num_maps) {
+            Con_Printf("... (%d more)", gds->num_maps - i);
         }
         Con_Printf("\n");
-        if (ghost_demo_summary.skill >= 0 && ghost_demo_summary.skill <= 3) {
+        if (gds->skill >= 0 && gds->skill <= 3) {
             Con_Printf("        Skill: %s\n",
-                       skill_modes[ghost_demo_summary.skill]);
+                       skill_modes[gds->skill]);
         }
-        if (ghost_demo_summary.total_time > 0) {
+        if (gds->total_time > 0) {
             Con_Printf("         Time: %s\n",
-                       GetPrintedTime(ghost_demo_summary.total_time));
+                       GetPrintedTime(gds->total_time));
             Con_Printf("        Kills: %d / %d\n",
-                       ghost_demo_summary.kills,
-                       ghost_demo_summary.total_kills);
+                       gds->kills,
+                       gds->total_kills);
             Con_Printf("      Secrets: %d / %d\n",
-                       ghost_demo_summary.secrets,
-                       ghost_demo_summary.total_secrets);
+                       gds->secrets,
+                       gds->total_secrets);
 
         }
+    }
+    if (possible_recam) {
+        Con_Printf("WARNING: Ghost demo appears to be a recam\n");
     }
     Con_Printf("\n");
 }

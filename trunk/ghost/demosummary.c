@@ -104,7 +104,23 @@ DS_ServerInfo_cb (int protocol, unsigned int protocol_flags,
     if (!pctx->any_intermission_seen) {
         memset(pctx->demo_summary->client_names, 0,
                sizeof(pctx->demo_summary->client_names));
+        pctx->demo_summary->view_entity = -1;
     }
+    return DP_CBR_CONTINUE;
+}
+
+
+static dp_cb_response_t
+DS_SetView_cb (int entity_num, void *ctx)
+{
+    ds_ctx_t *pctx = ctx;
+
+    if (pctx->demo_summary->view_entity == -1) {
+        // Take the view entity as the first view entity of the first level with
+        // an intermission (or the last level if there is no intermission).
+        pctx->demo_summary->view_entity = entity_num;
+    }
+
     return DP_CBR_CONTINUE;
 }
 
@@ -244,6 +260,7 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
         .read = DS_Read_cb,
         .server_info_model = DS_ServerInfoModel_cb,
         .server_info = DS_ServerInfo_cb,
+        .set_view = DS_SetView_cb,
         .print = DS_Print_cb,
         .update_name = DS_UpdateName_cb,
         .time = DS_Time_cb,
@@ -261,6 +278,7 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
 
     memset(demo_summary, 0, sizeof(*demo_summary));
     demo_summary->skill = -1;
+    demo_summary->view_entity = -1;
 
     dprc = DP_ReadDemo(&callbacks, &ctx);
     DS_UpdateStats(&ctx);

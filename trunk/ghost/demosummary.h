@@ -34,6 +34,7 @@ typedef struct
     int num_maps;
     float total_time;
     char client_names[DS_MAX_CLIENTS][MAX_SCOREBOARDNAME];
+    int view_entity;
     int skill;
 
     int kills, total_kills;
