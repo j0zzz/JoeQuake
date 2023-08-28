@@ -749,6 +749,18 @@ DP_ParseStuffText(ctx_t *ctx)
 
 
 static dp_err_t
+DP_ParsePrint(ctx_t *ctx)
+{
+    char string[2048];
+
+    CHECK_RC(DP_ParseString(ctx, string, sizeof(string), NULL));
+    CALL_CALLBACK(print, string);
+
+    return DP_ERR_SUCCESS;
+}
+
+
+static dp_err_t
 DP_UpdateColors(ctx_t* ctx)
 {
     byte client_num, colors;
@@ -786,6 +798,8 @@ DP_ParseMessage(ctx_t *ctx)
                 CHECK_RC(DP_ParseVersion(ctx));
                 break;
             case svc_print:
+                CHECK_RC(DP_ParsePrint(ctx));
+                break;
             case svc_centerprint:
             case svc_skybox:
                 CHECK_RC(DP_ParseString(ctx, NULL, 0, NULL));

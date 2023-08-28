@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../quakedef.h"
 #include "ghost_private.h"
+#include "demosummary.h"
 
 
 static cvar_t ghost_delta = {"ghost_delta", "1", CVAR_ARCHIVE};
@@ -40,6 +41,7 @@ static float        ghost_shift = 0.0f;
 static float        ghost_finish_time = -1.0f;
 static int          ghost_model_indices[GHOST_MODEL_COUNT];
 static float        ghost_last_relative_time = 0.0f;
+static demo_summary_t ghost_demo_summary;
 
 const char *ghost_model_paths[GHOST_MODEL_COUNT] = {
     "progs/player.mdl",
@@ -418,21 +420,222 @@ Ghost_DrawSingleTime (int y, float relative_time, char *label)
 }
 
 
+static const char *RedString(char *str)
+{
+    static char out[256];
+    int i;
+
+    for (i = 0; i < sizeof(out) - 1 && str[i] != '\0'; i++) {
+        if (str[i] >= 0x20) {
+            out[i] = str[i] | 0x80;
+        } else {
+            out[i] = str[i];
+        }
+    }
+    out[i] = '\0';
+
+    return out;
+}
+
+
+#define GHOST_MAX_SUMMARY_DESCS 8
+#define GHOST_MAX_SUMMARY_LINES 4
+
+static int Ghost_DrawDemoSummary (void)
+{
+    extern char *skill_modes[];
+    demo_summary_t *gds = &ghost_demo_summary;
+    char stat_descs[GHOST_MAX_SUMMARY_DESCS][32];
+    char lines[GHOST_MAX_SUMMARY_LINES][256];
+    int num_lines;
+    int num_players;
+    int num_descs = 0;
+    int size, y, i, col, max_line_width;
+
+    // Player name(s).
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        num_players = 0;
+        for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
+            if (gds->client_names[i][0] != '\0') {
+                num_players ++;
+            }
+        }
+        if (num_players == 1) {
+            // Single player.
+            Q_snprintfz(stat_descs[num_descs],
+                        sizeof(stat_descs[num_descs]),
+                        "%s %s",
+                        RedString("Ghost:"),
+                        gds->client_names[0]);
+        } else if (gds->view_entity - 1 >= 0
+                       && gds->view_entity - 1 < GHOST_MAX_CLIENTS
+                       && gds->client_names[gds->view_entity - 1][0] != '\0') {
+            // Normal co-op demo.
+            Q_snprintfz(stat_descs[num_descs],
+                        sizeof(stat_descs[num_descs]),
+                        "%s %s +%d",
+                        RedString("Ghost:"),
+                        gds->client_names[gds->view_entity - 1],
+                        num_players - 1);
+        } else {
+            // Co-op demo recam, or something weird.
+            Q_snprintfz(stat_descs[num_descs],
+                        sizeof(stat_descs[num_descs]),
+                        "%s %d players",
+                        RedString("Ghost:"),
+                        num_players);
+        }
+        num_descs ++;
+    }
+
+    // Total finish time.
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%s",
+                    GetPrintedTime(gds->total_time));
+        num_descs ++;
+    }
+
+    // Skill.
+    if (gds->skill >= 0 && gds->skill <= 3) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%s",
+                    skill_modes[gds->skill]);
+        num_descs ++;
+    }
+
+    // Number of maps in demo.
+    if (gds->num_maps > 1) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%d maps",
+                    gds->num_maps);
+        num_descs ++;
+    }
+
+    // Kills.
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%.1f%% kills",
+                    100.0f * (gds->kills + 1e-4) / (gds->total_kills + 1e-4));
+        num_descs ++;
+    }
+
+    // Secrets.
+    if (num_descs < GHOST_MAX_SUMMARY_DESCS) {
+        Q_snprintfz(stat_descs[num_descs],
+                    sizeof(stat_descs[num_descs]),
+                    "%.1f%% secrets",
+                    100.0f * (gds->secrets + 1e-4)
+                        / (gds->total_secrets + 1e-4));
+        num_descs ++;
+    }
+
+    // Format each stat into lines that do not wrap.
+    size = Sbar_GetScaledCharacterSize();
+    max_line_width = (vid.width / size) + 1;
+    if (max_line_width > sizeof(lines[0])) {
+        max_line_width = sizeof(lines[0]);
+    }
+    col = 0;
+    num_lines = 0;
+    for (i = 0; i < num_descs && num_lines < GHOST_MAX_SUMMARY_LINES; i++) {
+        if (col != 0
+            && strlen(stat_descs[i]) + col + 3 >= max_line_width) {
+            num_lines ++;
+            col = 0;
+        }
+
+        if (num_lines < GHOST_MAX_SUMMARY_LINES) {
+            if (col != 0) {
+                Q_snprintfz(lines[num_lines] + col,
+                            max_line_width - col,
+                            " \x8f ");
+                col += 3;
+            }
+            Q_snprintfz(lines[num_lines] + col,
+                        max_line_width - col,
+                        "%s",
+                        stat_descs[i]);
+            col += strlen(stat_descs[i]);
+        }
+    }
+    if (col != 0) {
+        num_lines++;
+    }
+
+    // Draw the lines onto the screen, centred at the bottom.
+    y = vid.height - (int)(1.25 * size);
+    for (i = num_lines - 1; i >= 0; i--) {
+        Draw_String ((vid.width - size * strlen(lines[i])) / 2,
+                     y, lines[i], true);
+
+        if (i > 0) {
+            y -= size;
+        }
+    }
+
+    return y;
+}
+
+
+static void Ghost_DrawIntermissionTimes (void)
+{
+    int size, x, y, i;
+    float relative_time, scale;
+    float total;
+    char st[16];
+    ghost_marathon_level_t *gml;
+    ghost_marathon_info_t *gmi = &ghost_marathon_info;
+
+    scale = Sbar_GetScaleAmount();
+    size = Sbar_GetScaledCharacterSize();
+
+    y = Ghost_DrawDemoSummary();
+
+    total = gmi->total_split;
+    for (i = gmi->num_levels - 1; i >= 0; i--) {
+        y -= 2 * size;
+        if (y <= (174 * scale)) {
+            break;
+        }
+        gml = &gmi->levels[i];
+        relative_time = gml->player_time - gml->ghost_time;
+        Ghost_DrawSingleTime(y, relative_time, gml->map_name);
+
+        if (i > 0) {
+            if (total < 1e-3) {
+                Q_snprintfz (st, sizeof(st), "%.2f s", total);
+            } else {
+                Q_snprintfz (st, sizeof(st), "+%.2f s", total);
+            }
+            total -= relative_time;
+        } else {
+            Q_snprintfz (st, sizeof(st), "%s", RedString("Total"));
+        }
+
+        if (gmi->num_levels > 1) {
+            x = ((vid.width + (int)(184 * scale)) / 2) + (ghost_bar_x.value * size);
+            Draw_String (x, y, st, true);
+        }
+    }
+}
+
+
 // Modified from the JoeQuake speedometer
 void Ghost_DrawGhostTime (qboolean intermission)
 {
-    int size, y, i;
-    float relative_time, scale;
+    int size, y;
+    float relative_time;
     qboolean match;
-    entity_t *ent = &cl_entities[cl.viewentity];
-    ghost_marathon_level_t *gml;
-    ghost_marathon_info_t *gmi = &ghost_marathon_info;
+    entity_t *ent;
 
     if (!ghost_delta.value || ghost_records == NULL)
         return;
 
-	scale = Sbar_GetScaleAmount();
-    size = Sbar_GetScaledCharacterSize();
     if (!intermission) {
         if (cl.intermission) {
             return;
@@ -443,6 +646,8 @@ void Ghost_DrawGhostTime (qboolean intermission)
         relative_time = Ghost_FindClosest(ent->origin, &match);
         if (!match)
             return;
+
+        size = Sbar_GetScaledCharacterSize();
 
         // Don't show small changes, to reduce flickering.
         if (fabs(relative_time - ghost_last_relative_time) < 1e-4 + 1./72)
@@ -462,19 +667,7 @@ void Ghost_DrawGhostTime (qboolean intermission)
 
         Ghost_DrawSingleTime(y, relative_time, "");
     } else {
-        y = vid.height - 2 * size;
-        if (gmi->num_levels > 1) {
-            Ghost_DrawSingleTime(y, gmi->total_split, "total");
-        }
-        for (i = gmi->num_levels - 1; i >= 0; i--) {
-            y -= 2 * size;
-            if (y <= (174 * scale)) {
-                break;
-            }
-            gml = &gmi->levels[i];
-            relative_time = gml->player_time - gml->ghost_time;
-            Ghost_DrawSingleTime(y, relative_time, gml->map_name);
-        }
+        Ghost_DrawIntermissionTimes();
     }
 }
 
@@ -534,21 +727,85 @@ void Ghost_Finish (void)
 }
 
 
+static void Ghost_PrintSummary (void)
+{
+    extern char *skill_modes[];
+    demo_summary_t *gds = &ghost_demo_summary;
+    int i;
+    qboolean possible_recam = false;
+
+    Con_Printf("ghost %s has been added\n", ghost_demo_path);
+    if (gds->total_time != 0.) {
+        if (gds->view_entity - 1 >= 0
+                && gds->view_entity - 1 < GHOST_MAX_CLIENTS
+                && gds->client_names[gds->view_entity - 1][0] != '\0') {
+            Con_Printf("  %s %s\n",
+                       RedString("View Player"),
+                       gds->client_names[gds->view_entity - 1]);
+        } else {
+            possible_recam = true;
+        }
+        Con_Printf("    %s", RedString("Player(s)"));
+        for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
+            if (gds->client_names[i][0] != '\0') {
+                Con_Printf(" %s ", gds->client_names[i]);
+            }
+        }
+        Con_Printf("\n");
+        Con_Printf("       %s", RedString("Map(s)"));
+        for (i = 0; i < gds->num_maps && i < 4; i++) {
+            Con_Printf(" %s", gds->maps[i]);
+        }
+        if (i < gds->num_maps) {
+            Con_Printf("... (%d more)", gds->num_maps - i);
+        }
+        Con_Printf("\n");
+        if (gds->skill >= 0 && gds->skill <= 3) {
+            Con_Printf("        %s %s\n",
+                       RedString("Skill"),
+                       skill_modes[gds->skill]);
+        }
+        if (gds->total_time > 0) {
+            Con_Printf("         %s %s\n",
+                       RedString("Time"),
+                       GetPrintedTime(gds->total_time));
+            Con_Printf("        %s %d / %d\n",
+                       RedString("Kills"),
+                       gds->kills,
+                       gds->total_kills);
+            Con_Printf("      %s %d / %d\n",
+                       RedString("Secrets"),
+                       gds->secrets,
+                       gds->total_secrets);
+
+        }
+    } else {
+        Con_Printf("%s Ghost demo does not contain an intermission screen\n",
+                   RedString("WARNING:"));
+    }
+    if (possible_recam) {
+        Con_Printf("%s Ghost demo appears to be a recam\n",
+                   RedString("WARNING:"));
+    }
+    Con_Printf("\n");
+}
+
+
 static void Ghost_Command_f (void)
 {
-    FILE *demo_file;
+    qboolean ok = true;
+    FILE *demo_file = NULL;
     char demo_path[MAX_OSPATH];
 
     if (cmd_source != src_command) {
         return;
     }
 
-    if (Cmd_Argc() != 2)
-    {
+    if (Cmd_Argc() != 2) {
         if (ghost_demo_path[0] == '\0') {
             Con_Printf("no ghost has been added\n");
         } else {
-            Con_Printf("ghost %s has been added\n", ghost_demo_path);
+            Ghost_PrintSummary();
         }
         Con_Printf("ghost <demoname> : add a ghost\n");
         return;
@@ -557,10 +814,25 @@ static void Ghost_Command_f (void)
     DZip_Cleanup(&ghost_dz_ctx);
     Q_strlcpy(demo_path, Cmd_Argv(1), sizeof(demo_path));
     demo_file = Ghost_OpenDemoOrDzip(demo_path);
+    ok = (demo_file != NULL);
+
+    if (ok) {
+        ok = DS_GetDemoSummary(demo_file, &ghost_demo_summary);
+    }
+
+    if (ok) {
+        Q_strlcpy(ghost_demo_path, demo_path, sizeof(ghost_demo_path));
+        Ghost_PrintSummary();
+        Con_Printf("ghost will be loaded on next map load\n");
+    }
+
+    if (!ok) {
+        ghost_demo_path[0] = '\0';
+        DZip_Cleanup(&ghost_dz_ctx);
+    }
+
     if (demo_file) {
         fclose(demo_file);
-        Q_strlcpy(ghost_demo_path, demo_path, sizeof(ghost_demo_path));
-        Con_Printf("ghost will be loaded on next map load\n");
     }
 }
 
