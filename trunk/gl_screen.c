@@ -1132,6 +1132,8 @@ void SCR_UpdateScreen (void)
 
 		if (con_notify_intermission.value)
 			SCR_DrawConsole();
+
+		Ghost_DrawGhostTime (true);
 	}
 	else
 	{

@@ -584,7 +584,7 @@ static int Ghost_DrawDemoSummary (void)
 
 static void Ghost_DrawIntermissionTimes (void)
 {
-    int size, x, y, i;
+    int size, x, y, i, min_y;
     float relative_time, scale;
     float total;
     char st[16];
@@ -596,10 +596,13 @@ static void Ghost_DrawIntermissionTimes (void)
 
     y = Ghost_DrawDemoSummary();
 
+    // Don't draw over the usual end of level screen or the finale text.
+    min_y = ((cl.intermission == 2) ? 182 : 174) * scale;
+
     total = gmi->total_split;
     for (i = gmi->num_levels - 1; i >= 0; i--) {
         y -= 2 * size;
-        if (y <= (174 * scale)) {
+        if (y <= min_y) {
             break;
         }
         gml = &gmi->levels[i];
