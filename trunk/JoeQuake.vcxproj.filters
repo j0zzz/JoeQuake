@@ -441,6 +441,9 @@
     <ClCompile Include="in_sdl.c">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
+    <ClCompile Include="ghost\demosummary.c">
+      <Filter>Source Files\Ghost</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="adivtab.h">
@@ -627,6 +630,9 @@
       <Filter>Header Files\Ghost_h</Filter>
     </ClInclude>
     <ClInclude Include="ghost\ghost_private.h">
+      <Filter>Header Files\Ghost_h</Filter>
+    </ClInclude>
+    <ClInclude Include="ghost\demosummary.h">
       <Filter>Header Files\Ghost_h</Filter>
     </ClInclude>
   </ItemGroup>
