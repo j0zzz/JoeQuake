@@ -55,7 +55,6 @@ DS_ServerInfoModel_cb (const char *model, void *ctx)
     char *map_name;
     ds_ctx_t *pctx = ctx;
     demo_summary_t *ds = pctx->demo_summary;
-    int i;
 
     if (pctx->model_num == 0 && ds->num_maps < DS_MAX_MAP_NAMES) {
         map_name = ds->maps[ds->num_maps];
