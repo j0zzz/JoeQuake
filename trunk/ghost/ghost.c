@@ -520,7 +520,7 @@ static int Ghost_DrawDemoSummary (void)
         Q_snprintfz(stat_descs[num_descs],
                     sizeof(stat_descs[num_descs]),
                     "%.1f%% kills",
-                    100.0f * gds->kills / gds->total_kills);
+                    100.0f * (gds->kills + 1e-4) / (gds->total_kills + 1e-4));
         num_descs ++;
     }
 
@@ -529,7 +529,8 @@ static int Ghost_DrawDemoSummary (void)
         Q_snprintfz(stat_descs[num_descs],
                     sizeof(stat_descs[num_descs]),
                     "%.1f%% secrets",
-                    100.0f * gds->secrets / gds->total_secrets);
+                    100.0f * (gds->secrets + 1e-4)
+                        / (gds->total_secrets + 1e-4));
         num_descs ++;
     }
 
