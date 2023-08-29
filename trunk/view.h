@@ -80,4 +80,5 @@ void SCR_DrawVolume (void);
 void SCR_DrawPlaybackStats (void);
 
 float V_CalcRoll (vec3_t angles, vec3_t velocity);
+void V_RestoreAngles (void);
 void V_UpdatePalette (void);
