@@ -29,32 +29,29 @@ ALIAS MODEL DISPLAY LIST GENERATION
 =================================================================
 */
 
-model_t		*aliasmodel;
-aliashdr_t	*paliashdr;
-
-qboolean	used[8192];
+static unsigned char used[MAXALIASTRIS];
 
 // the command list holds counts and s/t values that are valid for every frame
-int		commands[8192];
-int		numcommands;
+static int		commands[MAXALIASTRIS*7 + 1];
+static int		numcommands;
 
 // all frames will have their vertexes rearranged and expanded
 // so they are in the order expected by the command list
-int		vertexorder[8192];
-int		numorder;
+static int		vertexorder[MAXALIASTRIS * 3];
+static int		numorder;
 
-int		allverts, alltris;
+static int		allverts, alltris;
 
-int		stripverts[128];
-int		striptris[128];
-int		stripcount;
+static int		stripverts[MAXALIASTRIS + 2];
+static int		striptris[MAXALIASTRIS];
+static int		stripcount;
 
 /*
 ================
 StripLength
 ================
 */
-int StripLength (int starttri, int startv)
+static int StripLength (int starttri, int startv)
 {
 	int		m1, m2, j, k;
 	mtriangle_t	*last, *check;
@@ -120,7 +117,7 @@ done:
 FanLength
 ===========
 */
-int FanLength (int starttri, int startv)
+static int FanLength (int starttri, int startv)
 {
 	int		m1, m2, j, k;
 	mtriangle_t	*last, *check;
@@ -187,7 +184,7 @@ Generate a list of trifans or strips for the model, which holds for all frames
 */
 void BuildTris (void)
 {
-	int		i, j, k, startv, len, bestlen, besttype, type, bestverts[1024], besttris[1024];
+	int		i, j, k, startv, len, bestlen, besttype, type, bestverts[MAXALIASTRIS + 2], besttris[MAXALIASTRIS];
 	float	s, t;
 
 	// build tristrips
@@ -252,7 +249,7 @@ void BuildTris (void)
 	alltris += pheader->numtris;
 }
 
-void ScaleVerts (byte *original, vec3_t scaled)
+void ScaleVerts (byte *original, vec3_t scaled, aliashdr_t *paliashdr)
 {
 	scaled[0] = (float)original[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
 	scaled[1] = (float)original[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
@@ -269,7 +266,7 @@ and if the distance is longer than a given threshold, the verts of the destinati
 frame will be replaced with the source verts (to keep the muzzleflash hidden).
 ================
 */
-void RemoveMuzzleFlash(char *srcframe, char *dstframe, int threshold, qboolean removeall)
+void RemoveMuzzleFlash(char *srcframe, char *dstframe, int threshold, aliashdr_t *paliashdr, qboolean removeall)
 {
 	int		i, j;
 	vec3_t	scaledcurrent, scalednext;	// scaled versions of the verts (need to prescale for comparison)
@@ -309,8 +306,8 @@ void RemoveMuzzleFlash(char *srcframe, char *dstframe, int threshold, qboolean r
 	//Con_Printf("framename: %s\n\n", srcframe);
 	for (j = 0; j < numorder; j++)
 	{
-		ScaleVerts (vertscurrentframe->v, scaledcurrent);
-		ScaleVerts (vertsnextframe->v, scalednext);
+		ScaleVerts (vertscurrentframe->v, scaledcurrent, paliashdr);
+		ScaleVerts (vertsnextframe->v, scalednext, paliashdr);
 
 		// get difference in front to back movement
 		vdiff = fabs(scalednext[0] - scaledcurrent[0]);
@@ -372,7 +369,7 @@ void RemoveMuzzleFlash(char *srcframe, char *dstframe, int threshold, qboolean r
 	}
 }
 
-static void GL_MakeAliasModelDisplayLists_VBO(void);
+static void GL_MakeAliasModelDisplayLists_VBO (model_t *, aliashdr_t *);
 static void GLMesh_LoadVertexBuffer(model_t *m, const aliashdr_t *hdr);
 
 /*
@@ -384,9 +381,7 @@ void GL_MakeAliasModelDisplayLists (model_t *mod, aliashdr_t *hdr)
 {
 	int			i, j, *cmds;
 	trivertx_t	*verts;
-
-	aliasmodel = mod;
-	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
+	aliashdr_t	*paliashdr = hdr; // (aliashdr_t *)Mod_Extradata (m);
 
 	// Tonik: don't cache anything, because it seems just as fast
 	// (if not faster) to rebuild the tris instead of loading them from disk
@@ -406,29 +401,29 @@ void GL_MakeAliasModelDisplayLists (model_t *mod, aliashdr_t *hdr)
 			*verts++ = poseverts[i][vertexorder[j]];
 
 	// ericw
-	GL_MakeAliasModelDisplayLists_VBO();
+	GL_MakeAliasModelDisplayLists_VBO(mod, paliashdr);
 
 	// there is a stupid thing in the soldier's shooting animation, namely that the muzzleflash object
 	// is moved into the weapon from the body one frame earlier for no reason...
 	if (mod->modhint == MOD_SOLDIER)
-		RemoveMuzzleFlash("shoot3", "shoot4", 10, false);
+		RemoveMuzzleFlash("shoot3", "shoot4", 10, paliashdr, false);
 
 	// code for elimination of muzzleflashes
 	if (qmb_initialized && gl_part_muzzleflash.value)
 	{
 		if (mod->modhint == MOD_WEAPON)
-			RemoveMuzzleFlash("shot1", "shot2", 10, true);
+			RemoveMuzzleFlash("shot1", "shot2", 10, paliashdr, true);
 		else if (Mod_IsAnyKindOfPlayerModel(mod))
 		{
-			RemoveMuzzleFlash("nailatt2", "nailatt1", 10, false);
-			RemoveMuzzleFlash("rockatt6", "rockatt1", 10, false);
-			RemoveMuzzleFlash("shotatt3", "shotatt2", 10, false);
-			RemoveMuzzleFlash("shotatt2", "shotatt1", 10, false);
+			RemoveMuzzleFlash("nailatt2", "nailatt1", 10, paliashdr, false);
+			RemoveMuzzleFlash("rockatt6", "rockatt1", 10, paliashdr, false);
+			RemoveMuzzleFlash("shotatt3", "shotatt2", 10, paliashdr, false);
+			RemoveMuzzleFlash("shotatt2", "shotatt1", 10, paliashdr, false);
 		}
 		else if (mod->modhint == MOD_SOLDIER)
-			RemoveMuzzleFlash("shoot4", "shoot5", 10, false);
+			RemoveMuzzleFlash("shoot4", "shoot5", 10, paliashdr, false);
 		else if (mod->modhint == MOD_ENFORCER)
-			RemoveMuzzleFlash("attack5", "attack6", 10, false);
+			RemoveMuzzleFlash("attack5", "attack6", 10, paliashdr, false);
 	}
 }
 
@@ -442,7 +437,7 @@ is copied to Mod_Extradata.
 Original code by MH from RMQEngine
 ================
 */
-void GL_MakeAliasModelDisplayLists_VBO(void)
+static void GL_MakeAliasModelDisplayLists_VBO (model_t *aliasmodel, aliashdr_t *paliashdr)
 {
 	int i, j;
 	int maxverts_vbo;
