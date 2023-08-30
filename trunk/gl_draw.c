@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-extern	unsigned d_8to24table2[256];
-
 int		texture_extension_number = 1;
 
 extern qboolean OnChange_gl_picmip (cvar_t *var, char *string);
@@ -1896,7 +1894,7 @@ void GL_Upload8 (byte *data, int width, int height, int mode)
 	unsigned	*table;
 	static unsigned	trans[2048*2048*4];	// joe: raised value from 960*480
 
-	table = (mode & TEX_BRIGHTEN) ? d_8to24table2 : d_8to24table;
+	table = d_8to24table;
 	size = width * height;
 
 	if (size * 4 > sizeof(trans))

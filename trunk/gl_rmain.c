@@ -130,6 +130,9 @@ cvar_t	gl_caustics = {"gl_caustics", "1"};
 cvar_t	gl_ringalpha = {"gl_ringalpha", "0.4"};
 cvar_t	gl_fb_bmodels = {"gl_fb_bmodels", "1"};
 cvar_t	gl_fb_models = {"gl_fb_models", "1"};
+qboolean OnChange_gl_overbright(cvar_t *var, char *string);
+cvar_t	gl_overbright = { "gl_overbright", "1", 0, OnChange_gl_overbright };
+cvar_t	gl_overbright_models = { "gl_overbright_models", "1" };
 cvar_t  gl_solidparticles = {"gl_solidparticles", "0"};
 cvar_t  gl_vertexlights = {"gl_vertexlights", "0"};
 cvar_t	gl_shownormals = {"gl_shownormals", "0"};
@@ -160,8 +163,6 @@ cvar_t	gl_decal_explosions = {"gl_decal_explosions", "0"};
 extern cvar_t r_waterquality;
 extern cvar_t r_oldwater;
 extern cvar_t r_waterwarp;
-
-int		lightmode = 2;	// 1: normal (not used), 2: overbright (always used)
 
 float	pitch_rot;
 #if 0
@@ -636,6 +637,8 @@ float	r_avertexnormal_dots[SHADEDOT_QUANT][256] =
 vec3_t	shadevector;
 float	*shadedots = r_avertexnormal_dots[0];
 
+qboolean	overbright; //johnfitz
+
 float	apitch, ayaw;
 
 static GLuint r_alias_program;
@@ -653,6 +656,7 @@ static GLuint aYawLoc;
 static GLuint texLoc;
 static GLuint fullbrightTexLoc;
 static GLuint useFullbrightTexLoc;
+static GLuint useOverbrightLoc;
 static GLuint useAlphaTestLoc;
 static GLuint useWaterFogLoc;
 
@@ -808,6 +812,7 @@ void GLAlias_CreateShaders(void)
 		"uniform sampler2D Tex;\n"
 		"uniform sampler2D FullbrightTex;\n"
 		"uniform int UseFullbrightTex;\n"
+		"uniform bool UseOverbright;\n"
 		"uniform bool UseAlphaTest;\n"
 		"uniform int UseWaterFog;\n"
 		"\n"
@@ -819,6 +824,8 @@ void GLAlias_CreateShaders(void)
 		"	if (UseAlphaTest && (result.a < 0.666))\n"
 		"		discard;\n"
 		"	result *= gl_Color;\n"
+		"	if (UseOverbright)\n"
+		"		result.rgb *= 2.0;\n"
 		"	vec4 fb = texture2D(FullbrightTex, gl_TexCoord[0].xy);\n"
 		"	if (UseFullbrightTex == 1)\n"
 		"		result = mix(result, fb, fb.a);\n"
@@ -856,6 +863,7 @@ void GLAlias_CreateShaders(void)
 		texLoc = GL_GetUniformLocation(&r_alias_program, "Tex");
 		fullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "FullbrightTex");
 		useFullbrightTexLoc = GL_GetUniformLocation(&r_alias_program, "UseFullbrightTex");
+		useOverbrightLoc = GL_GetUniformLocation(&r_alias_program, "UseOverbright");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_alias_program, "UseAlphaTest");
 		useWaterFogLoc = GL_GetUniformLocation(&r_alias_program, "UseWaterFog");
 
@@ -973,6 +981,7 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1i(texLoc, 0);
 	qglUniform1i(fullbrightTexLoc, 1);
 	qglUniform1i(useFullbrightTexLoc, (fb_texture != 0) ? (islumaskin ? 2 : 1) : 0);
+	qglUniform1i(useOverbrightLoc, overbright ? 1 : 0);
 	qglUniform1i(useAlphaTestLoc, (currententity->model->flags & MF_HOLEY) ? 1 : 0);
 	qglUniform1i(useWaterFogLoc, fog_data.useWaterFog);
 
@@ -1340,11 +1349,31 @@ void R_SetupLighting (entity_t *ent)
 	model_t	*clmodel = ent->model;
 	static float shadescale = 0;
 
-	if (clmodel->modhint == MOD_Q3GUNSHOT || clmodel->modhint == MOD_Q3TELEPORT || clmodel->modhint == MOD_QLTELEPORT)
+	// make thunderbolt and torches full light
+	if (clmodel->modhint == MOD_THUNDERBOLT)
+	{
+		lightcolor[0] = 210.0f;
+		lightcolor[1] = 210.0f;
+		lightcolor[2] = 210.0f;
+		overbright = false;
+		full_light = ent->noshadow = true;
+		goto end;
+	}
+	else if (clmodel->modhint == MOD_FLAME)
+	{
+		lightcolor[0] = 256.0f;
+		lightcolor[1] = 256.0f;
+		lightcolor[2] = 256.0f;
+		overbright = false;
+		full_light = ent->noshadow = true;
+		goto end;
+	}
+	else if (clmodel->modhint == MOD_Q3GUNSHOT || clmodel->modhint == MOD_Q3TELEPORT || clmodel->modhint == MOD_QLTELEPORT)
 	{
 		lightcolor[0] = 128.0f;
 		lightcolor[1] = 128.0f;
 		lightcolor[2] = 128.0f;
+		overbright = false;
 		full_light = ent->noshadow = true;
 		goto end;
 	}
@@ -1378,7 +1407,7 @@ void R_SetupLighting (entity_t *ent)
 			if (r_dynamic.value)
 			{
 				VectorCopy (bubblecolor[cl_dlights[lnum].type], dlight_color);
-				VectorMA(lightcolor, add, dlight_color, lightcolor);
+				VectorMA (lightcolor, add, dlight_color, lightcolor);
 			}
 		}
 	}
@@ -1391,16 +1420,12 @@ void R_SetupLighting (entity_t *ent)
 	}
 
 	// clamp lighting so it doesn't overbright as much
-	if (lightmode == 2)
+	if (overbright)
 	{
 		add = 288.0f / (lightcolor[0] + lightcolor[1] + lightcolor[2]);
 		if (add < 1.0f)
 			VectorScale(lightcolor, add, lightcolor);
 	}
-
-	// don't draw shadows of thunderbolt and torches
-	if (clmodel->modhint == MOD_THUNDERBOLT || clmodel->modhint == MOD_FLAME)
-		ent->noshadow = true;
 
 	// always give the gun some light
 	if (ent == &cl.viewent)
@@ -1422,9 +1447,10 @@ void R_SetupLighting (entity_t *ent)
 		// brighten player models if r_fullbrightskins is not 0
 		if (r_fullbrightskins.value)
 		{
-			lightcolor[0] = 128.0f;
-			lightcolor[1] = 128.0f;
-			lightcolor[2] = 128.0f;
+			lightcolor[0] = 176.0f;
+			lightcolor[1] = 176.0f;
+			lightcolor[2] = 176.0f;
+			overbright = false;
 			full_light = true;
 		}
 		else
@@ -1442,9 +1468,10 @@ void R_SetupLighting (entity_t *ent)
 	// brighten monster models if r_fullbrightskins is 2
 	if (Mod_IsMonsterModel(ent->modelindex) && r_fullbrightskins.value == 2)
 	{
-		lightcolor[0] = 128.0f;
-		lightcolor[1] = 128.0f;
-		lightcolor[2] = 128.0f;
+		lightcolor[0] = 176.0f;
+		lightcolor[1] = 176.0f;
+		lightcolor[2] = 176.0f;
+		overbright = false;
 		full_light = true;
 	}
 
@@ -1552,6 +1579,8 @@ void R_DrawAliasModel (entity_t *ent)
 
 	VectorCopy (ent->origin, r_entorigin);
 	VectorSubtract (r_origin, r_entorigin, modelorg);
+
+	overbright = gl_overbright_models.value;
 
 	// get lighting information
 	R_SetupLighting (ent);
@@ -3387,6 +3416,8 @@ void R_Init (void)
 	Cvar_Register (&gl_ringalpha);
 	Cvar_Register (&gl_fb_bmodels);
 	Cvar_Register (&gl_fb_models);
+	Cvar_Register (&gl_overbright);
+	Cvar_Register (&gl_overbright_models);
 	Cvar_Register (&gl_solidparticles);
 	Cvar_Register (&gl_vertexlights);
 	Cvar_Register (&gl_shownormals);

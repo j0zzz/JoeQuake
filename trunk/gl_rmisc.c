@@ -259,7 +259,6 @@ void R_TranslatePlayerSkin (int playernum, qboolean ghost)
 void R_PreMapLoad (char *mapname)
 {
 	Cvar_ForceSet (&cl_mapname, mapname);
-	lightmode = 2;
 }
 
 qboolean OnChange_r_wateralpha(cvar_t *var, char *string)

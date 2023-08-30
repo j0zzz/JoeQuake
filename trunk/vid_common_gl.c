@@ -42,6 +42,7 @@ qboolean	gl_vbo_able = false;
 qboolean	gl_glsl_able = false;
 qboolean	gl_glsl_gamma_able = false;
 qboolean	gl_glsl_alias_able = false; //ericw
+qboolean	gl_packed_pixels = false;
 
 lpGenerateMipmapFUNC qglGenerateMipmap = NULL;
 
@@ -91,7 +92,6 @@ float		vid_gamma = 1.0;
 byte		vid_gamma_table[256];
 
 unsigned	d_8to24table[256];
-unsigned	d_8to24table2[256];
 
 byte		color_white[4] = {255, 255, 255, 0};
 byte		color_black[4] = {0, 0, 0, 0};
@@ -288,7 +288,10 @@ void CheckGLSLExtensions(void)
 
 	// GLSL alias model rendering
 	if (!COM_CheckParm("-noglslalias") && gl_glsl_able && gl_vbo_able && gl_textureunits >= 4)
+	{
 		gl_glsl_alias_able = true;
+		gl_packed_pixels = true;
+	}
 }
 
 /*
@@ -404,17 +407,4 @@ void VID_SetPalette (unsigned char *palette)
 		*table++ = (255<<24) + (r<<0) + (g<<8) + (b<<16);
 	}
 	d_8to24table[255] = 0;	// 255 is transparent
-
-// Tonik: create a brighter palette for bmodel textures
-	pal = palette;
-	table = d_8to24table2;
-	for (i = 0 ; i < 256 ; i++)
-	{
-		r = min(pal[0] * 2.0, 255);
-		g = min(pal[1] * 2.0, 255);
-		b = min(pal[2] * 2.0, 255);
-		pal += 3;
-		*table++ = (255<<24) + (r<<0) + (g<<8) + (b<<16);
-	}
-	d_8to24table2[255] = 0;	// 255 is transparent
 }
