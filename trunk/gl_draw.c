@@ -1155,7 +1155,6 @@ void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha)
 	
 	glDisable (GL_ALPHA_TEST);
 	glEnable (GL_BLEND);
-	glCullFace (GL_FRONT);
 	glColor4f (1, 1, 1, alpha);
 	GL_Bind (pic->texnum);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_hud);
@@ -1321,7 +1320,6 @@ void Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_x, int src_y, int src
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glCullFace(GL_FRONT);
 		glColor4f(1, 1, 1, alpha);
 	}
 

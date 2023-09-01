@@ -191,7 +191,6 @@ extern	cvar_t	r_scale;
 extern	cvar_t	gl_clear;
 extern	cvar_t	gl_cull;
 extern	cvar_t	gl_poly;
-extern	cvar_t	gl_ztrick;
 extern	cvar_t	gl_smoothmodels;
 extern	cvar_t	gl_affinemodels;
 extern	cvar_t	gl_polyblend;
@@ -375,8 +374,9 @@ void GL_EnableMultitexture (void);
 // vid_common_gl.c
 void Check_Gamma (unsigned char *pal);
 void GL_Init (void);
+void GL_SetupState(void);
 qboolean CheckExtension (const char *extension);
-extern qboolean	gl_add_ext, gl_allow_ztrick;
+extern qboolean	gl_add_ext;
 
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);

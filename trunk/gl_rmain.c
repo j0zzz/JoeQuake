@@ -110,7 +110,6 @@ cvar_t	r_scale = { "r_scale", "1" };
 
 cvar_t	gl_clear = {"gl_clear", "0"};
 cvar_t	gl_cull = {"gl_cull", "1"};
-cvar_t	gl_ztrick = {"gl_ztrick", "0"};
 cvar_t	gl_smoothmodels = {"gl_smoothmodels", "1"};
 cvar_t	gl_affinemodels = {"gl_affinemodels", "0"};
 cvar_t	gl_polyblend = {"gl_polyblend", "1"};
@@ -1057,11 +1056,9 @@ void R_DrawAliasOutlineFrame(int frame, aliashdr_t *paliashdr, entity_t *ent, in
 		return;
 
 
-	glCullFace(GL_BACK);
-	glPolygonMode(GL_FRONT, GL_LINE);
-
+	glCullFace(GL_FRONT);
+	glPolygonMode(GL_BACK, GL_LINE);
 	glLineWidth(line_width);
-
 	glEnable(GL_LINE_SMOOTH);
 	GL_PolygonOffset(-0.7);
 	glDisable(GL_TEXTURE_2D);
@@ -1111,9 +1108,9 @@ void R_DrawAliasOutlineFrame(int frame, aliashdr_t *paliashdr, entity_t *ent, in
 	}
 	glColor4f(1, 1, 1, 1);
 	GL_PolygonOffset(0);
-	glPolygonMode(GL_FRONT, GL_FILL);
+	glPolygonMode(GL_BACK, GL_FILL);
 	glDisable(GL_LINE_SMOOTH);
-	glCullFace(GL_FRONT);
+	glCullFace(GL_BACK);
 	glEnable(GL_TEXTURE_2D);
 }
 
@@ -3012,7 +3009,7 @@ void R_DrawViewModel (void)
 	currententity->transparency = (cl.items & IT_INVISIBILITY) ? gl_ringalpha.value : bound(0, r_drawviewmodel.value, 1);
 
 	// hack the depth range to prevent view model from poking into walls
-	glDepthRange (gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
+	glDepthRange (0, 0.3);
 
 	switch (currententity->model->type)
 	{
@@ -3025,7 +3022,7 @@ void R_DrawViewModel (void)
 		break;
 	}
 
-	glDepthRange (gldepthmin, gldepthmax);
+	glDepthRange (0, 1);
 }
 
 /*
@@ -3330,8 +3327,6 @@ void R_SetupGL (void)
 
 	GL_SetFrustum(r_fovx, r_fovy); //johnfitz -- use r_fov* vars
 
-	glCullFace (GL_FRONT);
-
 	glMatrixMode (GL_MODELVIEW);
 	glLoadIdentity ();
 
@@ -3397,7 +3392,6 @@ void R_Init (void)
 	Cvar_Register (&gl_finish);
 	Cvar_Register (&gl_clear);
 	Cvar_Register (&gl_cull);
-	Cvar_Register (&gl_ztrick);
 	Cvar_Register (&gl_smoothmodels);
 	Cvar_Register (&gl_affinemodels);
 	Cvar_Register (&gl_polyblend);
@@ -3449,9 +3443,6 @@ void R_Init (void)
 	// this minigl driver seems to slow us down if the particles are drawn WITHOUT Z buffer bits
 	if (!strcmp(gl_vendor, "METABYTE/WICKED3D"))
 		Cvar_SetDefault (&gl_solidparticles, 1);
-
-	if (!gl_allow_ztrick)
-		Cvar_SetDefault (&gl_ztrick, 0);
 
 	R_InitTextures ();
 	R_InitBubble ();
@@ -3515,8 +3506,6 @@ void R_RenderScene (void)
 	R_DrawViewModel();
 }
 
-int	gl_ztrickframe = 0;
-
 /*
 =============
 R_Clear
@@ -3524,46 +3513,13 @@ R_Clear
 */
 void R_Clear (void)
 {
-	int	clearbits = 0;
+	unsigned int clearbits = GL_DEPTH_BUFFER_BIT;
 
 	if (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1))
 		clearbits |= GL_COLOR_BUFFER_BIT;
-
-	if (gl_ztrick.value)
-	{
-		if (clearbits)
-			glClear (clearbits);
-
-		gl_ztrickframe = !gl_ztrickframe;
-		if (gl_ztrickframe)
-		{
-			gldepthmin = 0;
-			gldepthmax = 0.49999;
-			glDepthFunc (GL_LEQUAL);
-		}
-		else
-		{
-			gldepthmin = 1;
-			gldepthmax = 0.5;
-			glDepthFunc (GL_GEQUAL);
-		}
-	}
-	else
-	{
-		clearbits |= GL_DEPTH_BUFFER_BIT;
-		glClear (clearbits);
-		gldepthmin = 0;
-		gldepthmax = 1;
-		glDepthFunc (GL_LEQUAL);
-	}
-
-	glDepthRange (gldepthmin, gldepthmax);
-
-	if (r_shadows.value == 2)
-	{
-		glClearStencil (GL_TRUE);
-		glClear (GL_STENCIL_BUFFER_BIT);
-	}
+	if (gl_have_stencil && r_shadows.value == 2)
+		clearbits |= GL_STENCIL_BUFFER_BIT;
+	glClear (clearbits);
 }
 
 static GLuint r_scaleview_texture;

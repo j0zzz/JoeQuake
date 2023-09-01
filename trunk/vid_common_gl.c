@@ -86,9 +86,6 @@ lpUniformBlockBindingFUNC qglUniformBlockBinding = NULL;
 
 qboolean	gl_add_ext = false;
 
-float		gldepthmin, gldepthmax;
-qboolean	gl_allow_ztrick = true;
-
 float		vid_gamma = 1.0;
 byte		vid_gamma_table[256];
 
@@ -313,6 +310,39 @@ void CheckDepthClampExtensions(void)
 
 /*
 ===============
+GL_SetupState -- johnfitz
+
+does all the stuff from GL_Init that needs to be done every time a new GL render context is created
+===============
+*/
+void GL_SetupState (void)
+{
+	glClearColor (0.15, 0.15, 0.15, 0);
+	glCullFace(GL_BACK); //johnfitz -- glquake used CCW with backwards culling -- let's do it right
+	glFrontFace(GL_CW); //johnfitz -- glquake used CCW with backwards culling -- let's do it right
+	glEnable (GL_TEXTURE_2D);
+	glEnable (GL_ALPHA_TEST);
+	glAlphaFunc (GL_GREATER, 0.666);
+
+	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+	glShadeModel (GL_FLAT);
+	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); //johnfitz
+
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glDepthRange (0, 1); //johnfitz -- moved here becuase gl_ztrick is gone.
+	glDepthFunc (GL_LEQUAL); //johnfitz -- moved here becuase gl_ztrick is gone.
+	if (gl_nv_depth_clamp)
+		glEnable(GL_DEPTH_CLAMP_NV);
+}
+
+/*
+===============
 GL_Init
 ===============
 */
@@ -337,30 +367,6 @@ void GL_Init (void)
 	if (!Q_strncasecmp((char *)gl_renderer, "PowerVR", 7))
 		fullsbardraw = true;
 
-	glClearColor (0, 0, 0, 0);
-	glCullFace (GL_FRONT);
-	glEnable (GL_TEXTURE_2D);
-
-	glEnable (GL_ALPHA_TEST);
-	glAlphaFunc (GL_GREATER, 0.666);
-
-	// Get rid of Z-fighting for textures by offsetting the
-	// drawing of entity models compared to normal polygons.
-	// (Only works if gl_ztrick is turned off)
-	glPolygonOffset (0.05, 25.0);
-
-	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
-	glShadeModel (GL_FLAT);
-
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
 	gl_add_ext = CheckExtension("GL_ARB_texture_env_add");
 	CheckGenerateMipmapExtension();
 	CheckMultiTextureExtensions ();
@@ -368,9 +374,6 @@ void GL_Init (void)
 	CheckVertexBufferExtensions();
 	CheckGLSLExtensions();
 	CheckDepthClampExtensions();
-
-	if (gl_nv_depth_clamp)
-		glEnable(GL_DEPTH_CLAMP_NV);
 
 	GLAlias_CreateShaders();
 	GLWorld_CreateShaders();

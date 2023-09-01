@@ -643,10 +643,8 @@ void EmitOutlinePolys(void)
 
 	glEnable(GL_LINE_SMOOTH);
 	glDisable(GL_TEXTURE_2D);
-	glCullFace(GL_BACK);
-
-	glPolygonMode(GL_FRONT, GL_LINE);
-
+	glCullFace(GL_FRONT);
+	glPolygonMode(GL_BACK, GL_LINE);
 	glLineWidth(line_width);
 
 	for (p = outline_polys; p; p = p->outline_chain)
@@ -659,11 +657,11 @@ void EmitOutlinePolys(void)
 		}
 		glEnd();
 	}
-	glCullFace(GL_FRONT);
+	glCullFace(GL_BACK);
 	glColor4f(1, 1, 1, 1);
 	glDisable(GL_LINE_SMOOTH);
 	glEnable(GL_TEXTURE_2D);
-	glPolygonMode(GL_FRONT, GL_FILL);
+	glPolygonMode(GL_BACK, GL_FILL);
 	outline_polys = NULL;
 	glEnable(GL_TEXTURE_2D);
 }

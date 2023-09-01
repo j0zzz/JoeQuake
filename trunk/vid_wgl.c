@@ -883,9 +883,6 @@ BOOL bSetupPixelFormat (HDC hDC)
 		return FALSE;
 	}
 
-	if (retpfd.cDepthBits < 24)
-		gl_allow_ztrick = false;
-
 	gl_have_stencil = true;
 	return TRUE;
 }
@@ -1844,6 +1841,7 @@ void VID_Init (unsigned char *palette)
 
 	GL_Init ();
 	GL_Init_Win();
+	GL_SetupState ();
 	Fog_SetupState();
 
 	InitHWGamma();
