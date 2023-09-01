@@ -3518,7 +3518,10 @@ void R_Clear (void)
 	if (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1))
 		clearbits |= GL_COLOR_BUFFER_BIT;
 	if (gl_have_stencil && r_shadows.value == 2)
+	{
+		glClearStencil(GL_TRUE);
 		clearbits |= GL_STENCIL_BUFFER_BIT;
+	}
 	glClear (clearbits);
 }
 
