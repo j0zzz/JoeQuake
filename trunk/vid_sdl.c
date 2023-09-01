@@ -383,6 +383,7 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 			Sys_Error("Couldn't create GL context: %s", SDL_GetError());
 		}
 		GL_Init ();
+		GL_SetupState ();
 	}
 
 	vid.width = vid.conwidth = VID_GetCurrentWidth();
