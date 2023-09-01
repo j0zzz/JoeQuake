@@ -2264,8 +2264,6 @@ void GL_BuildLightmaps (void)
 	int		i, j, lightmap_textures;
 	struct lightmap_s *lm;
 	model_t	*m;
-	const GLint internalfmt = gl_packed_pixels ? GL_RGB10_A2 : lightmap_bytes;
-	const GLenum type = gl_packed_pixels ? GL_UNSIGNED_INT_10_10_10_2 : GL_UNSIGNED_BYTE;
 
 	r_framecount = 1;		// no dlightcache
 
@@ -2322,6 +2320,9 @@ void GL_BuildLightmaps (void)
 	// upload all lightmaps that were filled
 	for (i = 0 ; i < lightmap_count; i++)
 	{
+		const GLint internalfmt = gl_packed_pixels ? GL_RGB10_A2 : lightmap_bytes;
+		const GLenum type = gl_packed_pixels ? GL_UNSIGNED_INT_10_10_10_2 : GL_UNSIGNED_BYTE;
+
 		lm = &lightmaps[i];
 		lm->modified = false;
 		lm->rectchange.l = LMBLOCK_WIDTH;
