@@ -14,6 +14,7 @@ trunk/.vs/*
 *.txt
 *.user
 *.ipch
+*.vs
 _shelve_*
 trunk/debug_*
 trunk/release_*
