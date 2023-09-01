@@ -43,6 +43,7 @@ qboolean	gl_glsl_able = false;
 qboolean	gl_glsl_gamma_able = false;
 qboolean	gl_glsl_alias_able = false; //ericw
 qboolean	gl_packed_pixels = false;
+qboolean	gl_nv_depth_clamp = false;
 
 lpGenerateMipmapFUNC qglGenerateMipmap = NULL;
 
@@ -299,6 +300,17 @@ void CheckGLSLExtensions(void)
 	}
 }
 
+void CheckDepthClampExtensions(void)
+{
+	// ARB_depth_clamp
+	if (!COM_CheckParm("-nodepthclamp") && 
+		(CheckExtension("GL_ARB_depth_clamp") || CheckExtension("GL_NV_depth_clamp")))
+	{
+		Con_Printf("Depth clamp extensions found\n");
+		gl_nv_depth_clamp = true;
+	}
+}
+
 /*
 ===============
 GL_Init
@@ -355,6 +367,10 @@ void GL_Init (void)
 	CheckAnisotropicFilteringExtensions();
 	CheckVertexBufferExtensions();
 	CheckGLSLExtensions();
+	CheckDepthClampExtensions();
+
+	if (gl_nv_depth_clamp)
+		glEnable(GL_DEPTH_CLAMP_NV);
 
 	GLAlias_CreateShaders();
 	GLWorld_CreateShaders();
