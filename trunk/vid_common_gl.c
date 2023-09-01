@@ -290,6 +290,11 @@ void CheckGLSLExtensions(void)
 	if (!COM_CheckParm("-noglslalias") && gl_glsl_able && gl_vbo_able && gl_textureunits >= 4)
 	{
 		gl_glsl_alias_able = true;
+	}
+
+	// 10bit color buffer
+	if (!COM_CheckParm("-nopackedpixels") && gl_glsl_alias_able)
+	{
 		gl_packed_pixels = true;
 	}
 }

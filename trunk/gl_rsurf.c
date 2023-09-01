@@ -1140,6 +1140,7 @@ static GLuint causticsTexLoc;
 static GLuint useFullbrightTexLoc;
 static GLuint useOverbrightLoc;
 static GLuint useAlphaTestLoc;
+static GLuint usePackedPixelsLoc;
 static GLuint useWaterFogLoc;
 static GLuint alphaLoc;
 static GLuint clTimeLoc;
@@ -1199,6 +1200,7 @@ void GLWorld_CreateShaders(void)
 		"uniform bool UseCausticsTex;\n"
 		"uniform bool UseOverbright;\n"
 		"uniform bool UseAlphaTest;\n"
+		"uniform bool UsePackedPixels;\n"
 		"uniform int UseWaterFog;\n"
 		"uniform float Alpha;\n"
 		"uniform float ClTime;\n"
@@ -1236,7 +1238,8 @@ void GLWorld_CreateShaders(void)
 		"	if (UseAlphaTest && (result.a < 0.666))\n"
 		"		discard;\n"
 		"	result *= texture2D(LMTex, gl_TexCoord[1].xy);\n"
-		"   result.rgb *= 4.0;\n"
+		"	if (UsePackedPixels)\n"
+		"	    result.rgb *= 4.0;\n"
 		"	if (UseOverbright)\n"
 		"		result.rgb *= 2.0;\n"
 		"	vec4 fb = texture2D(FullbrightTex, gl_TexCoord[0].xy);\n"
@@ -1290,6 +1293,7 @@ void GLWorld_CreateShaders(void)
 		useCausticsTexLoc = GL_GetUniformLocation(&r_world_program, "UseCausticsTex");
 		useOverbrightLoc = GL_GetUniformLocation(&r_world_program, "UseOverbright");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_world_program, "UseAlphaTest");
+		usePackedPixelsLoc = GL_GetUniformLocation(&r_world_program, "UsePackedPixels");
 		useWaterFogLoc = GL_GetUniformLocation(&r_world_program, "UseWaterFog");
 		alphaLoc = GL_GetUniformLocation(&r_world_program, "Alpha");
 		clTimeLoc = GL_GetUniformLocation(&r_world_program, "ClTime");
@@ -1345,6 +1349,7 @@ void R_DrawTextureChains_GLSL(model_t *model, texchain_t chain)
 	qglUniform1i(useCausticsTexLoc, 0);
 	qglUniform1i(useOverbrightLoc, (int)gl_overbright.value);
 	qglUniform1i(useAlphaTestLoc, 0);
+	qglUniform1i(usePackedPixelsLoc, gl_packed_pixels);
 	qglUniform1i(useWaterFogLoc, (r_viewleaf->contents != CONTENTS_EMPTY && r_viewleaf->contents != CONTENTS_SOLID) ? (int)gl_waterfog.value : 0);
 	qglUniform1f(alphaLoc, ent->transparency == 0 ? 1 : ent->transparency);
 	qglUniform1f(clTimeLoc, cl.time);
@@ -1771,6 +1776,7 @@ void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 			qglUniform1i(useDetailTexLoc, 0);
 			qglUniform1i(useCausticsTexLoc, 0);
 			qglUniform1i(useAlphaTestLoc, 0);
+			qglUniform1i(usePackedPixelsLoc, gl_packed_pixels);
 			qglUniform1i(useWaterFogLoc, 0);
 			qglUniform1f(clTimeLoc, cl.time);
 
