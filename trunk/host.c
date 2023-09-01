@@ -611,6 +611,10 @@ qboolean Host_FilterTime (double time)
 	{
 		physframetime = realtime - oldphysrealtime;
 		oldphysrealtime = realtime;
+	
+		// joe: never allow physframetime to go above 0.1
+		// this guarantees that after a longer map load (> 0.1s), a physical server frame is executed immediately
+		physframetime = min(physframetime, 0.1);
 	}
 
 	return result;
