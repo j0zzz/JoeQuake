@@ -432,6 +432,11 @@ store:
 					r = *bl++ >> 7;
 					g = *bl++ >> 7;
 					b = *bl++ >> 7;
+
+					// artifically clamp to 255 so gl_overbright 0 renders as expected in the gl_packed_pixels case
+					r = (r > 255) ? 255 : r;
+					g = (g > 255) ? 255 : g;
+					b = (b > 255) ? 255 : b;
 				}
 				if (gl_packed_pixels)
 				{
@@ -469,6 +474,11 @@ store:
 					r = *bl++ >> 7;
 					g = *bl++ >> 7;
 					b = *bl++ >> 7;
+
+					// artifically clamp to 255 so gl_overbright 0 renders as expected in the gl_packed_pixels case
+					r = (r > 255) ? 255 : r;
+					g = (g > 255) ? 255 : g;
+					b = (b > 255) ? 255 : b;
 				}
 				if (gl_packed_pixels)
 				{
