@@ -337,8 +337,10 @@ void GL_SetupState (void)
 
 	glDepthRange (0, 1); //johnfitz -- moved here becuase gl_ztrick is gone.
 	glDepthFunc (GL_LEQUAL); //johnfitz -- moved here becuase gl_ztrick is gone.
+#if 0	//joe: removed due to causing issues in Re:Mobilize mod
 	if (gl_nv_depth_clamp)
 		glEnable(GL_DEPTH_CLAMP_NV);
+#endif
 }
 
 /*
@@ -373,7 +375,9 @@ void GL_Init (void)
 	CheckAnisotropicFilteringExtensions();
 	CheckVertexBufferExtensions();
 	CheckGLSLExtensions();
+#if 0	//joe: removed due to causing issues in Re:Mobilize mod
 	CheckDepthClampExtensions();
+#endif
 
 	GLAlias_CreateShaders();
 	GLWorld_CreateShaders();
