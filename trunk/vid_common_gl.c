@@ -289,10 +289,15 @@ void CheckGLSLExtensions(void)
 	{
 		gl_glsl_alias_able = true;
 	}
+}
 
+void CheckPackedPixelsExtensions(void)
+{
 	// 10bit color buffer
-	if (!COM_CheckParm("-nopackedpixels") && gl_glsl_alias_able)
+	if (!COM_CheckParm("-nopackedpixels") && gl_glsl_alias_able &&
+		(CheckExtension("GL_APPLE_packed_pixels") || CheckExtension("GL_EXT_packed_pixels")))
 	{
+		Con_Printf("Packed pixels extensions found\n");
 		gl_packed_pixels = true;
 	}
 }
@@ -375,6 +380,7 @@ void GL_Init (void)
 	CheckAnisotropicFilteringExtensions();
 	CheckVertexBufferExtensions();
 	CheckGLSLExtensions();
+	CheckPackedPixelsExtensions();
 #if 0	//joe: removed due to causing issues in Re:Mobilize mod
 	CheckDepthClampExtensions();
 #endif
