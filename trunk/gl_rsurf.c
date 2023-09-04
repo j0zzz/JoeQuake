@@ -678,28 +678,14 @@ void EmitOutlinePolys(void)
 
 /*
 ================
-R_BlendLightmaps
+R_DrawLightmapChains -- johnfitz -- R_BlendLightmaps stripped down to almost nothing
 ================
 */
-void R_BlendLightmaps ()
+void R_DrawLightmapChains (void)
 {
 	int			i, j;
-	float		*v;
 	glpoly_t	*p;
-
-	glDepthMask (GL_FALSE);		// don't bother writing Z
-	if (gl_overbright.value)
-	{
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-		glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-		glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 2.0f);
-	}
-	glBlendFunc (GL_ZERO, GL_SRC_COLOR);
-
-	if (!r_lightmap.value)
-		glEnable (GL_BLEND);
-
-	Fog_StartAdditive();
+	float		*v;
 
 	for (i = 0 ; i < lightmap_count; i++)
 	{
@@ -719,6 +705,28 @@ void R_BlendLightmaps ()
 			glEnd ();
 		}
 	}
+}
+
+/*
+================
+R_BlendLightmaps
+================
+*/
+void R_BlendLightmaps ()
+{
+	glDepthMask (GL_FALSE);		// don't bother writing Z
+	if (gl_overbright.value)
+	{
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+		glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+		glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 2.0f);
+	}
+	glBlendFunc (GL_ZERO, GL_SRC_COLOR);
+	glEnable (GL_BLEND);
+
+	Fog_StartAdditive();
+
+	R_DrawLightmapChains();
 
 	Fog_StopAdditive();
 	if (gl_overbright.value)
@@ -2020,14 +2028,30 @@ void R_DrawTextureChains(model_t *model, entity_t *ent, texchain_t chain)
 	
 	R_UploadLightmaps();
 
-	if (r_world_program != 0)
+	if (r_lightmap.value)
 	{
-		if (r_lightmap.value)
+		if (r_world_program != 0)
 		{
 			R_DrawLightmapChains_GLSL(model, chain);
 			return;
 		}
 
+		if (!gl_overbright.value)
+		{
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glColor3f(0.5, 0.5, 0.5);
+		}
+		R_DrawLightmapChains ();
+		if (!gl_overbright.value)
+		{
+			glColor3f(1, 1, 1);
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		}
+		return;
+	}
+
+	if (r_world_program != 0)
+	{
 		R_DrawTextureChains_GLSL(model, chain);
 		return;
 	}
