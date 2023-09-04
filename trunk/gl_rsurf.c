@@ -1149,6 +1149,7 @@ static GLuint useFullbrightTexLoc;
 static GLuint useOverbrightLoc;
 static GLuint useAlphaTestLoc;
 static GLuint usePackedPixelsLoc;
+static GLint  useLightmapOnlyLoc;
 static GLuint useWaterFogLoc;
 static GLuint alphaLoc;
 static GLuint clTimeLoc;
@@ -1224,6 +1225,7 @@ void GLWorld_CreateShaders(void)
 		"uniform bool UseOverbright;\n"
 		"uniform bool UseAlphaTest;\n"
 		"uniform bool UsePackedPixels;\n"
+		"uniform bool UseLightmapOnly;\n"
 		"uniform int UseWaterFog;\n"
 		"uniform float Alpha;\n"
 		"uniform float ClTime;\n"
@@ -1248,6 +1250,8 @@ void GLWorld_CreateShaders(void)
 		"void main()\n"
 		"{\n"
 		"	vec4 result = texture2D(Tex, gl_TexCoord[0].xy);\n"
+		"	if (UseLightmapOnly)\n"
+		"		result = vec4(0.5, 0.5, 0.5, 1.0);\n"
 		"	if (UseAlphaTest && (result.a < 0.666))\n"
 		"		discard;\n"
 		"	result *= texture2D(LMTex, gl_TexCoord[1].xy);\n"
@@ -1307,6 +1311,7 @@ void GLWorld_CreateShaders(void)
 		useOverbrightLoc = GL_GetUniformLocation(&r_world_program, "UseOverbright");
 		useAlphaTestLoc = GL_GetUniformLocation(&r_world_program, "UseAlphaTest");
 		usePackedPixelsLoc = GL_GetUniformLocation(&r_world_program, "UsePackedPixels");
+		useLightmapOnlyLoc = GL_GetUniformLocation (&r_world_program, "UseLightmapOnly");
 		useWaterFogLoc = GL_GetUniformLocation(&r_world_program, "UseWaterFog");
 		alphaLoc = GL_GetUniformLocation(&r_world_program, "Alpha");
 		clTimeLoc = GL_GetUniformLocation(&r_world_program, "ClTime");
@@ -1367,6 +1372,7 @@ void R_DrawTextureChains_GLSL(model_t *model, texchain_t chain)
 	qglUniform1i(useOverbrightLoc, (int)gl_overbright.value);
 	qglUniform1i(useAlphaTestLoc, 0);
 	qglUniform1i(usePackedPixelsLoc, gl_packed_pixels);
+	qglUniform1i(useLightmapOnlyLoc, 0);
 	qglUniform1i(useWaterFogLoc, (r_viewleaf->contents != CONTENTS_EMPTY && r_viewleaf->contents != CONTENTS_SOLID) ? (int)gl_waterfog.value : 0);
 	qglUniform1f(alphaLoc, ent->transparency == 0 ? 1 : ent->transparency);
 	qglUniform1f(clTimeLoc, cl.time);
@@ -1449,6 +1455,87 @@ void R_DrawTextureChains_GLSL(model_t *model, texchain_t chain)
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 	}
+}
+
+/*
+================
+R_DrawLightmapChains_GLSL -- ericw
+================
+*/
+void R_DrawLightmapChains_GLSL(model_t *model, texchain_t chain)
+{
+	int			i, lastlightmap;
+	msurface_t	*s;
+	texture_t	*t;
+
+	qglUseProgram(r_world_program);
+
+	// Bind the buffers
+	GL_BindBuffer(GL_ARRAY_BUFFER, gl_bmodel_vbo);
+	GL_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // indices come from client memory!
+
+	qglEnableVertexAttribArray(vertAttrIndex);
+	qglEnableVertexAttribArray(texCoordsAttrIndex);
+	qglEnableVertexAttribArray(LMCoordsAttrIndex);
+
+	qglVertexAttribPointer(vertAttrIndex, 3, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float*)0));
+	qglVertexAttribPointer(texCoordsAttrIndex, 2, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float*)0) + 3);
+	qglVertexAttribPointer(LMCoordsAttrIndex, 2, GL_FLOAT, GL_FALSE, VERTEXSIZE * sizeof(float), ((float*)0) + 5);
+
+	// set uniforms
+	qglUniform1i(texLoc, 0);
+	qglUniform1i(LMTexLoc, 1);
+	qglUniform1i(fullbrightTexLoc, 2);
+	qglUniform1i(useFullbrightTexLoc, 0);
+	qglUniform1i(useOverbrightLoc, (int)gl_overbright.value);
+	qglUniform1i(useDetailTexLoc, 0);
+	qglUniform1i(useCausticsTexLoc, 0);
+	qglUniform1i(useAlphaTestLoc, 0);
+	qglUniform1i(usePackedPixelsLoc, gl_packed_pixels);
+	qglUniform1f(alphaLoc, 1.0f);
+	qglUniform1i(useLightmapOnlyLoc, 1);
+	qglUniform1i(useWaterFogLoc, 0);
+	qglUniform1f(clTimeLoc, cl.time);
+
+	R_ClearBatch();
+	lastlightmap = -1;
+
+	for (i = 0; i < model->numtextures; i++)
+	{
+		t = model->textures[i];
+
+		if (!t || !t->texturechains[chain] || t->texturechains[chain]->flags & (SURF_DRAWTILED | SURF_NOTEXTURE))
+			continue;
+
+		if (t->texturechains[chain]->texinfo->flags & TEX_SPECIAL)
+			continue; // unlit water
+
+		for (s = t->texturechains[chain]; s; s = s->texturechain)
+		{
+			if (s->lightmaptexturenum < 0)
+				continue;
+
+			if (s->lightmaptexturenum != lastlightmap)
+			{
+				R_FlushBatch(IS_WATER);
+
+				GL_SelectTexture(GL_TEXTURE1);
+				GL_Bind(lightmaps[s->lightmaptexturenum].texture);
+				lastlightmap = s->lightmaptexturenum;
+			}
+			R_BatchSurface(s, IS_WATER);
+		}
+	}
+
+	R_FlushBatch(IS_WATER);
+
+	// clean up
+	qglDisableVertexAttribArray(vertAttrIndex);
+	qglDisableVertexAttribArray(texCoordsAttrIndex);
+	qglDisableVertexAttribArray(LMCoordsAttrIndex);
+
+	qglUseProgram(0);
+	GL_SelectTexture(GL_TEXTURE0);
 }
 
 /*
@@ -1794,6 +1881,7 @@ void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 			qglUniform1i(useCausticsTexLoc, 0);
 			qglUniform1i(useAlphaTestLoc, 0);
 			qglUniform1i(usePackedPixelsLoc, gl_packed_pixels);
+			qglUniform1i(useLightmapOnlyLoc, 0);
 			qglUniform1i(useWaterFogLoc, 0);
 			qglUniform1f(clTimeLoc, cl.time);
 
@@ -1934,6 +2022,12 @@ void R_DrawTextureChains(model_t *model, entity_t *ent, texchain_t chain)
 
 	if (r_world_program != 0)
 	{
+		if (r_lightmap.value)
+		{
+			R_DrawLightmapChains_GLSL(model, chain);
+			return;
+		}
+
 		R_DrawTextureChains_GLSL(model, chain);
 		return;
 	}
