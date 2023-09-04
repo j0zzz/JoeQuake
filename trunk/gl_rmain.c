@@ -108,7 +108,7 @@ qboolean OnChange_r_skyfog(cvar_t *var, char *string);
 cvar_t	r_skyfog = { "r_skyfog", "0.5", 0, OnChange_r_skyfog };
 cvar_t	r_scale = { "r_scale", "1" };
 
-cvar_t	gl_clear = {"gl_clear", "0"};
+cvar_t	gl_clear = {"gl_clear", "1"};
 cvar_t	gl_cull = {"gl_cull", "1"};
 cvar_t	gl_smoothmodels = {"gl_smoothmodels", "1"};
 cvar_t	gl_affinemodels = {"gl_affinemodels", "0"};
