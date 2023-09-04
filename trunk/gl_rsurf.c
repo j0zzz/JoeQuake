@@ -1163,8 +1163,23 @@ static GLuint clTimeLoc;
 GLWorld_CreateShaders
 =============
 */
+#define TURBSINSIZE 128
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
 void GLWorld_CreateShaders(void)
 {
+	GLuint turbsinLoc;
+	const int turbsin[TURBSINSIZE] = {
+		127, 133, 139, 146, 152, 158, 164, 170, 176, 182, 187, 193, 198, 203, 208, 213,
+		217, 221, 226, 229, 233, 236, 239, 242, 245, 247, 249, 251, 252, 253, 254, 254,
+		255, 254, 254, 253, 252, 251, 249, 247, 245, 242, 239, 236, 233, 229, 226, 221,
+		217, 213, 208, 203, 198, 193, 187, 182, 176, 170, 164, 158, 152, 146, 139, 133,
+		127, 121, 115, 108, 102, 96, 90, 84, 78, 72, 67, 61, 56, 51, 46, 41,
+		37, 33, 28, 25, 21, 18, 15, 12, 9, 7, 5, 3, 2, 1, 0, 0,
+		0, 0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 21, 25, 28, 33,
+		37, 41, 46, 51, 56, 61, 67, 72, 78, 84, 90, 96, 102, 108, 115, 121,
+	};
+
 	const glsl_attrib_binding_t bindings[] = {
 		{ "Vert", vertAttrIndex },
 		{ "TexCoords", texCoordsAttrIndex },
@@ -1195,7 +1210,7 @@ void GLWorld_CreateShaders(void)
 		"#version 130\n"	// required for bitwise operators
 		"\n"
 		"#define M_PI			3.1415926535897932384626433832795\n"
-		"#define TURBSINSIZE	128\n"
+		"#define TURBSINSIZE	" TOSTRING(TURBSINSIZE) "\n"
 		"#define TURBSCALE		(float(TURBSINSIZE) / (2.0 * M_PI))\n"
 		"\n"
 		"uniform sampler2D Tex;\n"
@@ -1212,17 +1227,7 @@ void GLWorld_CreateShaders(void)
 		"uniform int UseWaterFog;\n"
 		"uniform float Alpha;\n"
 		"uniform float ClTime;\n"
-		"uniform int turbsin[TURBSINSIZE] =\n"
-		"{\n"
-		"	127, 133, 139, 146, 152, 158, 164, 170, 176, 182, 187, 193, 198, 203, 208, 213,\n"
-		"	217, 221, 226, 229, 233, 236, 239, 242, 245, 247, 249, 251, 252, 253, 254, 254,\n"
-		"	255, 254, 254, 253, 252, 251, 249, 247, 245, 242, 239, 236, 233, 229, 226, 221,\n"
-		"	217, 213, 208, 203, 198, 193, 187, 182, 176, 170, 164, 158, 152, 146, 139, 133,\n"
-		"	127, 121, 115, 108, 102, 96, 90, 84, 78, 72, 67, 61, 56, 51, 46, 41,\n"
-		"	37, 33, 28, 25, 21, 18, 15, 12, 9, 7, 5, 3, 2, 1, 0, 0,\n"
-		"	0, 0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 21, 25, 28, 33,\n"
-		"	37, 41, 46, 51, 56, 61, 67, 72, 78, 84, 90, 96, 102, 108, 115, 121,\n"
-		"};\n"
+		"uniform int turbsin[TURBSINSIZE];\n"
 		"\n"
 		"varying float FogFragCoord;\n"
 		"\n"
@@ -1305,6 +1310,10 @@ void GLWorld_CreateShaders(void)
 		useWaterFogLoc = GL_GetUniformLocation(&r_world_program, "UseWaterFog");
 		alphaLoc = GL_GetUniformLocation(&r_world_program, "Alpha");
 		clTimeLoc = GL_GetUniformLocation(&r_world_program, "ClTime");
+
+		// Fill in the turbsin lookup
+		turbsinLoc = GL_GetUniformLocation(&r_world_program, "turbsin");
+		qglUniform1iv(turbsinLoc, TURBSINSIZE, turbsin);
 	}
 }
 
