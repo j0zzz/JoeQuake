@@ -367,14 +367,6 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	blocksize = size * 3;
 	lightmap = surf->samples;
 
-	// set to full bright if no light data
-	if (r_fullbright.value || !cl.worldmodel->lightdata)
-	{
-		for (i = 0; i < blocksize; i++)
-			blocklights[i] = 255 * 256;
-		goto store;
-	}
-
 	if (cl.worldmodel->lightdata)
 	{
 		// clear to no light
@@ -411,7 +403,6 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	}
 
 	// bound, invert, and shift
-store:
 	switch (gl_lightmap_format)
 	{
 	case GL_RGBA:
@@ -1778,6 +1769,48 @@ void R_DrawTextureChains_Multitexture (model_t *model, texchain_t chain)
 }
 
 /*
+================
+R_DrawTextureChains_TextureOnly -- johnfitz
+================
+*/
+void R_DrawTextureChains_TextureOnly (model_t *model, texchain_t chain)
+{
+	int			i;
+	msurface_t	*s;
+	texture_t	*t, *at;
+	qboolean	bound;
+
+	for (i = 0 ; i < model->numtextures ; i++)
+	{
+		t = model->textures[i];
+
+		if (!t || !t->texturechains[chain] || t->texturechains[chain]->flags & (SURF_DRAWTURB | SURF_DRAWSKY))
+			continue;
+
+		at = R_TextureAnimation(t);
+
+		bound = false;
+
+		for (s = t->texturechains[chain]; s; s = s->texturechain)
+		{
+			if (!bound) //only bind once we are sure we need this texture
+			{
+				GL_Bind (at->gl_texturenum);
+
+				if (t->texturechains[chain]->flags & SURF_DRAWALPHA)
+					glEnable (GL_ALPHA_TEST); // Flip alpha test back on
+
+				bound = true;
+			}
+			DrawGLPoly (s->polys);
+		}
+
+		if (bound && t->texturechains[chain]->flags & SURF_DRAWALPHA)
+			glDisable (GL_ALPHA_TEST); // Flip alpha test back off
+	}
+}
+
+/*
 =============
 R_BeginTransparentDrawing -- ericw
 =============
@@ -2027,6 +2060,14 @@ void R_DrawTextureChains(model_t *model, entity_t *ent, texchain_t chain)
 	entalpha = (ent != NULL) ? ent->transparency : 1.0f;
 	
 	R_UploadLightmaps();
+
+	if (r_fullbright.value)
+	{
+		R_BeginTransparentDrawing (entalpha);
+		R_DrawTextureChains_TextureOnly (model, chain);
+		R_EndTransparentDrawing (entalpha);
+		return;
+	}
 
 	if (r_lightmap.value)
 	{

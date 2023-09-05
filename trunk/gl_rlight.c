@@ -461,7 +461,7 @@ int R_LightPoint (vec3_t p)
 	vec3_t	end;
 	float maxdist = 8192.f; //johnfitz -- was 2048
 
-	if (r_fullbright.value || !cl.worldmodel->lightdata)
+	if (!cl.worldmodel->lightdata)
 	{
 		lightcolor[0] = lightcolor[1] = lightcolor[2] = 255;
 		return 255;
