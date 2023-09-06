@@ -394,6 +394,9 @@ void R_InitSky(texture_t *mt);		// called at level load
 void R_UpdateWarpTextures(void);
 extern int gl_warpimagesize;
 
+#define TURBSINSIZE 128
+extern int turbsin[TURBSINSIZE];
+
 // gl_draw.c
 extern	cvar_t	gl_texturemode;
 extern	cvar_t	gl_texturemode_hud;
