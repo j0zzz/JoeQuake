@@ -386,16 +386,9 @@ qboolean R_CullModelForEntity(entity_t *e)
 	return R_CullBox(mins, maxs);
 }
 
-/*
-=============
-R_RotateForEntity
-=============
-*/
-void R_RotateForEntity (entity_t *ent, qboolean shadow)
+float R_CalculateLerpfracForEntity(entity_t *ent)
 {
-	int		i;
 	float	lerpfrac;
-	vec3_t	d, interpolated;
 
 	// if LERP_RESETMOVE, kill any lerps in progress
 	if (ent->lerpflags & LERP_RESETMOVE)
@@ -426,11 +419,22 @@ void R_RotateForEntity (entity_t *ent, qboolean shadow)
 	else
 		lerpfrac = 1;
 
-	//translation
+	return lerpfrac;
+}
+
+void R_DoEntityTranslate(entity_t *ent, float lerpfrac)
+{
+	vec3_t	interpolated;
+
 	VectorInterpolate (ent->origin1, lerpfrac, ent->origin2, interpolated);
 	glTranslatef (interpolated[0], interpolated[1], interpolated[2]);
+}
 
-	//rotation
+void R_DoEntityRotate(entity_t *ent, float lerpfrac, qboolean shadow)
+{
+	int		i;
+	vec3_t	d;
+
 	VectorSubtract (ent->angles2, ent->angles1, d);
 
 	// always interpolate along the shortest path
@@ -472,10 +476,25 @@ void R_RotateForEntity (entity_t *ent, qboolean shadow)
 
 /*
 =============
-R_RotateForViewEntity
+R_RotateForEntityWithLerp
 =============
 */
-void R_RotateForViewEntity (entity_t *ent)
+void R_RotateForEntityWithLerp (entity_t *ent, qboolean shadow)
+{
+	float	lerpfrac;
+	
+	lerpfrac = R_CalculateLerpfracForEntity(ent);
+	
+	R_DoEntityTranslate(ent, lerpfrac);
+	R_DoEntityRotate(ent, lerpfrac, shadow);
+}
+
+/*
+=============
+R_RotateForEntity
+=============
+*/
+void R_RotateForEntity (entity_t *ent)
 {
 	glTranslatef (ent->origin[0], ent->origin[1], ent->origin[2]);
 
@@ -636,7 +655,8 @@ float	r_avertexnormal_dots[SHADEDOT_QUANT][256] =
 vec3_t	shadevector;
 float	*shadedots = r_avertexnormal_dots[0];
 
-qboolean	overbright; //johnfitz
+static qboolean	overbright; //johnfitz
+static qboolean shading = true; //johnfitz -- if false, disable vertex shading for various reasons (fullbright, r_lightmap, showtris, etc)
 
 float	apitch, ayaw;
 
@@ -1065,7 +1085,7 @@ void R_DrawAliasOutlineFrame(int frame, aliashdr_t *paliashdr, entity_t *ent, in
 
 	if ((frame >= paliashdr->numframes) || (frame < 0))
 	{
-		Con_DPrintf("R_DrawAliasFrame: no such frame %d\n", frame);
+		Con_DPrintf("R_DrawAliasOutlineFrame: no such frame %d\n", frame);
 		frame = 0;
 	}
 
@@ -1224,23 +1244,26 @@ void R_DrawAliasFrame (int frame, aliashdr_t *paliashdr, entity_t *ent, int dist
 
 			lerpfrac = VectorL2Compare(verts1->v, verts2->v, distance) ? ent->framelerp : 1;
 
-			// normals and vertexes come from the frame list
-			// blend the light intensity from the two frames together
-			if (gl_vertexlights.value && !full_light)
+			if (shading)
 			{
-				l = R_LerpVertexLight (anorm_pitch[verts1->lightnormalindex], anorm_yaw[verts1->lightnormalindex],
-							anorm_pitch[verts2->lightnormalindex], anorm_yaw[verts2->lightnormalindex], lerpfrac, apitch, ayaw);
-				l = min(l, 1);
+				// normals and vertexes come from the frame list
+				// blend the light intensity from the two frames together
+				if (gl_vertexlights.value && !full_light)
+				{
+					l = R_LerpVertexLight (anorm_pitch[verts1->lightnormalindex], anorm_yaw[verts1->lightnormalindex],
+						anorm_pitch[verts2->lightnormalindex], anorm_yaw[verts2->lightnormalindex], lerpfrac, apitch, ayaw);
+					l = min(l, 1);
 
-				for (i = 0 ; i < 3 ; i++)
-					lightvec[i] = lightcolor[i] * (200.0 / 256.0) + l;
+					for (i = 0 ; i < 3 ; i++)
+						lightvec[i] = lightcolor[i] * (200.0 / 256.0) + l;
+				}
+				else
+				{
+					l = FloatInterpolate (shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]);
+					VectorScale(lightcolor, l, lightvec);
+				}
+				glColor4f(lightvec[0], lightvec[1], lightvec[2], ent->transparency);
 			}
-			else
-			{
-				l = FloatInterpolate (shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]);
-				VectorScale(lightcolor, l, lightvec);
-			}
-			glColor4f(lightvec[0], lightvec[1], lightvec[2], ent->transparency);
 
 			VectorInterpolate (verts1->v, lerpfrac, verts2->v, interpolated_verts);
 			glVertex3fv (interpolated_verts);
@@ -1555,6 +1578,13 @@ void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *dist
 	}
 }
 
+//johnfitz -- values for shadow matrix
+#define SHADOW_SKEW_X -0.7 //skew along x axis. -0.7 to mimic glquake shadows
+#define SHADOW_SKEW_Y 0 //skew along y axis. 0 to mimic glquake shadows
+#define SHADOW_VSCALE 0 //0=completely flat
+#define SHADOW_HEIGHT 0.1 //how far above the floor to render the shadow
+//johnfitz
+
 /*
 =================
 R_DrawAliasModel
@@ -1578,6 +1608,7 @@ void R_DrawAliasModel (entity_t *ent)
 	VectorSubtract (r_origin, r_entorigin, modelorg);
 
 	overbright = gl_overbright_models.value;
+	shading = true;
 
 	// get lighting information
 	R_SetupLighting (ent);
@@ -1593,9 +1624,9 @@ void R_DrawAliasModel (entity_t *ent)
 	glPushMatrix ();
 
 	if (ent == &cl.viewent || clmodel->modhint == MOD_FLAME)
-		R_RotateForViewEntity (ent);
+		R_RotateForEntity (ent);
 	else
-		R_RotateForEntity (ent, false);
+		R_RotateForEntityWithLerp (ent, false);
 
 	scalefactor = ENTSCALE_DECODE(ent->scale);
 	if (scalefactor != 1.0f)
@@ -1805,12 +1836,25 @@ void R_DrawAliasModel (entity_t *ent)
 		int		farclip;
 		vec3_t	downmove;
 		trace_t	downtrace;
+		float	shadowmatrix[16] = {1,				0,				0,				0,
+									0,				1,				0,				0,
+									SHADOW_SKEW_X,	SHADOW_SKEW_Y,	SHADOW_VSCALE,	0,
+									0,				0,				SHADOW_HEIGHT,	1};
+		float	lheight, lerpfrac;
 
+		lheight = ent->origin[2] - lightspot[2];
 		farclip = max((int)r_farclip.value, 4096);
+		lerpfrac = R_CalculateLerpfracForEntity(ent);
 
 		glPushMatrix ();
 
-		R_RotateForEntity (ent, true);
+		R_DoEntityTranslate (ent, lerpfrac);
+		glTranslatef (0, 0, -lheight);
+		glMultMatrixf (shadowmatrix);
+		glTranslatef (0, 0, lheight);
+		R_DoEntityRotate (ent, lerpfrac, true);
+		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
 
 		VectorCopy (ent->origin, downmove);
 		downmove[2] -= farclip;
@@ -1828,7 +1872,8 @@ void R_DrawAliasModel (entity_t *ent)
 			glStencilOp (GL_KEEP, GL_KEEP, GL_INCR);
 		}
 
-		R_DrawAliasShadow (paliashdr, ent, distance, downtrace);
+		shading = false;
+		R_DrawAliasFrame (ent->frame, paliashdr, ent, distance);
 
 		glDepthMask (GL_TRUE);
 		glEnable (GL_TEXTURE_2D);
@@ -2666,9 +2711,9 @@ void R_DrawQ3Model (entity_t *ent)
 	glPushMatrix ();
 
 	if (ent == &cl.viewent)
-		R_RotateForViewEntity (ent);
+		R_RotateForEntity (ent);
 	else
-		R_RotateForEntity (ent, false);
+		R_RotateForEntityWithLerp (ent, false);
 
 	scalefactor = ENTSCALE_DECODE(ent->scale);
 	if (scalefactor != 1.0f)
@@ -2735,7 +2780,7 @@ void R_DrawQ3Model (entity_t *ent)
 
 		glPushMatrix ();
 
-		R_RotateForEntity (ent, true);
+		R_RotateForEntityWithLerp (ent, true);
 
 		VectorCopy (ent->origin, downmove);
 		downmove[2] -= farclip;
