@@ -1864,7 +1864,7 @@ void R_DrawAliasModel (entity_t *ent)
 		glDepthMask (GL_FALSE);
 		glDisable (GL_TEXTURE_2D);
 		glEnable (GL_BLEND);
-		glColor4f (0, 0, 0, ((MaxLightColor() * 200.0f) - (mins[2] - downtrace.endpos[2])) / 150);
+		glColor4f (0, 0, 0, ((MaxLightColor() * 150.0f) - (mins[2] - downtrace.endpos[2])) / 150);
 		if (gl_have_stencil && r_shadows.value == 2)
 		{
 			glEnable (GL_STENCIL_TEST);
@@ -2795,7 +2795,7 @@ void R_DrawQ3Model (entity_t *ent)
 		glDepthMask (GL_FALSE);
 		glDisable (GL_TEXTURE_2D);
 		glEnable (GL_BLEND);
-		glColor4f (0, 0, 0, ((MaxLightColor() * 200.0f) - (mins[2] - downtrace.endpos[2])) / 150);
+		glColor4f (0, 0, 0, ((MaxLightColor() * 150.0f) - (mins[2] - downtrace.endpos[2])) / 150);
 		if (gl_have_stencil && r_shadows.value == 2) 
 		{
 			glEnable (GL_STENCIL_TEST);
