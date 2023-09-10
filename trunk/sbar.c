@@ -69,6 +69,7 @@ int	sbar_xofs;
 cvar_t	scr_centersbar = {"scr_centersbar", "1"};
 cvar_t	scr_sbarscale_amount = { "scr_sbarscale_amount", "2" };
 cvar_t	scr_scorebarmode = { "scr_scorebarmode", "0" };
+cvar_t	scr_timeprecision = { "scr_timeprecision", "2" };
 
 /*
 ===============
@@ -274,6 +275,7 @@ void Sbar_Init (void)
 	Cvar_Register (&scr_centersbar);
 	Cvar_Register (&scr_sbarscale_amount);
 	Cvar_Register(&scr_scorebarmode);
+	Cvar_Register(&scr_timeprecision);
 
 	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
 	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
@@ -1457,8 +1459,14 @@ Sbar_IntermissionOverlay
 void Sbar_IntermissionOverlay (void)
 {
 	mpic_t	*pic;
-	int		dig, num, xofs, pos;
+	int		dig, num, xofs, pos, i;
+	int precision;
+	float remainder;
 	float	scale;
+
+	precision = (int)scr_timeprecision.value;
+	if (precision > 5)
+		precision = 5;
 
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;
@@ -1480,11 +1488,28 @@ void Sbar_IntermissionOverlay (void)
 
 	// time
 	dig = cl.completed_time / 60;
-	Sbar_IntermissionNumber (xofs + (int)(160 * scale), (int)(64 * scale), dig, 3, 0);
+	if (precision > 0) {
+		pos = 168 - precision * 24;
+	} else {
+		pos = 160;
+	}
+	Sbar_IntermissionNumber (xofs + (int)(pos * scale), (int)(64 * scale), dig, 3, 0); pos += 24 * 3 + 2;
 	num = cl.completed_time - dig * 60;
-	Draw_TransPic (xofs + (int)(234 * scale), (int)(64 * scale), sb_colon, true);
-	Draw_TransPic (xofs + (int)(246 * scale), (int)(64 * scale), sb_nums[0][num/10], true);
-	Draw_TransPic (xofs + (int)(266 * scale), (int)(64 * scale), sb_nums[0][num%10], true);
+	Draw_TransPic (xofs + (int)(pos * scale), (int)(64 * scale), sb_colon, true); pos += 12;
+	Draw_TransPic (xofs + (int)(pos * scale), (int)(64 * scale), sb_nums[0][num/10], true); pos += 20;
+	Draw_TransPic (xofs + (int)(pos * scale), (int)(64 * scale), sb_nums[0][num%10], true); pos += 20;
+	if (precision > 0)
+	{
+		pos += 6;
+		Draw_TransPic (xofs + (int)(pos  * scale), (int)(64 * scale), sb_colon, true); pos += 12;
+		remainder = fmodf(cl.completed_time, 1);
+		for (i = 0; i < precision; pos += 24, i++)
+		{
+			remainder *= 10.0f;
+			Draw_TransPic (xofs + (int)(pos * scale), (int)(64 * scale), sb_nums[0][(int)remainder], true);
+			remainder = fmodf(remainder, 1);
+		}
+	}
 
 	// secrets
 	Sbar_IntermissionNumber (xofs + (int)(160 * scale), (int)(104 * scale), cl.stats[STAT_SECRETS], 3, 0);
