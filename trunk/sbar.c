@@ -1461,8 +1461,8 @@ void Sbar_IntermissionOverlay (void)
 	mpic_t	*pic;
 	int		dig, num, xofs, pos, i;
 	int precision;
-	float remainder;
 	float	scale;
+	char fracstring[8];
 
 	precision = (int)scr_timeprecision.value;
 	if (precision > 5)
@@ -1500,15 +1500,12 @@ void Sbar_IntermissionOverlay (void)
 	Draw_TransPic (xofs + (int)(pos * scale), (int)(64 * scale), sb_nums[0][num%10], true); pos += 20;
 	if (precision > 0)
 	{
+		Q_snprintfz(fracstring, sizeof(fracstring), "%.5f", cl.completed_time - (int)cl.completed_time);
+
 		pos += 6;
 		Draw_TransPic (xofs + (int)(pos  * scale), (int)(64 * scale), sb_colon, true); pos += 12;
-		remainder = fmodf(cl.completed_time, 1);
 		for (i = 0; i < precision; pos += 24, i++)
-		{
-			remainder *= 10.0f;
-			Draw_TransPic (xofs + (int)(pos * scale), (int)(64 * scale), sb_nums[0][(int)remainder], true);
-			remainder = fmodf(remainder, 1);
-		}
+			Draw_TransPic (xofs + (int)(pos * scale), (int)(64 * scale), sb_nums[0][fracstring[i + 2] - '0'], true);
 	}
 
 	// secrets
