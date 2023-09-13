@@ -1222,13 +1222,20 @@ char *GetPrintedTime(double time)
 
 void PrintFinishTime()
 {
-	char *timestring;
+	if (cl_demorewind.value)
+	{
+		cls.marathon_time -= cl.completed_time;
+		cls.marathon_level--;
+		return;
+	}
 
 	cls.marathon_time += cl.completed_time;
 	cls.marathon_level++;
 
 	if (!pr_qdqstats && !cls.demoplayback && sv.active)
 	{
+		char *timestring;
+		
 		// Sphere --- calling SV_ from CL_ here is probably not the best, but at
 		// least we check for sv.active. We need the broadcast so that the time
 		// messages appear in recorded demos and also get sent to clients
