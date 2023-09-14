@@ -1,8 +1,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.3.32922.545
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34031.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JoeQuake", "JoeQuake.vcxproj", "{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JoeQuake-sw", "JoeQuake-sw.vcxproj", "{C93A1B3B-2B4F-49B5-9B77-04884462E13C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,8 +12,6 @@ Global
 		GL Debug|Win32 = GL Debug|Win32
 		GL Release|Win32 = GL Release|Win32
 		SDL Release|Win32 = SDL Release|Win32
-		Software Debug|Win32 = Software Debug|Win32
-		Software Release|Win32 = Software Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Direct3D Release|Win32.ActiveCfg = Direct3D Release|Win32
@@ -22,10 +22,10 @@ Global
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.GL Release|Win32.Build.0 = GL Release|Win32
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.SDL Release|Win32.ActiveCfg = SDL Release|Win32
 		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.SDL Release|Win32.Build.0 = SDL Release|Win32
-		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Debug|Win32.ActiveCfg = Software Debug|Win32
-		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Debug|Win32.Build.0 = Software Debug|Win32
-		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Release|Win32.ActiveCfg = Software Release|Win32
-		{8BAAFF94-EA92-4366-9B4F-B9E9F896CF1D}.Software Release|Win32.Build.0 = Software Release|Win32
+		{C93A1B3B-2B4F-49B5-9B77-04884462E13C}.Direct3D Release|Win32.ActiveCfg = Release|Win32
+		{C93A1B3B-2B4F-49B5-9B77-04884462E13C}.GL Debug|Win32.ActiveCfg = Debug|Win32
+		{C93A1B3B-2B4F-49B5-9B77-04884462E13C}.GL Release|Win32.ActiveCfg = Release|Win32
+		{C93A1B3B-2B4F-49B5-9B77-04884462E13C}.SDL Release|Win32.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
