@@ -1,6 +1,4 @@
 ﻿
-# JoeQuake
-
 ## Description
 
 This is a custom Quake engine designed exclusively for speedrunning.
@@ -32,9 +30,9 @@ Unfortunately this main fork does not provide any Linux binaries.
 You may compile your own Linux binaries from the following JoeQuake 
 contributors (look for linux related branches):
 
-https://github.com/kugelrund
+https://github.com/kugelrund/JoeQuake
 
-https://github.com/matthewearl
+https://github.com/matthewearl/JoeQuake-1
 
 ## License and Warranty
 

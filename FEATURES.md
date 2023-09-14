@@ -1,6 +1,4 @@
 
-# JoeQuake features
-
 ## New cvars
 
 ### `r_explosiontype`
