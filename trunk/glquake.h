@@ -265,6 +265,7 @@ extern	const	char	*gl_version;
 extern	const	char	*gl_extensions;
 
 void GL_Bind (int texnum);
+void GL_BindTBO (int texnum);
 
 // Generate mipmaps
 typedef void (APIENTRY *lpGenerateMipmapFUNC)(GLenum);

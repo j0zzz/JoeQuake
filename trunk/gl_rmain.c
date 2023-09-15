@@ -678,6 +678,7 @@ static GLuint useFullbrightTexLoc;
 static GLuint useOverbrightLoc;
 static GLuint useAlphaTestLoc;
 static GLuint useWaterFogLoc;
+static GLuint vlightTableLoc;
 
 fog_data_t fog_data;
 
@@ -889,6 +890,7 @@ void GLAlias_CreateShaders(void)
 		// joe: bind uniform buffer here, only once
 		GLuint vlightDataLoc = qglGetUniformBlockIndex(r_alias_program, "VlightData");
 		qglUniformBlockBinding(r_alias_program, vlightDataLoc, 0);
+		vlightTableLoc = GL_GetUniformLocation(&r_alias_program, "VlightTable");
 	}
 }
 
@@ -908,6 +910,7 @@ Based on code by MH from RMQEngine
 */
 void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int distance, int gl_texture, int fb_texture, qboolean islumaskin)
 {
+	extern GLuint	tbo_tex;
 	int			posenum, numposes;
 
 	if ((frame >= paliashdr->numframes) || (frame < 0))
@@ -1004,6 +1007,8 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	qglUniform1i(useAlphaTestLoc, (currententity->model->flags & MF_HOLEY) ? 1 : 0);
 	qglUniform1i(useWaterFogLoc, fog_data.useWaterFog);
 
+	qglUniform1i(vlightTableLoc, 2);
+
 	// set textures
 	GL_SelectTexture(GL_TEXTURE0);
 	GL_Bind(gl_texture);
@@ -1012,6 +1017,12 @@ void R_DrawAliasFrame_GLSL(int frame, aliashdr_t *paliashdr, entity_t *ent, int 
 	{
 		GL_SelectTexture(GL_TEXTURE1);
 		GL_Bind(fb_texture);
+	}
+
+	if (gl_vertexlights.value && !full_light)
+	{
+		GL_SelectTexture(GL_TEXTURE2);
+		GL_BindTBO(tbo_tex);
 	}
 
 	// draw

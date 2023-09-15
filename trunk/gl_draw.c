@@ -185,6 +185,15 @@ void GL_Bind (int texnum)
 	glBindTexture (GL_TEXTURE_2D, texnum);
 }
 
+void GL_BindTBO (int texnum)
+{
+	if (currenttexture == texnum)
+		return;
+
+	currenttexture = texnum;
+	glBindTexture (GL_TEXTURE_BUFFER, texnum);
+}
+
 color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a)
 {
 	return ((r << 0) | (g << 8) | (b << 16) | (a << 24)) & 0xFFFFFFFF;
