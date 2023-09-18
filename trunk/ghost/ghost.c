@@ -33,6 +33,7 @@ static cvar_t ghost_bar_alpha = { "ghost_bar_alpha", "0.8", CVAR_ARCHIVE };
 
 
 static dzip_context_t ghost_dz_ctx;
+static ghost_info_t *ghost_info = NULL;
 char                ghost_demo_path[MAX_OSPATH] = "";
 static ghostrec_t   *ghost_records = NULL;
 static int          ghost_num_records = 0;
@@ -178,48 +179,55 @@ extern char *GetPrintedTime(double time);   // Maybe put the definition somewher
 void Ghost_Load (const char *map_name)
 {
     int i;
-    ghost_info_t ghost_info;
     FILE *demo_file;
+    ghost_level_t *level;
 
-    memset(&ghost_info, 0, sizeof(ghost_info));
     ghost_records = NULL;
     ghost_num_records = 0;
     ghost_entity = NULL;
     ghost_finish_time = -1.0f;
 
     if (ghost_demo_path[0] == '\0') {
+        if (ghost_info != NULL) {
+            Sys_Error("ghost_demo_path empty but ghost_info is not NULL");
+        }
+        return;
+    }
+    if (ghost_info == NULL) {
+        Sys_Error("ghost_demo_path not empty but ghost info is NULL");
+    }
+
+    for (i = 0; i < ghost_info->num_levels; i++) {
+        level = &ghost_info->levels[i];
+        if (strcmp(map_name, level->map_name) == 0) {
+            break;
+        }
+    }
+    if (i == ghost_info->num_levels) {
+        Con_Printf("Map %s not found in ghost demo\n", map_name);
         return;
     }
 
-    demo_file = Ghost_OpenDemoOrDzip(ghost_demo_path);
-    if (!demo_file)
-    {
-        Con_Printf ("ERROR: couldn't open %s\n", ghost_demo_path);
-        return;
-    }
-    if (!Ghost_ReadDemo(demo_file, &ghost_info, map_name)) {
-        return;
-    }
-    ghost_records = ghost_info.records;
-    ghost_num_records = ghost_info.num_records;
+    ghost_records = level->records;
+    ghost_num_records = level->num_records;
     memcpy(ghost_model_indices,
-           ghost_info.model_indices,
-           sizeof(ghost_info.model_indices));
+           level->model_indices,
+           sizeof(level->model_indices));
 
     // Print player names
     Con_Printf("Ghost player(s): ");
     for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
-        if (ghost_info.client_names[i][0] != '\0') {
-            Con_Printf(" %s ", ghost_info.client_names[i]);
+        if (level->client_names[i][0] != '\0') {
+            Con_Printf(" %s ", level->client_names[i]);
         }
-        ghost_color_info[i].colors = ghost_info.client_colors[i];
+        ghost_color_info[i].colors = level->client_colors[i];
     }
     Con_Printf("\n");
 
     // Print finish time
-    ghost_finish_time = ghost_info.finish_time;
-    if (ghost_info.finish_time > 0) {
-        Con_Printf("Ghost time:       %s\n", GetPrintedTime(ghost_info.finish_time));
+    ghost_finish_time = level->finish_time;
+    if (level->finish_time > 0) {
+        Con_Printf("Ghost time:       %s\n", GetPrintedTime(level->finish_time));
     }
 
     ghost_entity = (entity_t *)Hunk_AllocName(sizeof(entity_t),
@@ -814,7 +822,6 @@ static void Ghost_Command_f (void)
         return;
     }
 
-    DZip_Cleanup(&ghost_dz_ctx);
     Q_strlcpy(demo_path, Cmd_Argv(1), sizeof(demo_path));
     demo_file = Ghost_OpenDemoOrDzip(demo_path);
     ok = (demo_file != NULL);
@@ -824,19 +831,26 @@ static void Ghost_Command_f (void)
     }
 
     if (ok) {
+        fseek(demo_file, 0, SEEK_SET);
+        if (ghost_info != NULL) {
+            Ghost_Free(&ghost_info);
+        }
+        ok = Ghost_ReadDemo(demo_file, &ghost_info);
+    }
+
+    if (ok) {
         Q_strlcpy(ghost_demo_path, demo_path, sizeof(ghost_demo_path));
         Ghost_PrintSummary();
-        Con_Printf("ghost will be loaded on next map load\n");
     }
 
     if (!ok) {
         ghost_demo_path[0] = '\0';
-        DZip_Cleanup(&ghost_dz_ctx);
     }
 
     if (demo_file) {
         fclose(demo_file);
     }
+    DZip_Cleanup(&ghost_dz_ctx);
 }
 
 
@@ -855,9 +869,8 @@ static void Ghost_RemoveCommand_f (void)
     if (ghost_demo_path[0] == '\0') {
         Con_Printf("no ghost has been added\n");
     } else {
-        Con_Printf("ghost %s will be removed on next map load\n", ghost_demo_path);
+        Ghost_Free(&ghost_info);
         ghost_demo_path[0] = '\0';
-        DZip_Cleanup(&ghost_dz_ctx);
     }
 }
 
@@ -936,5 +949,4 @@ void Ghost_Init (void)
 
 void Ghost_Shutdown (void)
 {
-    DZip_Cleanup(&ghost_dz_ctx);
 }

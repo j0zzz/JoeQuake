@@ -67,7 +67,7 @@ typedef struct {
 
 extern const char *ghost_model_paths[GHOST_MODEL_COUNT];
 
-qboolean Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info);
-void Ghost_Free (ghost_info_t *ghost_info);
+qboolean Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info);
+void Ghost_Free (ghost_info_t **ghost_info);
 
 #endif /* __GHOST_PRIVATE */

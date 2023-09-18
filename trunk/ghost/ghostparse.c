@@ -324,7 +324,7 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
         if (dprc == DP_ERR_CALLBACK_STOP) {
             if (pctx.ghost_info->num_levels == GHOST_MAX_LEVELS) {
                 Con_Printf("Demo contains more than %d maps, ghost has been "
-                           "truncated\n",
+                           "truncated",
                            GHOST_MAX_LEVELS);
                 ok = true;
             } else if (pctx.next_demo_path[0]) {
@@ -358,11 +358,17 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
 
 
 qboolean
-Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info)
+Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info_p)
 {
     qboolean ok = true;
     char next_demo_path[MAX_OSPATH];
     int num_demos_searched = 0;
+    ghost_info_t *ghost_info;
+
+    if (*ghost_info_p != NULL) {
+        Sys_Error("Tried to allocate ghost info without freeing first");
+    }
+    ghost_info = Q_calloc(1, sizeof(*ghost_info));
 
     while (ok && demo_file != NULL && num_demos_searched < MAX_CHAINED_DEMOS) {
         ok = Ghost_ReadDemoNoChain (demo_file, ghost_info, next_demo_path);
@@ -388,8 +394,10 @@ Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info)
         ok = false;
     }
 
-    if (!ok) {
-        Ghost_Free(ghost_info);
+    if (ok) {
+        *ghost_info_p = ghost_info;
+    } else {
+        Ghost_Free(&ghost_info);
     }
 
     return ok;
@@ -397,12 +405,15 @@ Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info)
 
 
 void
-Ghost_Free (ghost_info_t *ghost_info)
+Ghost_Free (ghost_info_t **ghost_info_p)
 {
     int level_idx;
 
-    for (level_idx = 0; level_idx < ghost_info->num_levels; level_idx ++) {
-        free(ghost_info->levels[level_idx].records);
-        ghost_info->levels[level_idx].records = NULL;
+    for (level_idx = 0; level_idx < (*ghost_info_p)->num_levels; level_idx ++) {
+        free((*ghost_info_p)->levels[level_idx].records);
+        (*ghost_info_p)->levels[level_idx].records = NULL;
     }
+
+    free(*ghost_info_p);
+    *ghost_info_p = NULL;
 }
