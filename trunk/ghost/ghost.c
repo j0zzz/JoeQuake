@@ -836,6 +836,7 @@ static void Ghost_Command_f (void)
             Ghost_Free(&ghost_info);
         }
         ok = Ghost_ReadDemo(demo_file, &ghost_info);
+        // file is now closed.
     }
 
     if (ok) {
@@ -847,9 +848,6 @@ static void Ghost_Command_f (void)
         ghost_demo_path[0] = '\0';
     }
 
-    if (demo_file) {
-        fclose(demo_file);
-    }
     DZip_Cleanup(&ghost_dz_ctx);
 }
 

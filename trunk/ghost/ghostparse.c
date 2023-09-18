@@ -65,17 +65,17 @@ Ghost_Read_cb (void *dest, unsigned int size, void *ctx)
 static dp_cb_response_t
 Ghost_ServerInfoModel_cb (const char *model, void *ctx)
 {
-    char map_name[MAX_OSPATH];
     ghost_parse_ctx_t *pctx = ctx;
     int i;
 
     if (pctx->model_num == 0) {
         // Just encountered a new server info.  Move to the next level.
+        pctx->level = &pctx->ghost_info->levels[pctx->ghost_info->num_levels];
         pctx->ghost_info->num_levels ++;
-        if (pctx->ghost_info->num_levels == GHOST_MAX_LEVELS) {
+        if (pctx->ghost_info->num_levels > GHOST_MAX_LEVELS) {
             return DP_CBR_STOP;
         }
-        pctx->level = &pctx->ghost_info->levels[pctx->ghost_info->num_levels];
+
         memset(pctx->level, 0, sizeof(ghost_level_t));
 
         Q_strncpyz(pctx->level->map_name, (char *)model,
@@ -205,11 +205,12 @@ Ghost_Append(ghost_level_t *level, ghostrec_t *rec)
 {
     int num_chunks;
 
-    if (level->num_records & ((1 << RECORD_REALLOC_LOG2) - 1) == 0)
+    if ((level->num_records & ((1 << RECORD_REALLOC_LOG2) - 1)) == 0)
     {
         num_chunks = (level->num_records >> RECORD_REALLOC_LOG2) + 1;
         level->records = Q_realloc(level->records,
-                                   sizeof(ghostrec_t) * num_chunks);
+                                   sizeof(ghostrec_t)
+                                    * (num_chunks << RECORD_REALLOC_LOG2));
     }
     level->records[level->num_records] = *rec;
     level->num_records ++;
@@ -316,16 +317,18 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
         .model_num = 0,
         .demo_file = demo_file,
         .updated = false,
+        .ghost_info = ghost_info,
     };
 
     if (ok) {
         next_demo_path[0] = '\0';
         dprc = DP_ReadDemo(&callbacks, &pctx);
         if (dprc == DP_ERR_CALLBACK_STOP) {
-            if (pctx.ghost_info->num_levels == GHOST_MAX_LEVELS) {
+            if (pctx.ghost_info->num_levels > GHOST_MAX_LEVELS) {
                 Con_Printf("Demo contains more than %d maps, ghost has been "
                            "truncated",
                            GHOST_MAX_LEVELS);
+                pctx.ghost_info->num_levels = GHOST_MAX_LEVELS;
                 ok = true;
             } else if (pctx.next_demo_path[0]) {
                 // There's another .dem file in the chain.
@@ -370,7 +373,9 @@ Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info_p)
     }
     ghost_info = Q_calloc(1, sizeof(*ghost_info));
 
-    while (ok && demo_file != NULL && num_demos_searched < MAX_CHAINED_DEMOS) {
+    while (ok && demo_file != NULL
+           && ghost_info->num_levels < GHOST_MAX_LEVELS
+           && num_demos_searched < MAX_CHAINED_DEMOS) {
         ok = Ghost_ReadDemoNoChain (demo_file, ghost_info, next_demo_path);
         if (ok) {
             if (next_demo_path[0] != '\0') {
@@ -389,7 +394,7 @@ Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info_p)
 
     if (num_demos_searched == MAX_CHAINED_DEMOS) {
         // Best to have a limit in case we have looped demos.
-        Con_Printf("Stopped searching for ghost after %d chained demos\n",
+        Con_Printf("Encountered %d chained demos, ghost has been truncated\n",
                    MAX_CHAINED_DEMOS);
         ok = false;
     }
@@ -398,6 +403,10 @@ Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info_p)
         *ghost_info_p = ghost_info;
     } else {
         Ghost_Free(&ghost_info);
+    }
+
+    if (demo_file != NULL) {
+        fclose(demo_file);
     }
 
     return ok;
