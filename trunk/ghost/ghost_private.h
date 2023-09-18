@@ -26,6 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 
+#define GHOST_MAX_LEVELS     128
+#define GHOST_MAP_NAME_SIZE  64
+
+
 typedef enum {
     GHOST_MODEL_PLAYER = 0,
     GHOST_MODEL_EYES,
@@ -44,17 +48,26 @@ typedef struct {
 
 
 typedef struct {
+    char map_name[GHOST_MAP_NAME_SIZE];
+
     char client_names[GHOST_MAX_CLIENTS][MAX_SCOREBOARDNAME];
     byte client_colors[GHOST_MAX_CLIENTS];
     float finish_time;
     ghostrec_t *records;
     int num_records;
     int model_indices[GHOST_MODEL_COUNT];
+} ghost_level_t;
+
+
+typedef struct {
+    ghost_level_t levels[GHOST_MAX_LEVELS];
+    int num_levels;
 } ghost_info_t;
+
 
 extern const char *ghost_model_paths[GHOST_MODEL_COUNT];
 
-qboolean Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info,
-                         const char *expected_map_name);
+qboolean Ghost_ReadDemo (FILE *demo_file, ghost_info_t *ghost_info);
+void Ghost_Free (ghost_info_t *ghost_info);
 
 #endif /* __GHOST_PRIVATE */
