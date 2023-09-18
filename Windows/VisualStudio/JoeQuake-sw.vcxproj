@@ -168,234 +168,234 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ResourceCompile Include="joequake.rc" />
+    <ResourceCompile Include="..\joequake.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cd_null.c" />
-    <ClCompile Include="cl_dzip.c" />
-    <ClCompile Include="fmod.c" />
-    <ClCompile Include="ghost\demoparse.c" />
-    <ClCompile Include="ghost\demosummary.c" />
-    <ClCompile Include="ghost\ghost.c" />
-    <ClCompile Include="ghost\ghostparse.c" />
-    <ClCompile Include="gl_decals.c">
+    <ClCompile Include="..\..\trunk\cd_null.c" />
+    <ClCompile Include="..\..\trunk\cl_dzip.c" />
+    <ClCompile Include="..\..\trunk\fmod.c" />
+    <ClCompile Include="..\..\trunk\ghost\demoparse.c" />
+    <ClCompile Include="..\..\trunk\ghost\demosummary.c" />
+    <ClCompile Include="..\..\trunk\ghost\ghost.c" />
+    <ClCompile Include="..\..\trunk\ghost\ghostparse.c" />
+    <ClCompile Include="..\..\trunk\gl_decals.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_draw.c">
+    <ClCompile Include="..\..\trunk\gl_draw.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_fakegl.c" />
-    <ClCompile Include="gl_fog.c" />
-    <ClCompile Include="gl_mesh.c">
+    <ClCompile Include="..\..\trunk\gl_fakegl.c" />
+    <ClCompile Include="..\..\trunk\gl_fog.c" />
+    <ClCompile Include="..\..\trunk\gl_mesh.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_model.c">
+    <ClCompile Include="..\..\trunk\gl_model.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_refrag.c">
+    <ClCompile Include="..\..\trunk\gl_refrag.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_rlight.c">
+    <ClCompile Include="..\..\trunk\gl_rlight.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_rmain.c">
+    <ClCompile Include="..\..\trunk\gl_rmain.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_rmisc.c">
+    <ClCompile Include="..\..\trunk\gl_rmisc.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_rpart.c">
+    <ClCompile Include="..\..\trunk\gl_rpart.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_rsurf.c">
+    <ClCompile Include="..\..\trunk\gl_rsurf.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_screen.c">
+    <ClCompile Include="..\..\trunk\gl_screen.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="gl_warp.c">
+    <ClCompile Include="..\..\trunk\gl_warp.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="cd_win.c" />
-    <ClCompile Include="in_sdl.c" />
-    <ClCompile Include="ioapi.c" />
-    <ClCompile Include="snd_dma.c" />
-    <ClCompile Include="snd_sdl.c" />
-    <ClCompile Include="snd_mem.c" />
-    <ClCompile Include="snd_mix.c" />
-    <ClCompile Include="snd_win.c" />
-    <ClCompile Include="cl_input.c" />
-    <ClCompile Include="in_win.c" />
-    <ClCompile Include="keys.c" />
-    <ClCompile Include="sv_main.c" />
-    <ClCompile Include="sv_move.c" />
-    <ClCompile Include="sv_phys.c" />
-    <ClCompile Include="sv_user.c" />
-    <ClCompile Include="pr_cmds.c" />
-    <ClCompile Include="pr_edict.c" />
-    <ClCompile Include="pr_exec.c" />
-    <ClCompile Include="r_aclip.c" />
-    <ClCompile Include="r_alias.c" />
-    <ClCompile Include="r_bsp.c" />
-    <ClCompile Include="r_draw.c" />
-    <ClCompile Include="r_edge.c" />
-    <ClCompile Include="r_efrag.c" />
-    <ClCompile Include="r_light.c" />
-    <ClCompile Include="r_main.c" />
-    <ClCompile Include="r_misc.c" />
-    <ClCompile Include="r_model.c" />
-    <ClCompile Include="r_part.c" />
-    <ClCompile Include="r_rast.c" />
-    <ClCompile Include="r_screen.c" />
-    <ClCompile Include="r_sky.c" />
-    <ClCompile Include="r_sprite.c" />
-    <ClCompile Include="r_surf.c" />
-    <ClCompile Include="r_vars.c" />
-    <ClCompile Include="d_edge.c" />
-    <ClCompile Include="d_fill.c" />
-    <ClCompile Include="d_init.c" />
-    <ClCompile Include="d_modech.c" />
-    <ClCompile Include="d_polyse.c" />
-    <ClCompile Include="d_scan.c" />
-    <ClCompile Include="d_sky.c" />
-    <ClCompile Include="d_sprite.c" />
-    <ClCompile Include="d_surf.c" />
-    <ClCompile Include="d_vars.c" />
-    <ClCompile Include="d_zpoint.c" />
-    <ClCompile Include="unzip.c">
+    <ClCompile Include="..\..\trunk\cd_win.c" />
+    <ClCompile Include="..\..\trunk\in_sdl.c" />
+    <ClCompile Include="..\..\trunk\ioapi.c" />
+    <ClCompile Include="..\..\trunk\snd_dma.c" />
+    <ClCompile Include="..\..\trunk\snd_sdl.c" />
+    <ClCompile Include="..\..\trunk\snd_mem.c" />
+    <ClCompile Include="..\..\trunk\snd_mix.c" />
+    <ClCompile Include="..\..\trunk\snd_win.c" />
+    <ClCompile Include="..\..\trunk\cl_input.c" />
+    <ClCompile Include="..\..\trunk\in_win.c" />
+    <ClCompile Include="..\..\trunk\keys.c" />
+    <ClCompile Include="..\..\trunk\sv_main.c" />
+    <ClCompile Include="..\..\trunk\sv_move.c" />
+    <ClCompile Include="..\..\trunk\sv_phys.c" />
+    <ClCompile Include="..\..\trunk\sv_user.c" />
+    <ClCompile Include="..\..\trunk\pr_cmds.c" />
+    <ClCompile Include="..\..\trunk\pr_edict.c" />
+    <ClCompile Include="..\..\trunk\pr_exec.c" />
+    <ClCompile Include="..\..\trunk\r_aclip.c" />
+    <ClCompile Include="..\..\trunk\r_alias.c" />
+    <ClCompile Include="..\..\trunk\r_bsp.c" />
+    <ClCompile Include="..\..\trunk\r_draw.c" />
+    <ClCompile Include="..\..\trunk\r_edge.c" />
+    <ClCompile Include="..\..\trunk\r_efrag.c" />
+    <ClCompile Include="..\..\trunk\r_light.c" />
+    <ClCompile Include="..\..\trunk\r_main.c" />
+    <ClCompile Include="..\..\trunk\r_misc.c" />
+    <ClCompile Include="..\..\trunk\r_model.c" />
+    <ClCompile Include="..\..\trunk\r_part.c" />
+    <ClCompile Include="..\..\trunk\r_rast.c" />
+    <ClCompile Include="..\..\trunk\r_screen.c" />
+    <ClCompile Include="..\..\trunk\r_sky.c" />
+    <ClCompile Include="..\..\trunk\r_sprite.c" />
+    <ClCompile Include="..\..\trunk\r_surf.c" />
+    <ClCompile Include="..\..\trunk\r_vars.c" />
+    <ClCompile Include="..\..\trunk\d_edge.c" />
+    <ClCompile Include="..\..\trunk\d_fill.c" />
+    <ClCompile Include="..\..\trunk\d_init.c" />
+    <ClCompile Include="..\..\trunk\d_modech.c" />
+    <ClCompile Include="..\..\trunk\d_polyse.c" />
+    <ClCompile Include="..\..\trunk\d_scan.c" />
+    <ClCompile Include="..\..\trunk\d_sky.c" />
+    <ClCompile Include="..\..\trunk\d_sprite.c" />
+    <ClCompile Include="..\..\trunk\d_surf.c" />
+    <ClCompile Include="..\..\trunk\d_vars.c" />
+    <ClCompile Include="..\..\trunk\d_zpoint.c" />
+    <ClCompile Include="..\..\trunk\unzip.c">
       <PreprocessorDefinitions>NOUNCRYPT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="vid_common_gl.c">
+    <ClCompile Include="..\..\trunk\vid_common_gl.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="vid_sdl.c" />
-    <ClCompile Include="vid_wgl.c">
+    <ClCompile Include="..\..\trunk\vid_sdl.c" />
+    <ClCompile Include="..\..\trunk\vid_wgl.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="vid_win.c" />
-    <ClCompile Include="cl_demo.c" />
-    <ClCompile Include="cl_main.c" />
-    <ClCompile Include="cl_parse.c" />
-    <ClCompile Include="cl_slist.c" />
-    <ClCompile Include="cl_tent.c" />
-    <ClCompile Include="net_dgrm.c" />
-    <ClCompile Include="net_loop.c" />
-    <ClCompile Include="net_main.c" />
-    <ClCompile Include="net_vcr.c" />
-    <ClCompile Include="net_win.c" />
-    <ClCompile Include="net_wins.c" />
-    <ClCompile Include="net_wipx.c" />
-    <ClCompile Include="chase.c" />
-    <ClCompile Include="cmd.c" />
-    <ClCompile Include="common.c" />
-    <ClCompile Include="conproc.c" />
-    <ClCompile Include="console.c" />
-    <ClCompile Include="crc.c" />
-    <ClCompile Include="cvar.c" />
-    <ClCompile Include="host.c" />
-    <ClCompile Include="host_cmd.c" />
-    <ClCompile Include="image.c" />
-    <ClCompile Include="iplog.c" />
-    <ClCompile Include="mathlib.c" />
-    <ClCompile Include="menu.c" />
-    <ClCompile Include="movie.c" />
-    <ClCompile Include="movie_avi.c" />
-    <ClCompile Include="nehahra.c">
+    <ClCompile Include="..\..\trunk\vid_win.c" />
+    <ClCompile Include="..\..\trunk\cl_demo.c" />
+    <ClCompile Include="..\..\trunk\cl_main.c" />
+    <ClCompile Include="..\..\trunk\cl_parse.c" />
+    <ClCompile Include="..\..\trunk\cl_slist.c" />
+    <ClCompile Include="..\..\trunk\cl_tent.c" />
+    <ClCompile Include="..\..\trunk\net_dgrm.c" />
+    <ClCompile Include="..\..\trunk\net_loop.c" />
+    <ClCompile Include="..\..\trunk\net_main.c" />
+    <ClCompile Include="..\..\trunk\net_vcr.c" />
+    <ClCompile Include="..\..\trunk\net_win.c" />
+    <ClCompile Include="..\..\trunk\net_wins.c" />
+    <ClCompile Include="..\..\trunk\net_wipx.c" />
+    <ClCompile Include="..\..\trunk\chase.c" />
+    <ClCompile Include="..\..\trunk\cmd.c" />
+    <ClCompile Include="..\..\trunk\common.c" />
+    <ClCompile Include="..\..\trunk\conproc.c" />
+    <ClCompile Include="..\..\trunk\console.c" />
+    <ClCompile Include="..\..\trunk\crc.c" />
+    <ClCompile Include="..\..\trunk\cvar.c" />
+    <ClCompile Include="..\..\trunk\host.c" />
+    <ClCompile Include="..\..\trunk\host_cmd.c" />
+    <ClCompile Include="..\..\trunk\image.c" />
+    <ClCompile Include="..\..\trunk\iplog.c" />
+    <ClCompile Include="..\..\trunk\mathlib.c" />
+    <ClCompile Include="..\..\trunk\menu.c" />
+    <ClCompile Include="..\..\trunk\movie.c" />
+    <ClCompile Include="..\..\trunk\movie_avi.c" />
+    <ClCompile Include="..\..\trunk\nehahra.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="sbar.c" />
-    <ClCompile Include="security.c" />
-    <ClCompile Include="version.c" />
-    <ClCompile Include="view.c" />
-    <ClCompile Include="wad.c" />
-    <ClCompile Include="world.c" />
-    <ClCompile Include="zone.c" />
-    <ClCompile Include="sys_win.c" />
+    <ClCompile Include="..\..\trunk\sbar.c" />
+    <ClCompile Include="..\..\trunk\security.c" />
+    <ClCompile Include="..\..\trunk\version.c" />
+    <ClCompile Include="..\..\trunk\view.c" />
+    <ClCompile Include="..\..\trunk\wad.c" />
+    <ClCompile Include="..\..\trunk\world.c" />
+    <ClCompile Include="..\..\trunk\zone.c" />
+    <ClCompile Include="..\..\trunk\sys_win.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="fakegl.h" />
-    <ClInclude Include="ghost\demoparse.h" />
-    <ClInclude Include="ghost\demosummary.h" />
-    <ClInclude Include="ghost\ghost.h" />
-    <ClInclude Include="ghost\ghost_private.h" />
-    <ClInclude Include="gl_model.h" />
-    <ClInclude Include="glquake.h" />
-    <ClInclude Include="cdaudio.h" />
-    <ClInclude Include="gl_warp_sin.h" />
-    <ClInclude Include="progdefs.h" />
-    <ClInclude Include="progs.h" />
-    <ClInclude Include="sound.h" />
-    <ClInclude Include="server.h" />
-    <ClInclude Include="draw.h" />
-    <ClInclude Include="r_local.h" />
-    <ClInclude Include="r_model.h" />
-    <ClInclude Include="r_shared.h" />
-    <ClInclude Include="render.h" />
-    <ClInclude Include="d_iface.h" />
-    <ClInclude Include="d_ifacea.h" />
-    <ClInclude Include="d_local.h" />
-    <ClInclude Include="quakedef.h" />
-    <ClInclude Include="cl_slist.h" />
-    <ClInclude Include="client.h" />
-    <ClInclude Include="console.h" />
-    <ClInclude Include="menu.h" />
-    <ClInclude Include="view.h" />
-    <ClInclude Include="net.h" />
-    <ClInclude Include="net_dgrm.h" />
-    <ClInclude Include="net_loop.h" />
-    <ClInclude Include="net_vcr.h" />
-    <ClInclude Include="net_wins.h" />
-    <ClInclude Include="net_wipx.h" />
-    <ClInclude Include="protocol.h" />
-    <ClInclude Include="adivtab.h" />
-    <ClInclude Include="anorm_dots.h" />
-    <ClInclude Include="anorms.h" />
-    <ClInclude Include="bspfile.h" />
-    <ClInclude Include="cmd.h" />
-    <ClInclude Include="common.h" />
-    <ClInclude Include="conproc.h" />
-    <ClInclude Include="crc.h" />
-    <ClInclude Include="cvar.h" />
-    <ClInclude Include="image.h" />
-    <ClInclude Include="input.h" />
-    <ClInclude Include="iplog.h" />
-    <ClInclude Include="keys.h" />
-    <ClInclude Include="mathlib.h" />
-    <ClInclude Include="modelgen.h" />
-    <ClInclude Include="movie.h" />
-    <ClInclude Include="movie_avi.h" />
-    <ClInclude Include="nehahra.h" />
-    <ClInclude Include="sbar.h" />
-    <ClInclude Include="screen.h" />
-    <ClInclude Include="security.h" />
-    <ClInclude Include="spritegn.h" />
-    <ClInclude Include="sys.h" />
-    <ClInclude Include="version.h" />
-    <ClInclude Include="vid.h" />
-    <ClInclude Include="wad.h" />
-    <ClInclude Include="winquake.h" />
-    <ClInclude Include="world.h" />
-    <ClInclude Include="zone.h" />
+    <ClInclude Include="..\..\trunk\fakegl.h" />
+    <ClInclude Include="..\..\trunk\ghost\demoparse.h" />
+    <ClInclude Include="..\..\trunk\ghost\demosummary.h" />
+    <ClInclude Include="..\..\trunk\ghost\ghost.h" />
+    <ClInclude Include="..\..\trunk\ghost\ghost_private.h" />
+    <ClInclude Include="..\..\trunk\gl_model.h" />
+    <ClInclude Include="..\..\trunk\glquake.h" />
+    <ClInclude Include="..\..\trunk\cdaudio.h" />
+    <ClInclude Include="..\..\trunk\gl_warp_sin.h" />
+    <ClInclude Include="..\..\trunk\progdefs.h" />
+    <ClInclude Include="..\..\trunk\progs.h" />
+    <ClInclude Include="..\..\trunk\sound.h" />
+    <ClInclude Include="..\..\trunk\server.h" />
+    <ClInclude Include="..\..\trunk\draw.h" />
+    <ClInclude Include="..\..\trunk\r_local.h" />
+    <ClInclude Include="..\..\trunk\r_model.h" />
+    <ClInclude Include="..\..\trunk\r_shared.h" />
+    <ClInclude Include="..\..\trunk\render.h" />
+    <ClInclude Include="..\..\trunk\d_iface.h" />
+    <ClInclude Include="..\..\trunk\d_ifacea.h" />
+    <ClInclude Include="..\..\trunk\d_local.h" />
+    <ClInclude Include="..\..\trunk\quakedef.h" />
+    <ClInclude Include="..\..\trunk\cl_slist.h" />
+    <ClInclude Include="..\..\trunk\client.h" />
+    <ClInclude Include="..\..\trunk\console.h" />
+    <ClInclude Include="..\..\trunk\menu.h" />
+    <ClInclude Include="..\..\trunk\view.h" />
+    <ClInclude Include="..\..\trunk\net.h" />
+    <ClInclude Include="..\..\trunk\net_dgrm.h" />
+    <ClInclude Include="..\..\trunk\net_loop.h" />
+    <ClInclude Include="..\..\trunk\net_vcr.h" />
+    <ClInclude Include="..\..\trunk\net_wins.h" />
+    <ClInclude Include="..\..\trunk\net_wipx.h" />
+    <ClInclude Include="..\..\trunk\protocol.h" />
+    <ClInclude Include="..\..\trunk\adivtab.h" />
+    <ClInclude Include="..\..\trunk\anorm_dots.h" />
+    <ClInclude Include="..\..\trunk\anorms.h" />
+    <ClInclude Include="..\..\trunk\bspfile.h" />
+    <ClInclude Include="..\..\trunk\cmd.h" />
+    <ClInclude Include="..\..\trunk\common.h" />
+    <ClInclude Include="..\..\trunk\conproc.h" />
+    <ClInclude Include="..\..\trunk\crc.h" />
+    <ClInclude Include="..\..\trunk\cvar.h" />
+    <ClInclude Include="..\..\trunk\image.h" />
+    <ClInclude Include="..\..\trunk\input.h" />
+    <ClInclude Include="..\..\trunk\iplog.h" />
+    <ClInclude Include="..\..\trunk\keys.h" />
+    <ClInclude Include="..\..\trunk\mathlib.h" />
+    <ClInclude Include="..\..\trunk\modelgen.h" />
+    <ClInclude Include="..\..\trunk\movie.h" />
+    <ClInclude Include="..\..\trunk\movie_avi.h" />
+    <ClInclude Include="..\..\trunk\nehahra.h" />
+    <ClInclude Include="..\..\trunk\sbar.h" />
+    <ClInclude Include="..\..\trunk\screen.h" />
+    <ClInclude Include="..\..\trunk\security.h" />
+    <ClInclude Include="..\..\trunk\spritegn.h" />
+    <ClInclude Include="..\..\trunk\sys.h" />
+    <ClInclude Include="..\..\trunk\version.h" />
+    <ClInclude Include="..\..\trunk\vid.h" />
+    <ClInclude Include="..\..\trunk\wad.h" />
+    <ClInclude Include="..\..\trunk\winquake.h" />
+    <ClInclude Include="..\..\trunk\world.h" />
+    <ClInclude Include="..\..\trunk\zone.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="joequake.bmp" />
-    <None Include="quake.ico" />
-    <CustomBuild Include="d_draw.s">
+    <None Include="..\joequake.bmp" />
+    <None Include="..\quake.ico" />
+    <CustomBuild Include="..\..\trunk\d_draw.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -410,7 +410,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="d_draw16.s">
+    <CustomBuild Include="..\..\trunk\d_draw16.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -425,7 +425,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="d_parta.s">
+    <CustomBuild Include="..\..\trunk\d_parta.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -440,7 +440,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="d_polysa.s">
+    <CustomBuild Include="..\..\trunk\d_polysa.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -455,7 +455,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="d_scana.s">
+    <CustomBuild Include="..\..\trunk\d_scana.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -470,7 +470,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="d_spr8.s">
+    <CustomBuild Include="..\..\trunk\d_spr8.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -485,7 +485,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="d_varsa.s">
+    <CustomBuild Include="..\..\trunk\d_varsa.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -500,7 +500,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="math.s">
+    <CustomBuild Include="..\..\trunk\math.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -515,7 +515,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="r_aclipa.s">
+    <CustomBuild Include="..\..\trunk\r_aclipa.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -530,7 +530,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="r_aliasa.s">
+    <CustomBuild Include="..\..\trunk\r_aliasa.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -545,7 +545,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="r_drawa.s">
+    <CustomBuild Include="..\..\trunk\r_drawa.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -560,7 +560,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="r_edgea.s">
+    <CustomBuild Include="..\..\trunk\r_edgea.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -575,7 +575,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="r_varsa.s">
+    <CustomBuild Include="..\..\trunk\r_varsa.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -590,7 +590,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="snd_mixa.s">
+    <CustomBuild Include="..\..\trunk\snd_mixa.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -605,7 +605,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="surf8.s">
+    <CustomBuild Include="..\..\trunk\surf8.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -620,7 +620,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="sys_x86.s">
+    <CustomBuild Include="..\..\trunk\sys_x86.s">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /nologo /EP &gt; $(OutDir)%(FileName).spp %(FullPath)
 gas2masm &lt; $(OutDir)%(FileName).spp &gt;$(OutDir)%(FileName).asm
@@ -635,7 +635,7 @@ del $(OutDir)%(FileName).spp
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(FileName).obj;%(Outputs)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="worlda.s">
+    <CustomBuild Include="..\..\trunk\worlda.s">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

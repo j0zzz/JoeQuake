@@ -115,585 +115,585 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="joequake.rc">
+    <ResourceCompile Include="..\joequake.rc">
       <Filter>Source Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cd_win.c">
+    <ClCompile Include="..\..\trunk\cd_win.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="chase.c">
+    <ClCompile Include="..\..\trunk\chase.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="cl_demo.c">
+    <ClCompile Include="..\..\trunk\cl_demo.c">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="cl_input.c">
+    <ClCompile Include="..\..\trunk\cl_input.c">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="cl_main.c">
+    <ClCompile Include="..\..\trunk\cl_main.c">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="cl_parse.c">
+    <ClCompile Include="..\..\trunk\cl_parse.c">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="cl_slist.c">
+    <ClCompile Include="..\..\trunk\cl_slist.c">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="cl_tent.c">
+    <ClCompile Include="..\..\trunk\cl_tent.c">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="cmd.c">
+    <ClCompile Include="..\..\trunk\cmd.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="common.c">
+    <ClCompile Include="..\..\trunk\common.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="conproc.c">
+    <ClCompile Include="..\..\trunk\conproc.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="console.c">
+    <ClCompile Include="..\..\trunk\console.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="crc.c">
+    <ClCompile Include="..\..\trunk\crc.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="cvar.c">
+    <ClCompile Include="..\..\trunk\cvar.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="d_edge.c">
+    <ClCompile Include="..\..\trunk\d_edge.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_fill.c">
+    <ClCompile Include="..\..\trunk\d_fill.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_init.c">
+    <ClCompile Include="..\..\trunk\d_init.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_modech.c">
+    <ClCompile Include="..\..\trunk\d_modech.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_polyse.c">
+    <ClCompile Include="..\..\trunk\d_polyse.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_scan.c">
+    <ClCompile Include="..\..\trunk\d_scan.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_sky.c">
+    <ClCompile Include="..\..\trunk\d_sky.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_sprite.c">
+    <ClCompile Include="..\..\trunk\d_sprite.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_surf.c">
+    <ClCompile Include="..\..\trunk\d_surf.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_vars.c">
+    <ClCompile Include="..\..\trunk\d_vars.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="d_zpoint.c">
+    <ClCompile Include="..\..\trunk\d_zpoint.c">
       <Filter>Source Files\Software</Filter>
     </ClCompile>
-    <ClCompile Include="gl_decals.c">
+    <ClCompile Include="..\..\trunk\gl_decals.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_draw.c">
+    <ClCompile Include="..\..\trunk\gl_draw.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_mesh.c">
+    <ClCompile Include="..\..\trunk\gl_mesh.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_model.c">
+    <ClCompile Include="..\..\trunk\gl_model.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_refrag.c">
+    <ClCompile Include="..\..\trunk\gl_refrag.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_rlight.c">
+    <ClCompile Include="..\..\trunk\gl_rlight.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_rmain.c">
+    <ClCompile Include="..\..\trunk\gl_rmain.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_rmisc.c">
+    <ClCompile Include="..\..\trunk\gl_rmisc.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_rpart.c">
+    <ClCompile Include="..\..\trunk\gl_rpart.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_rsurf.c">
+    <ClCompile Include="..\..\trunk\gl_rsurf.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_screen.c">
+    <ClCompile Include="..\..\trunk\gl_screen.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_warp.c">
+    <ClCompile Include="..\..\trunk\gl_warp.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="host.c">
+    <ClCompile Include="..\..\trunk\host.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="host_cmd.c">
+    <ClCompile Include="..\..\trunk\host_cmd.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="image.c">
+    <ClCompile Include="..\..\trunk\image.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="in_win.c">
+    <ClCompile Include="..\..\trunk\in_win.c">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="iplog.c">
+    <ClCompile Include="..\..\trunk\iplog.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="keys.c">
+    <ClCompile Include="..\..\trunk\keys.c">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="mathlib.c">
+    <ClCompile Include="..\..\trunk\mathlib.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="menu.c">
+    <ClCompile Include="..\..\trunk\menu.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="movie.c">
+    <ClCompile Include="..\..\trunk\movie.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="movie_avi.c">
+    <ClCompile Include="..\..\trunk\movie_avi.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="nehahra.c">
+    <ClCompile Include="..\..\trunk\nehahra.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="net_dgrm.c">
+    <ClCompile Include="..\..\trunk\net_dgrm.c">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="net_loop.c">
+    <ClCompile Include="..\..\trunk\net_loop.c">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="net_main.c">
+    <ClCompile Include="..\..\trunk\net_main.c">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="net_vcr.c">
+    <ClCompile Include="..\..\trunk\net_vcr.c">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="net_win.c">
+    <ClCompile Include="..\..\trunk\net_win.c">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="net_wins.c">
+    <ClCompile Include="..\..\trunk\net_wins.c">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="net_wipx.c">
+    <ClCompile Include="..\..\trunk\net_wipx.c">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="pr_cmds.c">
+    <ClCompile Include="..\..\trunk\pr_cmds.c">
       <Filter>Source Files\VM</Filter>
     </ClCompile>
-    <ClCompile Include="pr_edict.c">
+    <ClCompile Include="..\..\trunk\pr_edict.c">
       <Filter>Source Files\VM</Filter>
     </ClCompile>
-    <ClCompile Include="pr_exec.c">
+    <ClCompile Include="..\..\trunk\pr_exec.c">
       <Filter>Source Files\VM</Filter>
     </ClCompile>
-    <ClCompile Include="r_aclip.c">
+    <ClCompile Include="..\..\trunk\r_aclip.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_alias.c">
+    <ClCompile Include="..\..\trunk\r_alias.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_bsp.c">
+    <ClCompile Include="..\..\trunk\r_bsp.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_draw.c">
+    <ClCompile Include="..\..\trunk\r_draw.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_edge.c">
+    <ClCompile Include="..\..\trunk\r_edge.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_efrag.c">
+    <ClCompile Include="..\..\trunk\r_efrag.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_light.c">
+    <ClCompile Include="..\..\trunk\r_light.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_main.c">
+    <ClCompile Include="..\..\trunk\r_main.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_misc.c">
+    <ClCompile Include="..\..\trunk\r_misc.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_model.c">
+    <ClCompile Include="..\..\trunk\r_model.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_part.c">
+    <ClCompile Include="..\..\trunk\r_part.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_rast.c">
+    <ClCompile Include="..\..\trunk\r_rast.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_screen.c">
+    <ClCompile Include="..\..\trunk\r_screen.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_sky.c">
+    <ClCompile Include="..\..\trunk\r_sky.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_sprite.c">
+    <ClCompile Include="..\..\trunk\r_sprite.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_surf.c">
+    <ClCompile Include="..\..\trunk\r_surf.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="r_vars.c">
+    <ClCompile Include="..\..\trunk\r_vars.c">
       <Filter>Source Files\Draw</Filter>
     </ClCompile>
-    <ClCompile Include="sbar.c">
+    <ClCompile Include="..\..\trunk\sbar.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="security.c">
+    <ClCompile Include="..\..\trunk\security.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="snd_dma.c">
+    <ClCompile Include="..\..\trunk\snd_dma.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="snd_mem.c">
+    <ClCompile Include="..\..\trunk\snd_mem.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="snd_mix.c">
+    <ClCompile Include="..\..\trunk\snd_mix.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="snd_win.c">
+    <ClCompile Include="..\..\trunk\snd_win.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="sv_main.c">
+    <ClCompile Include="..\..\trunk\sv_main.c">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
-    <ClCompile Include="sv_move.c">
+    <ClCompile Include="..\..\trunk\sv_move.c">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
-    <ClCompile Include="sv_phys.c">
+    <ClCompile Include="..\..\trunk\sv_phys.c">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
-    <ClCompile Include="sv_user.c">
+    <ClCompile Include="..\..\trunk\sv_user.c">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
-    <ClCompile Include="sys_win.c">
+    <ClCompile Include="..\..\trunk\sys_win.c">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="version.c">
+    <ClCompile Include="..\..\trunk\version.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="vid_common_gl.c">
+    <ClCompile Include="..\..\trunk\vid_common_gl.c">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="vid_wgl.c">
+    <ClCompile Include="..\..\trunk\vid_wgl.c">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="vid_win.c">
+    <ClCompile Include="..\..\trunk\vid_win.c">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="view.c">
+    <ClCompile Include="..\..\trunk\view.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="wad.c">
+    <ClCompile Include="..\..\trunk\wad.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="world.c">
+    <ClCompile Include="..\..\trunk\world.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="zone.c">
+    <ClCompile Include="..\..\trunk\zone.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="gl_fakegl.c">
+    <ClCompile Include="..\..\trunk\gl_fakegl.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="gl_fog.c">
+    <ClCompile Include="..\..\trunk\gl_fog.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="fmod.c">
+    <ClCompile Include="..\..\trunk\fmod.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="ioapi.c">
+    <ClCompile Include="..\..\trunk\ioapi.c">
       <Filter>Source Files\Unzip</Filter>
     </ClCompile>
-    <ClCompile Include="unzip.c">
+    <ClCompile Include="..\..\trunk\unzip.c">
       <Filter>Source Files\Unzip</Filter>
     </ClCompile>
-    <ClCompile Include="ghost\demoparse.c">
+    <ClCompile Include="..\..\trunk\ghost\demoparse.c">
       <Filter>Source Files\Ghost</Filter>
     </ClCompile>
-    <ClCompile Include="ghost\ghost.c">
+    <ClCompile Include="..\..\trunk\ghost\ghost.c">
       <Filter>Source Files\Ghost</Filter>
     </ClCompile>
-    <ClCompile Include="ghost\ghostparse.c">
+    <ClCompile Include="..\..\trunk\ghost\ghostparse.c">
       <Filter>Source Files\Ghost</Filter>
     </ClCompile>
-    <ClCompile Include="cl_dzip.c">
+    <ClCompile Include="..\..\trunk\cl_dzip.c">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="snd_sdl.c">
+    <ClCompile Include="..\..\trunk\snd_sdl.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="vid_sdl.c">
+    <ClCompile Include="..\..\trunk\vid_sdl.c">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
-    <ClCompile Include="cd_null.c">
+    <ClCompile Include="..\..\trunk\cd_null.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="in_sdl.c">
+    <ClCompile Include="..\..\trunk\in_sdl.c">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="ghost\demosummary.c">
+    <ClCompile Include="..\..\trunk\ghost\demosummary.c">
       <Filter>Source Files\Ghost</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="adivtab.h">
+    <ClInclude Include="..\..\trunk\adivtab.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="anorms.h">
+    <ClInclude Include="..\..\trunk\anorms.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="anorm_dots.h">
+    <ClInclude Include="..\..\trunk\anorm_dots.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="bspfile.h">
+    <ClInclude Include="..\..\trunk\bspfile.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="cdaudio.h">
+    <ClInclude Include="..\..\trunk\cdaudio.h">
       <Filter>Header Files\Sound_h</Filter>
     </ClInclude>
-    <ClInclude Include="client.h">
+    <ClInclude Include="..\..\trunk\client.h">
       <Filter>Header Files\Client_h</Filter>
     </ClInclude>
-    <ClInclude Include="cl_slist.h">
+    <ClInclude Include="..\..\trunk\cl_slist.h">
       <Filter>Header Files\Client_h</Filter>
     </ClInclude>
-    <ClInclude Include="cmd.h">
+    <ClInclude Include="..\..\trunk\cmd.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="common.h">
+    <ClInclude Include="..\..\trunk\common.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="conproc.h">
+    <ClInclude Include="..\..\trunk\conproc.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="console.h">
+    <ClInclude Include="..\..\trunk\console.h">
       <Filter>Header Files\Client_h</Filter>
     </ClInclude>
-    <ClInclude Include="crc.h">
+    <ClInclude Include="..\..\trunk\crc.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="cvar.h">
+    <ClInclude Include="..\..\trunk\cvar.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="draw.h">
+    <ClInclude Include="..\..\trunk\draw.h">
       <Filter>Header Files\Draw_h</Filter>
     </ClInclude>
-    <ClInclude Include="d_iface.h">
+    <ClInclude Include="..\..\trunk\d_iface.h">
       <Filter>Header Files\Software_h</Filter>
     </ClInclude>
-    <ClInclude Include="d_ifacea.h">
+    <ClInclude Include="..\..\trunk\d_ifacea.h">
       <Filter>Header Files\Software_h</Filter>
     </ClInclude>
-    <ClInclude Include="d_local.h">
+    <ClInclude Include="..\..\trunk\d_local.h">
       <Filter>Header Files\Software_h</Filter>
     </ClInclude>
-    <ClInclude Include="glquake.h">
+    <ClInclude Include="..\..\trunk\glquake.h">
       <Filter>Header Files\OpenGL_h</Filter>
     </ClInclude>
-    <ClInclude Include="gl_model.h">
+    <ClInclude Include="..\..\trunk\gl_model.h">
       <Filter>Header Files\OpenGL_h</Filter>
     </ClInclude>
-    <ClInclude Include="image.h">
+    <ClInclude Include="..\..\trunk\image.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="input.h">
+    <ClInclude Include="..\..\trunk\input.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="iplog.h">
+    <ClInclude Include="..\..\trunk\iplog.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="keys.h">
+    <ClInclude Include="..\..\trunk\keys.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="mathlib.h">
+    <ClInclude Include="..\..\trunk\mathlib.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="menu.h">
+    <ClInclude Include="..\..\trunk\menu.h">
       <Filter>Header Files\Client_h</Filter>
     </ClInclude>
-    <ClInclude Include="modelgen.h">
+    <ClInclude Include="..\..\trunk\modelgen.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="movie.h">
+    <ClInclude Include="..\..\trunk\movie.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="movie_avi.h">
+    <ClInclude Include="..\..\trunk\movie_avi.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="nehahra.h">
+    <ClInclude Include="..\..\trunk\nehahra.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="net.h">
+    <ClInclude Include="..\..\trunk\net.h">
       <Filter>Header Files\Net_h</Filter>
     </ClInclude>
-    <ClInclude Include="net_dgrm.h">
+    <ClInclude Include="..\..\trunk\net_dgrm.h">
       <Filter>Header Files\Net_h</Filter>
     </ClInclude>
-    <ClInclude Include="net_loop.h">
+    <ClInclude Include="..\..\trunk\net_loop.h">
       <Filter>Header Files\Net_h</Filter>
     </ClInclude>
-    <ClInclude Include="net_vcr.h">
+    <ClInclude Include="..\..\trunk\net_vcr.h">
       <Filter>Header Files\Net_h</Filter>
     </ClInclude>
-    <ClInclude Include="net_wins.h">
+    <ClInclude Include="..\..\trunk\net_wins.h">
       <Filter>Header Files\Net_h</Filter>
     </ClInclude>
-    <ClInclude Include="net_wipx.h">
+    <ClInclude Include="..\..\trunk\net_wipx.h">
       <Filter>Header Files\Net_h</Filter>
     </ClInclude>
-    <ClInclude Include="protocol.h">
+    <ClInclude Include="..\..\trunk\protocol.h">
       <Filter>Header Files\Net_h</Filter>
     </ClInclude>
-    <ClInclude Include="quakedef.h">
+    <ClInclude Include="..\..\trunk\quakedef.h">
       <Filter>Header Files\Main_h</Filter>
     </ClInclude>
-    <ClInclude Include="render.h">
+    <ClInclude Include="..\..\trunk\render.h">
       <Filter>Header Files\Draw_h</Filter>
     </ClInclude>
-    <ClInclude Include="r_local.h">
+    <ClInclude Include="..\..\trunk\r_local.h">
       <Filter>Header Files\Draw_h</Filter>
     </ClInclude>
-    <ClInclude Include="r_model.h">
+    <ClInclude Include="..\..\trunk\r_model.h">
       <Filter>Header Files\Draw_h</Filter>
     </ClInclude>
-    <ClInclude Include="r_shared.h">
+    <ClInclude Include="..\..\trunk\r_shared.h">
       <Filter>Header Files\Draw_h</Filter>
     </ClInclude>
-    <ClInclude Include="sbar.h">
+    <ClInclude Include="..\..\trunk\sbar.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="screen.h">
+    <ClInclude Include="..\..\trunk\screen.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="security.h">
+    <ClInclude Include="..\..\trunk\security.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="server.h">
+    <ClInclude Include="..\..\trunk\server.h">
       <Filter>Header Files\Server_h</Filter>
     </ClInclude>
-    <ClInclude Include="sound.h">
+    <ClInclude Include="..\..\trunk\sound.h">
       <Filter>Header Files\Sound_h</Filter>
     </ClInclude>
-    <ClInclude Include="spritegn.h">
+    <ClInclude Include="..\..\trunk\spritegn.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="sys.h">
+    <ClInclude Include="..\..\trunk\sys.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="version.h">
+    <ClInclude Include="..\..\trunk\version.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="vid.h">
+    <ClInclude Include="..\..\trunk\vid.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="view.h">
+    <ClInclude Include="..\..\trunk\view.h">
       <Filter>Header Files\Client_h</Filter>
     </ClInclude>
-    <ClInclude Include="wad.h">
+    <ClInclude Include="..\..\trunk\wad.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="winquake.h">
+    <ClInclude Include="..\..\trunk\winquake.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="world.h">
+    <ClInclude Include="..\..\trunk\world.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="zone.h">
+    <ClInclude Include="..\..\trunk\zone.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
-    <ClInclude Include="fakegl.h">
+    <ClInclude Include="..\..\trunk\fakegl.h">
       <Filter>Header Files\OpenGL_h</Filter>
     </ClInclude>
-    <ClInclude Include="progdefs.h">
+    <ClInclude Include="..\..\trunk\progdefs.h">
       <Filter>Header Files\VM_h</Filter>
     </ClInclude>
-    <ClInclude Include="progs.h">
+    <ClInclude Include="..\..\trunk\progs.h">
       <Filter>Header Files\VM_h</Filter>
     </ClInclude>
-    <ClInclude Include="gl_warp_sin.h">
+    <ClInclude Include="..\..\trunk\gl_warp_sin.h">
       <Filter>Header Files\OpenGL_h</Filter>
     </ClInclude>
-    <ClInclude Include="ghost\demoparse.h">
+    <ClInclude Include="..\..\trunk\ghost\demoparse.h">
       <Filter>Header Files\Ghost_h</Filter>
     </ClInclude>
-    <ClInclude Include="ghost\ghost.h">
+    <ClInclude Include="..\..\trunk\ghost\ghost.h">
       <Filter>Header Files\Ghost_h</Filter>
     </ClInclude>
-    <ClInclude Include="ghost\ghost_private.h">
+    <ClInclude Include="..\..\trunk\ghost\ghost_private.h">
       <Filter>Header Files\Ghost_h</Filter>
     </ClInclude>
-    <ClInclude Include="ghost\demosummary.h">
+    <ClInclude Include="..\..\trunk\ghost\demosummary.h">
       <Filter>Header Files\Ghost_h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="joequake.bmp">
+    <None Include="..\joequake.bmp">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="quake.ico">
+    <None Include="..\quake.ico">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="d_draw.s">
+    <CustomBuild Include="..\..\trunk\d_draw.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="d_draw16.s">
+    <CustomBuild Include="..\..\trunk\d_draw16.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="d_parta.s">
+    <CustomBuild Include="..\..\trunk\d_parta.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="d_polysa.s">
+    <CustomBuild Include="..\..\trunk\d_polysa.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="d_scana.s">
+    <CustomBuild Include="..\..\trunk\d_scana.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="d_spr8.s">
+    <CustomBuild Include="..\..\trunk\d_spr8.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="d_varsa.s">
+    <CustomBuild Include="..\..\trunk\d_varsa.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="math.s">
+    <CustomBuild Include="..\..\trunk\math.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="r_aclipa.s">
+    <CustomBuild Include="..\..\trunk\r_aclipa.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="r_aliasa.s">
+    <CustomBuild Include="..\..\trunk\r_aliasa.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="r_drawa.s">
+    <CustomBuild Include="..\..\trunk\r_drawa.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="r_edgea.s">
+    <CustomBuild Include="..\..\trunk\r_edgea.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="r_varsa.s">
+    <CustomBuild Include="..\..\trunk\r_varsa.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="snd_mixa.s">
+    <CustomBuild Include="..\..\trunk\snd_mixa.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="surf8.s">
+    <CustomBuild Include="..\..\trunk\surf8.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="sys_x86.s">
+    <CustomBuild Include="..\..\trunk\sys_x86.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="worlda.s">
+    <CustomBuild Include="..\..\trunk\worlda.s">
       <Filter>Asm Files</Filter>
     </CustomBuild>
   </ItemGroup>
