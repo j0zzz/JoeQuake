@@ -35,6 +35,7 @@ static cvar_t ghost_bar_alpha = { "ghost_bar_alpha", "0.8", CVAR_ARCHIVE };
 static dzip_context_t ghost_dz_ctx;
 static ghost_info_t *ghost_info = NULL;
 char                ghost_demo_path[MAX_OSPATH] = "";
+static char         ghost_map_name[MAX_QPATH];
 static ghostrec_t   *ghost_records = NULL;
 static int          ghost_num_records = 0;
 entity_t			*ghost_entity = NULL;
@@ -176,7 +177,7 @@ Ghost_OpenDemoOrDzip (const char *demo_path)
 static qboolean first_update;
 
 extern char *GetPrintedTime(double time);   // Maybe put the definition somewhere central?
-void Ghost_Load (const char *map_name)
+static void Ghost_Load (void)
 {
     int i;
     FILE *demo_file;
@@ -199,12 +200,12 @@ void Ghost_Load (const char *map_name)
 
     for (i = 0; i < ghost_info->num_levels; i++) {
         level = &ghost_info->levels[i];
-        if (strcmp(map_name, level->map_name) == 0) {
+        if (strcmp(ghost_map_name, level->map_name) == 0) {
             break;
         }
     }
     if (i == ghost_info->num_levels) {
-        Con_Printf("Map %s not found in ghost demo\n", map_name);
+        Con_Printf("Map %s not found in ghost demo\n", ghost_map_name);
         return;
     }
 
@@ -363,6 +364,17 @@ static qboolean Ghost_Update (void)
 void R_DrawAliasModel (entity_t *ent);
 void Ghost_Draw (void)
 {
+    /*
+     * Reload the ghost if level has changed.
+     */
+    if (ghost_demo_path[0] != '\0'
+            && strncmp(ghost_map_name, CL_MapName(), MAX_QPATH)) {
+        Q_strncpyz(ghost_map_name, CL_MapName(), MAX_QPATH);
+        if (ghost_map_name[0] != '\0') {
+            Ghost_Load();
+        }
+    }
+
     /*
      * These attributes are required by R_DrawAliasModel:
      *  - model
