@@ -307,8 +307,7 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy ".\debug_gl\joequake-gl-DEV.exe" ".\..\..\..\TEST" /Y</Command>
     </PostBuildEvent>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
