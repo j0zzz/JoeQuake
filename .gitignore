@@ -2,7 +2,6 @@
 *.db-shm
 *.db-wal
 *.opendb
-trunk/.vs/*
 *.obj
 *.pdb
 *.exe
@@ -16,9 +15,6 @@ trunk/.vs/*
 *.ipch
 *.vs
 trunk/_shelve_*
-Windows/dxsdk/*
-Windows/scitech/*
-Windows/SDL2/*
 Windows/VisualStudio/debug_*
 Windows/VisualStudio/release_*
 Windows/VisualStudio/JoeQuake.sdf
