@@ -134,7 +134,7 @@ void R_TranslatePlayerSkin (int playernum, qboolean ghost)
 	}
 
 	// locate the original skin pixels
-	currententity = ghost ? ghost_entity : &cl_entities[1 + playernum];
+	currententity = ghost ? &ghost_entity : &cl_entities[1 + playernum];
 	if (!(model = currententity->model))
 		return;		// player doesn't have a model yet
 	if (model->type != mod_alias)

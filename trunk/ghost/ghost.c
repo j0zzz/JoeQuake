@@ -38,7 +38,7 @@ char                ghost_demo_path[MAX_OSPATH] = "";
 static char         ghost_map_name[MAX_QPATH];
 static ghostrec_t   *ghost_records = NULL;
 static int          ghost_num_records = 0;
-entity_t			*ghost_entity = NULL;
+entity_t            ghost_entity;
 static float        ghost_shift = 0.0f;
 static float        ghost_finish_time = -1.0f;
 static int          ghost_model_indices[GHOST_MODEL_COUNT];
@@ -185,7 +185,6 @@ static void Ghost_Load (void)
 
     ghost_records = NULL;
     ghost_num_records = 0;
-    ghost_entity = NULL;
     ghost_finish_time = -1.0f;
 
     if (ghost_demo_path[0] == '\0') {
@@ -231,14 +230,11 @@ static void Ghost_Load (void)
         Con_Printf("Ghost time:       %s\n", GetPrintedTime(level->finish_time));
     }
 
-    ghost_entity = (entity_t *)Hunk_AllocName(sizeof(entity_t),
-                                              "ghost_entity");
-
-    ghost_entity->skinnum = 0;
-    ghost_entity->modelindex = -1;
-    ghost_entity->translate_start_time = 0.0f;
-    ghost_entity->frame_start_time = 0.0f;
-    ghost_entity->scale = ENTSCALE_DEFAULT;
+    ghost_entity.skinnum = 0;
+    ghost_entity.modelindex = -1;
+    ghost_entity.translate_start_time = 0.0f;
+    ghost_entity.frame_start_time = 0.0f;
+    ghost_entity.scale = ENTSCALE_DEFAULT;
 
     ghost_shift = 0.0f;
     ghost_last_relative_time = 0.0f;
@@ -289,7 +285,7 @@ static qboolean Ghost_SetAlpha(void)
     float dist;
 
     // distance from player to ghost
-    VectorSubtract(ent->origin, ghost_entity->origin, diff);
+    VectorSubtract(ent->origin, ghost_entity.origin, diff);
     dist = VectorLength(diff);
 
     // fully opaque at range+64, fully transparent at range
@@ -298,7 +294,7 @@ static qboolean Ghost_SetAlpha(void)
     // scale by cvar alpha
     alpha *= bound(0.0f, ghost_alpha.value, 1.0f);
 
-    ghost_entity->transparency = alpha;
+    ghost_entity.transparency = alpha;
 
     return alpha != 0.0f;
 }
@@ -325,16 +321,16 @@ static qboolean Ghost_Update (void)
             if (ghost_model_indices[i] != 0
                     && rec_after->model == ghost_model_indices[i]) {
                 ghost_show = true;
-                ghost_entity->model = Mod_ForName((char *)ghost_model_paths[i],
+                ghost_entity.model = Mod_ForName((char *)ghost_model_paths[i],
                                                   false);
                 if (first_update) {
                     CL_NewTranslation(clientnum, true);
                     first_update = false;
                 }
                 if (i == GHOST_MODEL_PLAYER)
-                    ghost_entity->colormap = ghost_color_info[clientnum].translations;
+                    ghost_entity.colormap = ghost_color_info[clientnum].translations;
                 else
-                    ghost_entity->colormap = vid.colormap;  // eyes, head
+                    ghost_entity.colormap = vid.colormap;  // eyes, head
             }
         }
     }
@@ -344,14 +340,14 @@ static qboolean Ghost_Update (void)
                 / (rec_after->time - rec_before->time);
 
         // TODO: lerp animation frames
-        ghost_entity->frame = rec_after->frame;
+        ghost_entity.frame = rec_after->frame;
 
         Ghost_LerpOrigin(rec_before->origin, rec_after->origin,
                          frac,
-                         ghost_entity->origin);
+                         ghost_entity.origin);
         Ghost_LerpAngle(rec_before->angle, rec_after->angle,
                         frac,
-                        ghost_entity->angles);
+                        ghost_entity.angles);
 
         // Set alpha based on distance to player.
         ghost_show = Ghost_SetAlpha();
@@ -387,8 +383,8 @@ void Ghost_Draw (void)
      *  - frame
      */
     if (Ghost_Update()) {
-        currententity = ghost_entity;
-        R_DrawAliasModel (ghost_entity);
+        currententity = &ghost_entity;
+        R_DrawAliasModel (&ghost_entity);
     }
 }
 
@@ -854,6 +850,7 @@ static void Ghost_Command_f (void)
     if (ok) {
         Q_strlcpy(ghost_demo_path, demo_path, sizeof(ghost_demo_path));
         Ghost_PrintSummary();
+        ghost_map_name[0] = '\0';  // force ghost to be loaded next time map is rendered.
     }
 
     if (!ok) {

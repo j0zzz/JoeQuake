@@ -1693,7 +1693,7 @@ void R_DrawAliasModel (entity_t *ent)
 		extern int player_32bit_skins[14];
 		extern qboolean player_32bit_skins_loaded;
 
-		if (ent == ghost_entity)
+		if (ent == &ghost_entity)
 		{
 			i = 1;	// currently only supporting 1 ghost player
 
