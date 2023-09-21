@@ -54,9 +54,6 @@ int			allocated[LMBLOCK_WIDTH];
 
 unsigned	blocklights[LMBLOCK_WIDTH*LMBLOCK_HEIGHT*3]; //johnfitz -- was 18*18, added lit support (*3) and loosened surface extents maximum (LMBLOCK_WIDTH*LMBLOCK_HEIGHT)
 
-static glpoly_t	*world_waterlightmap_polys[MAX_LIGHTMAPS];
-static glpoly_t	*bmodel_waterlightmap_polys[MAX_LIGHTMAPS];
-
 glpoly_t	*fullbright_polys[MAX_GLTEXTURES];
 glpoly_t	*luma_polys[MAX_GLTEXTURES];
 qboolean	drawfullbrights = false, drawlumas = false;
@@ -749,24 +746,8 @@ void R_RenderDynamicLightmaps (msurface_t *fa, texchain_t chain)
 		return;
 
 	// add to lightmap chain
-	if (fa->flags & SURF_DRAWTURB)
-	{
-		if (chain == chain_world)
-		{
-			fa->polys->chain = world_waterlightmap_polys[fa->lightmaptexturenum];
-			world_waterlightmap_polys[fa->lightmaptexturenum] = fa->polys;
-		}
-		else if (chain == chain_model)
-		{
-			fa->polys->chain = bmodel_waterlightmap_polys[fa->lightmaptexturenum];
-			bmodel_waterlightmap_polys[fa->lightmaptexturenum] = fa->polys;
-		}
-	}
-	else
-	{
-		fa->polys->chain = lightmaps[fa->lightmaptexturenum].polys;
-		lightmaps[fa->lightmaptexturenum].polys = fa->polys;
-	}
+	fa->polys->chain = lightmaps[fa->lightmaptexturenum].polys;
+	lightmaps[fa->lightmaptexturenum].polys = fa->polys;
 
 	if (!r_dynamic.value)
 		return;
@@ -828,11 +809,6 @@ static void R_ClearTextureChains (model_t *mod, texchain_t chain)
 	for (i = 0; i < lightmap_count; i++)
 		lightmaps[i].polys = NULL;
 
-	if (chain == chain_world)
-		memset(world_waterlightmap_polys, 0, sizeof(world_waterlightmap_polys));
-	else if (chain == chain_model)
-		memset(bmodel_waterlightmap_polys, 0, sizeof(bmodel_waterlightmap_polys));
-
 	memset (fullbright_polys, 0, sizeof(fullbright_polys));
 	memset (luma_polys, 0, sizeof(luma_polys));
 
@@ -887,8 +863,6 @@ void R_MarkSurfaces(void)
 	// clear lightmap chains
 	for (i = 0; i < lightmap_count; i++)
 		lightmaps[i].polys = NULL;
-	memset(world_waterlightmap_polys, 0, sizeof(world_waterlightmap_polys));
-	memset(bmodel_waterlightmap_polys, 0, sizeof(bmodel_waterlightmap_polys));
 
 	// check this leaf for water portals
 	// TODO: loop through all water surfs and use distance to leaf cullbox
@@ -2018,19 +1992,6 @@ void R_DrawTextureChains_Water(model_t *model, entity_t *ent, texchain_t chain)
 				R_EndTransparentDrawing(entalpha);
 			}
 		}
-	}
-	
-	if (cl.worldmodel->haslitwater && r_litwater.value && (!r_world_program || r_oldwater.value))
-	{
-		glEnable(GL_POLYGON_OFFSET_FILL);	//joe: i've added this to fix z-fighting when r_wateralpha is 1.0
-		glPolygonOffset(-1, -1);
-
-		if (chain == chain_world)
-			R_BlendLightmaps(world_waterlightmap_polys);
-		else if (chain == chain_model)
-			R_BlendLightmaps(bmodel_waterlightmap_polys);
-	
-		glDisable(GL_POLYGON_OFFSET_FILL); 
 	}
 }
 
