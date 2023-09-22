@@ -1,2 +1,14 @@
 remote_theme: LeNPaul/Millennial
-title: JoeQuake
+
+# jekyll-paginate configuration
+paginate:     5
+
+# Build settings
+markdown:     kramdown
+highlighter:  rouge
+permalink:    /:title
+plugins:      [jekyll-paginate, jekyll-sitemap, jekyll-feed, jekyll-seo-tag]
+
+# Customise atom feed settings (this is where Jekyll-Feed gets configuration information)
+title:        "JoeQuake"
+description:	"makuka"
