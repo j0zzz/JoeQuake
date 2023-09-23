@@ -1,0 +1,32 @@
+# Change 'comments' to true for Disqus comments
+disqus:
+  comments: false
+  disqus_shortname: 'millennial-3'
+
+# If you are not using Google Analytics, please change 'google-ID' to an empty string
+google-ID: 'UA-112060364-2'
+
+menu:
+- {name: 'Features',  url: 'facts'}
+- {name: 'Download', url: 'resources'}
+- {name: 'Screens',       url: 'sample-posts'}
+- {name: 'About',              url: 'about'}
+- {name: 'Links',            url: 'contact'}
+
+# Available social icons are powered by Font Awesome, so you can use any icon that they offer
+social:
+- {icon: 'discord', link:    'https://twitter.com/paululele'}
+- {icon: 'youtube', link:   'https://www.youtube.com/@QuakeSpeedrunning'}
+- {icon: 'envelope', link:   'mailto:joequake@gmail.com'}
+# - {icon: 'rss-square', link: 'rss-feed.xml'}
+
+# Customize site text
+# pagination:
+#   next_page: 'Newer'
+#   previous_page: 'Older'
+
+sharing_button_prompt: 'Feel free to share!'
+
+related_posts: 'You may also enjoy...'
+
+post_date_prefix: 'Written on'

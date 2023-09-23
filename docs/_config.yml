@@ -1,14 +1,19 @@
-remote_theme: LeNPaul/Millennial
+# Site Build Settings
 
 # jekyll-paginate configuration
-paginate:     5
+paginate:            10
 
 # Build settings
-markdown:     kramdown
-highlighter:  rouge
-permalink:    /:title
-plugins:      [jekyll-paginate, jekyll-sitemap, jekyll-feed, jekyll-seo-tag]
+markdown:            kramdown
+highlighter:         rouge
+permalink:           /:title
+plugins:             [jekyll-paginate, jekyll-sitemap, jekyll-feed, jekyll-seo-tag]
 
 # Customise atom feed settings (this is where Jekyll-Feed gets configuration information)
-title:        "JoeQuake"
-description:	"makuka"
+title:               "JoeQuake"
+description:	       "a custom Quake engine designed for speedrunning"
+author:              "Jozsef Szalontai"
+
+# RSS 2.0 can be used instead of Atom by uncommenting following two lines
+#feed:
+#  path: rss-feed.xml
