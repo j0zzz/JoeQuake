@@ -1,4 +1,4 @@
-# Site Build Settings
+remote_theme: LeNPaul/Millennial
 
 # jekyll-paginate configuration
 paginate:            10
