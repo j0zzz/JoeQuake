@@ -1,8 +1,8 @@
 ---
 layout: post
 title: "Ghost recording"
-author: "Paul Le"
-categories: documentation
+author: "Jozsef Szalontai"
+categories: features
 tags: [documentation,sample]
 image: cuba-1.jpg
 ---

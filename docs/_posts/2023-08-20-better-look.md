@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Improved graphics"
-author: "Paul Le"
-categories: sample
-tags: [sample]
+author: "Jozsef Szalontai"
+categories: features
+tags: [documentation,sample]
 image: arctic-1.jpg
 ---
 

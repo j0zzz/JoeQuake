@@ -1,9 +1,9 @@
 ---
 layout: post
 title: "Large maps"
-author: "Paul Le"
-categories: facts
-tags: [sample]
+author: "Jozsef Szalontai"
+categories: features
+tags: [documentation,sample]
 image: cuba-2.jpg
 ---
 

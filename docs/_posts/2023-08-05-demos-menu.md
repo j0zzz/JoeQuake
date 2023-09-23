@@ -1,8 +1,8 @@
 ---
 layout: post
 title: "Demos menu"
-author: "Paul Le"
-categories: documentation
+author: "Jozsef Szalontai"
+categories: features
 tags: [documentation,sample]
 image: city-1.jpg
 ---
