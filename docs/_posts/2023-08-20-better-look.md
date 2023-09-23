@@ -4,7 +4,7 @@ title: "Improved graphics"
 author: "Jozsef Szalontai"
 categories: features
 tags: [documentation,sample]
-image: arctic-1.jpg
+image: jq-improved-graphics.jpg
 ---
 
 # Markdown Support

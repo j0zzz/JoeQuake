@@ -4,7 +4,7 @@ title: "Demos menu"
 author: "Jozsef Szalontai"
 categories: features
 tags: [documentation,sample]
-image: city-1.jpg
+image: jq-demos-menu.jpg
 ---
 
 # Millennial
