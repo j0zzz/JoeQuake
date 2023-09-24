@@ -47,6 +47,8 @@ typedef enum {false, true}	qboolean;
 
 #define bound(a, b, c) ((a) >= (c) ? (a) : (b) < (a) ? (a) : (b) > (c) ? (c) : (b))
 
+#define countof(x) (sizeof(x) / sizeof((x)[0]))
+
 //============================================================================
 
 typedef struct sizebuf_s
@@ -189,7 +191,14 @@ static inline int Q_isspace(int c)
 extern	char		com_token[1024];
 extern	qboolean	com_eof;
 
+typedef enum
+{
+	CPE_NOTRUNC,					// return parse error in case of overflow
+	CPE_ALLOWTRUNC,					// truncate com_token in case of overflow
+} cpe_mode;
+
 char *COM_Parse (char *data);
+char *COM_ParseEx (char *data, cpe_mode mode);
 
 
 extern	int	com_argc;

@@ -987,22 +987,26 @@ void COM_DefaultExtension (char *path, char *extension)
 
 /*
 ==============
-COM_Parse
+COM_ParseEx
 
 Parse a token out of a string
+
+The mode argument controls how overflow is handled:
+- CPE_NOTRUNC:		return NULL (abort parsing)
+- CPE_ALLOWTRUNC:	truncate com_token (ignore the extra characters in this token)
 ==============
 */
-char *COM_Parse (char *data)
+char *COM_ParseEx (char *data, cpe_mode mode)
 {
 	int	c, len;
-	
+
 	len = 0;
 	com_token[0] = 0;
-	
+
 	if (!data)
 		return NULL;
-		
-// skip whitespace
+
+	// skip whitespace
 skipwhite:
 	while ((c = *data) <= ' ')
 	{
@@ -1010,48 +1014,65 @@ skipwhite:
 			return NULL;		// end of file;
 		data++;
 	}
-	
-// skip // comments
+
+	// skip // comments
 	if (c == '/' && data[1] == '/')
 	{
 		while (*data && *data != '\n')
 			data++;
 		goto skipwhite;
 	}
-	
 
-// handle quoted strings specially
+	// skip /*..*/ comments
+	if (c == '/' && data[1] == '*')
+	{
+		data += 2;
+		while (*data && !(*data == '*' && data[1] == '/'))
+			data++;
+		if (*data)
+			data += 2;
+		goto skipwhite;
+	}
+
+	// handle quoted strings specially
 	if (c == '\"')
 	{
 		data++;
 		while (1)
 		{
-			c = *data++;
+			if ((c = *data) != 0)
+				++data;
 			if (c == '\"' || !c)
 			{
 				com_token[len] = 0;
 				return data;
 			}
-			com_token[len] = c;
-			len++;
+			if (len < countof(com_token) - 1)
+				com_token[len++] = c;
+			else if (mode == CPE_NOTRUNC)
+				return NULL;
 		}
 	}
 
-// parse single characters
+	// parse single characters
 	if (c == '{' || c == '}'|| c == ')'|| c == '(' || c == '\'' || c == ':')
 	{
-		com_token[len] = c;
-		len++;
+		if (len < countof(com_token) - 1)
+			com_token[len++] = c;
+		else if (mode == CPE_NOTRUNC)
+			return NULL;
 		com_token[len] = 0;
 		return data+1;
 	}
 
-// parse a regular word
+	// parse a regular word
 	do
 	{
-		com_token[len] = c;
+		if (len < countof(com_token) - 1)
+			com_token[len++] = c;
+		else if (mode == CPE_NOTRUNC)
+			return NULL;
 		data++;
-		len++;
 		c = *data;
 		// joe, from ProQuake: removed ':' so that ip:port works
 		if (c == '{' || c == '}'|| c == ')'|| c == '(' || c == '\'' /*|| c==':'*/)
@@ -1060,6 +1081,20 @@ skipwhite:
 
 	com_token[len] = 0;
 	return data;
+}
+
+/*
+==============
+COM_Parse
+
+Parse a token out of a string
+
+Return NULL in case of overflow
+==============
+*/
+char *COM_Parse (char *data)
+{
+	return COM_ParseEx (data, CPE_NOTRUNC);
 }
 
 /*

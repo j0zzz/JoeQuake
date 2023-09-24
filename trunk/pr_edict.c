@@ -893,7 +893,11 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		}
 
 	// parse value	
-		if (!(data = COM_Parse (data)))
+	// HACK: we allow truncation when reading the wad field,
+	// otherwise maps using lots of wads with absolute paths
+	// could cause a parse error
+		data = COM_ParseEx (data, !strcmp(keyname, "wad") ? CPE_ALLOWTRUNC : CPE_NOTRUNC);
+		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
 
 		if (com_token[0] == '}')

@@ -1167,7 +1167,7 @@ void Sky_NewMap(void)
 			strcpy(key, com_token);
 		while (key[strlen(key) - 1] == ' ') // remove trailing spaces
 			key[strlen(key) - 1] = 0;
-		data = COM_Parse(data);
+		data = COM_ParseEx(data, CPE_ALLOWTRUNC);
 		if (!data)
 			return; // error
 		strcpy(value, com_token);
