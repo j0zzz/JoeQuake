@@ -40,7 +40,6 @@ static ghostrec_t   *ghost_records = NULL;
 static int          ghost_num_records = 0;
 entity_t            ghost_entity;
 static float        ghost_shift = 0.0f;
-static float        ghost_finish_time = -1.0f;
 static int          ghost_model_indices[GHOST_MODEL_COUNT];
 static float        ghost_last_relative_time = 0.0f;
 static demo_summary_t ghost_demo_summary;
@@ -54,7 +53,7 @@ const char *ghost_model_paths[GHOST_MODEL_COUNT] = {
 #define MAX_MARATHON_LEVELS     256
 typedef struct {
     char map_name[MAX_QPATH];
-    float ghost_time;
+    float ghost_time;       // -1 if no time for current ghost
     float player_time;
 } ghost_marathon_level_t;
 typedef struct {
@@ -62,10 +61,12 @@ typedef struct {
     ghost_marathon_level_t levels[MAX_MARATHON_LEVELS];
     float total_split;
     int num_levels;
+    int ghost_start;
 } ghost_marathon_info_t;
 static ghost_marathon_info_t ghost_marathon_info;
 
 ghost_color_info_t ghost_color_info[GHOST_MAX_CLIENTS];
+extern char *GetPrintedTime(double time);   // Maybe put the definition somewhere central?
 
 
 // This could be done more intelligently, no doubt.
@@ -174,9 +175,65 @@ Ghost_OpenDemoOrDzip (const char *demo_path)
 }
 
 
+// Update the ghost times in the ghost marathon info.  Called on intermission or
+// when the ghost is changed.
+static void Ghost_UpdateMarathon (void)
+{
+    int i, j;
+    ghost_level_t *gl;
+    ghost_marathon_level_t *gml;
+    ghost_marathon_info_t *gmi = &ghost_marathon_info;
+
+    gmi->valid = true;
+    gmi->total_split = 0.0f;
+    for (i = 0; i < gmi->num_levels; i++) {
+        gml = &gmi->levels[i];
+
+        gml->ghost_time = -1.0f;
+        for (j = 0; j < ghost_info->num_levels; j++) {
+            gl = &ghost_info->levels[j];
+            if (strcmp(gl->map_name, gml->map_name) == 0
+                    && gl->finish_time > 0) {
+                gml->ghost_time = gl->finish_time;
+                break;
+            }
+        }
+        if (gml->ghost_time < 0.0) {
+            gmi->valid = false;
+        } else {
+            gmi->total_split += (gml->player_time - gml->ghost_time);
+        }
+    }
+}
+
+
+static void Ghost_PrintMarathonSplits (void)
+{
+    int i;
+    ghost_marathon_level_t *gml;
+    ghost_marathon_info_t *gmi = &ghost_marathon_info;
+
+    if (gmi->valid && gmi->num_levels > 0) {
+        Con_Printf("ghost splits:\n");
+        Con_Printf("  map                time    split    total\n");
+        Con_Printf("  \x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
+                   "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
+                   "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
+                   "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f\n");
+        for (i = gmi->ghost_start; i < gmi->num_levels; i++) {
+            gml = &gmi->levels[i];
+            Con_Printf("  %-10s %12s %+8.2f %+8.2f\n",
+                       gml->map_name,
+                       GetPrintedTime(gml->player_time),
+                       (gml->player_time - gml->ghost_time),
+                       gmi->total_split);
+        }
+    }
+}
+
+
 static qboolean first_update;
 
-extern char *GetPrintedTime(double time);   // Maybe put the definition somewhere central?
 static void Ghost_Load (void)
 {
     int i;
@@ -185,7 +242,6 @@ static void Ghost_Load (void)
 
     ghost_records = NULL;
     ghost_num_records = 0;
-    ghost_finish_time = -1.0f;
 
     if (ghost_demo_path[0] == '\0') {
         if (ghost_info != NULL) {
@@ -225,7 +281,6 @@ static void Ghost_Load (void)
     Con_Printf("\n");
 
     // Print finish time
-    ghost_finish_time = level->finish_time;
     if (level->finish_time > 0) {
         Con_Printf("Ghost time:       %s\n", GetPrintedTime(level->finish_time));
     }
@@ -238,10 +293,6 @@ static void Ghost_Load (void)
 
     ghost_shift = 0.0f;
     ghost_last_relative_time = 0.0f;
-    if ((!sv.active && !cls.demoplayback) || cls.marathon_level == 0) {
-        ghost_marathon_info.total_split = 0.0f;
-        ghost_marathon_info.num_levels = 0;
-    }
 
     first_update = true;
 }
@@ -693,55 +744,21 @@ void Ghost_DrawGhostTime (qboolean intermission)
 
 void Ghost_Finish (void)
 {
-    int i;
-    float split;
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
 
-    if (ghost_finish_time > 0) {
-        if (!sv.active && !cls.demoplayback) {
-            // Can't track marathons for remote servers.
-            gmi->valid = false;
-        } else if (cls.marathon_level == 1) {
-            gmi->valid = true;
-        }
-        if (!gmi->valid) {
-            // If the ghost did not finish one of the levels, just print this
-            // level's splits.
-            gmi->num_levels = 1;
-        } else {
-            gmi->num_levels = cls.marathon_level;
-        }
-
+    if (sv.active || cls.demoplayback) {
+        gmi->num_levels = cls.marathon_level;
         if (gmi->num_levels - 1 < MAX_MARATHON_LEVELS) {
             gml = &gmi->levels[gmi->num_levels - 1];
             Q_strncpyz(gml->map_name, CL_MapName(), MAX_QPATH);
             gml->player_time = cl.mtime[0];
-            gml->ghost_time = ghost_finish_time;
         }
 
-        Con_Printf("ghost splits:\n");
-        Con_Printf("  map                time    split    total\n");
-        Con_Printf("  \x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
-                   "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
-                   "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
-                   "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f\n");
-        gmi->total_split = 0.0f;
-        for (i = 0; i < gmi->num_levels; i++) {
-            gml = &gmi->levels[i];
-            split = (gml->player_time - gml->ghost_time);
-            gmi->total_split += split;
-            Con_Printf("  %-10s %12s %+8.2f %+8.2f\n",
-                       gml->map_name,
-                       GetPrintedTime(gml->player_time),
-                       split,
-                       gmi->total_split);
-        }
+        Ghost_UpdateMarathon();
+        Ghost_PrintMarathonSplits();
     } else {
-        if (gmi->valid) {
-            Con_Printf("Ghost did not finish, marathon stopped\n");
-        }
-        gmi->valid = false;
+        gmi->num_levels = 0;
     }
 }
 
@@ -858,6 +875,11 @@ static void Ghost_Command_f (void)
     }
 
     DZip_Cleanup(&ghost_dz_ctx);
+
+    if (sv.active || cls.demoplayback) {
+        Ghost_UpdateMarathon();
+        Ghost_PrintMarathonSplits();
+    }
 }
 
 
