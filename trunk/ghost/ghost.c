@@ -245,7 +245,6 @@ static void Ghost_Load (void)
     ghost_level_t *level;
 
     ghost_records = NULL;
-    ghost_num_records = 0;
 
     if (ghost_demo_path[0] == '\0') {
         if (ghost_info != NULL) {
@@ -904,6 +903,7 @@ static void Ghost_RemoveCommand_f (void)
     } else {
         Ghost_Free(&ghost_info);
         ghost_demo_path[0] = '\0';
+        ghost_records = NULL;
     }
 }
 
