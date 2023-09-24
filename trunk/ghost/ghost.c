@@ -209,6 +209,7 @@ static void Ghost_UpdateMarathon (void)
 
 static void Ghost_PrintMarathonSplits (void)
 {
+    float split, total_split;
     int i;
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
@@ -220,13 +221,16 @@ static void Ghost_PrintMarathonSplits (void)
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f\n");
+        total_split = 0.0f;
         for (i = gmi->ghost_start; i < gmi->num_levels; i++) {
             gml = &gmi->levels[i];
+            split = gml->player_time - gml->ghost_time;
+            total_split += split;
             Con_Printf("  %-10s %12s %+8.2f %+8.2f\n",
                        gml->map_name,
                        GetPrintedTime(gml->player_time),
-                       (gml->player_time - gml->ghost_time),
-                       gmi->total_split);
+                       split,
+                       total_split);
         }
     }
 }
@@ -755,10 +759,10 @@ void Ghost_Finish (void)
             gml->player_time = cl.mtime[0];
         }
 
-        Ghost_UpdateMarathon();
-        Ghost_PrintMarathonSplits();
-    } else {
-        gmi->num_levels = 0;
+        if (ghost_demo_path[0]) {
+            Ghost_UpdateMarathon();
+            Ghost_PrintMarathonSplits();
+        }
     }
 }
 
@@ -876,7 +880,7 @@ static void Ghost_Command_f (void)
 
     DZip_Cleanup(&ghost_dz_ctx);
 
-    if (sv.active || cls.demoplayback) {
+    if (ok && (sv.active || cls.demoplayback)) {
         Ghost_UpdateMarathon();
         Ghost_PrintMarathonSplits();
     }
