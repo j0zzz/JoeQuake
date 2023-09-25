@@ -261,7 +261,7 @@ static void Ghost_Load (void)
             break;
         }
     }
-    if (i == ghost_info->num_levels) {
+    if (i >= ghost_info->num_levels) {
         Con_Printf("Map %s not found in ghost demo\n", ghost_map_name);
         return;
     }
