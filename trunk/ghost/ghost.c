@@ -60,7 +60,6 @@ typedef struct {
     qboolean valid;         // has there been a ghost time for each level?
     ghost_marathon_level_t levels[MAX_MARATHON_LEVELS];
     float total_split;
-    int num_levels;
     int ghost_start;
 } ghost_marathon_info_t;
 static ghost_marathon_info_t ghost_marathon_info;
@@ -186,7 +185,7 @@ static void Ghost_UpdateMarathon (void)
 
     gmi->valid = true;
     gmi->total_split = 0.0f;
-    for (i = 0; i < gmi->num_levels; i++) {
+    for (i = 0; i < cls.marathon_level; i++) {
         gml = &gmi->levels[i];
 
         gml->ghost_time = -1.0f;
@@ -214,7 +213,7 @@ static void Ghost_PrintMarathonSplits (void)
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
 
-    if (gmi->valid && gmi->num_levels > 0) {
+    if (gmi->valid && cls.marathon_level > 0) {
         Con_Printf("ghost splits:\n");
         Con_Printf("  map                time    split    total\n");
         Con_Printf("  \x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
@@ -222,7 +221,7 @@ static void Ghost_PrintMarathonSplits (void)
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f\n");
         total_split = 0.0f;
-        for (i = gmi->ghost_start; i < gmi->num_levels; i++) {
+        for (i = gmi->ghost_start; i < cls.marathon_level; i++) {
             gml = &gmi->levels[i];
             split = gml->player_time - gml->ghost_time;
             total_split += split;
@@ -670,7 +669,7 @@ static void Ghost_DrawIntermissionTimes (void)
     min_y = ((cl.intermission == 2) ? 182 : 174) * scale;
 
     total = gmi->total_split;
-    for (i = gmi->num_levels - 1; i >= 0; i--) {
+    for (i = cls.marathon_level - 1; i >= 0; i--) {
         y -= 2 * size;
         if (y <= min_y) {
             break;
@@ -690,7 +689,7 @@ static void Ghost_DrawIntermissionTimes (void)
             Q_snprintfz (st, sizeof(st), "%s", RedString("Total"));
         }
 
-        if (gmi->num_levels > 1) {
+        if (cls.marathon_level > 1) {
             x = ((vid.width + (int)(184 * scale)) / 2) + (ghost_bar_x.value * size);
             Draw_String (x, y, st, true);
         }
@@ -751,9 +750,8 @@ void Ghost_Finish (void)
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
 
     if (sv.active || cls.demoplayback) {
-        gmi->num_levels = cls.marathon_level;
-        if (gmi->num_levels - 1 < MAX_MARATHON_LEVELS) {
-            gml = &gmi->levels[gmi->num_levels - 1];
+        if (cls.marathon_level - 1 < MAX_MARATHON_LEVELS) {
+            gml = &gmi->levels[cls.marathon_level - 1];
             Q_strncpyz(gml->map_name, CL_MapName(), MAX_QPATH);
             gml->player_time = cl.mtime[0];
         }
@@ -862,6 +860,8 @@ static void Ghost_Command_f (void)
         fseek(demo_file, 0, SEEK_SET);
         if (ghost_info != NULL) {
             Ghost_Free(&ghost_info);
+            ghost_demo_path[0] = '\0';
+            ghost_records = NULL;
         }
         ok = Ghost_ReadDemo(demo_file, &ghost_info);
         // file is now closed.
