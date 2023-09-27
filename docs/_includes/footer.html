@@ -1,0 +1,6 @@
+<footer class="footer">
+  {% for item in site.data.settings.social %}
+    {% include social-icons.html %}
+  {% endfor %}
+  <div class="footer-description"><a href="{{ site.github.url }}/">{{ site.title }} | {{ site.description }} by {{ site.author }}</a></div>
+</footer>

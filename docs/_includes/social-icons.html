@@ -1,0 +1,5 @@
+{% if item.icon == "discord" %}
+  <a href="{{ item.link }}" class="menu-link" target="_blank"><i class="fa footer-social-icon" aria-hidden="true"><img src="assets/img/discord.svg" width="16px" height="16px" class="footer-social-image"></i></a>
+{% else %}
+  <a href="{{ item.link }}" class="menu-link" target="_blank"><i class="fa fa-{{ item.icon }}" aria-hidden="true"></i></a>
+{% endif %}
