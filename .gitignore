@@ -19,3 +19,11 @@ Windows/VisualStudio/debug_*
 Windows/VisualStudio/release_*
 Windows/VisualStudio/JoeQuake.sdf
 Windows/VisualStudio/joequake.aps
+
+_site
+Gemfile.lock
+.sass-cache
+.jekyll-metadata
+.DS_Store
+.jekyll-cache
+*.gem

@@ -1,24 +1,23 @@
 # Change 'comments' to true for Disqus comments
-disqus:
-  comments: false
-  disqus_shortname: 'millennial-3'
+# disqus:
+#   comments: false
+#   disqus_shortname: 'millennial-3'
 
 # If you are not using Google Analytics, please change 'google-ID' to an empty string
 google-ID: ''
 
 menu:
 - {name: 'Features',  url: 'features'}
-- {name: 'Screens',       url: 'screens'}
-- {name: 'Download', url: 'download'}
-- {name: 'About',              url: 'about'}
-- {name: 'Links',            url: 'contact'}
+- {name: 'Screens',   url: 'screens'}
+- {name: 'Download',  url: 'download'}
+- {name: 'About',     url: 'about'}
+- {name: 'Links',     url: 'contact'}
 
 # Available social icons are powered by Font Awesome, so you can use any icon that they offer
 social:
-- {icon: 'discord', link:    'https://discord.gg/wYkznd7'}
-- {icon: 'youtube-play', link:   'https://www.youtube.com/@QuakeSpeedrunning'}
-- {icon: 'envelope', link:   'mailto:joequake@gmail.com'}
-# - {icon: 'rss-square', link: 'rss-feed.xml'}
+- {icon: 'discord',       link: 'https://discord.gg/wYkznd7'}
+- {icon: 'youtube-play',  link: 'https://www.youtube.com/@QuakeSpeedrunning'}
+- {icon: 'envelope',      link: 'mailto:joequake@gmail.com'}
 
 # Customize site text
 # pagination:
