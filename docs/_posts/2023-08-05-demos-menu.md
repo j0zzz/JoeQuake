@@ -6,4 +6,4 @@ categories: features
 image: jq-demos-menu.jpg
 ---
 
-{% include_absolute 'pages/subfeatures/demos-menu.md' %}
+{% include subfeatures/demos-menu.md %}

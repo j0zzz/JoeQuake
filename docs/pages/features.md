@@ -35,9 +35,9 @@ Parameter completion works for the following commands:
 None of them require any extension to be given, they'll automatically find
 their filetypes.
 
-{% include_absolute 'pages/subfeatures/demos-menu.md' %}
+{% include subfeatures/demos-menu.md %}
 
-{% include_absolute 'pages/subfeatures/better-look.md' %}
+{% include subfeatures/better-look.md %}
 
 ### Avi capturing
 
@@ -74,4 +74,4 @@ The client can operate as many fps as possible, so users can for example match t
 desired max fps to their monitor's refresh rate to achieve a much smoother gameplay
 experience.
 
-{% include_absolute 'pages/subfeatures/ghost-recording.md' %}
+{% include subfeatures/ghost-recording.md %}

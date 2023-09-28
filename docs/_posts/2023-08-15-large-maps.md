@@ -6,4 +6,4 @@ categories: features
 image: jq-large-maps.jpg
 ---
 
-{% include_absolute 'pages/subfeatures/large-maps.md' %}
+{% include subfeatures/large-maps.md %}

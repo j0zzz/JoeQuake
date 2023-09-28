@@ -6,4 +6,4 @@ categories: features
 image: jq-improved-graphics.jpg
 ---
 
-{% include_absolute 'pages/subfeatures/better-look.md' %}
+{% include subfeatures/better-look.md %}
