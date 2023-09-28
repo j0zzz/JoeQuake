@@ -165,7 +165,7 @@ Ghost_OpenDemoOrDzip (const char *demo_path)
         Q_strlcpy(demo_path_with_ext, demo_path, MAX_OSPATH);
         COM_DefaultExtension (demo_path_with_ext, ".dem");
         if (COM_FOpenFile (demo_path_with_ext, &demo_file) == -1) {
-            Con_Printf("cannot find demo %s", demo_path_with_ext);
+            Con_Printf("cannot find demo %s\n", demo_path_with_ext);
             demo_file = NULL;
         }
     }
