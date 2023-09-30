@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define GHOST_MAX_CLIENTS   8
 
+void Ghost_Load (void);
 void Ghost_Draw (void);
 void Ghost_DrawGhostTime (qboolean intermission);
 void Ghost_Init (void);

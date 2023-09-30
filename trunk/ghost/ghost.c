@@ -36,8 +36,7 @@ static dzip_context_t ghost_dz_ctx;
 static ghost_info_t *ghost_info = NULL;
 char                ghost_demo_path[MAX_OSPATH] = "";
 static char         ghost_map_name[MAX_QPATH];
-static ghostrec_t   *ghost_records = NULL;
-static int          ghost_num_records = 0;
+static ghost_level_t *ghost_current_level = NULL;
 entity_t            ghost_entity;
 static float        ghost_shift = 0.0f;
 static int          ghost_model_indices[GHOST_MODEL_COUNT];
@@ -81,8 +80,8 @@ static float Ghost_FindClosest (vec3_t origin, qboolean *match)
     // Ignore any matches that are not close by.
     closest_dist_sqr = 256.0f * 256.0f;
 
-    for (idx = 0, rec = ghost_records;
-         idx < ghost_num_records;
+    for (idx = 0, rec = ghost_current_level->records;
+         idx < ghost_current_level->num_records;
          rec++, idx++) {
         VectorSubtract(origin, rec->origin, diff);
 
@@ -112,13 +111,13 @@ static int Ghost_FindRecord (float time)
     int idx;
     ghostrec_t *rec;
 
-    if (ghost_records == NULL) {
+    if (ghost_current_level == NULL) {
         // not loaded
         return -1;
     }
 
-    for (idx = 0, rec = ghost_records;
-         idx < ghost_num_records && time > rec->time;
+    for (idx = 0, rec = ghost_current_level->records;
+         idx < ghost_current_level->num_records && time > rec->time;
          idx++, rec++);
 
     if (idx == 0) {
@@ -126,7 +125,7 @@ static int Ghost_FindRecord (float time)
         return -1;
     }
 
-    if (idx == ghost_num_records) {
+    if (idx == ghost_current_level->num_records) {
         // gone beyond the last record
         return -1;
     }
@@ -235,21 +234,60 @@ static void Ghost_PrintMarathonSplits (void)
 }
 
 
+static void Ghost_PrintLevelLoadInfo (void)
+{
+    int i;
+
+    if (ghost_current_level == NULL) {
+        return;
+    }
+
+    // Print player names
+    Con_Printf("Ghost player(s): ");
+    for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
+        if (ghost_current_level->client_names[i][0] != '\0') {
+            Con_Printf(" %s ", ghost_current_level->client_names[i]);
+        }
+    }
+    Con_Printf("\n");
+
+    // Print finish time
+    if (ghost_current_level->finish_time > 0) {
+        Con_Printf("Ghost time:       %s\n",
+                   GetPrintedTime(ghost_current_level->finish_time));
+    }
+
+}
+
+
 static qboolean first_update;
 
-static void Ghost_Load (void)
+// Set up the ghost for the current level.
+//    Return true iff a different ghost was loaded.
+static qboolean Ghost_SetForLevel (void)
 {
     int i;
     FILE *demo_file;
     ghost_level_t *level;
 
-    ghost_records = NULL;
+    if (ghost_demo_path[0] == '\0') {
+        return false;
+    }
+    if (strncmp(ghost_map_name, CL_MapName(), MAX_QPATH) == 0) {
+        return false;
+    }
+    Q_strncpyz(ghost_map_name, CL_MapName(), MAX_QPATH);
+    if (ghost_map_name[0] == '\0') {
+        return false;
+    }
+
+    ghost_current_level = NULL;
 
     if (ghost_demo_path[0] == '\0') {
         if (ghost_info != NULL) {
             Sys_Error("ghost_demo_path empty but ghost_info is not NULL");
         }
-        return;
+        return false;
     }
     if (ghost_info == NULL) {
         Sys_Error("ghost_demo_path not empty but ghost info is NULL");
@@ -263,28 +301,17 @@ static void Ghost_Load (void)
     }
     if (i >= ghost_info->num_levels) {
         Con_Printf("Map %s not found in ghost demo\n", ghost_map_name);
-        return;
+        return false;
     }
 
-    ghost_records = level->records;
-    ghost_num_records = level->num_records;
+    ghost_current_level = level;
     memcpy(ghost_model_indices,
            level->model_indices,
            sizeof(level->model_indices));
 
-    // Print player names
-    Con_Printf("Ghost player(s): ");
+    // Set the colours for each ghost.
     for (i = 0; i < GHOST_MAX_CLIENTS; i++) {
-        if (level->client_names[i][0] != '\0') {
-            Con_Printf(" %s ", level->client_names[i]);
-        }
         ghost_color_info[i].colors = level->client_colors[i];
-    }
-    Con_Printf("\n");
-
-    // Print finish time
-    if (level->finish_time > 0) {
-        Con_Printf("Ghost time:       %s\n", GetPrintedTime(level->finish_time));
     }
 
     ghost_entity.skinnum = 0;
@@ -297,6 +324,8 @@ static void Ghost_Load (void)
     ghost_last_relative_time = 0.0f;
 
     first_update = true;
+
+    return true;
 }
 
 
@@ -366,8 +395,8 @@ static qboolean Ghost_Update (void)
     ghost_show = (after_idx != -1);
 
     if (ghost_show) {
-        rec_after = &ghost_records[after_idx];
-        rec_before = &ghost_records[after_idx - 1];
+        rec_after = &ghost_current_level->records[after_idx];
+        rec_before = &ghost_current_level->records[after_idx - 1];
 
         ghost_show = false;
         for (i = 0; !ghost_show && i < GHOST_MODEL_COUNT; i++) {
@@ -410,18 +439,18 @@ static qboolean Ghost_Update (void)
 }
 
 
+void Ghost_Load (void)
+{
+    Ghost_SetForLevel();
+    Ghost_PrintLevelLoadInfo();
+}
+
 void R_DrawAliasModel (entity_t *ent);
 void Ghost_Draw (void)
 {
-    /*
-     * Reload the ghost if level has changed.
-     */
-    if (ghost_demo_path[0] != '\0'
-            && strncmp(ghost_map_name, CL_MapName(), MAX_QPATH)) {
-        Q_strncpyz(ghost_map_name, CL_MapName(), MAX_QPATH);
-        if (ghost_map_name[0] != '\0') {
-            Ghost_Load();
-        }
+    if (Ghost_SetForLevel()) {
+        Con_Printf("\n");
+        Ghost_PrintLevelLoadInfo();
     }
 
     /*
@@ -705,7 +734,7 @@ void Ghost_DrawGhostTime (qboolean intermission)
     qboolean match;
     entity_t *ent;
 
-    if (!ghost_delta.value || ghost_records == NULL)
+    if (!ghost_delta.value || ghost_current_level == NULL)
         return;
 
     if (!intermission) {
@@ -713,7 +742,7 @@ void Ghost_DrawGhostTime (qboolean intermission)
             return;
         }
         ent = &cl_entities[cl.viewentity];
-        if (!ghost_delta.value || ghost_records == NULL)
+        if (!ghost_delta.value || ghost_current_level == NULL)
             return;
         relative_time = Ghost_FindClosest(ent->origin, &match);
         if (!match)
@@ -861,7 +890,7 @@ static void Ghost_Command_f (void)
         if (ghost_info != NULL) {
             Ghost_Free(&ghost_info);
             ghost_demo_path[0] = '\0';
-            ghost_records = NULL;
+            ghost_current_level = NULL;
         }
         ok = Ghost_ReadDemo(demo_file, &ghost_info);
         // file is now closed.
@@ -903,7 +932,7 @@ static void Ghost_RemoveCommand_f (void)
     } else {
         Ghost_Free(&ghost_info);
         ghost_demo_path[0] = '\0';
-        ghost_records = NULL;
+        ghost_current_level = NULL;
     }
 }
 
@@ -925,7 +954,7 @@ static void Ghost_ShiftCommand_f (void)
         return;
     }
 
-    if (ghost_records == NULL) {
+    if (ghost_current_level == NULL) {
         Con_Printf("ghost not loaded\n");
         return;
     }
@@ -952,7 +981,7 @@ static void Ghost_ShiftResetCommand_f (void)
         return;
     }
 
-    if (ghost_records == NULL) {
+    if (ghost_current_level == NULL) {
         Con_Printf("ghost not loaded\n");
         return;
     }
