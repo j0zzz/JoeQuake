@@ -326,7 +326,7 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
         if (dprc == DP_ERR_CALLBACK_STOP) {
             if (pctx.ghost_info->num_levels > GHOST_MAX_LEVELS) {
                 Con_Printf("Demo contains more than %d maps, ghost has been "
-                           "truncated",
+                           "truncated\n",
                            GHOST_MAX_LEVELS);
                 pctx.ghost_info->num_levels = GHOST_MAX_LEVELS;
                 ok = true;
