@@ -184,7 +184,7 @@ static void Ghost_UpdateMarathon (void)
 
     gmi->valid = true;
     gmi->total_split = 0.0f;
-    for (i = 0; i < cls.marathon_level; i++) {
+    for (i = 0; i < cls.marathon_level && i < MAX_MARATHON_LEVELS; i++) {
         gml = &gmi->levels[i];
 
         gml->ghost_time = -1.0f;
@@ -220,7 +220,9 @@ static void Ghost_PrintMarathonSplits (void)
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
                    "\x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9f\n");
         total_split = 0.0f;
-        for (i = gmi->ghost_start; i < cls.marathon_level; i++) {
+        for (i = gmi->ghost_start;
+                i < cls.marathon_level && i < MAX_MARATHON_LEVELS;
+                i++) {
             gml = &gmi->levels[i];
             split = gml->player_time - gml->ghost_time;
             total_split += split;
@@ -699,6 +701,9 @@ static void Ghost_DrawIntermissionTimes (void)
 
     total = gmi->total_split;
     for (i = cls.marathon_level - 1; i >= 0; i--) {
+        if (i >= MAX_MARATHON_LEVELS) {
+            continue;
+        }
         y -= 2 * size;
         if (y <= min_y) {
             break;
