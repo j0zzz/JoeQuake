@@ -956,11 +956,10 @@ ctrl-shift-enter to remove the ghost.
 
 #### Commands
 
-- `ghost <demo-file>`:  Add ghost from the given demo file.  The ghost will be
-  loaded on next map load.  With no arguments it will show the current ghost's
-  demo file, if any.  Only one ghost may be added at a time.
-- `ghost_remove`: Remove the current ghost, if any is added.  The change will
-  take effect on next map load.
+- `ghost <demo-file>`:  Load ghost from the given demo file.  With no arguments
+  it will show information about the current ghost, if any.  Only one ghost may
+  be added at a time.
+- `ghost_remove`: Remove the current ghost, if any is added.
 - `ghost_shift <t>`: Shift the ghost to be the given number of seconds infront
   of the player.  Useful if you lose the ghost but you still want to see its
   route.
@@ -981,7 +980,8 @@ ctrl-shift-enter to remove the ghost.
 
 #### Marathon split times
 
-When a ghost is loaded a split time is printed to the console at the end of each
-level.  If a marathon demo is loaded as the ghost, and the player is also
-running a marathon, then split times for each level are shown.  Splits are also
-shown when playing a demo with a ghost loaded.
+When a ghost is loaded a split time is shown on the intermission screen and,
+printed to the console at the end of each level.  If a marathon demo is loaded
+as the ghost, and the player is also running a marathon, then split times for
+each level are shown.  Splits are also shown when playing a demo with a ghost
+loaded.
