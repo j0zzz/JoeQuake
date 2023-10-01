@@ -980,7 +980,7 @@ ctrl-shift-enter to remove the ghost.
 
 #### Marathon split times
 
-When a ghost is loaded a split time is shown on the intermission screen and,
+When a ghost is loaded a split time is shown on the intermission screen and
 printed to the console at the end of each level.  If a marathon demo is loaded
 as the ghost, and the player is also running a marathon, then split times for
 each level are shown.  Splits are also shown when playing a demo with a ghost
