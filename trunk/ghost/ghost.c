@@ -269,7 +269,6 @@ static qboolean first_update;
 static qboolean Ghost_SetForLevel (void)
 {
     int i;
-    FILE *demo_file;
     ghost_level_t *level;
 
     if (ghost_demo_path[0] == '\0') {
