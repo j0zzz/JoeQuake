@@ -11,4 +11,4 @@ You can also use Quake 3 player multimodels in JoeQuake the following way:
 - Copy the `animation.cfg` file.
 - You can also have view weapons displayed in the player's hand. You have to place the weapon models to the `progs` folder with the following naming convention: `w_<q1-weapon-name>.md3` (e.g. `w_shot.md3` for shotgun, `w_nail.md3` for nailgun, etc). I encourage you to familiarize yourself with Quake weapon names by looking into the Quake *.pak files.
 
-![Quake 3 players](/assets/img/jq-md3-players.jpg)
+![Quake 3 players]({{ site.github.url }}/assets/img/jq-md3-players.jpg)
