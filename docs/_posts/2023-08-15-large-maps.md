@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Large maps"
+title: "Rich mod support"
 author: "Jozsef Szalontai"
 categories: features
 image: jq-large-maps.jpg

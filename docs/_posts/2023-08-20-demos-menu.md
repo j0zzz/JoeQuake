@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Demos menu"
+title: "Demo browser"
 author: "Jozsef Szalontai"
 categories: features
 image: jq-demos-menu.jpg
