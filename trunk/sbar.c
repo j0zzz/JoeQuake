@@ -1462,7 +1462,8 @@ void Sbar_IntermissionOverlay (void)
 	int		dig, num, xofs, pos, i;
 	int precision;
 	float	scale;
-	char fracstring[8];
+	double frac;
+	char fracstring[9];
 
 	precision = (int)scr_timeprecision.value;
 	if (precision > 5)
@@ -1500,7 +1501,9 @@ void Sbar_IntermissionOverlay (void)
 	Draw_TransPic (xofs + (int)(pos * scale), (int)(64 * scale), sb_nums[0][num%10], true); pos += 20;
 	if (precision > 0)
 	{
-		Q_snprintfz(fracstring, sizeof(fracstring), "%.5f", cl.completed_time - (int)cl.completed_time);
+		frac = cl.completed_time - (int)cl.completed_time;
+		frac = bound(0.000005, frac, 0.999995);
+		Q_snprintfz(fracstring, sizeof(fracstring), "%.6f", frac);
 
 		pos += 6;
 		Draw_TransPic (xofs + (int)(pos  * scale), (int)(64 * scale), sb_colon, true); pos += 12;
