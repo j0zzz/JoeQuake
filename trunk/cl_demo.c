@@ -715,8 +715,12 @@ void CL_DemoSkip_f (void)
 		return;
 	}
 
-	if (fseek(cls.demofile, demo_summary.offsets[map_num], SEEK_SET) == -1)
+	if (fseek(cls.demofile, demo_summary.offsets[map_num], SEEK_SET) == -1) {
 		Con_Printf("seek failed\n", map_num);
+		return;
+	}
+
+	Cvar_SetValue(&cl_demorewind, 0.);
 }
 
 /*
