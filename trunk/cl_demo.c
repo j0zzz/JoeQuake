@@ -673,7 +673,9 @@ void CL_PlayDemo_f (void)
 
 void CL_DemoSkip_f (void)
 {
+	char *map_num_str;
 	int map_num;
+	long current_offset;
 
 	if (!cls.demoplayback)
 	{
@@ -691,7 +693,21 @@ void CL_DemoSkip_f (void)
 		return;
 	}
 
-	map_num = atoi(Cmd_Argv(1));
+	map_num_str = Cmd_Argv(1);
+	if (map_num_str[0] == '+' || map_num_str[0] == '-') {
+		current_offset = ftell(cls.demofile);
+		for (map_num = 0;
+				current_offset >= demo_summary.offsets[map_num] &&
+				map_num < demo_summary.num_maps;
+				map_num++)
+		{
+		}
+
+		map_num = map_num - 1 + atoi(map_num_str);
+	} else {
+		map_num = atoi(map_num_str);
+	}
+
 	if (map_num < 0 || map_num >= demo_summary.num_maps
 		|| demo_summary.offsets[map_num] < 0)
 	{
