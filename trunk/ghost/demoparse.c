@@ -949,6 +949,8 @@ DP_ReadPacket(ctx_t *ctx) {
     int packet_len;
     vec3_t view_angle;
 
+    CALL_CALLBACK_NO_ARGS(packet_start);
+
     // Read packet header and packet
     CHECK_RC(DP_ReadFromFile(ctx, &packet_len, sizeof(packet_len)));
     packet_len = LittleLong(packet_len);

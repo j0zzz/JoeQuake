@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct
 {
     char maps[DS_MAX_MAP_NAMES][DS_MAP_NAME_SIZE];
+    long offsets[DS_MAX_MAP_NAMES];
     int num_maps;
     float total_time;
     char client_names[DS_MAX_CLIENTS][MAX_SCOREBOARDNAME];

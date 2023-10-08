@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "winquake.h"
+#include "ghost/demosummary.h"
 #include <time.h>	// easyrecord stats
 
 #ifdef _WIN32
@@ -41,6 +42,7 @@ static	HANDLE	hDZipProcess = NULL;
 static qboolean hDZipProcess = false;
 #endif
 
+static demo_summary_t demo_summary;
 static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
 qboolean	dz_unpacking = false;
@@ -492,6 +494,13 @@ void StartPlayingOpenedDemo (void)
 	cls.state = ca_connected;
 	cls.forcetrack = 0;
 
+	if (!DS_GetDemoSummary (cls.demofile, &demo_summary))
+	{
+		Con_Printf ("ERROR: Could not parse demo\n");
+		return;
+	}
+
+	fseek(cls.demofile, 0, SEEK_SET);
 	while ((c = getc(cls.demofile)) != '\n')
 	{
 		if (c == EOF)
@@ -660,6 +669,38 @@ void CL_PlayDemo_f (void)
 	Con_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 
 	StartPlayingOpenedDemo ();
+}
+
+void CL_DemoSkip_f (void)
+{
+	int map_num;
+
+	if (!cls.demoplayback)
+	{
+		Con_Printf ("not playing a demo\n");
+		return;
+	}
+
+	if (Cmd_Argc() != 2)
+	{
+		for (map_num = 0; map_num < demo_summary.num_maps; map_num++)
+		{
+			Con_Printf("%d : %s\n", map_num, demo_summary.maps[map_num]);
+		}
+		Con_Printf ("\ndemoskip <map number> : skip to map\n");
+		return;
+	}
+
+	map_num = atoi(Cmd_Argv(1));
+	if (map_num < 0 || map_num >= demo_summary.num_maps
+		|| demo_summary.offsets[map_num] < 0)
+	{
+		Con_Printf("invalid map number %d\n", map_num);
+		return;
+	}
+
+	if (fseek(cls.demofile, demo_summary.offsets[map_num], SEEK_SET) == -1)
+		Con_Printf("seek failed\n", map_num);
 }
 
 /*
