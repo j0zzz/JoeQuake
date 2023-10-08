@@ -8,7 +8,7 @@ google-ID: ''
 
 menu:
 - {name: 'Features',  url: 'features'}
-- {name: 'Cvars',     url: 'cvars-commands'}
+- {name: 'Settings',  url: 'cvars-commands'}
 - {name: 'Screens',   url: 'screens'}
 - {name: 'Download',  url: 'download'}
 - {name: 'About',     url: 'about'}

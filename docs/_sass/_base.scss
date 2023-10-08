@@ -37,6 +37,11 @@ h4, h5, h6 {
   font-size: 1rem;
 }
 
+h5 > code {
+  // font-size: 1rem;
+  background-color: lightblue;
+}
+
 /* Body */
 body {
   font-family: $base-font-family;
@@ -45,7 +50,7 @@ body img {
   align: middle;
   margin: 5px auto auto auto;
   display: block;
-  max-width: 600px;
+  max-width: 740px;
 }
 
 p {
@@ -66,10 +71,36 @@ ul, ol, dl {
   font-family: $body-font-family;
 }
 
+#markdown-toc::before {
+  content: "Table of contents";
+  font-weight: bold;
+}
+
+#markdown-toc li > ol {
+  list-style-type: lower-latin;
+}
+
+#markdown-toc a {
+  color: $link-color;
+  text-decoration: underline;
+}
+
+#markdown-toc li > ol > li > ol {
+  display: none;
+}
+
+#markdown-toc {
+  border: 1px solid #aaa;
+  padding: 1.0em 1.0em 0.5em;
+  list-style: decimal;
+  display: inline-block;
+}
+
 ol li {
   margin-top: 1rem;
   margin-bottom: 1rem;
   margin-left: 1.5rem;
+  line-height: 1.0;
 }
 
 li {

@@ -5,6 +5,9 @@ category: features
 permalink: /features
 ---
 
+1. TOC
+{:toc}
+
 ### Framerate independent physics
 
 Server and Client calculates fps differently.

@@ -70,7 +70,7 @@ There are 3 additional particle effects:
 - Damagesplash (`gl_part_damagesplash`)
 - Bouncing particles (only for QMB gunshots/spikes) (`gl_bounceparticles`)
 
-See the *Console variables* page for a detailed description about additional particle effects.
+See the [Settings](/cvars-commands) page for a detailed description about additional particle effects.
 
 ### Decals
 
@@ -88,4 +88,4 @@ Additional decal options:
 - Decal view distance (`gl_decal_viewdistance`)
 - Decal visibility time (`gl_decaltime`)
 
-See the *Console variables* page for a detailed description about additional decal options.
+See the [Settings](/cvars-commands) page for a detailed description about additional decal options.

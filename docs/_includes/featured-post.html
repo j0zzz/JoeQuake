@@ -1,6 +1,7 @@
 <article>
   <a href="{{ site.github.url }}{{ post.url }}{{ post.tag[0] }}">
-    <div class="featured-post" {% if post.image %}style="background-image:url({{ site.github.url }}/assets/img/{{ post.image }})"{% endif %}>
+    <div class="featured-post">
+      <div class="featured-post-img" {% if post.image %}style="background-image:url({{ site.github.url }}/assets/img/{{ post.image }})"{% endif %}></div>
       <h2><span>{{ post.title }}</span></h2>
     </div>
   </a>
