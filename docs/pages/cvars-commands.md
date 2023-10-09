@@ -580,6 +580,11 @@ Possible values are between `0.0` (fully transparent) and `1.0` (fully opaque).
 Sets the type of screenshot image, `jpg` by default.
 Can be `tga`, `png` or `[jpeg|jpg]`.
 
+##### `scr_precisetime`
+
+Show two decimal places of precision on the intermission screen time, `0` by
+default.
+
 #### Console
 
 ##### `gl_conalpha`
