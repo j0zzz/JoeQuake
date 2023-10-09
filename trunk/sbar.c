@@ -69,7 +69,7 @@ int	sbar_xofs;
 cvar_t	scr_centersbar = {"scr_centersbar", "1"};
 cvar_t	scr_sbarscale_amount = { "scr_sbarscale_amount", "2" };
 cvar_t	scr_scorebarmode = { "scr_scorebarmode", "0" };
-cvar_t	scr_timeprecision = { "scr_timeprecision", "2" };
+cvar_t	scr_precisetime = { "scr_precisetime", "0" };
 
 /*
 ===============
@@ -275,7 +275,7 @@ void Sbar_Init (void)
 	Cvar_Register (&scr_centersbar);
 	Cvar_Register (&scr_sbarscale_amount);
 	Cvar_Register(&scr_scorebarmode);
-	Cvar_Register(&scr_timeprecision);
+	Cvar_Register(&scr_precisetime);
 
 	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
 	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
@@ -1465,9 +1465,10 @@ void Sbar_IntermissionOverlay (void)
 	double frac;
 	char fracstring[9];
 
-	precision = (int)scr_timeprecision.value;
-	if (precision > 5)
-		precision = 5;
+	if (scr_precisetime.value)
+		precision = 2;
+	else
+		precision = 0;
 
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;
