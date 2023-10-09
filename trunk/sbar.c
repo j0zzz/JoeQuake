@@ -69,7 +69,7 @@ int	sbar_xofs;
 cvar_t	scr_centersbar = {"scr_centersbar", "1"};
 cvar_t	scr_sbarscale_amount = { "scr_sbarscale_amount", "2" };
 cvar_t	scr_scorebarmode = { "scr_scorebarmode", "0" };
-cvar_t	scr_precisetime = { "scr_precisetime", "0" };
+cvar_t	scr_precisetime = { "scr_precisetime", "0", CVAR_ARCHIVE };
 
 /*
 ===============
