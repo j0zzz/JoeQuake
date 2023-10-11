@@ -1459,6 +1459,7 @@ void CL_Init (void)
 	Cmd_AddCommand ("stop", CL_Stop_f);
 	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
 	Cmd_AddCommand ("demoskip", CL_DemoSkip_f);
+	Cmd_AddCommand ("demoseek", CL_DemoSeek_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
 	Cmd_AddCommand("keepdemo", CL_KeepDemo_f);
 

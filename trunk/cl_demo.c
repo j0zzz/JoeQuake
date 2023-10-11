@@ -43,6 +43,8 @@ static qboolean hDZipProcess = false;
 #endif
 
 static demo_summary_t demo_summary;
+static double seek_time;
+static qboolean seek_backwards;
 static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
 qboolean	dz_unpacking = false;
@@ -162,6 +164,7 @@ void EraseTopEntry (void)
 	free (top);
 }
 
+
 /*
 ====================
 CL_GetMessage
@@ -173,8 +176,11 @@ int CL_GetMessage (void)
 {
 	int	r, i;
 	float	f;
-	
-	if (cl.paused & 2)
+	qboolean backwards;
+
+	backwards = (seek_time >= 0) ? seek_backwards : (cl_demorewind.value != 0);
+
+	if (seek_time < 0 && cl.paused & 2)
 		return 0;
 
 	CheckDZipCompletion ();
@@ -183,8 +189,11 @@ int CL_GetMessage (void)
 
 	if (cls.demoplayback)
 	{
-		if (start_of_demo && cl_demorewind.value)
+		if (start_of_demo && backwards)
+		{
+			seek_time = -1.0;
 			return 0;
+		}
 
 		if (cls.signon < SIGNONS)	// clear stuffs if new demo
 			while (dem_framepos)
@@ -204,12 +213,22 @@ int CL_GetMessage (void)
 					cls.td_starttime = realtime;
 			}
 			// modified by joe to handle rewind playing
-			else if (!cl_demorewind.value && cl.ctime <= cl.mtime[0])
+			else if (seek_time < 0 && !cl_demorewind.value && cl.ctime <= cl.mtime[0])
 				return 0;		// don't need another message yet
-			else if (cl_demorewind.value && cl.ctime >= cl.mtime[0])
+			else if (seek_time < 0 && cl_demorewind.value && cl.ctime >= cl.mtime[0])
 				return 0;
+			else if (seek_time >= 0 && !seek_backwards && cl.mtime[0] >= seek_time)
+			{
+				seek_time = -1.0;
+				return 0;
+			}
+			else if (seek_time >= 0 && seek_backwards && cl.mtime[0] < seek_time)
+			{
+				seek_time = -1.0;
+				return 0;
+			}
 
-			if (!cl_demorewind.value)
+			if (!backwards)
 			{
 				// joe: fill in the stack of frames' positions
 				PushFrameposEntry (ftell(cls.demofile));
@@ -221,6 +240,7 @@ int CL_GetMessage (void)
 				EraseTopEntry ();
 				if (!dem_framepos) {
 					start_of_demo = true;
+					seek_time = -1.0;
 					return 0;
 				}
 			}
@@ -493,6 +513,7 @@ void StartPlayingOpenedDemo (void)
 	cls.demoplayback = true;
 	cls.state = ca_connected;
 	cls.forcetrack = 0;
+	seek_time = -1.0;
 
 	if (!DS_GetDemoSummary (cls.demofile, &demo_summary))
 	{
@@ -721,6 +742,34 @@ void CL_DemoSkip_f (void)
 	}
 
 	Cvar_SetValue(&cl_demorewind, 0.);
+}
+
+void CL_DemoSeek_f (void)
+{
+	char *time_str;
+
+	if (!cls.demoplayback)
+	{
+		Con_Printf ("not playing a demo\n");
+		return;
+	}
+
+	if (Cmd_Argc() != 2)
+	{
+		Con_Printf ("demoseek <time> : seek to time\n");
+		return;
+	}
+
+	time_str = Cmd_Argv(1);
+	if (time_str[0] == '+' || time_str[0] == '-')
+		seek_time = cl.mtime[0] + atof(time_str);
+	else
+		seek_time = atof(time_str);
+
+	if (seek_time < 0.)
+		seek_time = 0.;
+
+	seek_backwards = (seek_time < cl.mtime[0]);
 }
 
 /*
