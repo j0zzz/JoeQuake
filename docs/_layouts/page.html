@@ -7,6 +7,12 @@ layout: default
     {{ page.title }}
   </h1>
   <article>
-    {{ content }}
+    {% if page.category == "sample" %}
+      {% for item in page.collection %}
+        {% include screen.html %}
+      {% endfor %}
+    {% else %}
+      {{ content }}
+    {% endif %}
   </article>
 </div>

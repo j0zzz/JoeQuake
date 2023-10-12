@@ -16,6 +16,9 @@
   display: block;
   max-width: 740px;
 }
+.post-content a {
+  color: $link-color;
+}
 @media (max-width: $container-width) {
   .post-content {
     width: 60vw;

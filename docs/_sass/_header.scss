@@ -20,12 +20,26 @@
   text-decoration: none;
 }
 .site-title {
-  font-size: 26px;
-  font-weight: 400;
+  font-size: 30px;
+  font-weight: 500;
   line-height: 56px;
   margin-bottom: 0;
   margin-top: 0;
   padding-left: 10px;
+  float: left;
+}
+.site-quote1 {
+  font-size: 12px;
+  font-style: italic;
+  margin-left: 20px;
+  margin-top: 10px;
+  float: left;
+}
+.site-quote2 {
+  font-size: 12px;
+  font-style: italic;
+  margin-left: -80px;
+  margin-top: 30px;
   float: left;
 }
 .menu-list {

@@ -6,6 +6,7 @@
   transition: $transition;
   &:hover{
     color: $color;
+    fill: $color;
   }
 }
 
@@ -67,4 +68,9 @@
 .fa-youtube-play {
   padding: 5px;
   @include social-media-icon($youtube-color, $icon-transition-time);
+}
+
+.fa-discord {
+  padding: 5px;
+  @include social-media-icon($discord-color, $icon-transition-time);
 }
