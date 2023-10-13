@@ -42,7 +42,7 @@ static	HANDLE	hDZipProcess = NULL;
 static qboolean hDZipProcess = false;
 #endif
 
-static demo_summary_t demo_summary;
+static dseek_info_t demo_seek_info;
 static double seek_time;
 static qboolean seek_backwards;
 static dzip_context_t dzCtx;
@@ -515,11 +515,8 @@ void StartPlayingOpenedDemo (void)
 	cls.forcetrack = 0;
 	seek_time = -1.0;
 
-	if (!DS_GetDemoSummary (cls.demofile, &demo_summary))
-	{
-		Con_Printf ("ERROR: Could not parse demo\n");
+	if (!DSeek_Parse (cls.demofile, &demo_seek_info))
 		return;
-	}
 
 	fseek(cls.demofile, 0, SEEK_SET);
 	while ((c = getc(cls.demofile)) != '\n')
@@ -697,6 +694,7 @@ void CL_DemoSkip_f (void)
 	char *map_num_str;
 	int map_num;
 	long current_offset;
+	dseek_map_info_t *dsmi;
 
 	if (!cls.demoplayback)
 	{
@@ -706,10 +704,8 @@ void CL_DemoSkip_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		for (map_num = 0; map_num < demo_summary.num_maps; map_num++)
-		{
-			Con_Printf("%d : %s\n", map_num, demo_summary.maps[map_num]);
-		}
+		for (map_num = 0; map_num < demo_seek_info.num_maps; map_num++)
+			Con_Printf("%d : %s\n", map_num, demo_seek_info.maps[map_num].name);
 		Con_Printf ("\ndemoskip <map number> : skip to map\n");
 		return;
 	}
@@ -718,8 +714,8 @@ void CL_DemoSkip_f (void)
 	if (map_num_str[0] == '+' || map_num_str[0] == '-') {
 		current_offset = ftell(cls.demofile);
 		for (map_num = 0;
-				current_offset >= demo_summary.offsets[map_num] &&
-				map_num < demo_summary.num_maps;
+				current_offset >= demo_seek_info.maps[map_num].offset &&
+				map_num < demo_seek_info.num_maps;
 				map_num++)
 		{
 		}
@@ -729,14 +725,16 @@ void CL_DemoSkip_f (void)
 		map_num = atoi(map_num_str);
 	}
 
-	if (map_num < 0 || map_num >= demo_summary.num_maps
-		|| demo_summary.offsets[map_num] < 0)
+	if (map_num < 0 || map_num >= demo_seek_info.num_maps
+		|| demo_seek_info.maps[map_num].offset < 0)
 	{
 		Con_Printf("invalid map number %d\n", map_num);
 		return;
 	}
 
-	if (fseek(cls.demofile, demo_summary.offsets[map_num], SEEK_SET) == -1) {
+	dsmi = &demo_seek_info.maps[map_num];
+
+	if (fseek(cls.demofile, dsmi->offset, SEEK_SET) == -1) {
 		Con_Printf("seek failed\n", map_num);
 		return;
 	}

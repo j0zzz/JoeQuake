@@ -324,6 +324,7 @@
     </ClCompile>
     <ClCompile Include="..\..\trunk\cl_dzip.c" />
     <ClCompile Include="..\..\trunk\fmod.c" />
+    <ClCompile Include="..\..\trunk\demoseekparse.c" />
     <ClCompile Include="..\..\trunk\demoparse.c" />
     <ClCompile Include="..\..\trunk\ghost\demosummary.c" />
     <ClCompile Include="..\..\trunk\ghost\ghost.c" />

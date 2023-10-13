@@ -385,6 +385,22 @@ void CL_TimeDemo_f(void);
 void CL_KeepDemo_f (void);
 int CL_DemoIntermissionState (int old_state, int new_state);
 
+// demoseekparse.c
+#define DSEEK_MAX_MAPS	128
+#define DSEEK_MAP_NAME_SIZE  64
+typedef struct
+{
+	long offset;
+    char name[DSEEK_MAP_NAME_SIZE];
+	float max_time;
+} dseek_map_info_t;
+typedef struct
+{
+    dseek_map_info_t maps[DSEEK_MAX_MAPS];
+	int num_maps;
+} dseek_info_t;
+qboolean DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info);
+
 // cl_parse.c
 void CL_ParseServerMessage (void);
 void CL_NewTranslation (int slot, qboolean ghost);

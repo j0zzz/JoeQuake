@@ -32,7 +32,6 @@ typedef struct
     int model_num;
     qboolean intermission_seen;
     qboolean any_intermission_seen;
-    long packet_offset;
 
     char print_buffer[DS_PRINT_BUFFER_SIZE];
     int print_buffer_len;
@@ -43,17 +42,6 @@ typedef struct
 
 
 static char *map_name;
-
-
-static dp_cb_response_t
-DS_PacketStart_cb (void *ctx)
-{
-    ds_ctx_t *pctx = ctx;
-
-    pctx->packet_offset = ftell(pctx->demo_file);
-
-    return DP_CBR_CONTINUE;
-}
 
 
 static qboolean
@@ -74,7 +62,6 @@ DS_ServerInfoModel_cb (const char *model, void *ctx)
         map_name = ds->maps[ds->num_maps];
 		Q_strncpyz(map_name, (char *)model, DS_MAP_NAME_SIZE);
         COM_StripExtension(COM_SkipPath(map_name), map_name);
-        ds->offsets[ds->num_maps] = pctx->packet_offset;
 
         // `num_maps` is incremented on intermission, so that we don't list
         // start map.
@@ -290,7 +277,6 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
 
     dp_err_t dprc;
     dp_callbacks_t callbacks = {
-        .packet_start = DS_PacketStart_cb,
         .read = DS_Read_cb,
         .server_info_model = DS_ServerInfoModel_cb,
         .server_info = DS_ServerInfo_cb,
