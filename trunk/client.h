@@ -388,6 +388,7 @@ typedef struct
 qboolean DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info);
 
 // cl_demo.c
+extern dseek_info_t demo_seek_info;
 void CL_InitDemo(void);
 void CL_ShutdownDemo (void);
 void CL_StopPlayback (void);
@@ -401,7 +402,7 @@ void CL_TimeDemo_f(void);
 void CL_KeepDemo_f (void);
 int CL_DemoIntermissionState (int old_state, int new_state);
 qboolean CL_DemoRewind(void);
-dseek_map_info_t *CL_DemoGetCurrentMapInfo (void);
+dseek_map_info_t *CL_DemoGetCurrentMapInfo (int *map_num_p);
 
 // cl_demoui.c
 typedef struct mouse_state_s mouse_state_t;

@@ -42,7 +42,7 @@ static	HANDLE	hDZipProcess = NULL;
 static qboolean hDZipProcess = false;
 #endif
 
-static dseek_info_t demo_seek_info;
+dseek_info_t demo_seek_info;
 static double seek_time;
 static qboolean seek_backwards;
 static dzip_context_t dzCtx;
@@ -702,7 +702,7 @@ void CL_PlayDemo_f (void)
 }
 
 
-dseek_map_info_t *CL_DemoGetCurrentMapInfo (void)
+dseek_map_info_t *CL_DemoGetCurrentMapInfo (int *map_num_p)
 {
 	long current_offset;
 	int map_num;
@@ -723,6 +723,9 @@ dseek_map_info_t *CL_DemoGetCurrentMapInfo (void)
 		dsmi = &demo_seek_info.maps[map_num - 1];
 	else
 		dsmi = NULL;  // before the first server info msg, this shouldn't happen
+
+	if (map_num_p)
+		*map_num_p = map_num - 1;
 
 	return dsmi;
 }
