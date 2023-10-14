@@ -404,6 +404,7 @@ dseek_map_info_t *CL_DemoGetCurrentMapInfo (void);
 
 // cl_demoui.c
 typedef struct mouse_state_s mouse_state_t;
+extern qboolean demoui_dragging_seek;
 qboolean Demo_MouseEvent(const mouse_state_t* ms);
 void Demo_DrawUI(void);
 

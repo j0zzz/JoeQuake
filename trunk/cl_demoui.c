@@ -1,7 +1,7 @@
 #include "quakedef.h"
 
 
-static qboolean dragging_seek;
+qboolean demoui_dragging_seek;
 
 
 typedef struct
@@ -30,7 +30,7 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 	layout_t layout;
 
 	if (!ms->buttons[1]) {
-		dragging_seek = false;
+		demoui_dragging_seek = false;
 		return handled;
 	}
 
@@ -48,10 +48,10 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 			&& ms->x >= layout.bar_x
 			&& ms->x < layout.bar_x + layout.bar_width)
 	{
-		dragging_seek = true;
+		demoui_dragging_seek = true;
 	}
 
-	if (dragging_seek)
+	if (demoui_dragging_seek)
 	{
 		progress = (ms->x - layout.char_size / 2 - layout.bar_x - layout.char_size)
 					/ (float)(layout.bar_width - layout.char_size * 2);

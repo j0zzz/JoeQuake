@@ -180,7 +180,7 @@ int CL_GetMessage (void)
 
 	backwards = (seek_time >= 0) ? seek_backwards : (cl_demorewind.value != 0);
 
-	if (seek_time < 0 && cl.paused & 2)
+	if (seek_time < 0 && (cl.paused & 2 || demoui_dragging_seek))
 		return 0;
 
 	CheckDZipCompletion ();
