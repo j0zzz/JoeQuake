@@ -130,7 +130,7 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 	if (ms->button_down == 1)
 	{
 		if(ms->y >= layout.bar_y
-			&& ms->y < layout.bar_y + layout.char_size
+			&& ms->y <= layout.bar_y + layout.char_size
 			&& ms->x >= layout.bar_x
 			&& ms->x < layout.bar_x + layout.bar_width)
 		{
