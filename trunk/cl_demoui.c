@@ -254,15 +254,21 @@ void Demo_DrawUI(void)
 	Draw_String(0, layout.time_y, buf, true);
 
 	// Level
-	Draw_Character(layout.skip_prev_x, layout.skip_y, 0xbc, true);
-	Draw_Character(layout.skip_prev_x + layout.char_size, layout.skip_y, 0xbc, true);
+	if (map_num > 0)
+	{
+		Draw_Character(layout.skip_prev_x, layout.skip_y, 0xbc, true);
+		Draw_Character(layout.skip_prev_x + layout.char_size, layout.skip_y, 0xbc, true);
+	}
 	Q_snprintfz(buf, min(sizeof(buf), MAP_NAME_DRAW_CHARS + 1),
 				"%s", dsmi->name);
 	Draw_String(layout.skip_prev_x + layout.char_size
 					+ layout.char_size * (MAP_NAME_DRAW_CHARS - strlen(buf)) / 2,
 				layout.skip_y, buf, true);
-	Draw_Character(layout.skip_next_x, layout.skip_y, 0xbe, true);
-	Draw_Character(layout.skip_next_x + layout.char_size, layout.skip_y, 0xbe, true);
+	if (map_num < demo_seek_info.num_maps - 1)
+	{
+		Draw_Character(layout.skip_next_x, layout.skip_y, 0xbe, true);
+		Draw_Character(layout.skip_next_x + layout.char_size, layout.skip_y, 0xbe, true);
+	}
 
 	// Level selector
 	if (map_menu_open)
