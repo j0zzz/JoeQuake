@@ -1222,7 +1222,7 @@ char *GetPrintedTime(double time)
 
 void PrintFinishTime()
 {
-	if (cl_demorewind.value)
+	if (CL_DemoRewind())
 		return;
 
 	cls.marathon_time += cl.completed_time;
@@ -1483,7 +1483,7 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_killedmonster:
-			if (cls.demoplayback && cl_demorewind.value)
+			if (CL_DemoRewind())
 				cl.stats[STAT_MONSTERS]--;
 			else
 				cl.stats[STAT_MONSTERS]++;
@@ -1491,7 +1491,7 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_foundsecret:
-			if (cls.demoplayback && cl_demorewind.value)
+			if ((CL_DemoRewind()))
 				cl.stats[STAT_SECRETS]--;
 			else
 				cl.stats[STAT_SECRETS]++;

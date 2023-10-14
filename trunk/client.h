@@ -400,6 +400,7 @@ void CL_DemoSeek_f (void);
 void CL_TimeDemo_f(void);
 void CL_KeepDemo_f (void);
 int CL_DemoIntermissionState (int old_state, int new_state);
+qboolean CL_DemoRewind(void);
 dseek_map_info_t *CL_DemoGetCurrentMapInfo (void);
 
 // cl_demoui.c

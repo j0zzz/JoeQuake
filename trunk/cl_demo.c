@@ -82,6 +82,18 @@ void CL_ShutdownDemo (void)
 }
 
 
+qboolean CL_DemoRewind(void)
+{
+	if (!cls.demoplayback)
+		return false;
+
+	if (seek_time >= 0)
+		return seek_backwards;
+
+	return (cl_demorewind.value != 0);
+}
+
+
 /*
 ==============
 CL_StopPlayback
@@ -178,7 +190,7 @@ int CL_GetMessage (void)
 	float	f;
 	qboolean backwards;
 
-	backwards = (seek_time >= 0) ? seek_backwards : (cl_demorewind.value != 0);
+	backwards = CL_DemoRewind();
 
 	if (seek_time < 0 && (cl.paused & 2 || demoui_dragging_seek))
 		return 0;
@@ -948,7 +960,7 @@ static void DemoIntermissionStatePush (int value) {
 
 int CL_DemoIntermissionState (int old_state, int new_state)
 {
-	if (cl_demorewind.value)
+	if (CL_DemoRewind())
 		return DemoIntermissionStatePop();
 
 	DemoIntermissionStatePush(old_state);

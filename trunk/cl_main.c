@@ -1318,7 +1318,7 @@ void CL_ReadFromServer (void)
 
 	cl.oldtime = cl.ctime;
 	cl.time += host_frametime;
-	if (!cl_demorewind.value || !cls.demoplayback)
+	if (!CL_DemoRewind())
 		cl.ctime += host_frametime;
 	else
 		cl.ctime -= host_frametime;
