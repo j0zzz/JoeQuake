@@ -1,8 +1,11 @@
 #include "quakedef.h"
 
 #define MAP_NAME_DRAW_CHARS	12
+#define HIDE_TIME	1.5f
 
 
+double last_event_time = -1.0f;
+qboolean over_ui = false;
 qboolean demoui_dragging_seek;
 
 
@@ -12,22 +15,37 @@ typedef struct
 	int char_size;
 	int bar_x, bar_y, bar_width, bar_num_chars;
 	int skip_prev_x, skip_next_x, skip_y;
+	int time_y;
 } layout_t;
 
 
-static void
+static qboolean
 GetLayout (layout_t *layout)
 {
+	float show_frac;
+
+	if (over_ui)
+		show_frac = 1;
+	else
+		show_frac = bound(0, 1 - 2 * (realtime - last_event_time - HIDE_TIME), 1);
+
+	if (show_frac == 0)
+		return false;
+
 	layout->char_size = Sbar_GetScaledCharacterSize();
-	layout->top = (int)(vid.height - 2.f * layout->char_size);
+	layout->top = (int)(vid.height - 2 * layout->char_size * show_frac);
+
 	layout->bar_num_chars = (int)(vid.width / layout->char_size);
 	layout->bar_width = layout->bar_num_chars * layout->char_size;
 	layout->bar_x = (vid.width - layout->bar_width) / 2;
-	layout->bar_y = vid.height - layout->char_size;
+	layout->bar_y = layout->top + layout->char_size;
 
 	layout->skip_next_x = vid.width - 2 * layout->char_size;
 	layout->skip_prev_x = vid.width - layout->char_size * (4 + MAP_NAME_DRAW_CHARS);
-	layout->skip_y = vid.height - layout->char_size * 2;
+	layout->skip_y = layout->top;
+	layout->time_y = layout->top;
+
+	return true;
 }
 
 
@@ -39,11 +57,6 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 	dseek_map_info_t *dsmi;
 	layout_t layout;
 
-	if (!ms->buttons[1]) {
-		demoui_dragging_seek = false;
-		return handled;
-	}
-
 	dsmi = CL_DemoGetCurrentMapInfo ();
 	if (dsmi == NULL)
 		return handled;
@@ -51,7 +64,16 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 	if (dsmi->min_time == dsmi->max_time)
 		return handled;  // only one frame in demo
 
-	GetLayout(&layout);
+	last_event_time = realtime;
+	over_ui = false;
+	if (!GetLayout(&layout))
+		return handled;
+	over_ui = ms->y > layout.top;
+
+	if (!ms->buttons[1]) {
+		demoui_dragging_seek = false;
+		return handled;
+	}
 
 	if (ms->button_down == 1)
 	{
@@ -124,7 +146,8 @@ void Demo_DrawUI(void)
 	if (dsmi->min_time == dsmi->max_time)
 		return;  // only one frame in demo
 
-	GetLayout(&layout);
+	if (!GetLayout(&layout))
+		return;
 
 	// Backdrop
 	Draw_AlphaFill(0, layout.top, vid.width, vid.height - layout.top, 0, 0.7);
@@ -152,7 +175,7 @@ void Demo_DrawUI(void)
 	FormatTimeString(cl.mtime[0], sizeof(current_time_buf), current_time_buf);
 	FormatTimeString(dsmi->max_time, sizeof(max_time_buf), max_time_buf);
 	Q_snprintfz(buf, sizeof(buf), "%s / %s", current_time_buf, max_time_buf);
-	Draw_String(0, vid.height - layout.char_size * 2, buf, true);
+	Draw_String(0, layout.time_y, buf, true);
 
 	// Level
 	Draw_Character(layout.skip_prev_x, layout.skip_y, 0xbc, true);
