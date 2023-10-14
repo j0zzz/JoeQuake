@@ -561,6 +561,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\trunk\cl_demo.c" />
+    <ClCompile Include="..\..\trunk\cl_demoui.c" />
     <ClCompile Include="..\..\trunk\cl_main.c" />
     <ClCompile Include="..\..\trunk\cl_parse.c" />
     <ClCompile Include="..\..\trunk\cl_slist.c" />

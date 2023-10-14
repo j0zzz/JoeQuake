@@ -936,6 +936,9 @@ static qboolean Mouse_EventDispatch(void)
 		break;
 	}
 
+	if (!mouse_handled && cls.demoplayback)
+		mouse_handled = Demo_MouseEvent(&scr_pointer_state);
+
 	return mouse_handled;
 }
 

@@ -970,7 +970,7 @@ static void SCR_DrawCursor(void)
 	cursor_y = scr_pointer_state.y;
 
 	// Disable the cursor in all but following client parts
-	if (key_dest != key_menu)
+	if (!cls.demoplayback && key_dest != key_menu)
 		return;
 
 	// Always draw the cursor.
@@ -1162,8 +1162,11 @@ void SCR_UpdateScreen (void)
 		Sbar_Draw ();
 		SCR_DrawConsole ();
 		M_Draw ();
-		SCR_DrawCursor();
 	}
+
+	if (cls.demoplayback && key_dest == key_game)
+		Demo_DrawUI();
+	SCR_DrawCursor();
 
 	if (!gl_glsl_gamma_able)
 	{

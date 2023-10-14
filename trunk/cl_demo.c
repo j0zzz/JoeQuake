@@ -689,6 +689,33 @@ void CL_PlayDemo_f (void)
 	StartPlayingOpenedDemo ();
 }
 
+
+dseek_map_info_t *CL_DemoGetCurrentMapInfo (void)
+{
+	long current_offset;
+	int map_num;
+	dseek_map_info_t *dsmi;
+
+	if (!cls.demoplayback)
+		Sys_Error ("not playing demo\n");
+
+	current_offset = ftell(cls.demofile);
+	for (map_num = 0;
+			current_offset >= demo_seek_info.maps[map_num].offset &&
+			map_num < demo_seek_info.num_maps;
+			map_num++)
+	{
+	}
+
+	if (map_num > 0)
+		dsmi = &demo_seek_info.maps[map_num - 1];
+	else
+		dsmi = NULL;  // before the first server info msg, this shouldn't happen
+
+	return dsmi;
+}
+
+
 void CL_DemoSkip_f (void)
 {
 	char *map_num_str;

@@ -371,6 +371,22 @@ void CL_BaseMove (usercmd_t *cmd);
 
 float CL_KeyState (kbutton_t *key);
 
+// demoseekparse.c
+#define DSEEK_MAX_MAPS	128
+#define DSEEK_MAP_NAME_SIZE  64
+typedef struct
+{
+	long offset;
+    char name[DSEEK_MAP_NAME_SIZE];
+	float min_time, max_time;
+} dseek_map_info_t;
+typedef struct
+{
+    dseek_map_info_t maps[DSEEK_MAX_MAPS];
+	int num_maps;
+} dseek_info_t;
+qboolean DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info);
+
 // cl_demo.c
 void CL_InitDemo(void);
 void CL_ShutdownDemo (void);
@@ -384,22 +400,12 @@ void CL_DemoSeek_f (void);
 void CL_TimeDemo_f(void);
 void CL_KeepDemo_f (void);
 int CL_DemoIntermissionState (int old_state, int new_state);
+dseek_map_info_t *CL_DemoGetCurrentMapInfo (void);
 
-// demoseekparse.c
-#define DSEEK_MAX_MAPS	128
-#define DSEEK_MAP_NAME_SIZE  64
-typedef struct
-{
-	long offset;
-    char name[DSEEK_MAP_NAME_SIZE];
-	float max_time;
-} dseek_map_info_t;
-typedef struct
-{
-    dseek_map_info_t maps[DSEEK_MAX_MAPS];
-	int num_maps;
-} dseek_info_t;
-qboolean DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info);
+// cl_demoui.c
+typedef struct mouse_state_s mouse_state_t;
+qboolean Demo_MouseEvent(const mouse_state_t* ms);
+void Demo_DrawUI(void);
 
 // cl_parse.c
 void CL_ParseServerMessage (void);
