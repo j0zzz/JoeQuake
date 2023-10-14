@@ -17,7 +17,7 @@ SeekBarLayout (layout_t *layout)
 	layout->bar_num_chars = (int)(vid.width / layout->char_size);
 	layout->bar_width = layout->bar_num_chars * layout->char_size;
 	layout->bar_x = (vid.width - layout->bar_width) / 2;
-	layout->bar_y = vid.height - layout->char_size;
+	layout->bar_y = vid.height - layout->char_size * 2;
 }
 
 
@@ -69,8 +69,19 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 }
 
 
+static
+FormatTimeString (float seconds, int buf_size, char *buf)
+{
+	int minutes = (int)(seconds / 60);
+	Q_snprintfz(buf, buf_size, "%d:%05.2f", minutes, seconds - 60 * minutes);
+}
+
+
 void Demo_DrawUI(void)
 {
+	char current_time_buf[32];
+	char max_time_buf[32];
+	char buf[64];
 	char c;
 	float progress;
 	int i, x, playhead_x;
@@ -104,4 +115,10 @@ void Demo_DrawUI(void)
 						+ (layout.bar_x + layout.bar_width - layout.char_size * 2) * progress);
 
 	Draw_Character(playhead_x, layout.bar_y, 131, true);
+
+	// Time
+	FormatTimeString(cl.mtime[0], sizeof(current_time_buf), current_time_buf);
+	FormatTimeString(dsmi->max_time, sizeof(max_time_buf), max_time_buf);
+	Q_snprintfz(buf, sizeof(buf), "%s / %s", current_time_buf, max_time_buf);
+	Draw_String(0, vid.height - layout.char_size, buf, true);
 }
