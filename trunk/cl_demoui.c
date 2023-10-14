@@ -175,7 +175,7 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 	else if (demoui_dragging_seek)
 	{
 		progress = (ms->x - layout.char_size / 2 - layout.bar_x - layout.char_size)
-					/ (float)(layout.bar_width - layout.char_size * 2);
+					/ (float)(layout.bar_width - layout.char_size * 3);
 
 		progress = bound(0, progress, 1);
 
