@@ -253,7 +253,7 @@ void Demo_DrawUI(void)
 	Q_snprintfz(buf, sizeof(buf), "%s / %s", current_time_buf, max_time_buf);
 	Draw_String(0, layout.time_y, buf, true);
 
-	// Level
+	// Current level
 	if (map_num > 0)
 	{
 		Draw_Character(layout.skip_prev_x, layout.skip_y, 0xbc, true);
@@ -261,7 +261,7 @@ void Demo_DrawUI(void)
 	}
 	Q_snprintfz(buf, min(sizeof(buf), MAP_NAME_DRAW_CHARS + 1),
 				"%s", dsmi->name);
-	Draw_String(layout.skip_prev_x + layout.char_size
+	Draw_String(layout.skip_prev_x + 2 * layout.char_size
 					+ layout.char_size * (MAP_NAME_DRAW_CHARS - strlen(buf)) / 2,
 				layout.skip_y, buf, true);
 	if (map_num < demo_seek_info.num_maps - 1)
