@@ -8,6 +8,7 @@ qboolean demoui_dragging_seek;
 
 typedef struct
 {
+	int top;
 	int char_size;
 	int bar_x, bar_y, bar_width, bar_num_chars;
 	int skip_prev_x, skip_next_x, skip_y;
@@ -18,14 +19,15 @@ static void
 GetLayout (layout_t *layout)
 {
 	layout->char_size = Sbar_GetScaledCharacterSize();
+	layout->top = (int)(vid.height - 2.f * layout->char_size);
 	layout->bar_num_chars = (int)(vid.width / layout->char_size);
 	layout->bar_width = layout->bar_num_chars * layout->char_size;
 	layout->bar_x = (vid.width - layout->bar_width) / 2;
-	layout->bar_y = vid.height - layout->char_size * 2;
+	layout->bar_y = vid.height - layout->char_size;
 
 	layout->skip_next_x = vid.width - 2 * layout->char_size;
 	layout->skip_prev_x = vid.width - layout->char_size * (4 + MAP_NAME_DRAW_CHARS);
-	layout->skip_y = vid.height - layout->char_size;
+	layout->skip_y = vid.height - layout->char_size * 2;
 }
 
 
@@ -124,6 +126,9 @@ void Demo_DrawUI(void)
 
 	GetLayout(&layout);
 
+	// Backdrop
+	Draw_AlphaFill(0, layout.top, vid.width, vid.height - layout.top, 0, 0.7);
+
 	// Seek bar
 	for (i = 0, x = layout.bar_x; i < layout.bar_num_chars; i++, x += layout.char_size)
 	{
@@ -147,7 +152,7 @@ void Demo_DrawUI(void)
 	FormatTimeString(cl.mtime[0], sizeof(current_time_buf), current_time_buf);
 	FormatTimeString(dsmi->max_time, sizeof(max_time_buf), max_time_buf);
 	Q_snprintfz(buf, sizeof(buf), "%s / %s", current_time_buf, max_time_buf);
-	Draw_String(0, vid.height - layout.char_size, buf, true);
+	Draw_String(0, vid.height - layout.char_size * 2, buf, true);
 
 	// Level
 	Draw_Character(layout.skip_prev_x, layout.skip_y, 0xbc, true);
