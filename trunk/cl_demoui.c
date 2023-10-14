@@ -23,8 +23,8 @@ GetLayout (layout_t *layout)
 	layout->bar_x = (vid.width - layout->bar_width) / 2;
 	layout->bar_y = vid.height - layout->char_size * 2;
 
-	layout->skip_next_x = vid.width - layout->char_size;
-	layout->skip_prev_x = vid.width - layout->char_size * (2 + MAP_NAME_DRAW_CHARS);
+	layout->skip_next_x = vid.width - 2 * layout->char_size;
+	layout->skip_prev_x = vid.width - layout->char_size * (4 + MAP_NAME_DRAW_CHARS);
 	layout->skip_y = vid.height - layout->char_size;
 }
 
@@ -63,7 +63,7 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 		else if (ms->y >= layout.skip_y
 			&& ms->y < layout.skip_y + layout.char_size
 			&& ms->x >= layout.skip_next_x
-			&& ms->x < layout.skip_next_x + layout.char_size)
+			&& ms->x < layout.skip_next_x + 2 * layout.char_size)
 		{
 			Cmd_ExecuteString("demoskip +1", src_command);
 			handled = true;
@@ -71,7 +71,7 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 		else if (ms->y >= layout.skip_y
 			&& ms->y < layout.skip_y + layout.char_size
 			&& ms->x >= layout.skip_prev_x
-			&& ms->x < layout.skip_prev_x + layout.char_size)
+			&& ms->x < layout.skip_prev_x + 2 * layout.char_size)
 		{
 			Cmd_ExecuteString("demoskip -1", src_command);
 			handled = true;
@@ -151,10 +151,12 @@ void Demo_DrawUI(void)
 
 	// Level
 	Draw_Character(layout.skip_prev_x, layout.skip_y, 0xbc, true);
+	Draw_Character(layout.skip_prev_x + layout.char_size, layout.skip_y, 0xbc, true);
 	Q_snprintfz(buf, min(sizeof(buf), MAP_NAME_DRAW_CHARS + 1),
 				"%s", dsmi->name);
 	Draw_String(layout.skip_prev_x + layout.char_size
 					+ layout.char_size * (MAP_NAME_DRAW_CHARS - strlen(buf)) / 2,
 				layout.skip_y, buf, true);
 	Draw_Character(layout.skip_next_x, layout.skip_y, 0xbe, true);
+	Draw_Character(layout.skip_next_x + layout.char_size, layout.skip_y, 0xbe, true);
 }
