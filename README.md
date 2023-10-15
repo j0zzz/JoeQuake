@@ -1,8 +1,8 @@
 ﻿
 ## Description
 
-This is a custom Quake engine designed exclusively for speedrunning.
-It was originated from the official id software GLQuake source code.
+JoeQuake is a custom Quake engine designed exclusively for speedrunning.  
+It was originated from the official id software [GLQuake source code](https://github.com/id-Software/Quake).
 
 JoeQuake features several improvements over the vanilla GLQuake client, just to name a few:
 * Independent server-client physics

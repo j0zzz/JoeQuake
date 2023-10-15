@@ -76,10 +76,10 @@ See the [Settings]({{ site.github.url }}/cvars-commands) page for a detailed des
 
 JoeQuake can display decal patches on floors and walls, when using QMB or Quake 3 style particle effects. For example, a soot stain after an explosion or blood splatters after monster gibs.  
 Similarly to particles, you can override the following individual categories:
-- Blood splatters (`gl_part_blood`)
-- Bullet holes (`gl_part_bullets`)
-- Spark trails (`gl_part_sparks`)
-- Explosion marks (`gl_part_explosions`)
+- Blood splatters (`gl_decal_blood`)
+- Bullet holes (`gl_decal_bullets`)
+- Spark trails (`gl_decal_sparks`)
+- Explosion marks (`gl_decal_explosions`)
 
 To quickly switch on/off decals, use the `toggledecals` command.  
 Go to the *Options / Decal options* menu to customize your decal settings.

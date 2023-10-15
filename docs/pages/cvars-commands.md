@@ -473,10 +473,41 @@ Sets type of torch flames:
 
 Turns Quake 3 style on-screen damage splash on/off, `0` by default.
 
+##### `gl_part_muzzleflash`
+
+Hides muzzleflash model objects from weapons when fired. Instead it replaces the muzzle flashes with particle effects.
+`0` by default.
+
 ##### `gl_bounceparticles`
 
 Turns bouncing chunks on/off, `1` by default.
 Only works for QMB particles.
+
+##### `gl_decal_blood`
+
+Turns blood stain decal patches on/off, `0` by default.
+
+##### `gl_decal_bullets`
+
+Turns bullet mark decal patches on/off, `0` by default.
+
+##### `gl_decal_sparks`
+
+Turns nail spark decal patches on/off, `0` by default.
+
+##### `gl_decal_explosions`
+
+Turns explosion stain decal patches on/off, `0` by default.
+
+##### `gl_decal_viewdistance`
+
+Sets distance how far decal patches are visible from.
+Default value is `2048`.
+
+##### `gl_decaltime`
+
+Sets the time (in seconds) how long decal patches remain visible.
+Default value is `30`.
 
 ##### `gl_loadq3models`
 
@@ -579,6 +610,18 @@ Possible values are between `0.0` (fully transparent) and `1.0` (fully opaque).
 
 Sets the type of screenshot image, `jpg` by default.
 Can be `tga`, `png` or `[jpeg|jpg]`.
+
+##### `png_compression_level`
+
+Sets the compression level of `png` screenshots.  
+The value can be between `0` - `9`, where `0` means no compression and `9` means maximum compression.  
+Default value is `1`.
+
+##### `jpeg_compression_level`
+
+Sets the quality level of `jpg` screenshots.  
+The value can be between `0` - `100`, where `0` means worst quality (maximum compression) and `100` means best quality (least compression).  
+Default value is `90`.
 
 ##### `scr_precisetime`
 
