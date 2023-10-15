@@ -1,5 +1,6 @@
 #include "quakedef.h"
 
+#define SPEED_DRAW_CHARS	5
 #define MAP_NAME_DRAW_CHARS	12
 #define HIDE_TIME	1.5f
 
@@ -19,9 +20,29 @@ typedef struct
 	int bar_x, bar_y, bar_width, bar_num_chars;
 	int skip_prev_x, skip_next_x, skip_y;
 	int time_y;
-
+	int speed_prev_x, speed_next_x, speed_y;
 	int map_min_num, map_max_num, map_x, map_y, map_width, map_height;
 } layout_t;
+
+
+static void
+ChangeSpeed (int change)
+{
+	static const float levels[] = {0.25, 0.5, 0.8, 1.0, 1.25, 2, 4};
+	static const int num_levels = sizeof(levels) / sizeof(float);
+	int i, current_level;
+
+	// Find level nearest to cl_demospeed
+	current_level = 0;
+	for (i = 0; i < num_levels - 1; i++)
+		if (cl_demospeed.value > (levels[i] + levels[i + 1]) * 0.5)
+			current_level = i + 1;
+
+	current_level = (current_level + change) % num_levels;
+	if (current_level < 0)
+		current_level += num_levels;
+	Cvar_SetValue(&cl_demospeed, levels[current_level]);
+}
 
 
 static qboolean
@@ -49,6 +70,11 @@ GetLayout (layout_t *layout, int map_num)
 	layout->skip_next_x = vid.width - 2 * layout->char_size;
 	layout->skip_prev_x = vid.width - layout->char_size * (4 + MAP_NAME_DRAW_CHARS);
 	layout->skip_y = layout->top;
+
+	layout->speed_prev_x = (vid.width - layout->char_size * (4 + SPEED_DRAW_CHARS)) / 2;
+	layout->speed_next_x = (vid.width + layout->char_size * (SPEED_DRAW_CHARS)) / 2;
+	layout->speed_y = layout->top;
+
 	layout->time_y = layout->top;
 
 	layout->map_x = (int)(vid.width - show_frac * layout->char_size * MAP_NAME_DRAW_CHARS);
@@ -160,6 +186,30 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 			map_menu_open = !map_menu_open;
 			handled = true;
 		}
+		else if (ms->y >= layout.speed_y
+			&& ms->y < layout.speed_y + layout.char_size
+			&& ms->x >= layout.speed_next_x
+			&& ms->x < layout.speed_next_x + 2 * layout.char_size)
+		{
+			ChangeSpeed(1);
+			handled = true;
+		}
+		else if (ms->y >= layout.speed_y
+			&& ms->y < layout.speed_y + layout.char_size
+			&& ms->x >= layout.speed_prev_x
+			&& ms->x < layout.speed_prev_x + 2 * layout.char_size)
+		{
+			ChangeSpeed(-1);
+			handled = true;
+		}
+		else if (ms->y >= layout.speed_y
+			&& ms->y < layout.speed_y + layout.char_size
+			&& ms->x >= layout.speed_prev_x + 2 * layout.char_size
+			&& ms->x < layout.speed_next_x)
+		{
+			ChangeSpeed(1);
+			handled = true;
+		}
 
 		if (hover_map_idx != -1)
 		{
@@ -252,6 +302,16 @@ void Demo_DrawUI(void)
 	FormatTimeString(dsmi->max_time, sizeof(max_time_buf), max_time_buf);
 	Q_snprintfz(buf, sizeof(buf), "%s / %s", current_time_buf, max_time_buf);
 	Draw_String(0, layout.time_y, buf, true);
+
+	// Speed
+	Draw_Character(layout.speed_prev_x, layout.speed_y, 0xbc, true);
+	Draw_Character(layout.speed_prev_x + layout.char_size, layout.speed_y, 0xbc, true);
+	Q_snprintfz(buf, sizeof(buf), "%4.2fx", cl_demospeed.value);
+	Draw_String(layout.speed_prev_x + 2 * layout.char_size
+					+ layout.char_size * (SPEED_DRAW_CHARS - strlen(buf)) / 2,
+				layout.speed_y, buf, true);
+	Draw_Character(layout.speed_next_x, layout.speed_y, 0xbe, true);
+	Draw_Character(layout.speed_next_x + layout.char_size, layout.speed_y, 0xbe, true);
 
 	// Current level
 	if (map_num > 0)
