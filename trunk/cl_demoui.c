@@ -255,6 +255,46 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 			handled = true;
 		}
 	}
+	else if (ms->button_down == K_MWHEELDOWN || ms->button_down == K_MWHEELUP)
+	{
+		handled = true;
+		switch (hover)
+		{
+			case HOVER_SEEK:
+				if (ms->button_down == K_MWHEELUP)
+					Cmd_ExecuteString("demoseek -1", src_command);
+				else
+					Cmd_ExecuteString("demoseek +1", src_command);
+				break;
+			case HOVER_SKIP_NEXT:
+			case HOVER_SKIP:
+			case HOVER_SKIP_PREV:
+				if (ms->button_down == K_MWHEELUP)
+					Cmd_ExecuteString("demoskip -1", src_command);
+				else
+					Cmd_ExecuteString("demoskip +1", src_command);
+				break;
+			case HOVER_SPEED_NEXT:
+			case HOVER_SPEED:
+			case HOVER_SPEED_PREV:
+				if (ms->button_down == K_MWHEELUP)
+					ChangeSpeed(-1);
+				else
+					ChangeSpeed(1);
+				break;
+			default:
+				handled = false; break;
+		}
+
+		if (hover_map_idx != -1)
+		{
+			if (ms->button_down == K_MWHEELUP)
+				Cmd_ExecuteString("demoskip -1", src_command);
+			else
+				Cmd_ExecuteString("demoskip +1", src_command);
+			handled = true;
+		}
+	}
 
 	if (!ms->buttons[1])
 	{
