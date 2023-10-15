@@ -35,7 +35,7 @@ int	image_width, image_height;
 
 cvar_t	png_compression_level = {"png_compression_level", "1"};
 #ifdef GLQUAKE
-cvar_t	jpeg_compression_level = {"jpeg_compression_level", "75"};
+cvar_t	jpeg_compression_level = {"jpeg_compression_level", "90"};
 #endif
 
 /*
