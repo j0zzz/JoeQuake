@@ -1,6 +1,6 @@
 #include "quakedef.h"
 
-#define SPEED_DRAW_CHARS	5
+#define SPEED_DRAW_CHARS	6
 #define MAP_NAME_DRAW_CHARS	12
 #define HIDE_TIME	1.5f
 
