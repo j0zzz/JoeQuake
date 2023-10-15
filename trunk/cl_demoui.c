@@ -237,7 +237,10 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 	}
 
 	if (ms->button_down == 1 && !handled) {
-		map_menu_open = false;
+		if (map_menu_open)
+			map_menu_open = false;
+		else
+			Cmd_ExecuteString("pause", src_command);
 	}
 
 	return handled;
