@@ -5,14 +5,6 @@
 #define HIDE_TIME	1.5f
 
 
-static double last_event_time = -1.0f;
-static qboolean over_ui = false;
-static qboolean map_menu_open = false;
-static int hover_map_idx = -1;
-
-qboolean demoui_dragging_seek;
-
-
 typedef struct
 {
 	int top;
@@ -24,6 +16,26 @@ typedef struct
 	int map_min_num, map_max_num, map_x, map_y, map_width, map_height;
 } layout_t;
 
+
+typedef enum
+{
+	HOVER_NONE,
+	HOVER_SEEK,
+	HOVER_SKIP_PREV,
+	HOVER_SKIP,
+	HOVER_SKIP_NEXT,
+	HOVER_SPEED_PREV,
+	HOVER_SPEED,
+	HOVER_SPEED_NEXT,
+} hover_t;
+
+
+qboolean demoui_dragging_seek;
+static double last_event_time = -1.0f;
+static qboolean over_ui = false;
+static qboolean map_menu_open = false;
+static hover_t hover;
+static int hover_map_idx = -1;
 
 static void
 ChangeSpeed (int change)
@@ -118,6 +130,78 @@ GetLayout (layout_t *layout, int map_num)
 }
 
 
+
+static void
+UpdateHover (layout_t *layout, const mouse_state_t* ms)
+{
+	hover = HOVER_NONE;
+
+	if(ms->y >= layout->bar_y
+		&& ms->y <= layout->bar_y + layout->char_size
+		&& ms->x >= layout->bar_x
+		&& ms->x < layout->bar_x + layout->bar_width)
+	{
+		hover = HOVER_SEEK;
+	}
+	else if (ms->y >= layout->skip_y
+		&& ms->y < layout->skip_y + layout->char_size
+		&& ms->x >= layout->skip_next_x
+		&& ms->x < layout->skip_next_x + 2 * layout->char_size)
+	{
+		hover = HOVER_SKIP_NEXT;
+	}
+	else if (ms->y >= layout->skip_y
+		&& ms->y < layout->skip_y + layout->char_size
+		&& ms->x >= layout->skip_prev_x
+		&& ms->x < layout->skip_prev_x + 2 * layout->char_size)
+	{
+		hover = HOVER_SKIP_PREV;
+	}
+	else if (ms->y >= layout->skip_y
+		&& ms->y < layout->skip_y + layout->char_size
+		&& ms->x >= layout->skip_prev_x + 2 * layout->char_size
+		&& ms->x < layout->skip_next_x)
+	{
+		hover = HOVER_SKIP;
+	}
+	else if (ms->y >= layout->speed_y
+		&& ms->y < layout->speed_y + layout->char_size
+		&& ms->x >= layout->speed_next_x
+		&& ms->x < layout->speed_next_x + 2 * layout->char_size)
+	{
+		hover = HOVER_SPEED_NEXT;
+	}
+	else if (ms->y >= layout->speed_y
+		&& ms->y < layout->speed_y + layout->char_size
+		&& ms->x >= layout->speed_prev_x
+		&& ms->x < layout->speed_prev_x + 2 * layout->char_size)
+	{
+		hover = HOVER_SPEED_PREV;
+	}
+	else if (ms->y >= layout->speed_y
+		&& ms->y < layout->speed_y + layout->char_size
+		&& ms->x >= layout->speed_prev_x + 2 * layout->char_size
+		&& ms->x < layout->speed_next_x)
+	{
+		hover = HOVER_SPEED;
+	}
+
+	if (map_menu_open
+		&& ms->x >= layout->map_x
+		&& ms->y >= layout->map_y
+		&& ms->y < layout->map_y + layout->map_height)
+	{
+		hover_map_idx = layout->map_min_num
+					+ (int)((ms->y - layout->map_y) / layout->char_size);
+	}
+	else
+	{
+		hover_map_idx = -1;
+	}
+
+}
+
+
 qboolean Demo_MouseEvent(const mouse_state_t* ms)
 {
 	char command[64];
@@ -140,75 +224,28 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 		return handled;
 	over_ui = ms->y > layout.top || (map_menu_open && ms->x > layout.map_x);
 
-	if (map_menu_open
-		&& ms->x >= layout.map_x
-		&& ms->y >= layout.map_y
-		&& ms->y < layout.map_y + layout.map_height)
-	{
-		hover_map_idx = layout.map_min_num
-					+ (int)((ms->y - layout.map_y) / layout.char_size);
-	}
-	else
-	{
-		hover_map_idx = -1;
-	}
+	UpdateHover(&layout, ms);
 
 	if (ms->button_down == 1)
 	{
-		if(ms->y >= layout.bar_y
-			&& ms->y <= layout.bar_y + layout.char_size
-			&& ms->x >= layout.bar_x
-			&& ms->x < layout.bar_x + layout.bar_width)
+		handled = true;
+		switch (hover)
 		{
-			demoui_dragging_seek = true;
-		}
-		else if (ms->y >= layout.skip_y
-			&& ms->y < layout.skip_y + layout.char_size
-			&& ms->x >= layout.skip_next_x
-			&& ms->x < layout.skip_next_x + 2 * layout.char_size)
-		{
-			Cmd_ExecuteString("demoskip +1", src_command);
-			handled = true;
-		}
-		else if (ms->y >= layout.skip_y
-			&& ms->y < layout.skip_y + layout.char_size
-			&& ms->x >= layout.skip_prev_x
-			&& ms->x < layout.skip_prev_x + 2 * layout.char_size)
-		{
-			Cmd_ExecuteString("demoskip -1", src_command);
-			handled = true;
-		}
-		else if (ms->y >= layout.skip_y
-			&& ms->y < layout.skip_y + layout.char_size
-			&& ms->x >= layout.skip_prev_x + 2 * layout.char_size
-			&& ms->x < layout.skip_next_x)
-		{
-			map_menu_open = !map_menu_open;
-			handled = true;
-		}
-		else if (ms->y >= layout.speed_y
-			&& ms->y < layout.speed_y + layout.char_size
-			&& ms->x >= layout.speed_next_x
-			&& ms->x < layout.speed_next_x + 2 * layout.char_size)
-		{
-			ChangeSpeed(1);
-			handled = true;
-		}
-		else if (ms->y >= layout.speed_y
-			&& ms->y < layout.speed_y + layout.char_size
-			&& ms->x >= layout.speed_prev_x
-			&& ms->x < layout.speed_prev_x + 2 * layout.char_size)
-		{
-			ChangeSpeed(-1);
-			handled = true;
-		}
-		else if (ms->y >= layout.speed_y
-			&& ms->y < layout.speed_y + layout.char_size
-			&& ms->x >= layout.speed_prev_x + 2 * layout.char_size
-			&& ms->x < layout.speed_next_x)
-		{
-			ChangeSpeed(1);
-			handled = true;
+			case HOVER_SEEK:
+				demoui_dragging_seek = true; break;
+			case HOVER_SKIP_NEXT:
+				Cmd_ExecuteString("demoskip +1", src_command); break;
+			case HOVER_SKIP:
+				map_menu_open = !map_menu_open; break;
+			case HOVER_SKIP_PREV:
+				Cmd_ExecuteString("demoskip -1", src_command); break;
+			case HOVER_SPEED_NEXT:
+				ChangeSpeed(1); break;
+			case HOVER_SPEED:
+			case HOVER_SPEED_PREV:
+				ChangeSpeed(-1); break;
+			default:
+				handled = false; break;
 		}
 
 		if (hover_map_idx != -1)
@@ -219,7 +256,8 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 		}
 	}
 
-	if (!ms->buttons[1]) {
+	if (!ms->buttons[1])
+	{
 		demoui_dragging_seek = false;
 	}
 	else if (demoui_dragging_seek)
@@ -236,7 +274,8 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 		handled = true;
 	}
 
-	if (ms->button_down == 1 && !handled) {
+	if (ms->button_down == 1 && !handled)
+	{
 		if (map_menu_open)
 			map_menu_open = false;
 		else
@@ -244,6 +283,18 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 	}
 
 	return handled;
+}
+
+
+static void
+DrawArrows (layout_t *layout, int x, int y, hover_t highlight_hover, qboolean left)
+{
+	char c;
+	c = left ? 0xbc : 0xbe;
+	if (hover == highlight_hover)
+		c -= 0x80;
+	Draw_Character(x, y, c, true);
+	Draw_Character(x + layout->char_size, y, c, true);
 }
 
 
@@ -307,31 +358,23 @@ void Demo_DrawUI(void)
 	Draw_String(0, layout.time_y, buf, true);
 
 	// Speed
-	Draw_Character(layout.speed_prev_x, layout.speed_y, 0xbc, true);
-	Draw_Character(layout.speed_prev_x + layout.char_size, layout.speed_y, 0xbc, true);
+	DrawArrows(&layout, layout.speed_prev_x, layout.speed_y, HOVER_SPEED_PREV, true);
 	Q_snprintfz(buf, sizeof(buf), "%4.2fx", cl_demospeed.value);
 	Draw_String(layout.speed_prev_x + 2 * layout.char_size
 					+ layout.char_size * (SPEED_DRAW_CHARS - strlen(buf)) / 2,
 				layout.speed_y, buf, true);
-	Draw_Character(layout.speed_next_x, layout.speed_y, 0xbe, true);
-	Draw_Character(layout.speed_next_x + layout.char_size, layout.speed_y, 0xbe, true);
+	DrawArrows(&layout, layout.speed_next_x, layout.speed_y, HOVER_SPEED_NEXT, false);
 
 	// Current level
 	if (map_num > 0)
-	{
-		Draw_Character(layout.skip_prev_x, layout.skip_y, 0xbc, true);
-		Draw_Character(layout.skip_prev_x + layout.char_size, layout.skip_y, 0xbc, true);
-	}
+		DrawArrows(&layout, layout.skip_prev_x, layout.skip_y, HOVER_SKIP_PREV, true);
 	Q_snprintfz(buf, min(sizeof(buf), MAP_NAME_DRAW_CHARS + 1),
 				"%s", dsmi->name);
 	Draw_String(layout.skip_prev_x + 2 * layout.char_size
 					+ layout.char_size * (MAP_NAME_DRAW_CHARS - strlen(buf)) / 2,
 				layout.skip_y, buf, true);
 	if (map_num < demo_seek_info.num_maps - 1)
-	{
-		Draw_Character(layout.skip_next_x, layout.skip_y, 0xbe, true);
-		Draw_Character(layout.skip_next_x + layout.char_size, layout.skip_y, 0xbe, true);
-	}
+		DrawArrows(&layout, layout.skip_next_x, layout.skip_y, HOVER_SKIP_NEXT, false);
 
 	// Level selector
 	if (map_menu_open)
