@@ -898,6 +898,11 @@ void QMB_DrawParticles (void)
 			{
 				float alpha = (float)p->color[3] / 255.0;
 
+				if (gl_part_telesplash.value != 2 && gl_part_telesplash.value != 3)
+				{
+					p->die = 0;
+					continue;
+				}
 				if (gl_part_telesplash.value == 3)
 				{
 					if (cl.time < p->die - ((p->die - p->start) / 2.0))
