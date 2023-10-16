@@ -93,6 +93,11 @@ qboolean CL_DemoRewind(void)
 	return (cl_demorewind.value != 0);
 }
 
+qboolean CL_DemoUIOpen(void)
+{
+    return cls.demoplayback && cls.demofile;
+}
+
 
 /*
 ==============
@@ -755,7 +760,7 @@ void CL_DemoSkip_f (void)
 	long current_offset;
 	dseek_map_info_t *dsmi;
 
-	if (!cls.demoplayback)
+	if (!cls.demoplayback || !cls.demofile)
 	{
 		Con_Printf ("not playing a demo\n");
 		return;
@@ -805,7 +810,7 @@ void CL_DemoSeek_f (void)
 {
 	char *time_str;
 
-	if (!cls.demoplayback)
+	if (!cls.demoplayback || !cls.demofile)
 	{
 		Con_Printf ("not playing a demo\n");
 		return;

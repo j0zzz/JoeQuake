@@ -403,6 +403,7 @@ void CL_KeepDemo_f (void);
 int CL_DemoIntermissionState (int old_state, int new_state);
 qboolean CL_DemoRewind(void);
 dseek_map_info_t *CL_DemoGetCurrentMapInfo (int *map_num_p);
+qboolean CL_DemoUIOpen(void);
 
 // cl_demoui.c
 typedef struct mouse_state_s mouse_state_t;
