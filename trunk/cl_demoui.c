@@ -309,7 +309,8 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 
 		Q_snprintfz(command, sizeof(command),
 					"demoseek %f",
-					(1 - progress) * dsmi->min_time + progress * dsmi->max_time);
+					(1 - progress) * dsmi->min_time
+						+ progress * (dsmi->max_time - 0.01));
 		Cmd_ExecuteString(command, src_command);
 		handled = true;
 	}
