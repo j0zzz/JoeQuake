@@ -240,8 +240,8 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 			case HOVER_SKIP_PREV:
 				Cmd_ExecuteString("demoskip -1", src_command); break;
 			case HOVER_SPEED_NEXT:
-				ChangeSpeed(1); break;
 			case HOVER_SPEED:
+				ChangeSpeed(1); break;
 			case HOVER_SPEED_PREV:
 				ChangeSpeed(-1); break;
 			default:
