@@ -1164,7 +1164,7 @@ void SCR_UpdateScreen (void)
 		M_Draw ();
 	}
 
-	if (cls.demoplayback && key_dest == key_game)
+	if (cls.demoplayback && cls.demofile && key_dest == key_game)
 		Demo_DrawUI();
 	SCR_DrawCursor();
 

@@ -725,7 +725,7 @@ dseek_map_info_t *CL_DemoGetCurrentMapInfo (int *map_num_p)
 	int map_num;
 	dseek_map_info_t *dsmi;
 
-	if (!cls.demoplayback)
+	if (!cls.demoplayback || !cls.demofile)
 		Sys_Error ("not playing demo\n");
 
 	current_offset = ftell(cls.demofile);
