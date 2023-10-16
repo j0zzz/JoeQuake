@@ -544,7 +544,7 @@ float CL_LerpPoint (void)
 
 	f = cl.mtime[0] - cl.mtime[1];
 
-	if (!f || cl_nolerp.value || cls.timedemo || 
+	if (!f || cl_nolerp.value || cls.timedemo || demoui_dragging_seek || 
 		(sv.active && (!cl_independentphysics.value || host_frametime > 1.0 / 72.0)))	// ignore lerping if client fps is too low (not goes above 72 - the server fps)
 	{
 		cl.time = cl.ctime = cl.mtime[0];

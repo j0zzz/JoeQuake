@@ -44,7 +44,7 @@ static qboolean hDZipProcess = false;
 
 dseek_info_t demo_seek_info;
 static double seek_time;
-static qboolean seek_backwards;
+static qboolean seek_backwards, seek_was_backwards;
 static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
 qboolean	dz_unpacking = false;
@@ -177,6 +177,20 @@ void EraseTopEntry (void)
 }
 
 
+static void
+EndSeek (void)
+{
+	seek_time = -1.0;
+
+	if (seek_was_backwards)
+	{
+		memset(cl_dlights, 0, sizeof(cl_dlights));
+		R_ClearParticles();
+		CL_ClearTEnts();
+	}
+}
+
+
 /*
 ====================
 CL_GetMessage
@@ -190,8 +204,6 @@ int CL_GetMessage (void)
 	float	f;
 	qboolean backwards;
 
-	backwards = CL_DemoRewind();
-
 	if (seek_time < 0 && (cl.paused & 2 || demoui_dragging_seek))
 		return 0;
 
@@ -201,9 +213,19 @@ int CL_GetMessage (void)
 
 	if (cls.demoplayback)
 	{
+		if (seek_time >= 0 && seek_backwards && cl.mtime[0] < seek_time)
+		{
+			// If we are seeking backwards and just passed the target time, go
+			// forwards for another frame.  This means the frame we settle on is
+			// always the one immediately after (or equal to) the target time.
+			seek_backwards = false;
+		}
+
+		backwards = CL_DemoRewind();
+
 		if (start_of_demo && backwards)
 		{
-			seek_time = -1.0;
+			EndSeek();
 			return 0;
 		}
 
@@ -231,12 +253,7 @@ int CL_GetMessage (void)
 				return 0;
 			else if (seek_time >= 0 && !seek_backwards && cl.mtime[0] >= seek_time)
 			{
-				seek_time = -1.0;
-				return 0;
-			}
-			else if (seek_time >= 0 && seek_backwards && cl.mtime[0] < seek_time)
-			{
-				seek_time = -1.0;
+				EndSeek();
 				return 0;
 			}
 
@@ -252,7 +269,7 @@ int CL_GetMessage (void)
 				EraseTopEntry ();
 				if (!dem_framepos) {
 					start_of_demo = true;
-					seek_time = -1.0;
+					EndSeek();
 					return 0;
 				}
 			}
@@ -809,7 +826,7 @@ void CL_DemoSeek_f (void)
 	if (seek_time < 0.)
 		seek_time = 0.;
 
-	seek_backwards = (seek_time < cl.mtime[0]);
+	seek_was_backwards = seek_backwards = (seek_time < cl.mtime[0]);
 }
 
 /*
