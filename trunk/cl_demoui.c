@@ -437,13 +437,16 @@ void Demo_DrawUI(void)
 		for (i = layout.map_min_num, y = layout.map_y;
 				i < layout.map_max_num; i++, y += layout.char_size)
 		{
-			if ((hover_map_idx != -1 && i == hover_map_idx)
-					|| (hover_map_idx == -1 && i == map_num))
+			if (hover_map_idx != -1 && i == hover_map_idx)
 			{
 				Draw_Character(layout.map_x, y, 13, true);
 			}
-			Draw_String(layout.map_x + layout.char_size, y,
-						demo_seek_info.maps[i].name, true);
+			if (i == map_num)
+				Draw_Alt_String(layout.map_x + layout.char_size, y,
+								demo_seek_info.maps[i].name, true);
+			else
+				Draw_String(layout.map_x + layout.char_size, y,
+							demo_seek_info.maps[i].name, true);
 		}
 	}
 }
