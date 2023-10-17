@@ -60,7 +60,7 @@ ChangeSpeed (int change)
 static qboolean
 GetLayout (layout_t *layout, int map_num)
 {
-	int rows_available;
+	int centre_y, rows_above, rows_below;
 	float show_frac;
 
 	if (over_ui)
@@ -74,53 +74,55 @@ GetLayout (layout_t *layout, int map_num)
 	layout->char_size = Sbar_GetScaledCharacterSize();
 	layout->top = (int)(vid.height - 2 * layout->char_size * show_frac);
 
+	// Seek bar
 	layout->bar_num_chars = (int)(vid.width / layout->char_size);
 	layout->bar_width = layout->bar_num_chars * layout->char_size;
 	layout->bar_x = (vid.width - layout->bar_width) / 2;
 	layout->bar_y = layout->top + layout->char_size;
 
+	// Current level
 	layout->skip_next_x = vid.width - 2 * layout->char_size;
 	layout->skip_prev_x = vid.width - layout->char_size * (4 + MAP_NAME_DRAW_CHARS);
 	layout->skip_y = layout->top;
 
+	// Speed
 	layout->speed_prev_x = (vid.width - layout->char_size * (4 + SPEED_DRAW_CHARS)) / 2;
 	layout->speed_next_x = (vid.width + layout->char_size * (SPEED_DRAW_CHARS)) / 2;
 	layout->speed_y = layout->top;
 
+	// Time
 	layout->time_y = layout->top;
 
+	// Level selector
 	layout->map_x = (int)(vid.width - show_frac * layout->char_size * MAP_NAME_DRAW_CHARS);
 	layout->map_width = (1 + MAP_NAME_DRAW_CHARS) * layout->char_size;
-	rows_available = (int)((float)vid.height / layout->char_size - 4);
-	if (rows_available >= demo_seek_info.num_maps)
+
+	centre_y = (vid.height - layout->char_size * 3) / 2;
+	rows_above = max(0, centre_y / layout->char_size);
+	rows_below = max(0, (vid.height - layout->char_size * 3 - centre_y) / layout->char_size);
+	if (rows_above + rows_below > demo_seek_info.num_maps)
 	{
-		// Draw all maps at once, centered.
+		// More rows than maps: draw all maps at once, centered.
 		layout->map_min_num = 0;
+		layout->map_max_num = demo_seek_info.num_maps;
+	}
+	else if (map_num < rows_above)
+	{
+		// Near the top: make first map visible.
+		layout->map_min_num = 0;
+		layout->map_max_num = rows_below + rows_above;
+	}
+	else if (demo_seek_info.num_maps - map_num < rows_below)
+	{
+		// Near the bottom: make last map visible.
+		layout->map_min_num = demo_seek_info.num_maps - rows_below - rows_above;
 		layout->map_max_num = demo_seek_info.num_maps;
 	}
 	else
 	{
-		int centre_y, rows_above, rows_below;
-
-		centre_y = (vid.height - layout->char_size * 3) / 2;
-		rows_above = centre_y / layout->char_size;
-		rows_below = (vid.height - layout->char_size * 3 - centre_y) / layout->char_size;
-
-		if (map_num < rows_above)
-		{
-			layout->map_min_num = 0;
-			layout->map_max_num = rows_below + rows_above;
-		}
-		else if (demo_seek_info.num_maps - map_num < rows_below)
-		{
-			layout->map_min_num = demo_seek_info.num_maps - rows_below - rows_above;
-			layout->map_max_num = demo_seek_info.num_maps;
-		}
-		else
-		{
-			layout->map_min_num = map_num - rows_above;
-			layout->map_max_num = map_num + rows_below;
-		}
+		// In the middle: centre the current map.
+		layout->map_min_num = map_num - rows_above;
+		layout->map_max_num = map_num + rows_below;
 	}
 
 	layout->map_height = (layout->map_max_num - layout->map_min_num) * layout->char_size;
