@@ -60,6 +60,7 @@ ChangeSpeed (int change)
 static qboolean
 GetLayout (layout_t *layout, int map_num)
 {
+	int backdrop_height;
 	int centre_y, rows_above, rows_below;
 	float show_frac;
 
@@ -71,33 +72,35 @@ GetLayout (layout_t *layout, int map_num)
 	if (show_frac == 0)
 		return false;
 
+	// Backdrop.
 	layout->char_size = Sbar_GetScaledCharacterSize();
-	layout->top = (int)(vid.height - 2 * layout->char_size * show_frac);
+	backdrop_height = 3 * layout->char_size;
+	layout->top = (int)(vid.height - backdrop_height * show_frac);
 
 	// Seek bar
 	layout->bar_num_chars = (int)(vid.width / layout->char_size);
 	layout->bar_width = layout->bar_num_chars * layout->char_size;
 	layout->bar_x = (vid.width - layout->bar_width) / 2;
-	layout->bar_y = layout->top + layout->char_size;
+	layout->bar_y = layout->top + backdrop_height - layout->char_size;
 
 	// Current level
 	layout->skip_next_x = vid.width - 2 * layout->char_size;
 	layout->skip_prev_x = vid.width - layout->char_size * (4 + MAP_NAME_DRAW_CHARS);
-	layout->skip_y = layout->top;
+	layout->skip_y = layout->top + layout->char_size / 2;
 
 	// Speed
 	layout->speed_prev_x = (vid.width - layout->char_size * (4 + SPEED_DRAW_CHARS)) / 2;
 	layout->speed_next_x = (vid.width + layout->char_size * (SPEED_DRAW_CHARS)) / 2;
-	layout->speed_y = layout->top;
+	layout->speed_y = layout->top + layout->char_size / 2;
 
 	// Time
-	layout->time_y = layout->top;
+	layout->time_y = layout->top + layout->char_size / 2;
 
 	// Level selector
 	layout->map_x = (int)(vid.width - show_frac * layout->char_size * MAP_NAME_DRAW_CHARS);
 	layout->map_width = (1 + MAP_NAME_DRAW_CHARS) * layout->char_size;
 
-	centre_y = (vid.height - layout->char_size * 3) / 2;
+	centre_y = (vid.height - backdrop_height - layout->char_size) / 2;
 	rows_above = max(0, centre_y / layout->char_size);
 	rows_below = max(0, (vid.height - layout->char_size * 3 - centre_y) / layout->char_size);
 	if (rows_above + rows_below > demo_seek_info.num_maps)
@@ -200,7 +203,6 @@ UpdateHover (layout_t *layout, const mouse_state_t* ms)
 	{
 		hover_map_idx = -1;
 	}
-
 }
 
 
@@ -317,6 +319,12 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 		handled = true;
 	}
 
+	if (!handled && (ms->y >= layout.top || hover_map_idx != -1))
+	{
+		// Swallow all other events over the UI.
+		handled = true;
+	}
+
 	if (ms->button_down == 1 && !handled)
 	{
 		if (map_menu_open)
@@ -373,7 +381,7 @@ void Demo_DrawUI(void)
 		return;
 
 	// Backdrop
-	Draw_AlphaFill(0, layout.top, vid.width / sbar_scale, 16, 0, 0.7);
+	Draw_AlphaFill(0, layout.top, vid.width / sbar_scale, 32, 0, 0.7);
 
 	// Seek bar
 	for (i = 0, x = layout.bar_x; i < layout.bar_num_chars; i++, x += layout.char_size)
