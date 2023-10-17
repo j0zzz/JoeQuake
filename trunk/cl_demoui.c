@@ -226,9 +226,9 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 	over_ui = false;
 	if (!GetLayout(&layout, map_num))
 		return handled;
-	over_ui = ms->y > layout.top || (map_menu_open && ms->x > layout.map_x);
 
 	UpdateHover(&layout, ms);
+	over_ui = ms->y > layout.top || (map_menu_open && hover_map_idx != -1);
 
 	if (ms->button_down == 1)
 	{
@@ -319,7 +319,7 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 		handled = true;
 	}
 
-	if (!handled && (ms->y >= layout.top || hover_map_idx != -1))
+	if (!handled && over_ui)
 	{
 		// Swallow all other events over the UI.
 		handled = true;
