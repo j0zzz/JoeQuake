@@ -778,7 +778,7 @@ void Ghost_DrawGhostTime (qboolean intermission)
 }
 
 
-void Ghost_Finish (void)
+void Ghost_Finish (char *map_name, double finish_time)
 {
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
@@ -786,8 +786,8 @@ void Ghost_Finish (void)
     if (sv.active || cls.demoplayback) {
         if (cls.marathon_level - 1 < MAX_MARATHON_LEVELS) {
             gml = &gmi->levels[cls.marathon_level - 1];
-            Q_strncpyz(gml->map_name, CL_MapName(), MAX_QPATH);
-            gml->player_time = cl.mtime[0];
+            Q_strncpyz(gml->map_name, map_name, MAX_QPATH);
+            gml->player_time = finish_time;
         }
 
         if (ghost_demo_path[0]) {

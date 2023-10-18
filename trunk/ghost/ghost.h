@@ -27,7 +27,7 @@ void Ghost_Load (void);
 void Ghost_Draw (void);
 void Ghost_DrawGhostTime (qboolean intermission);
 void Ghost_Init (void);
-void Ghost_Finish (void);
+void Ghost_Finish (char *map_name, double finish_time);
 void Ghost_Shutdown (void);
 
 typedef struct {

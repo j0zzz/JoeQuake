@@ -1249,7 +1249,7 @@ void PrintFinishTime()
 		SV_BroadcastPrintf("\n");
 	}
 
-	Ghost_Finish ();
+	Ghost_Finish (CL_MapName(), cl.completed_time);
 }
 
 

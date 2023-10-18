@@ -378,7 +378,7 @@ typedef struct
 {
 	long offset;
     char name[DSEEK_MAP_NAME_SIZE];
-	float min_time, max_time;
+	float min_time, finish_time, max_time;
 } dseek_map_info_t;
 typedef struct
 {

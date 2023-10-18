@@ -43,8 +43,9 @@ DSeek_ServerInfoModel_cb (const char *model, void *ctx)
         Q_strncpyz(dsmi->name, (char *)model, DSEEK_MAP_NAME_SIZE);
         COM_StripExtension(COM_SkipPath(dsmi->name), dsmi->name);
         dsmi->offset = pctx->packet_offset;
-        dsmi->min_time = -1.0f;  // updated in `DSeek_Time_cb`.
-        dsmi->max_time = -1.0f;  // updated in `DSeek_Time_cb`.
+        dsmi->min_time = -1.0f;     // updated in `DSeek_Time_cb`.
+        dsmi->finish_time = -1.0f;  // updated in `DSeek_Intermission_cb`.
+        dsmi->max_time = -1.0f;     // updated in `DSeek_Time_cb`.
 
         dsi->num_maps++;
     }
@@ -71,6 +72,24 @@ DSeek_Time_cb (float time, void *ctx)
 }
 
 
+static dp_cb_response_t
+DSeek_Intermission_cb (void *ctx)
+{
+    dseek_ctx_t *pctx = ctx;
+    dseek_info_t *dsi = pctx->dseek_info;
+    dseek_map_info_t *dsmi = NULL;
+
+    if (dsi->num_maps > 0) {
+        dsmi = &dsi->maps[dsi->num_maps - 1];
+        if (dsmi->finish_time == -1) {
+            dsmi->finish_time = dsmi->max_time;
+        }
+    }
+
+    return DP_CBR_SKIP_PACKET;
+}
+
+
 qboolean
 DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info)
 {
@@ -82,6 +101,8 @@ DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info)
         .read = DSeek_Read_cb,
         .server_info_model = DSeek_ServerInfoModel_cb,
         .time = DSeek_Time_cb,
+        .intermission = DSeek_Intermission_cb,
+        .finale = DSeek_Intermission_cb,
     };
     dseek_ctx_t ctx = {
         .demo_file = demo_file,

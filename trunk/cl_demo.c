@@ -758,7 +758,7 @@ dseek_map_info_t *CL_DemoGetCurrentMapInfo (int *map_num_p)
 void CL_DemoSkip_f (void)
 {
 	char *map_num_str;
-	int map_num;
+	int i, map_num;
 	long current_offset;
 	dseek_map_info_t *dsmi;
 
@@ -776,6 +776,7 @@ void CL_DemoSkip_f (void)
 		return;
 	}
 
+	// Convert argument to a map number.
 	map_num_str = Cmd_Argv(1);
 	if (map_num_str[0] == '+' || map_num_str[0] == '-') {
 		current_offset = ftell(cls.demofile);
@@ -791,6 +792,7 @@ void CL_DemoSkip_f (void)
 		map_num = atoi(map_num_str);
 	}
 
+	// Validate the map number.
 	if (map_num < 0 || map_num >= demo_seek_info.num_maps
 		|| demo_seek_info.maps[map_num].offset < 0)
 	{
@@ -798,11 +800,26 @@ void CL_DemoSkip_f (void)
 		return;
 	}
 
+	// Actually do the seek.
 	dsmi = &demo_seek_info.maps[map_num];
-
-	if (fseek(cls.demofile, dsmi->offset, SEEK_SET) == -1) {
+	if (fseek(cls.demofile, dsmi->offset, SEEK_SET) == -1)
+	{
 		Con_Printf("seek failed\n", map_num);
 		return;
+	}
+
+	// Reset marathon information.
+	cls.marathon_time = 0;
+	cls.marathon_level = 0;
+	for (i = 0; i < map_num; i++)
+	{
+		dsmi = &demo_seek_info.maps[i];
+		if (dsmi->finish_time > 0)
+		{
+			cls.marathon_time += dsmi->finish_time;
+			cls.marathon_level++;
+			Ghost_Finish (dsmi->name, dsmi->finish_time);
+		}
 	}
 
 	Cvar_SetValue(&cl_demorewind, 0.);
