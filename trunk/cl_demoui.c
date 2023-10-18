@@ -357,6 +357,18 @@ FormatTimeString (float seconds, int buf_size, char *buf)
 }
 
 
+static int
+TimeToSeekbarPos (double time, dseek_map_info_t *dsmi, layout_t *layout)
+{
+	double frac;
+
+	frac = (time - dsmi->min_time) / (dsmi->max_time - dsmi->min_time);
+	return (int)((layout->bar_x + layout->char_size) * (1 - frac)
+					+ (layout->bar_x + layout->bar_width - layout->char_size * 2) * frac);
+
+}
+
+
 void Demo_DrawUI(void)
 {
 	float sbar_scale = Sbar_GetScaleAmount();
@@ -364,8 +376,7 @@ void Demo_DrawUI(void)
 	char max_time_buf[32];
 	char buf[64];
 	char c;
-	float progress;
-	int i, x, y, playhead_x;
+	int i, x, y, finish_x;
 	dseek_map_info_t *dsmi;
 	int map_num;
 	layout_t layout;
@@ -384,6 +395,21 @@ void Demo_DrawUI(void)
 	Draw_AlphaFill(0, layout.top, vid.width / sbar_scale, 32, 0, 0.7);
 
 	// Seek bar
+	if (dsmi->finish_time >= 0)
+	{
+		color_t c = RGBA_TO_COLOR(255, 255, 255, 128);
+
+		finish_x = TimeToSeekbarPos(dsmi->finish_time, dsmi, &layout) + layout.char_size / 2;
+		Draw_AlphaLineRGB(
+			finish_x,
+			layout.bar_y - layout.char_size / 4,
+			finish_x,
+			layout.bar_y,
+			sbar_scale * 2,
+			c
+		);
+	}
+
 	for (i = 0, x = layout.bar_x; i < layout.bar_num_chars; i++, x += layout.char_size)
 	{
 		if (i == 0)
@@ -396,11 +422,7 @@ void Demo_DrawUI(void)
 		Draw_Character (x, layout.bar_y, c, true);
 	}
 
-	progress = (cl.mtime[0] - dsmi->min_time) / (dsmi->max_time - dsmi->min_time);
-	playhead_x = (int)((layout.bar_x + layout.char_size) * (1 - progress)
-						+ (layout.bar_x + layout.bar_width - layout.char_size * 2) * progress);
-
-	Draw_Character(playhead_x, layout.bar_y, 131, true);
+	Draw_Character(TimeToSeekbarPos(cl.mtime[0], dsmi, &layout), layout.bar_y, 131, true);
 
 	// Time
 	FormatTimeString(cl.mtime[0], sizeof(current_time_buf), current_time_buf);
