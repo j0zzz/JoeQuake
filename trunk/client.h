@@ -377,12 +377,12 @@ float CL_KeyState (kbutton_t *key);
 typedef struct
 {
 	long offset;
-    char name[DSEEK_MAP_NAME_SIZE];
+	char name[DSEEK_MAP_NAME_SIZE];
 	float min_time, finish_time, max_time;
 } dseek_map_info_t;
 typedef struct
 {
-    dseek_map_info_t maps[DSEEK_MAX_MAPS];
+	dseek_map_info_t maps[DSEEK_MAX_MAPS];
 	int num_maps;
 } dseek_info_t;
 qboolean DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info);
