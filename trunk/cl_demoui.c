@@ -3,12 +3,14 @@
 #define SPEED_DRAW_CHARS	6
 #define MAP_NAME_DRAW_CHARS	12
 #define HIDE_TIME	1.5f
+#define PAUSE_PLAY_CHARS	2
 
 
 typedef struct
 {
 	int top;
 	int char_size;
+	int play_pause_x, play_pause_y, play_pause_width;
 	int bar_x, bar_y, bar_width, bar_num_chars;
 	int skip_prev_x, skip_next_x, skip_y;
 	int time_y;
@@ -20,6 +22,7 @@ typedef struct
 typedef enum
 {
 	HOVER_NONE,
+	HOVER_PLAY_PAUSE,
 	HOVER_SEEK,
 	HOVER_SKIP_PREV,
 	HOVER_SKIP,
@@ -77,10 +80,15 @@ GetLayout (layout_t *layout, int map_num)
 	backdrop_height = 3 * layout->char_size;
 	layout->top = (int)(vid.height - backdrop_height * show_frac);
 
+	// Play/pause
+	layout->play_pause_width = layout->char_size * PAUSE_PLAY_CHARS;
+	layout->play_pause_x = 0;
+	layout->play_pause_y = layout->top + backdrop_height - layout->char_size;
+
 	// Seek bar
-	layout->bar_num_chars = (int)(vid.width / layout->char_size);
+	layout->bar_num_chars = (int)(vid.width / layout->char_size) - PAUSE_PLAY_CHARS;
 	layout->bar_width = layout->bar_num_chars * layout->char_size;
-	layout->bar_x = (vid.width - layout->bar_width) / 2;
+	layout->bar_x = (vid.width - layout->bar_width + PAUSE_PLAY_CHARS * layout->char_size) / 2;
 	layout->bar_y = layout->top + backdrop_height - layout->char_size;
 
 	// Current level
@@ -141,7 +149,14 @@ UpdateHover (layout_t *layout, const mouse_state_t* ms)
 {
 	hover = HOVER_NONE;
 
-	if(ms->y >= layout->bar_y
+	if(ms->y >= layout->play_pause_y
+		&& ms->y <= layout->play_pause_y + layout->char_size
+		&& ms->x >= layout->play_pause_x
+		&& ms->x < layout->play_pause_x + layout->play_pause_width)
+	{
+		hover = HOVER_PLAY_PAUSE;
+	}
+	else if(ms->y >= layout->bar_y
 		&& ms->y <= layout->bar_y + layout->char_size
 		&& ms->x >= layout->bar_x
 		&& ms->x < layout->bar_x + layout->bar_width)
@@ -235,6 +250,8 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 		handled = true;
 		switch (hover)
 		{
+			case HOVER_PLAY_PAUSE:
+				cl.paused ^= 2; break;
 			case HOVER_SEEK:
 				demoui_dragging_seek = true; break;
 			case HOVER_SKIP_NEXT:
@@ -393,6 +410,23 @@ void Demo_DrawUI(void)
 
 	// Backdrop
 	Draw_AlphaFill(0, layout.top, vid.width / sbar_scale, 32, 0, 0.7);
+
+	// Pause / play
+	if (cl.paused & 2)
+	{
+		c = '>';
+		if (hover != HOVER_PLAY_PAUSE)
+			c |= 0x80;
+		Draw_Character(layout.play_pause_x + layout.char_size/2, layout.play_pause_y, c, true);
+	}
+	else
+	{
+		c = 'I';
+		if (hover != HOVER_PLAY_PAUSE)
+			c |= 0x80;
+		Draw_Character(layout.play_pause_x + layout.char_size/4, layout.play_pause_y, c, true);
+		Draw_Character(layout.play_pause_x + (3 * layout.char_size)/4, layout.play_pause_y, c, true);
+	}
 
 	// Seek bar
 	if (dsmi->finish_time >= 0)
