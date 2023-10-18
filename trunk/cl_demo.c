@@ -823,6 +823,7 @@ void CL_DemoSkip_f (void)
 	}
 
 	Cvar_SetValue(&cl_demorewind, 0.);
+	cl.paused &= ~2;
 }
 
 void CL_DemoSeek_f (void)
