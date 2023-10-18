@@ -26,21 +26,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 #include "movie.h"
+#else
+#include "errno.h"
 #endif
 
 framepos_t	*dem_framepos = NULL;
 qboolean	start_of_demo = false;
-
-// .dz playback
-#ifdef _WIN32
-static	HANDLE	hDZipProcess = NULL;
-#else
-#include <errno.h>
-//#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-static qboolean hDZipProcess = false;
-#endif
 
 dseek_info_t demo_seek_info;
 static double seek_time;
@@ -656,6 +647,9 @@ static void PlayDZDemo (void)
 			cls.demofile = NULL;
 			cls.state = ca_connected;
 			break;
+        default:
+            Sys_Error("Invalid dzip status %d", dzip_status);
+            return;
 	}
 }
 

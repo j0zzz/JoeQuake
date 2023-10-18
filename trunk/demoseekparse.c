@@ -33,7 +33,6 @@ DSeek_Read_cb (void *dest, unsigned int size, void *ctx)
 static dp_cb_response_t
 DSeek_ServerInfoModel_cb (const char *model, void *ctx)
 {
-    dp_cb_response_t rc;
     dseek_ctx_t *pctx = ctx;
     dseek_info_t *dsi = pctx->dseek_info;
     dseek_map_info_t *dsmi;

@@ -228,7 +228,7 @@ qboolean Demo_MouseEvent(const mouse_state_t* ms)
 	qboolean handled = false;
 	dseek_map_info_t *dsmi;
 	layout_t layout;
-	int map_num, clicked_map_num;
+	int map_num;
 
 	dsmi = CL_DemoGetCurrentMapInfo (&map_num);
 	if (dsmi == NULL)
