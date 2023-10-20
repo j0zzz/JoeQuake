@@ -173,6 +173,7 @@ void EraseTopEntry (void)
 }
 
 
+extern float fade_done;
 extern	float	scr_centertime_off;
 static void
 EndSeek (void)
@@ -181,10 +182,12 @@ EndSeek (void)
 
 	if (seek_was_backwards)
 	{
+		// Remove all ephemerals when seeking backwards
 		memset(cl_dlights, 0, sizeof(cl_dlights));
 		R_ClearParticles();
 		CL_ClearTEnts();
 		scr_centertime_off = 0;
+		fade_done = 0.0f;
 	}
 }
 
