@@ -970,7 +970,7 @@ static void SCR_DrawCursor(void)
 	cursor_y = scr_pointer_state.y;
 
 	// Disable the cursor in all but following client parts
-	if (!cls.demoplayback && key_dest != key_menu)
+	if (!CL_DemoUIOpen() && key_dest != key_menu)
 		return;
 
 	// Always draw the cursor.

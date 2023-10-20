@@ -86,7 +86,7 @@ qboolean CL_DemoRewind(void)
 
 qboolean CL_DemoUIOpen(void)
 {
-    return cls.demoplayback && cls.demofile;
+    return cl_demoui.value && cls.demoplayback && cls.demofile;
 }
 
 

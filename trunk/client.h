@@ -289,6 +289,8 @@ extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_confirmquit;
 
+extern	cvar_t	cl_demoui;
+
 #define	MAX_TEMP_ENTITIES	256		// lightning bolts, etc
 #define	MAX_STATIC_ENTITIES	4096	//ericw -- was 512
 
