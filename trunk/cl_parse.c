@@ -1358,6 +1358,8 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_serverinfo:
+			if (cls.demoplayback)
+				S_StopAllSounds (true);
 			CL_ParseServerInfo ();
 			vid.recalc_refdef = true;	// leave intermission full screen
 			break;
