@@ -34,6 +34,7 @@ framepos_t	*dem_framepos = NULL;
 qboolean	start_of_demo = false;
 
 dseek_info_t demo_seek_info;
+qboolean demo_seek_info_available;
 static double seek_time;
 static qboolean seek_backwards, seek_was_backwards;
 static dzip_context_t dzCtx;
@@ -86,7 +87,7 @@ qboolean CL_DemoRewind(void)
 
 qboolean CL_DemoUIOpen(void)
 {
-    return cl_demoui.value && cls.demoplayback && cls.demofile;
+    return demo_seek_info_available && cl_demoui.value && cls.demoplayback && cls.demofile;
 }
 
 
@@ -545,8 +546,9 @@ void StartPlayingOpenedDemo (void)
 	cls.forcetrack = 0;
 	seek_time = -1.0;
 
-	if (!DSeek_Parse (cls.demofile, &demo_seek_info))
-		return;
+	demo_seek_info_available = DSeek_Parse (cls.demofile, &demo_seek_info);
+	if (!demo_seek_info_available)
+		Con_Printf("WARNING: Could not extract seek information from demo, UI disabled\n");
 
 	fseek(cls.demofile, 0, SEEK_SET);
 	while ((c = getc(cls.demofile)) != '\n')
@@ -730,7 +732,10 @@ dseek_map_info_t *CL_DemoGetCurrentMapInfo (int *map_num_p)
 	dseek_map_info_t *dsmi;
 
 	if (!cls.demoplayback || !cls.demofile)
-		Sys_Error ("not playing demo\n");
+		Sys_Error ("not playing demo");
+
+	if (!demo_seek_info_available)
+		Sys_Error ("demo seek info not available");
 
 	current_offset = ftell(cls.demofile);
 	for (map_num = 0;
@@ -762,6 +767,12 @@ void CL_DemoSkip_f (void)
 	if (!cls.demoplayback || !cls.demofile)
 	{
 		Con_Printf ("not playing a demo\n");
+		return;
+	}
+
+	if (!demo_seek_info_available)
+	{
+		Con_Printf ("Cannot skip since seek info could not be read from demo\n");
 		return;
 	}
 

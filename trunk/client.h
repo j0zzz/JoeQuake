@@ -391,6 +391,7 @@ qboolean DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info);
 
 // cl_demo.c
 extern dseek_info_t demo_seek_info;
+extern qboolean demo_seek_info_available;
 void CL_InitDemo(void);
 void CL_ShutdownDemo (void);
 void CL_StopPlayback (void);
