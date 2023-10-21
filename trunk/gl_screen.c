@@ -1165,7 +1165,7 @@ void SCR_UpdateScreen (void)
 	}
 
 	if (CL_DemoUIOpen() && key_dest == key_game)
-		Demo_DrawUI();
+		DemoUI_Draw();
 	SCR_DrawCursor();
 
 	if (!gl_glsl_gamma_able)

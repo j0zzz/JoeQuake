@@ -221,7 +221,7 @@ UpdateHover (layout_t *layout, const mouse_state_t* ms)
 }
 
 
-qboolean Demo_MouseEvent(const mouse_state_t* ms)
+qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 {
 	char command[64];
 	float progress;
@@ -386,7 +386,7 @@ TimeToSeekbarPos (double time, dseek_map_info_t *dsmi, layout_t *layout)
 }
 
 
-void Demo_DrawUI(void)
+void DemoUI_Draw(void)
 {
 	float sbar_scale = Sbar_GetScaleAmount();
 	char current_time_buf[32];

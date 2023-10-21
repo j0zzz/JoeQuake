@@ -410,8 +410,8 @@ qboolean CL_DemoUIOpen(void);
 // cl_demoui.c
 typedef struct mouse_state_s mouse_state_t;
 extern qboolean demoui_dragging_seek;
-qboolean Demo_MouseEvent(const mouse_state_t* ms);
-void Demo_DrawUI(void);
+qboolean DemoUI_MouseEvent(const mouse_state_t* ms);
+void DemoUI_Draw(void);
 
 // cl_parse.c
 void CL_ParseServerMessage (void);
