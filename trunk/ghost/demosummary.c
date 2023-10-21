@@ -41,6 +41,9 @@ typedef struct
 } ds_ctx_t;
 
 
+static char *map_name;
+
+
 static qboolean
 DS_Read_cb (void *dest, unsigned int size, void *ctx)
 {
@@ -52,7 +55,6 @@ DS_Read_cb (void *dest, unsigned int size, void *ctx)
 static dp_cb_response_t
 DS_ServerInfoModel_cb (const char *model, void *ctx)
 {
-    char *map_name;
     ds_ctx_t *pctx = ctx;
     demo_summary_t *ds = pctx->demo_summary;
 
@@ -212,6 +214,25 @@ DS_Intermission_cb (void *ctx)
     return DP_CBR_CONTINUE;
 }
 
+
+static dp_cb_response_t
+DS_Cutscene_cb (void *ctx)
+{
+    ds_ctx_t *pctx = ctx;
+
+    if (MapHasCutsceneAsIntermission(map_name)) {
+        if (!pctx->intermission_seen) {
+            pctx->demo_summary->total_time += pctx->level_time;
+            pctx->demo_summary->num_maps ++;
+            pctx->intermission_seen = true;
+            pctx->any_intermission_seen = true;
+        }
+    }
+
+    return DP_CBR_CONTINUE;
+}
+
+
 static dp_cb_response_t
 DS_UpdateStat_cb (byte stat, int count, void *ctx)
 {
@@ -265,6 +286,7 @@ DS_GetDemoSummary (FILE *demo_file, demo_summary_t *demo_summary)
         .time = DS_Time_cb,
         .intermission = DS_Intermission_cb,
         .finale = DS_Intermission_cb,
+        .cut_scene = DS_Cutscene_cb,
         .update_stat = DS_UpdateStat_cb,
         .killed_monster = DS_KilledMonster_cb,
         .found_secret = DS_FoundSecret_cb,

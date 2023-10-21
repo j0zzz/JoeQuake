@@ -54,6 +54,23 @@ typedef struct {
     char next_demo_path[MAX_OSPATH];
 } ghost_parse_ctx_t;
 
+// on some maps an svc_cutscene message is sent when the level is finished
+// we need to handle such scenarios as if svc_intermission was sent
+static char *cutscene_maps[2] = {
+    "hipend",
+    "mexx8",
+};
+
+qboolean MapHasCutsceneAsIntermission(char *map_name)
+{
+    int i;
+
+    for (i = 0; i < countof(cutscene_maps); i++)
+        if (!Q_strcasecmp(cutscene_maps[i], map_name))
+            return true;
+
+    return false;
+}
 
 static qboolean
 Ghost_Read_cb (void *dest, unsigned int size, void *ctx)
@@ -195,8 +212,9 @@ Ghost_Update_cb(int entity_num, vec3_t origin, vec3_t angle, byte origin_bits,
 
     pctx->updated = true;
 
-    // Nothing of interest until the next packet.
-    return DP_CBR_SKIP_PACKET;
+    return MapHasCutsceneAsIntermission(pctx->level->map_name) ?
+        DP_CBR_CONTINUE :
+        DP_CBR_SKIP_PACKET; // Nothing of interest until the next packet.
 }
 
 
@@ -236,6 +254,21 @@ Ghost_Intermission_cb (void *ctx)
 
     if (pctx->level->finish_time <= 0) {
         pctx->level->finish_time = pctx->rec.time;
+    }
+
+    return DP_CBR_SKIP_PACKET;
+}
+
+
+static dp_cb_response_t
+Ghost_Cutscene_cb (void *ctx)
+{
+    ghost_parse_ctx_t *pctx = ctx;
+
+    if (MapHasCutsceneAsIntermission(pctx->level->map_name)) {
+        if (pctx->level->finish_time <= 0) {
+            pctx->level->finish_time = pctx->rec.time;
+        }
     }
 
     return DP_CBR_SKIP_PACKET;
@@ -308,7 +341,7 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
         .packet_end = Ghost_PacketEnd_cb,
         .intermission = Ghost_Intermission_cb,
         .finale = Ghost_Intermission_cb,
-        .cut_scene = Ghost_Intermission_cb,
+        .cut_scene = Ghost_Cutscene_cb,
         .update_name = Ghost_UpdateName_cb,
         .stuff_text = Ghost_StuffText_cb,
         .update_colors = Ghost_UpdateColors_cb,

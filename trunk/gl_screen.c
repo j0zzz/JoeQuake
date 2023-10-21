@@ -1137,6 +1137,10 @@ void SCR_UpdateScreen (void)
 
 		Ghost_DrawGhostTime (true);
 	}
+	else if (cl.intermission == 3 && key_dest == key_game)
+	{
+		Ghost_DrawGhostTime (true);
+	}
 	else
 	{
 		Draw_Crosshair (false);

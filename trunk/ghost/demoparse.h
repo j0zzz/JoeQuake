@@ -85,6 +85,8 @@ typedef struct {
 } dp_callbacks_t;
 
 
+extern qboolean MapHasCutsceneAsIntermission(char *map_name);
+
 dp_err_t DP_ReadDemo(dp_callbacks_t *callbacks, void *callback_ctx);
 const char *DP_StrError(dp_err_t rc);
 
