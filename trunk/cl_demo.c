@@ -573,6 +573,10 @@ void StartPlayingOpenedDemo (void)
 	// mid-demo).
 	cls.marathon_time = 0;
 	cls.marathon_level = 0;
+
+
+	// Unpause otherwise the game just sits on the console until unpausing...
+	cl.paused &= ~2;
 }
 
 // joe: playing demos from .dz files
