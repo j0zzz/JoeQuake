@@ -56,7 +56,6 @@ typedef struct {
     float player_time;
 } ghost_marathon_level_t;
 typedef struct {
-    qboolean valid;         // has there been a ghost time for each level?
     ghost_marathon_level_t levels[MAX_MARATHON_LEVELS];
     float total_split;
     int ghost_start;
@@ -182,7 +181,7 @@ static void Ghost_UpdateMarathon (void)
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
 
-    gmi->valid = true;
+    gmi->ghost_start = 0;
     gmi->total_split = 0.0f;
     for (i = 0; i < cls.marathon_level && i < MAX_MARATHON_LEVELS; i++) {
         gml = &gmi->levels[i];
@@ -197,7 +196,7 @@ static void Ghost_UpdateMarathon (void)
             }
         }
         if (gml->ghost_time < 0.0) {
-            gmi->valid = false;
+            gmi->ghost_start = i + 1;
         } else {
             gmi->total_split += (gml->player_time - gml->ghost_time);
         }
@@ -212,7 +211,9 @@ static void Ghost_PrintMarathonSplits (void)
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
 
-    if (gmi->valid && cls.marathon_level > 0) {
+    if (gmi->ghost_start < cls.marathon_level
+            && gmi->ghost_start < MAX_MARATHON_LEVELS
+            && cls.marathon_level > 0) {
         Con_Printf("ghost splits:\n");
         Con_Printf("  map                time    split    total\n");
         Con_Printf("  \x9d\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9e\x9f "
@@ -699,7 +700,7 @@ static void Ghost_DrawIntermissionTimes (void)
     min_y = ((cl.intermission == 2) ? 182 : 174) * scale;
 
     total = gmi->total_split;
-    for (i = cls.marathon_level - 1; i >= 0; i--) {
+    for (i = cls.marathon_level - 1; i >= gmi->ghost_start; i--) {
         if (i >= MAX_MARATHON_LEVELS) {
             continue;
         }
@@ -711,7 +712,7 @@ static void Ghost_DrawIntermissionTimes (void)
         relative_time = gml->player_time - gml->ghost_time;
         Ghost_DrawSingleTime(y, relative_time, gml->map_name);
 
-        if (i > 0) {
+        if (i > gmi->ghost_start) {
             if (total < 1e-3) {
                 Q_snprintfz (st, sizeof(st), "%.2f s", total);
             } else {
