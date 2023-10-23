@@ -43,7 +43,7 @@ static int hover_map_idx = -1;
 static void
 ChangeSpeed (int change)
 {
-	static const float levels[] = {0.25, 0.5, 0.8, 1.0, 1.25, 2, 4};
+	static const float levels[] = {0.1, 0.25, 0.5, 0.8, 1.0, 1.25, 2, 4, 10};
 	static const int num_levels = sizeof(levels) / sizeof(float);
 	int i, current_level;
 
