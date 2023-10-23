@@ -539,6 +539,7 @@ void CL_Record_f (void)
 void StartPlayingOpenedDemo (void)
 {
 	int		c;
+	long	demo_offset;
 	qboolean	neg = false;
 
 	cls.demoplayback = true;
@@ -546,11 +547,12 @@ void StartPlayingOpenedDemo (void)
 	cls.forcetrack = 0;
 	seek_time = -1.0;
 
+	demo_offset = ftell(cls.demofile);
 	demo_seek_info_available = DSeek_Parse (cls.demofile, &demo_seek_info);
 	if (!demo_seek_info_available)
 		Con_Printf("WARNING: Could not extract seek information from demo, UI disabled\n");
 
-	fseek(cls.demofile, 0, SEEK_SET);
+	fseek(cls.demofile, demo_offset, SEEK_SET);
 	while ((c = getc(cls.demofile)) != '\n')
 	{
 		if (c == EOF)
