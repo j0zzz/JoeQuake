@@ -89,6 +89,24 @@ DSeek_Intermission_cb (void *ctx)
 }
 
 
+static dp_cb_response_t
+DSeek_Cutscene_cb (void *ctx)
+{
+    dseek_ctx_t *pctx = ctx;
+    dseek_info_t *dsi = pctx->dseek_info;
+    dseek_map_info_t *dsmi = NULL;
+
+    if (dsi->num_maps > 0) {
+        dsmi = &dsi->maps[dsi->num_maps - 1];
+        if (MapHasCutsceneAsIntermission(dsmi->name)) {
+            (void) DSeek_Intermission_cb(ctx);
+        }
+    }
+
+    return DP_CBR_SKIP_PACKET;
+}
+
+
 qboolean
 DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info)
 {
@@ -102,6 +120,7 @@ DSeek_Parse (FILE *demo_file, dseek_info_t *dseek_info)
         .time = DSeek_Time_cb,
         .intermission = DSeek_Intermission_cb,
         .finale = DSeek_Intermission_cb,
+        .cut_scene = DSeek_Cutscene_cb,
     };
     dseek_ctx_t ctx = {
         .demo_file = demo_file,
