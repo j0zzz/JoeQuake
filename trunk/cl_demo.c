@@ -207,11 +207,21 @@ int CL_GetMessage (void)
 			else if (cl_demorewind.value && cl.ctime >= cl.mtime[0])
 				return 0;
 
-			// joe: fill in the stack of frames' positions
-			// enable on intermission or not...?
-			// NOTE: it can't handle fixed intermission views!
-			if (!cl_demorewind.value /*&& !cl.intermission*/)
+			if (!cl_demorewind.value)
+			{
+				// joe: fill in the stack of frames' positions
 				PushFrameposEntry (ftell(cls.demofile));
+			}
+			else
+			{
+				// joe: get out framestack's top entry
+				fseek (cls.demofile, dem_framepos->baz, SEEK_SET);
+				EraseTopEntry ();
+				if (!dem_framepos) {
+					start_of_demo = true;
+					return 0;
+				}
+			}
 		}
 
 		// get the next message
@@ -232,15 +242,6 @@ int CL_GetMessage (void)
 		{
 			CL_StopPlayback ();
 			return 0;
-		}
-
-		// joe: get out framestack's top entry
-		if (cl_demorewind.value /*&& !cl.intermission*/)
-		{
-			fseek (cls.demofile, dem_framepos->baz, SEEK_SET);
-			EraseTopEntry ();
-			if (!dem_framepos)
-				start_of_demo = true;
 		}
 
 		return 1;
