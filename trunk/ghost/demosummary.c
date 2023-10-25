@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include "../quakedef.h"
-#include "demoparse.h"
+#include "../demoparse.h"
 #include "demosummary.h"
 
 #define DS_PRINT_BUFFER_SIZE    256
@@ -45,7 +45,7 @@ typedef struct
 static char *map_name;
 
 
-static qboolean
+static dp_cb_response_t
 DS_PacketStart_cb (void *ctx)
 {
     ds_ctx_t *pctx = ctx;

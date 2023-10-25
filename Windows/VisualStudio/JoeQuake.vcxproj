@@ -324,7 +324,7 @@
     </ClCompile>
     <ClCompile Include="..\..\trunk\cl_dzip.c" />
     <ClCompile Include="..\..\trunk\fmod.c" />
-    <ClCompile Include="..\..\trunk\ghost\demoparse.c" />
+    <ClCompile Include="..\..\trunk\demoparse.c" />
     <ClCompile Include="..\..\trunk\ghost\demosummary.c" />
     <ClCompile Include="..\..\trunk\ghost\ghost.c" />
     <ClCompile Include="..\..\trunk\ghost\ghostparse.c" />
@@ -598,7 +598,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\trunk\fakegl.h" />
-    <ClInclude Include="..\..\trunk\ghost\demoparse.h" />
+    <ClInclude Include="..\..\trunk\demoparse.h" />
     <ClInclude Include="..\..\trunk\ghost\demosummary.h" />
     <ClInclude Include="..\..\trunk\ghost\ghost.h" />
     <ClInclude Include="..\..\trunk\ghost\ghost_private.h" />
