@@ -61,7 +61,7 @@ ChangeSpeed (int change)
 
 
 static qboolean
-GetLayout (layout_t *layout, int map_num)
+GetUILayout (layout_t *layout, int map_num)
 {
 	int backdrop_height;
 	int centre_y, rows_above, rows_below;
@@ -239,7 +239,7 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 
 	last_event_time = realtime;
 	over_ui = false;
-	if (!GetLayout(&layout, map_num))
+	if (!GetUILayout(&layout, map_num))
 		return handled;
 
 	UpdateHover(&layout, ms);
@@ -405,7 +405,7 @@ void DemoUI_Draw(void)
 	if (dsmi->min_time == dsmi->max_time)
 		return;  // only one frame in demo
 
-	if (!GetLayout(&layout, map_num))
+	if (!GetUILayout(&layout, map_num))
 		return;
 
 	// Backdrop
