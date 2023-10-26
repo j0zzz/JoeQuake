@@ -1,8 +1,11 @@
 <article>
-  <a href="{{ site.github.url }}{{ post.url }}{{ post.tag[0] }}">
+  <a href="{{ site.github.url }}{{ post.url }}">
     <div class="featured-post">
       <div class="featured-post-img" {% if post.image %}style="background-image:url({{ site.github.url }}/assets/img/{{ post.image }})"{% endif %}></div>
       <h2><span>{{ post.title }}</span></h2>
+      {% if post.tag[0] == "new" %}
+        <img class="featured-post-new-img" src="{{ site.github.url }}/assets/img/jq-post-new.png"></img>
+      {% endif %}
     </div>
   </a>
 </article>

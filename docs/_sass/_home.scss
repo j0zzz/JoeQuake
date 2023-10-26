@@ -18,6 +18,12 @@
 .featured-post-img:hover {
   transform: scale(1.2);
 }
+.featured-post-new-img {
+  position: absolute;
+  top: -110px;
+  left: -125px;
+  transform: rotate(-60deg) scale(0.35);
+}
 .featured-post h2 {
   bottom: 0;
   margin: 0;
