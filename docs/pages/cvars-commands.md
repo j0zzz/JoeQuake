@@ -253,6 +253,11 @@ Default value is `-70`.
 Maximum value of pitch angle. Cannot be greater than `90`.
 Default value is `80`.
 
+##### `cl_demoui`
+
+Switch for the demo player UI, `0` means the player is hidden.
+Default value is `1`.
+
 ##### `cl_independentphysics`
 
 Server and Client framerates are independent. This setting is turned on by default. To turn it off you need to start joequake with the following command line:
@@ -925,6 +930,21 @@ Starts playing a demo and starts capturing it also with the same name.
 ##### `keepdemo`
 
 See description about `cl_autodemo` in the Cvars section.
+
+##### `demoskip`
+
+When playing back a marathon demo, skips the amount of levels by the set value. Negative numbers are also valid.  
+For example: when playing back an episode 1 marathon (e1m1 - e1m7):
+- using `skipdemo +2` on e1m2 will jump to e1m4
+- using `skipdemo -3` on e1m6 will jump to e1m3
+
+##### `demoseek`
+
+Seeks the amount of seconds by the set value during demo playback.
+Available usage modes (example values):
+- `demoseek 12` will seek to the time 0:12
+- `demoseek +3` will seek forward 3 seconds from the actual position
+- `demoseek -5` will seek back 5 seconds from the actual position
 
 ##### `toggleparticles`
 
