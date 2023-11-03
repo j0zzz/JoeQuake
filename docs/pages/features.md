@@ -19,6 +19,8 @@ Use `vid_displayfrequency <value>` to set your desired monitor refresh rate.
 
 {% include subfeatures/ghost-recording.md %}
 
+{% include subfeatures/demo-ui.md %}
+
 ### Parameter completion
 
 Parameter completion means if you're using a command requiring a filename

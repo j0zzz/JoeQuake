@@ -1,4 +1,47 @@
 
+ version 0.17.7 build 7733
+ -----------------------
+
+Added youtube-like demo player UI (by Matthew Earl)
+Ghost is fixed when rewinding through finale (by Matthew Earl)
+Ghost now properly works on levels ending with svc_cutscene (e.g. hipend)
+Fixed bug when ambient sounds kept playing after level changes in multi-level demos
+Fixed bug when changing gl_part_telesplash (from 2 or 3) crashed the game
+Raised default JPG screenshot quality from 75 to 90 (jpeg_compression_level)
+Added optional precise time printing on intermission (by Matthew Earl)
+	New cvar: scr_precisetime
+	When set to 1, the intermission time is shown with two decimal places
+Added feature to reload ghost demos on-th-fly, so no demo restart needed (by Matthew Earl)
+Fixed producing corrupt savegame files due to CR/LF characters in map name (e.g. autumn_sp)
+Fixed drawing of Quake3 multimodel shadows
+Made visible portion of weapon models adjustable (from Ironwail)
+	New cvar: cl_gun_fovscale
+	Values from the 0...1 range are valid
+Fixed rendering mode when r_lightmap is 1
+Changed vertex lighting mode to be switched off by default
+Smaller fixes to support Mjolnir episode 4
+Ghost splits are now shown during finale (by Matthew Earl)
+Added demo summary text on intermission when ghost recording is enabled (by Matthew Earl)
+Optimized video renderer when large number of models were drawn
+	Special thanks to Matt for tracking down a long-standing bug on certain GPUs
+Made location of HUD icons slightly customizable
+	New cvar: cl_sbar_offset
+	The position of the HUD icons are lifted by the offset amount (valid from 0 to 8)
+	The specified offset is only applied if cl_sbar is 0 or 2
+Slightly increased lighting overbright on maps and made it available on models either
+	New cvars: gl_overbright, gl_overbright_models
+	Default values are 1 (overbright enabled) for both
+Fixed show_speed value when playing cooperative
+Added anisotropic filtering support from QuakeSpasm
+	New cvar: gl_texture_anisotropy, to set the desired filtering amount (2x, 4x, 8x, 16x)
+Added fix to avoid occasional 3s pause on restarting level (by Matthew Earl)
+SDL build improvements (by Matthew Earl):
+	- Fixed cl_minpitch and cl_maxpitch
+	- Keypad support
+	- Added resolution scale option to video menu 
+Fixed potential crash after loading a savegame (by Matthew Earl)
+Fixed bug when the same skin was loaded for different models (occured in Re:Mobilize)
+
  version 0.17.6 build 7652
  -----------------------
 

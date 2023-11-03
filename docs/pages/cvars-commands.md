@@ -167,6 +167,11 @@ Removes gibs if turned on, `0` (off) by default.
 
 Toggles between transparent (`0`), old/original (`1`) and alternative (`2`) huds, `0` by default.
 
+##### `cl_sbar_offset`
+
+Lifts the position of hud icons from the bottom with the specified offset. Valid range is from `0` (no offset) to `8` (max offset). Only applied to hud styles `0` and `2`.  
+Default value is `0`.
+
 ##### `cl_demorewind`
 
 Toggles between normal and backward demoplaying, `0` by default.
@@ -239,9 +244,14 @@ If turned on (`1`), everything that Quake can't interpret
 (not command or cvar or alias) is sent as chat. Similar to QW clients, you don't have to type `say ` every time you wanna say something.  
 Default value is `1`.
 
-##### `cl_oldbob`
+##### `cl_newbob`
 
 Toggles between old and new style weapon bobbing, `0` by default.
+
+##### `cl_gun_fovscale`
+
+If turned on (`1`), the gun model is scaled according to the current FOV. Decimal values are also accepted for partial scaling.  
+Default value is `0`.
 
 ##### `cl_minpitch`
 
@@ -328,6 +338,14 @@ Turn fullbright polys on brush models on/off, `1` by default.
 ##### `gl_fb_models`
 
 Turn fullbright polys on alias models on/off, `1` by default.
+
+##### `gl_overbright`
+
+Sets lighting overbright on map surfaces, `1` by default.
+
+##### `gl_overbright_models`
+
+Sets lighting overbright on models, `1` by default.
 
 ##### `gl_interpolate_animation`
 
@@ -544,6 +562,11 @@ default.
 
 Set texture filtering mode for sky textures. Valid modes: `GL_LINEAR` and
 `GL_NEAREST`, `GL_LINEAR` by default.
+
+##### `gl_texture_anisotropy`
+
+Sets the level of anisotropic texture filtering. A valid value should be a power of two: `2 4 8 16` (depending on your hardware's limits).
+If you don't wanna use anisotropic filtering, set the value to `1`.
 
 ##### `gl_zfix`
 
