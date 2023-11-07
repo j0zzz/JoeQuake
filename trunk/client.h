@@ -290,6 +290,8 @@ extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_confirmquit;
 
 extern	cvar_t	cl_demoui;
+extern	cvar_t	cl_demouitimeout;
+extern	cvar_t	cl_demouihidespeed;
 
 #define	MAX_TEMP_ENTITIES	256		// lightning bolts, etc
 #define	MAX_STATIC_ENTITIES	4096	//ericw -- was 512
@@ -413,6 +415,7 @@ typedef struct mouse_state_s mouse_state_t;
 extern qboolean demoui_dragging_seek;
 qboolean DemoUI_MouseEvent(const mouse_state_t* ms);
 void DemoUI_Draw(void);
+qboolean DemoUI_Visible(void);
 
 // cl_parse.c
 void CL_ParseServerMessage (void);

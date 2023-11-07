@@ -2,7 +2,6 @@
 
 #define SPEED_DRAW_CHARS	6
 #define MAP_NAME_DRAW_CHARS	12
-#define HIDE_TIME	1.5f
 #define PAUSE_PLAY_CHARS	2
 
 
@@ -60,6 +59,29 @@ ChangeSpeed (int change)
 }
 
 
+static float
+GetShowFrac (void)
+{
+	float hidespeed = max(0.1, cl_demouihidespeed.value);
+	float timeout = bound(0, cl_demouitimeout.value, 1);
+	float show_frac;
+
+	if (over_ui)
+		show_frac = 1;
+	else
+		show_frac = bound(0, 1 - hidespeed * (realtime - last_event_time - timeout), 1);
+
+	return show_frac;
+}
+
+
+qboolean
+DemoUI_Visible (void)
+{
+	return GetShowFrac() > 0;
+}
+
+
 static qboolean
 GetUILayout (layout_t *layout, int map_num)
 {
@@ -67,11 +89,7 @@ GetUILayout (layout_t *layout, int map_num)
 	int centre_y, rows_above, rows_below;
 	float show_frac;
 
-	if (over_ui)
-		show_frac = 1;
-	else
-		show_frac = bound(0, 1 - 2 * (realtime - last_event_time - HIDE_TIME), 1);
-
+	show_frac = GetShowFrac();
 	if (show_frac == 0)
 		return false;
 
