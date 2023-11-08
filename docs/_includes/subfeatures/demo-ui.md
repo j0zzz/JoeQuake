@@ -24,7 +24,9 @@ Tips and tricks:
 
 - Clicking outside of the demo UI (when the map menu is closed) will pause or
   resume demo playback.
-- Leave the mouse still and the UI will disappear after a short wait.
+- Leave the mouse still and the UI will disappear after a short wait.  The
+  timeout can be changed with `cl_demouitimeout` and the hiding animation sped
+  up with `cl_demouihidespeed`.
 - Bind keys to the commands `demoskip` and `demoseek` to enable keyboard
   shortcut navigation.  For example, bind `demoskip +1` to skip to the next map,
   or `demoseek -5` to seek backwards 5 seconds.

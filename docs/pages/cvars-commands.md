@@ -268,6 +268,16 @@ Default value is `80`.
 Switch for the demo player UI, `0` means the player is hidden.
 Default value is `1`.
 
+##### `cl_demouitimeout`
+
+Time that you have to keep the mouse still and not hovering over the demo UI
+before the UI hiding animation starts.
+
+##### `cl_demouihidespeed`
+
+Speed of the demo UI hiding animation which begins once the above timeout has
+elapsed.
+
 ##### `cl_independentphysics`
 
 Server and Client framerates are independent. This setting is turned on by default. To turn it off you need to start joequake with the following command line:
