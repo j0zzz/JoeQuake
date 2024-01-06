@@ -1148,6 +1148,8 @@ void V_CalcRefdef (void)
 	if (cl_thirdperson.value)
 		Chase_Update ();
 
+	FreeFly_SetRefdef ();
+
 // bound minpitch/maxpitch
 	if (cl_minpitch.value < -90)
 		Cvar_SetValue(&cl_minpitch, -90);

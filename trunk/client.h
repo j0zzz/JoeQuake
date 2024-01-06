@@ -247,6 +247,13 @@ typedef struct
 
 	unsigned	protocol; //johnfitz
 	unsigned	protocolflags;
+
+// freefly
+	qboolean	freefly_enabled;
+	qboolean	freefly_reset;
+	double		freefly_last_time;
+	vec3_t		freefly_origin;
+	vec3_t		freefly_angles;
 } client_state_t;
 
 extern	client_state_t	cl;
@@ -479,6 +486,12 @@ dzip_status_t DZip_CheckCompletion (dzip_context_t *ctx);
 dzip_status_t DZip_Open(dzip_context_t *ctx, const char *name, FILE **demo_file_p);
 void DZip_Cleanup(dzip_context_t *ctx);
 
+
+// cl_freefly.c
+void FreeFly_Init (void);
+void FreeFly_UpdateOrigin (void);
+void FreeFly_MouseMove (double x, double y);
+void FreeFly_SetRefdef (void);
 
 #ifdef GLQUAKE
 dlighttype_t SetDlightColor (float f, dlighttype_t def, qboolean random);

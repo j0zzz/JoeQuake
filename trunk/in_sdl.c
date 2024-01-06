@@ -289,7 +289,7 @@ static void IN_MouseMove (usercmd_t *cmd)
 	}
 	else
 	{
-		if (key_dest == key_menu || key_dest == key_console || CL_DemoUIOpen())
+		if (key_dest == key_menu || key_dest == key_console || (CL_DemoUIOpen() && !cl.freefly_enabled))
 		{
 			mouse_x *= cursor_sensitivity.value;
 			mouse_y *= cursor_sensitivity.value;
@@ -301,12 +301,16 @@ static void IN_MouseMove (usercmd_t *cmd)
 		}
 	}
 
+	if (key_dest != key_menu && key_dest != key_console)
+		FreeFly_MouseMove(mouse_x, mouse_y);
+
 	//
 	// Do not move the player if we're in menu mode.
 	// And don't apply ingame sensitivity, since that will make movements jerky.
 	//
 	if (key_dest != key_menu && key_dest != key_console && !CL_DemoUIOpen())
 	{
+
 		// add mouse X/Y movement to cmd
 		if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
 			cmd->sidemove += m_side.value * mouse_x;

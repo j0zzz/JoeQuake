@@ -49,6 +49,7 @@ int	demo_head_size[2];
 
 void CL_FinishTimeDemo (void);
 
+
 /*
 ==============================================================================
 DEMO CODE
