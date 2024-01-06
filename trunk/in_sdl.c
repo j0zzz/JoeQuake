@@ -289,7 +289,7 @@ static void IN_MouseMove (usercmd_t *cmd)
 	}
 	else
 	{
-		if (key_dest == key_menu || key_dest == key_console || (CL_DemoUIOpen() && !cl.freefly_enabled))
+		if (key_dest == key_menu || key_dest == key_console || (CL_DemoUIOpen() && !FreeFly_Moving()))
 		{
 			mouse_x *= cursor_sensitivity.value;
 			mouse_y *= cursor_sensitivity.value;
