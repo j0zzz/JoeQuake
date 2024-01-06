@@ -19,6 +19,34 @@ static void FreeFly_Toggle_f (void)
 }
 
 
+static void FreeFly_CopyCam_f (void)
+{
+	vec3_t	forward, right, up, end;
+	char cam_buf[1024];
+
+	AngleVectors (cl.freefly_angles, forward, right, up);
+	VectorMA(cl.freefly_origin, 2048, forward, end);
+	if (!cl.freefly_enabled)
+	{
+		Con_Printf("freefly not enabled\n");
+		return;
+	}
+	snprintf(cam_buf, sizeof(cam_buf),
+			 "%.2f move %.1f %.1f %.1f\n"
+			 "%.2f pan %.1f %.1f %.1f\n",
+			  cl.mtime[0],
+			  cl.freefly_origin[0],
+			  cl.freefly_origin[1],
+			  cl.freefly_origin[2],
+			  cl.mtime[0],
+			  end[0],
+			  end[1],
+			  end[2]);
+	if (Sys_SetClipboardData(cam_buf))
+		Con_Printf("Remaic commands copy to clipboard\n");
+}
+
+
 qboolean FreeFly_Moving (void)
 {
 	return cl.freefly_enabled && (in_freeflymove.state & 1);
@@ -83,4 +111,6 @@ void FreeFly_Init (void)
 {
 	Cvar_Register(&freefly_speed);
 	Cmd_AddCommand("freefly", FreeFly_Toggle_f);
+
+	Cmd_AddCommand("freefly_copycam", FreeFly_CopyCam_f);
 }
