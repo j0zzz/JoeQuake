@@ -19,11 +19,16 @@ static void FreeFly_Toggle_f (void)
 
 static void FreeFly_CopyCam_f (void)
 {
+	trace_t	trace;
 	vec3_t	forward, right, up, end;
 	char cam_buf[1024];
 
 	AngleVectors (cl.freefly_angles, forward, right, up);
 	VectorMA(cl.freefly_origin, 2048, forward, end);
+
+	memset (&trace, 0, sizeof(trace));
+	SV_RecursiveHullCheck (cl.worldmodel->hulls, 0, 0, 1, cl.freefly_origin, end, &trace);
+
 	if (!cl.freefly_enabled)
 	{
 		Con_Printf("freefly not enabled\n");
@@ -37,11 +42,11 @@ static void FreeFly_CopyCam_f (void)
 			  cl.freefly_origin[1],
 			  cl.freefly_origin[2],
 			  cl.mtime[0],
-			  end[0],
-			  end[1],
-			  end[2]);
+			  trace.endpos[0],
+			  trace.endpos[1],
+			  trace.endpos[2]);
 	if (Sys_SetClipboardData(cam_buf))
-		Con_Printf("Remaic commands copy to clipboard\n");
+		Con_Printf("Remaic commands copy to clipboard:\n%s", cam_buf);
 }
 
 
