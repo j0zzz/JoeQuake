@@ -138,12 +138,12 @@ void FreeFly_UpdateOrigin (void)
 	vec3_t forward, right, up, vel;
 	vec3_t world_up = {0, 0, 1};
 
-	if (!FreeFly_Moving())
-		return;
-
 	time = Sys_DoubleTime();
 	frametime = time - cl.freefly_last_time;
 	cl.freefly_last_time = time;
+
+	if (!FreeFly_Moving())
+		return;
 
 	AngleVectors (cl.freefly_angles, forward, right, up);
 	VectorScale(forward,
@@ -168,8 +168,8 @@ void FreeFly_UpdateOrigin (void)
 void FreeFly_Init (void)
 {
 	Cvar_Register(&freefly_speed);
-	Cmd_AddCommand("freefly", FreeFly_Toggle_f);
 
+	Cmd_AddCommand("freefly", FreeFly_Toggle_f);
 	Cmd_AddCommand("freefly_copycam", FreeFly_CopyCam_f);
 	Cmd_AddCommand("freefly_writecam", FreeFly_WriteCam_f);
 }
