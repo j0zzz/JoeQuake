@@ -84,6 +84,8 @@ static void FreeFly_WriteCam_f (void)
 	fprintf(f, "%s", cmd);
 
 	fclose (f);
+
+	Con_Printf("Remaic commands written to %s:\n%s", path, cmd);
 }
 
 
