@@ -3,7 +3,7 @@
 
 cvar_t	freefly_speed = {"freefly_speed", "800"};
 
-extern kbutton_t	in_freeflymove, in_forward, in_back, in_moveleft, in_moveright;
+extern kbutton_t	in_freeflymove, in_forward, in_back, in_moveleft, in_moveright, in_up, in_down, in_jump;
 
 static void FreeFly_Toggle_f (void)
 {
@@ -133,7 +133,8 @@ void FreeFly_MouseMove (double x, double y)
 void FreeFly_UpdateOrigin (void)
 {
 	double time, frametime;
-	vec3_t	forward, right, up, vel;
+	vec3_t forward, right, up, vel;
+	vec3_t world_up = {0, 0, 1};
 
 	if (!FreeFly_Moving())
 		return;
@@ -149,6 +150,12 @@ void FreeFly_UpdateOrigin (void)
 	VectorMA(vel,
 			 CL_KeyState (&in_moveright) - CL_KeyState (&in_moveleft),
 			 right,
+			 vel);
+	VectorMA(vel,
+			 CL_KeyState (&in_up)
+			 + CL_KeyState (&in_jump)
+			 - CL_KeyState (&in_down),
+			 world_up,
 			 vel);
 	VectorNormalize(vel);
 	VectorScale(vel, freefly_speed.value, vel);
