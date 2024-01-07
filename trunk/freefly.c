@@ -17,11 +17,22 @@ static void FreeFly_Toggle_f (void)
 }
 
 
-static void FreeFly_CopyCam_f (void)
+static char *FreeFly_GetRemaicCommand (void)
 {
 	trace_t	trace;
 	vec3_t	forward, right, up, end;
-	char cam_buf[1024];
+	static char cam_buf[1024];
+
+	if (cls.state != ca_connected)
+	{
+		Con_Printf("ERROR: You must be connected\n");
+		return NULL;
+	}
+	if (!cl.freefly_enabled)
+	{
+		Con_Printf("ERROR: freefly not enabled\n");
+		return NULL;
+	}
 
 	AngleVectors (cl.freefly_angles, forward, right, up);
 	VectorMA(cl.freefly_origin, 2048, forward, end);
@@ -29,24 +40,59 @@ static void FreeFly_CopyCam_f (void)
 	memset (&trace, 0, sizeof(trace));
 	SV_RecursiveHullCheck (cl.worldmodel->hulls, 0, 0, 1, cl.freefly_origin, end, &trace);
 
-	if (!cl.freefly_enabled)
+	snprintf(cam_buf, sizeof(cam_buf),
+			 "move %.1f %.1f %.1f\n"
+			 "pan %.1f %.1f %.1f\n"
+			 "%.2f\n",
+			 cl.freefly_origin[0],
+			 cl.freefly_origin[1],
+			 cl.freefly_origin[2],
+			 trace.endpos[0],
+			 trace.endpos[1],
+			 trace.endpos[2],
+			 cl.mtime[0]);
+
+	return cam_buf;
+}
+
+
+static void FreeFly_WriteCam_f (void)
+{
+	char path[MAX_OSPATH];
+	char *cmd;
+	FILE *f;
+
+	if (Cmd_Argc() != 2)
 	{
-		Con_Printf("freefly not enabled\n");
+		Con_Printf("Usage: %s [filename]\n", Cmd_Argv(0));
 		return;
 	}
-	snprintf(cam_buf, sizeof(cam_buf),
-			 "%.2f move %.1f %.1f %.1f\n"
-			 "%.2f pan %.1f %.1f %.1f\n",
-			  cl.mtime[0],
-			  cl.freefly_origin[0],
-			  cl.freefly_origin[1],
-			  cl.freefly_origin[2],
-			  cl.mtime[0],
-			  trace.endpos[0],
-			  trace.endpos[1],
-			  trace.endpos[2]);
-	if (Sys_SetClipboardData(cam_buf))
-		Con_Printf("Remaic commands copy to clipboard:\n%s", cam_buf);
+
+	cmd = FreeFly_GetRemaicCommand();
+	if (cmd == NULL)
+		return;
+
+	Q_strncpyz(path, Cmd_Argv(1), sizeof(path));
+	COM_DefaultExtension (path, ".cam");
+
+	if (!(f = fopen(va("%s/%s", com_gamedir, path), "a")))
+	{
+		Con_Printf ("Couldn't write %s\n", path);
+		return;
+	}
+
+	fprintf(f, "%s", cmd);
+
+	fclose (f);
+}
+
+
+static void FreeFly_CopyCam_f (void)
+{
+	char *cmd = FreeFly_GetRemaicCommand();
+
+	if (cmd != NULL && Sys_SetClipboardData(cmd))
+		Con_Printf("Remaic commands copy to clipboard:\n%s", cmd);
 }
 
 
@@ -116,4 +162,5 @@ void FreeFly_Init (void)
 	Cmd_AddCommand("freefly", FreeFly_Toggle_f);
 
 	Cmd_AddCommand("freefly_copycam", FreeFly_CopyCam_f);
+	Cmd_AddCommand("freefly_writecam", FreeFly_WriteCam_f);
 }
