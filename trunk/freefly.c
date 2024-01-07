@@ -46,7 +46,7 @@ static char *FreeFly_GetRemaicCommand (void)
 			 "%.2f\n",
 			 cl.freefly_origin[0],
 			 cl.freefly_origin[1],
-			 cl.freefly_origin[2],
+			 cl.freefly_origin[2] - DEFAULT_VIEWHEIGHT,
 			 trace.endpos[0],
 			 trace.endpos[1],
 			 trace.endpos[2],
