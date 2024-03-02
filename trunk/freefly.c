@@ -115,6 +115,7 @@ void FreeFly_SetRefdef (void)
 		{
 			VectorCopy (r_refdef.vieworg, cl.freefly_origin);
 			VectorCopy (r_refdef.viewangles, cl.freefly_angles);
+			cl.freefly_angles[ROLL] = 0.;
 			cl.freefly_reset = false;
 		} else {
 			VectorCopy (cl.freefly_origin, r_refdef.vieworg);
