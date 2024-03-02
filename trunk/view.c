@@ -1075,6 +1075,9 @@ void V_CalcIntermissionRefdef (void)
 	v_idlescale.value = 1;
 	V_AddIdle ();
 	v_idlescale.value = old;
+
+	FreeFly_SetRefdef ();
+
 }
 
 float	cl_punchangle, cl_ideal_punchangle;
