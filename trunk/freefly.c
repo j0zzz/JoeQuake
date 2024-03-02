@@ -106,6 +106,9 @@ qboolean FreeFly_Moving (void)
 
 void FreeFly_SetRefdef (void)
 {
+    if (!cls.demoplayback)
+        cl.freefly_enabled = false;
+
 	if (cl.freefly_enabled)
 	{
 		if (cl.freefly_reset)
