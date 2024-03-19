@@ -973,6 +973,19 @@ static void SCR_DrawCursor(void)
 	if (!CL_DemoUIOpen() && key_dest != key_menu)
 		return;
 
+	if (scr_pointer_state.x != scr_pointer_state.x_old || scr_pointer_state.y != scr_pointer_state.y_old)
+		Mouse_MoveEvent();
+
+	// remember the position for future
+	scr_pointer_state.x_old = scr_pointer_state.x;
+	scr_pointer_state.y_old = scr_pointer_state.y;
+
+	// If the demo UI is open but currently hidden then don't draw the cursor,
+	// but do update the cursor's position so that the UI can detect the
+	// movement to become visible again.
+	if (key_dest != key_menu && CL_DemoUIOpen() && !DemoUI_Visible())
+		return;
+
 	// Always draw the cursor.
 #ifdef GLQUAKE
 	cursor = &scr_cursor;
@@ -1001,13 +1014,6 @@ static void SCR_DrawCursor(void)
 		Draw_Character(cursor_x - LETTERWIDTH / 2, cursor_y - LETTERHEIGHT / 2, '+');
 	}
 #endif // GLQUAKE else
-
-	if (scr_pointer_state.x != scr_pointer_state.x_old || scr_pointer_state.y != scr_pointer_state.y_old)
-		Mouse_MoveEvent();
-
-	// remember the position for future
-	scr_pointer_state.x_old = scr_pointer_state.x;
-	scr_pointer_state.y_old = scr_pointer_state.y;
 }
 
 extern cvar_t con_notify_intermission;

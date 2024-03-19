@@ -64,6 +64,8 @@ cvar_t	cl_viewweapons = {"cl_viewweapons", "0"};
 cvar_t	cl_autodemo = { "cl_autodemo", "0" };
 cvar_t	cl_autodemo_name = { "cl_autodemo_name", "" };
 cvar_t	cl_demoui = {"cl_demoui", "1", CVAR_ARCHIVE};
+cvar_t	cl_demouitimeout = {"cl_demouitimeout", "2.5", CVAR_ARCHIVE};
+cvar_t	cl_demouihidespeed = {"cl_demouihidespeed", "2", CVAR_ARCHIVE};
 
 client_static_t	cls;
 client_state_t	cl;
@@ -1449,6 +1451,8 @@ void CL_Init (void)
 	Cvar_Register(&cl_autodemo);
 	Cvar_Register(&cl_autodemo_name);
 	Cvar_Register(&cl_demoui);
+	Cvar_Register(&cl_demouitimeout);
+	Cvar_Register(&cl_demouihidespeed);
 
 	if (COM_CheckParm("-noindphys"))
 	{
