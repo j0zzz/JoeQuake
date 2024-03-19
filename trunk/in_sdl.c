@@ -276,7 +276,7 @@ static void IN_MouseMove (usercmd_t *cmd)
 		float mousespeed = sqrt(mx * mx + my * my);
 		float m_accel_factor = m_accel.value * 0.1;
 
-		if (key_dest == key_menu || key_dest == key_console || CL_DemoUIOpen())
+		if (key_dest == key_menu || key_dest == key_console || (CL_DemoUIOpen() && !FreeFly_Moving()))
 		{
 			mouse_x *= ((mousespeed * m_accel_factor) + cursor_sensitivity.value);
 			mouse_y *= ((mousespeed * m_accel_factor) + cursor_sensitivity.value);
@@ -310,7 +310,6 @@ static void IN_MouseMove (usercmd_t *cmd)
 	//
 	if (key_dest != key_menu && key_dest != key_console && !CL_DemoUIOpen())
 	{
-
 		// add mouse X/Y movement to cmd
 		if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
 			cmd->sidemove += m_side.value * mouse_x;
