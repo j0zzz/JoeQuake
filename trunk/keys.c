@@ -936,7 +936,7 @@ static qboolean Mouse_EventDispatch(void)
 		break;
 	}
 
-	if (!mouse_handled && CL_DemoUIOpen())
+	if (!mouse_handled && CL_DemoUIOpen() && !FreeFly_Moving())
 		mouse_handled = DemoUI_MouseEvent(&scr_pointer_state);
 
 	return mouse_handled;

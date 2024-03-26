@@ -48,7 +48,7 @@ state bit 2 is edge triggered on the down to up transition
 ===============================================================================
 */
 
-kbutton_t	in_mlook, in_klook;
+kbutton_t	in_mlook, in_klook, in_freeflymove;
 kbutton_t	in_left, in_right, in_forward, in_back;
 kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack;
@@ -128,6 +128,8 @@ void IN_MLookUp (void)
 	if (!mlook_active && lookspring.value)
 		V_StartPitchDrift ();
 }
+void IN_FreeFlyMoveDown (void) {KeyDown(&in_freeflymove);}
+void IN_FreeFlyMoveUp (void) {KeyUp(&in_freeflymove);}
 void IN_UpDown(void) {KeyDown(&in_up);}
 void IN_UpUp(void) {KeyUp(&in_up);}
 void IN_DownDown(void) {KeyDown(&in_down);}
@@ -494,6 +496,8 @@ void CL_InitInput (void)
 	Cmd_AddCommand ("-klook", IN_KLookUp);
 	Cmd_AddCommand ("+mlook", IN_MLookDown);
 	Cmd_AddCommand ("-mlook", IN_MLookUp);
+	Cmd_AddCommand ("+freeflymove", IN_FreeFlyMoveDown);
+	Cmd_AddCommand ("-freeflymove", IN_FreeFlyMoveUp);
 
 	Cmd_AddCommand ("bestweapon", IN_BestWeapon);
 

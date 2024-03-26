@@ -1075,6 +1075,9 @@ void V_CalcIntermissionRefdef (void)
 	v_idlescale.value = 1;
 	V_AddIdle ();
 	v_idlescale.value = old;
+
+	FreeFly_SetRefdef ();
+
 }
 
 float	cl_punchangle, cl_ideal_punchangle;
@@ -1147,6 +1150,8 @@ void V_CalcRefdef (void)
 
 	if (cl_thirdperson.value)
 		Chase_Update ();
+
+	FreeFly_SetRefdef ();
 
 // bound minpitch/maxpitch
 	if (cl_minpitch.value < -90)

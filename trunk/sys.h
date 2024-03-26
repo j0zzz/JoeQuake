@@ -54,3 +54,4 @@ void Sys_HighFPPrecision (void);
 void Sys_SetFPCW (void);
 
 char *Sys_GetClipboardData (void);
+qboolean Sys_SetClipboardData (const char *text);

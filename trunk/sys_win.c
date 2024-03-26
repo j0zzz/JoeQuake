@@ -19,6 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sys_win.c -- Win32 system interface code
 
+#if defined(SDL2)
+#include <SDL.h>
+#endif
+
 #include "quakedef.h"
 #include "winquake.h"
 #include "resource.h"
@@ -502,6 +506,26 @@ char *Sys_GetClipboardData (void)
 
 	return clipboard;
 }
+
+#if !defined(SDL2)
+qboolean Sys_SetClipboardData (const char *text)
+{
+	// TODO: Implement this
+	Con_Printf("Copying to clipboard not supported on windows build\n");
+	return false;
+}
+#else
+// TODO: Implement for non-SDL2
+qboolean Sys_SetClipboardData (const char *text)
+{
+	qboolean success;
+	success = (SDL_SetClipboardText(text) == 0);
+	if (!success)
+		Con_Printf("Error setting clipboard: %s\n", SDL_GetError());
+	return success;
+}
+#endif
+
 
 /*
 ==============================================================================

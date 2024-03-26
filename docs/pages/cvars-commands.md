@@ -286,6 +286,10 @@ Server and Client framerates are independent. This setting is turned on by defau
 +set cl_independentphysics 0
 ```
 
+##### `freefly_speed`
+
+Set the speed the camera moves when in freefly mode.  `800` by default.
+
 #### Server
 
 ##### `sv_altnoclip`
@@ -1032,3 +1036,33 @@ an automatic name based on current map and time is used.
 
 Overrides the default `15` (NetQuake) protocol version with given value. Recognized values are `666` (FitzQuake) and `999` (RMQ).
 This command primarly aims to keep JoeQuake compatible with mods.
+
+##### `freefly`
+
+Toggle freefly mode.  This is a free flying third-person camera that can be used
+during demo playback.  See below for how to control the camera.
+
+##### `+freeflymove` / `-freeflymove`
+
+Enable movement of the camera in freefly mode.  When enabled, the usual inputs
+will manipulate the camera's position (`+moveleft`, `+moveright`, `+forward`,
+`+back`, mouse movements, etc).  You'll typically want to bind this to a key,
+which should be held down to move the camera.
+
+##### `freefly_copycam`
+
+Copy a ReMaic-style command to the clipboard, indicating the freefly camera's
+location, viewing direction, and current demo timestamp.  The output must be
+manipulated a little to make a valid ReMaic script --- the timestamp output as
+the third copied line must be used as a prefix for the next command, and
+likewise the copied `move` and `pan` command must be themselves prefixed with a
+timestamp from the previous command.  This is because ReMaic's move and pan
+commands indicate when the movement should *start* rather than when it should
+end, so timestamps need to be shifted on by one.
+
+This command currently does not work on the win32 build.
+
+##### `freefly_writecam [filename]`
+
+Like `freefly_copycam`, but append commands to the provided filename instead.
+This command is available on all builds.
