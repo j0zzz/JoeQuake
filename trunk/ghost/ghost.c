@@ -182,6 +182,10 @@ static void Ghost_UpdateMarathon (void)
     ghost_marathon_level_t *gml;
     ghost_marathon_info_t *gmi = &ghost_marathon_info;
 
+    if (ghost_demo_path[0] == '\0') {
+        return;
+    }
+
     gmi->ghost_start = 0;
     gmi->total_split = 0.0f;
     for (i = 0; i < gmi->num_levels && i < MAX_MARATHON_LEVELS; i++) {
