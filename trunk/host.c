@@ -48,8 +48,9 @@ double		realtime;			// without any filtering or bounding
 double		oldrealtime;			// last frame run
 int		host_framecount;
 
-qboolean physframe;
-double	physframetime;
+int             currentphysframe;
+int             physframecount;
+double          physframetime;
 
 int		host_hunklevel;
 
@@ -677,7 +678,6 @@ Runs all active servers
 void _Host_Frame (double time)
 {
 	int		pass1, pass2, pass3;
-	qboolean        mergeticks;
 	static	double	time1 = 0, time2 = 0, time3 = 0, accumulatedtime;
 
 	if (setjmp(host_abortserver))
@@ -703,25 +703,29 @@ void _Host_Frame (double time)
 #endif
 		)
 	{
-		accumulatedtime = host_frametime;
+		accumulatedtime = 0.0;
 		physframetime = host_frametime;
-		physframe = true;
-		mergeticks = false;
+		physframecount = 1;
 	}
 	else
 	{
 		accumulatedtime += host_frametime;
 		physframetime = MinPhysFrameTime();
-		physframe = accumulatedtime >= physframetime;
-		mergeticks = cl_mergeticks.value;
+		physframecount = (int)(accumulatedtime / physframetime);
+		accumulatedtime = fmod(accumulatedtime, physframetime);
+
+		if (cl_mergeticks.value && physframecount > 1)
+		{
+			// merge ticks to fully consume accumulated time with cl_mergeticks
+			physframetime *= physframecount;
+			physframecount = 1;
+		}
 	}
 
-	if (physframe)
+	currentphysframe = 0;
+		
+	if (physframecount)
 	{
-		// merge ticks to fully consume accumulated time with cl_mergeticks
-		if (mergeticks)
-			physframetime *= (int)(accumulatedtime / physframetime);
-
 		// get new key events
 		Sys_SendKeyEvents();
 
@@ -729,8 +733,6 @@ void _Host_Frame (double time)
 		IN_Commands();
 
 		do {
-			accumulatedtime -= physframetime;
-
 			// process console commands
 			Cbuf_Execute();
 
@@ -762,7 +764,7 @@ void _Host_Frame (double time)
 			// the incoming messages have been read
 			if (!sv.active)
 				CL_SendCmd();
-		} while (!mergeticks && accumulatedtime >= physframetime);
+		} while (++currentphysframe < physframecount);
 
 		host_time += host_frametime;
 

@@ -40,8 +40,8 @@ cvar_t	cl_keypad = {"cl_keypad", "1"};
 int		mouse_buttons;
 int		mouse_oldbuttonstate;
 POINT		current_pos;
-double		mouse_x, mouse_y;
-int		old_mouse_x, old_mouse_y, mx_accum, my_accum;
+double		mouse_x, mouse_y, applied_mouse_x, applied_mouse_y;
+int		mx, my, old_mx, old_my, mx_accum, my_accum;
 
 static qboolean	restore_spi;
 static	int	originalmouseparms[3], newmouseparms[3] = {0, 0, 1};
@@ -108,6 +108,8 @@ cvar_t	joy_wwhack2 = {"joywwhack2", "0.0"};
 
 extern cvar_t cl_maxpitch; //johnfitz -- variable pitch clamping
 extern cvar_t cl_minpitch; //johnfitz -- variable pitch clamping
+
+extern int currentphysframe;
 
 qboolean	joy_avail, joy_advancedinit, joy_haspov;
 DWORD		joy_oldbuttonstate, joy_oldpovstate;
@@ -994,32 +996,32 @@ void IN_RawMouseEvent(RAWMOUSE* state)
 
 /*
 ===========
-IN_MouseMove
+IN_Accumulate
 ===========
 */
-void IN_MouseMove (usercmd_t *cmd)
+void IN_Accumulate (void)
 {
-	int			mx, my, i;
-	DIDEVICEOBJECTDATA	od;
-	DWORD			dwElements;
-	HRESULT			hr;
-
 	if (!mouseactive)
 		return;
-
+		
 	if (dinput)
 	{
-		mx = my = 0;
-
+		int i;
+		
 		if (use_m_smooth)
 		{
-			IN_SMouseRead (&mx, &my);
+			int add_mx, add_my;
+			IN_SMouseRead (&add_mx, &add_my);
+			mx_accum += add_mx;
+			my_accum += add_my;
 		}
 		else
 		{
 			while (1)
 			{
-				dwElements = 1;
+				DIDEVICEOBJECTDATA      od;
+				HRESULT			hr;
+				DWORD                   dwElements = 1;
 
 				hr = IDirectInputDevice_GetDeviceData (g_pMouse, sizeof(DIDEVICEOBJECTDATA), &od, &dwElements, 0);
 
@@ -1038,11 +1040,11 @@ void IN_MouseMove (usercmd_t *cmd)
 				switch (od.dwOfs)
 				{
 				case DIMOFS_X:
-					mx += od.dwData;
+					mx_accum += od.dwData;
 					break;
 
 				case DIMOFS_Y:
-					my += od.dwData;
+					my_accum += od.dwData;
 					break;
 
 				INPUT_CASE_DINPUT_MOUSE_BUTTONS;
@@ -1074,26 +1076,47 @@ void IN_MouseMove (usercmd_t *cmd)
 			
 		mouse_oldbuttonstate = mstate_di;
 	}
-	else
+	else if (!rawinput)
 	{
-		if (rawinput)
-		{
-			mx = mx_accum;
-			my = my_accum;
-		}
-		else
-		{
-			GetCursorPos(&current_pos);
-			mx = current_pos.x - window_center_x + mx_accum;
-			my = current_pos.y - window_center_y + my_accum;
-		}
+		GetCursorPos(&current_pos);
+
+		mx_accum += current_pos.x - window_center_x;
+		my_accum += current_pos.y - window_center_y;
+
+		// force the mouse to the center, so there's room to move
+		SetCursorPos(window_center_x, window_center_y);
+	}
+}
+
+/*
+===========
+IN_MouseMove
+===========
+*/
+void IN_MouseMove (usercmd_t *cmd)
+{
+	if (!mouseactive)
+	{
+		mx = my = mx_accum = my_accum = 0;
+		applied_mouse_x = applied_mouse_y = 0.0;
+		return;
+	}
+
+	if (currentphysframe == 0)
+	{
+		// lock in mouse input for the frame
+		IN_Accumulate();
+		mx = mx_accum;
+		my = my_accum;
+		mx_accum = my_accum = 0;
+		applied_mouse_x = applied_mouse_y = 0.0;
 	}
 
 	// Chambers: Fixed mouse input in menus and players being able to update their viewangles after leaving the console
 	if (m_filter.value)
 	{
-		mouse_x = (mx + old_mouse_x) * 0.5;
-		mouse_y = (my + old_mouse_y) * 0.5;
+		mouse_x = (mx + old_mx) * 0.5;
+		mouse_y = (my + old_my) * 0.5;
 	}
 	else
 	{
@@ -1101,10 +1124,8 @@ void IN_MouseMove (usercmd_t *cmd)
 		mouse_y = my;
 	}
 
-	mx_accum = my_accum = 0;
-
-	old_mouse_x = mx;
-	old_mouse_y = my;
+	old_mx = mx;
+	old_my = my;
 
 	if (m_accel.value)
 	{
@@ -1135,7 +1156,7 @@ void IN_MouseMove (usercmd_t *cmd)
 			mouse_y *= sensitivity.value;
 		}
 	}
-
+	
 	//
 	// Do not move the player if we're in menu mode. 
 	// And don't apply ingame sensitivity, since that will make movements jerky.
@@ -1146,14 +1167,14 @@ void IN_MouseMove (usercmd_t *cmd)
 		if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
 			cmd->sidemove += m_side.value * mouse_x;
 		else
-			cl.viewangles[YAW] -= m_yaw.value * mouse_x;
+			cl.viewangles[YAW] -= m_yaw.value * (mouse_x - applied_mouse_x);
 
 		if (mlook_active)
 			V_StopPitchDrift();
 
 		if (mlook_active && !(in_strafe.state & 1))
 		{
-			cl.viewangles[PITCH] += m_pitch.value * mouse_y;
+			cl.viewangles[PITCH] += m_pitch.value * (mouse_y - applied_mouse_y);
 			cl.viewangles[PITCH] = bound(cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
 		}
 		else
@@ -1164,9 +1185,12 @@ void IN_MouseMove (usercmd_t *cmd)
 				cmd->forwardmove -= m_forward.value * mouse_y;
 		}
 	}
+	
+	applied_mouse_x = mouse_x;
+	applied_mouse_y = mouse_y;
 
 // if the mouse has moved, force it to the center, so there's room to move
-	if (mx || my)
+	if (currentphysframe == 0 && (mx || my))
 		SetCursorPos (window_center_x, window_center_y);
 }
 
@@ -1181,25 +1205,6 @@ void IN_Move (usercmd_t *cmd)
 	{
 		IN_MouseMove (cmd);
 		IN_JoyMove (cmd);
-	}
-}
-
-/*
-===========
-IN_Accumulate
-===========
-*/
-void IN_Accumulate (void)
-{
-	if (mouseactive && !dinput && !rawinput)
-	{
-		GetCursorPos(&current_pos);
-
-		mx_accum += current_pos.x - window_center_x;
-		my_accum += current_pos.y - window_center_y;
-
-		// force the mouse to the center, so there's room to move
-		SetCursorPos(window_center_x, window_center_y);
 	}
 }
 

@@ -25,12 +25,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-double mouse_x, mouse_y;
-static double	mx, my, old_mouse_x, old_mouse_y;
+double mouse_x, mouse_y, applied_mouse_x, applied_mouse_y;
+static int	mx, my, mx_accum, my_accum, old_mx, old_my;
 cvar_t	m_filter = {"m_filter", "0"};
 
 extern cvar_t cl_maxpitch; //johnfitz -- variable pitch clamping
 extern cvar_t cl_minpitch; //johnfitz -- variable pitch clamping
+
+extern int currentphysframe;
 
 // Stubs that are used externally.
 qboolean use_m_smooth;
@@ -220,8 +222,8 @@ void Sys_SendKeyEvents (void)
 			break;
 
 		case SDL_MOUSEMOTION:
-			mx += event.motion.xrel;
-			my += event.motion.yrel;
+			mx_accum += event.motion.xrel;
+			my_accum += event.motion.yrel;
 			break;
 
 		case SDL_QUIT:
@@ -257,10 +259,18 @@ void IN_Commands (void)
 
 static void IN_MouseMove (usercmd_t *cmd)
 {
+	if (currentphysframe == 0)
+	{
+		// lock in mouse input for the frame
+		mx = mx_accum;
+		my = my_accum;
+		mx_accum = my_accum = 0;
+	}
+	
 	if (m_filter.value)
 	{
-		mouse_x = (mx + old_mouse_x) * 0.5;
-		mouse_y = (my + old_mouse_y) * 0.5;
+		mouse_x = (mx + old_mx) * 0.5;
+		mouse_y = (my + old_my) * 0.5;
 	}
 	else
 	{
@@ -268,8 +278,8 @@ static void IN_MouseMove (usercmd_t *cmd)
 		mouse_y = my;
 	}
 
-	old_mouse_x = mx;
-	old_mouse_y = my;
+	old_mx = mx;
+	old_my = my;
 
 	if (m_accel.value)
 	{
@@ -311,14 +321,14 @@ static void IN_MouseMove (usercmd_t *cmd)
 		if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
 			cmd->sidemove += m_side.value * mouse_x;
 		else
-			cl.viewangles[YAW] -= m_yaw.value * mouse_x;
+			cl.viewangles[YAW] -= m_yaw.value * (mouse_x - applied_mouse_x);
 
 		if (mlook_active)
 			V_StopPitchDrift();
 
 		if (mlook_active && !(in_strafe.state & 1))
 		{
-			cl.viewangles[PITCH] += m_pitch.value * mouse_y;
+			cl.viewangles[PITCH] += m_pitch.value * (mouse_y - applied_mouse_y);
 			cl.viewangles[PITCH] = bound(cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
 		}
 		else
@@ -329,7 +339,9 @@ static void IN_MouseMove (usercmd_t *cmd)
 				cmd->forwardmove -= m_forward.value * mouse_y;
 		}
 	}
-	mx = my = 0.0;
+
+	applied_mouse_x = mouse_x;
+	applied_mouse_y = mouse_y;
 }
 
 void IN_Move (usercmd_t *cmd)
@@ -339,5 +351,5 @@ void IN_Move (usercmd_t *cmd)
 
 void IN_ClearStates (void)
 {
-	mx = my = old_mouse_x = old_mouse_y = 0.0;
+	mx = my = mx_accum = my_accum = old_mx = old_my = 0;
 }

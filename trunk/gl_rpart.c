@@ -124,7 +124,7 @@ void R_DrawQ3Model (entity_t *ent);
 void QMB_Q3Gunshot (vec3_t org, int skinnum, float alpha);
 void QMB_Q3Teleport (vec3_t org, float alpha);
 
-extern qboolean physframe;
+extern int physframecount;
 
 #define TruePointContents(p) SV_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
 
@@ -1837,16 +1837,13 @@ void QMB_TeleportSplash (vec3_t org)
 
 void QMB_StaticBubble (entity_t *ent)
 {
-	if (fabs(cl.ctime - cl.oldtime))
-		AddParticle (p_staticbubble, ent->origin, 1, ent->frame == 1 ? 1.85 : 2.9, ONE_FRAME_ONLY, NULL, zerodir);
+	AddParticle (p_staticbubble, ent->origin, 1, ent->frame == 1 ? 1.85 : 2.9, ONE_FRAME_ONLY, NULL, zerodir);
 }
 
 void QMB_TorchFlame (vec3_t org, float size, float time)
 {
-	if (!physframe)
-		return;
-
-	if (fabs(cl.ctime - cl.oldtime))
+	// emit once per tick
+	for (int i = 0; i < physframecount; i++)
 		AddParticle (p_flame, org, 1, size, time, NULL, zerodir);
 }
 
@@ -1859,14 +1856,12 @@ void QMB_Q3TorchFlame (vec3_t org, float size)
 	else
 		return;
 
-	if (fabs(cl.ctime - cl.oldtime))
-		AddParticle (p_q3flame, org, 1, size, 0.25, NULL, zerodir);
+	AddParticle (p_q3flame, org, 1, size, 0.25, NULL, zerodir);
 }
 
 void QMB_MissileFire (vec3_t org)
 {
-	if (fabs(cl.ctime - cl.oldtime))
-		AddParticle (p_missilefire, org, 1, 20, ONE_FRAME_ONLY, NULL, zerodir);
+	AddParticle (p_missilefire, org, 1, 20, ONE_FRAME_ONLY, NULL, zerodir);
 }
 
 void QMB_ShamblerCharge (vec3_t org)
@@ -1953,14 +1948,16 @@ void QMB_LightningBeam (vec3_t start, vec3_t end)
 {
 	vec3_t	neworg;
 
-	if (!physframe)
+	// only update LG beam on tick
+	if (!physframecount)
 		return;
 
-	if (fabs(cl.ctime - cl.oldtime))
-	{
-		AddParticle (p_lightningbeam, start, 1, 80, physframetime * 2, NULL, end);
+	AddParticle (p_lightningbeam, start, 1, 80, physframetime * 2, NULL, end);
 
-		if (TraceLineN(start, end, neworg, NULL))
+	if (TraceLineN(start, end, neworg, NULL))
+	{
+		// always create an impact for each tick
+		for (int i = 0; i < physframecount; i++)
 		{
 			QMB_LightningSplash (neworg);
 			if (gl_decal_sparks.value)
@@ -2026,10 +2023,8 @@ void QMB_MuzzleFlash (vec3_t org, qboolean weapon)
 {
 	if (weapon)
 	{
-		float	frametime = fabs(cl.ctime - cl.oldtime);
-
-		if (frametime)
-			AddParticle (p_muzzleflash, org, 1, 8, frametime * 2, NULL, zerodir);
+		float   frametime = fabs(cl.ctime - cl.oldtime);
+		AddParticle (p_muzzleflash, org, 1, 8, frametime * 2, NULL, zerodir);
 	}
 	else
 	{
