@@ -558,7 +558,8 @@ static double MinPhysFrameTime(void)
 {
 	double physfps = !cl_maxfps.value ? 72 : bound(10, cl_maxfps.value, 72);
 
-	return 1.0 / physfps;
+	// simulate limited clock resolution and overshoot like vanilla cl_maxfps
+	return ((int)(1e7 / physfps) + 1) * 1e-7;
 }
 
 /*
