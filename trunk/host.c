@@ -46,7 +46,6 @@ double		host_frametime;
 double		host_time;
 double		realtime;			// without any filtering or bounding
 double		oldrealtime;			// last frame run
-double		oldphysrealtime;
 int		host_framecount;
 
 qboolean physframe;
@@ -101,6 +100,7 @@ cvar_t campaign = { "campaign", "0" }; // for the 2021 rerelease
 cvar_t horde = { "horde", "0" }; // for the 2021 rerelease
 
 extern cvar_t cl_independentphysics;
+extern cvar_t cl_mergeticks;
 
 void Host_WriteConfig_f (void);
 
@@ -569,8 +569,7 @@ Returns false if the time is too short to run a frame
 */
 qboolean Host_FilterTime (double time)
 {
-	qboolean result;
-	double	frametime, minphysframetime;
+	double	frametime;
 
 	realtime += time;
 
@@ -582,8 +581,6 @@ qboolean Host_FilterTime (double time)
 #endif
 	else
 		frametime = 1.0 / (!cl_maxfps.value ? 1000 : bound(10, cl_maxfps.value, 1000));
-
-	result = false;
 
 	if (cls.capturedemo || cls.timedemo || realtime - oldrealtime >= frametime)
 	{
@@ -603,21 +600,10 @@ qboolean Host_FilterTime (double time)
 			// don't allow really long or short frames
 			host_frametime = bound(0.001, host_frametime, 0.1);
 
-		result = true;
-	}
-	
-	minphysframetime = MinPhysFrameTime();
-	if (cls.capturedemo || cls.timedemo || realtime - oldphysrealtime >= minphysframetime)
-	{
-		physframetime = realtime - oldphysrealtime;
-		oldphysrealtime = realtime;
-	
-		// joe: never allow physframetime to go above 0.1
-		// this guarantees that after a longer map load (> 0.1s), a physical server frame is executed immediately
-		physframetime = min(physframetime, 0.1);
+		return true;
 	}
 
-	return result;
+	return false;
 }
 
 /*
@@ -660,7 +646,7 @@ void Host_ServerFrame (double time)
 		Cmd_ExecuteString (va("port %d\n", net_hostport), src_command);
 	}
 
-	// run the world state	
+	// run the world state
 	pr_global_struct->frametime = sv_frametime;
 
 	// set the time and clear the general datagram
@@ -691,7 +677,8 @@ Runs all active servers
 void _Host_Frame (double time)
 {
 	int		pass1, pass2, pass3;
-	static	double	time1 = 0, time2 = 0, time3 = 0, extraphysframetime;
+	qboolean        mergeticks;
+	static	double	time1 = 0, time2 = 0, time3 = 0, accumulatedtime;
 
 	if (setjmp(host_abortserver))
 		return;		// something bad happened, or the server disconnected
@@ -708,7 +695,7 @@ void _Host_Frame (double time)
 		return;			// don't run too fast, or packets will flood out
 	}
 
-	if (!cl_independentphysics.value || 
+	if (!cl_independentphysics.value ||
 		host_framerate.value > 0 ||
 		(cls.demoplayback && cl_demospeed.value != 1)
 #ifdef _WIN32
@@ -716,63 +703,66 @@ void _Host_Frame (double time)
 #endif
 		)
 	{
-		physframe = true;
+		accumulatedtime = host_frametime;
 		physframetime = host_frametime;
-		extraphysframetime = 0;
+		physframe = true;
+		mergeticks = false;
 	}
 	else
 	{
-		extraphysframetime += host_frametime;
-		if (extraphysframetime < physframetime)
-		{
-			physframe = false;
-		}
-		else
-		{
-			physframe = true;
-			extraphysframetime -= physframetime;
-		}
+		accumulatedtime += host_frametime;
+		physframetime = MinPhysFrameTime();
+		physframe = accumulatedtime >= physframetime;
+		mergeticks = cl_mergeticks.value;
 	}
 
-	if (!cl_independentphysics.value || physframe)
+	if (physframe)
 	{
+		// merge ticks to fully consume accumulated time with cl_mergeticks
+		if (mergeticks)
+			physframetime *= (int)(accumulatedtime / physframetime);
+
 		// get new key events
 		Sys_SendKeyEvents();
 
 		// allow mice or other external controllers to add commands
 		IN_Commands();
 
-		// process console commands
-		Cbuf_Execute();
+		do {
+			accumulatedtime -= physframetime;
 
-		NET_Poll();
+			// process console commands
+			Cbuf_Execute();
 
-		// if running the server locally, make intentions now
-		if (sv.active)
-			CL_SendCmd();
+			NET_Poll();
 
-	//-------------------
-	//
-	// server operations
-	//
-	//-------------------
+			// if running the server locally, make intentions now
+			if (sv.active)
+				CL_SendCmd();
 
-		// check for commands typed to the host
-		Host_GetConsoleCommands();
+		//-------------------
+		//
+		// server operations
+		//
+		//-------------------
 
-		if (sv.active)
-			Host_ServerFrame(physframetime);
+			// check for commands typed to the host
+			Host_GetConsoleCommands();
 
-	//-------------------
-	//
-	// client operations
-	//
-	//-------------------
+			if (sv.active)
+				Host_ServerFrame(physframetime);
 
-		// if running the server remotely, send intentions now after
-		// the incoming messages have been read
-		if (!sv.active)
-			CL_SendCmd();
+		//-------------------
+		//
+		// client operations
+		//
+		//-------------------
+
+			// if running the server remotely, send intentions now after
+			// the incoming messages have been read
+			if (!sv.active)
+				CL_SendCmd();
+		} while (!mergeticks && accumulatedtime >= physframetime);
 
 		host_time += host_frametime;
 
@@ -797,11 +787,11 @@ void _Host_Frame (double time)
 		if (!cls.demoplayback || // not demo playback
 			CL_DemoUIOpen() || // unless we have the demo UI open, then we need correct mouse cursor movement
 			key_dest == key_menu ||	// in menu, for correct mouse cursor movement
-			cls.state == ca_disconnected // We need to move the mouse also when disconnected 
+			cls.state == ca_disconnected // We need to move the mouse also when disconnected
 			)
 		{
 			usercmd_t dummy;
-			Sys_SendKeyEvents(); 
+			Sys_SendKeyEvents();
 			IN_Move(&dummy);
 		}
 	}
