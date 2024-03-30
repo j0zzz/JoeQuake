@@ -1947,12 +1947,14 @@ void QMB_LightningSplash (vec3_t org)
 void QMB_LightningBeam (vec3_t start, vec3_t end)
 {
 	vec3_t	neworg;
+	double  frametime;
 
 	// only update LG beam on tick
 	if (!physframecount)
 		return;
 
-	AddParticle (p_lightningbeam, start, 1, 80, physframetime * 2, NULL, end);
+	frametime = max(physframetime, host_frametime);
+	AddParticle (p_lightningbeam, start, 1, 80, frametime * 2, NULL, end);
 
 	if (TraceLineN(start, end, neworg, NULL))
 	{
