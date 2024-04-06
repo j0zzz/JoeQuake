@@ -454,7 +454,9 @@ void Ghost_Load (void)
         ghost_marathon_info.num_levels = 0;
     }
 
-    Ghost_UpdateMarathon();
+    if (ghost_demo_path[0]) {
+        Ghost_UpdateMarathon();
+    }
     Ghost_SetForLevel();
     Ghost_PrintLevelLoadInfo();
 }
