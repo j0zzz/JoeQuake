@@ -286,7 +286,7 @@ static void IN_MouseMove (usercmd_t *cmd)
 		float mousespeed = sqrt(mx * mx + my * my);
 		float m_accel_factor = m_accel.value * 0.1;
 
-		if (key_dest == key_menu || key_dest == key_console || CL_DemoUIOpen())
+		if (key_dest == key_menu || key_dest == key_console || (CL_DemoUIOpen() && !FreeFly_Moving()))
 		{
 			mouse_x *= ((mousespeed * m_accel_factor) + cursor_sensitivity.value);
 			mouse_y *= ((mousespeed * m_accel_factor) + cursor_sensitivity.value);
@@ -299,7 +299,7 @@ static void IN_MouseMove (usercmd_t *cmd)
 	}
 	else
 	{
-		if (key_dest == key_menu || key_dest == key_console || CL_DemoUIOpen())
+		if (key_dest == key_menu || key_dest == key_console || (CL_DemoUIOpen() && !FreeFly_Moving()))
 		{
 			mouse_x *= cursor_sensitivity.value;
 			mouse_y *= cursor_sensitivity.value;
@@ -310,6 +310,9 @@ static void IN_MouseMove (usercmd_t *cmd)
 			mouse_y *= sensitivity.value;
 		}
 	}
+
+	if (key_dest != key_menu && key_dest != key_console)
+		FreeFly_MouseMove(mouse_x, mouse_y);
 
 	//
 	// Do not move the player if we're in menu mode.

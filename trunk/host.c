@@ -799,6 +799,8 @@ void _Host_Frame (double time)
 		}
 	}
 
+	FreeFly_UpdateOrigin();
+
 	if (host_speeds.value)
 		time1 = Sys_DoubleTime ();
 

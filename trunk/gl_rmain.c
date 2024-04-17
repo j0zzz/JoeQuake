@@ -3082,7 +3082,7 @@ void R_DrawViewModel (void)
 {
 	currententity = &cl.viewent;
 
-	if (!r_drawviewmodel.value || cl_thirdperson.value || !r_drawentities.value || 
+	if (!r_drawviewmodel.value || cl.freefly_enabled || cl_thirdperson.value || !r_drawentities.value || 
 	    (cl.stats[STAT_HEALTH] <= 0) || !currententity->model)
 		return;
 

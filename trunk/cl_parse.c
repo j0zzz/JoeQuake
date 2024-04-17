@@ -1300,7 +1300,11 @@ void CL_ParseServerMessage (void)
 	else if (cl_shownet.value == 2)
 		Con_Printf ("------------------\n");
 
-	cl.onground = false;	// unless the server says otherwise
+	// Sphere -- vanilla Quake reset cl.onground to false as a default here,
+	// which may not be overwritten with the correct value when the server sends
+	// packets without a clientdata message. Since a clientdata message always
+	// sets cl.onground, we do not need a default and can instead keep it at
+	// whatever it was on the last received one.
 
 // parse the message
 	MSG_BeginReading ();
