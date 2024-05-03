@@ -30,7 +30,7 @@ static void FreeFly_Toggle_f (void)
 }
 
 
-static char *FreeFly_GetRemaicCommand (void)
+static char *FreeFly_GetRemaicCommand (const char *arg)
 {
 	trace_t	trace;
 	vec3_t	forward, right, up, end;
@@ -53,17 +53,41 @@ static char *FreeFly_GetRemaicCommand (void)
 	memset (&trace, 0, sizeof(trace));
 	SV_RecursiveHullCheck (cl.worldmodel->hulls, 0, 0, 1, cl.freefly_origin, end, &trace);
 
-	snprintf(cam_buf, sizeof(cam_buf),
-			 "move %.1f %.1f %.1f\n"
-			 "pan %.1f %.1f %.1f\n"
-			 "%.2f\n",
-			 cl.freefly_origin[0],
-			 cl.freefly_origin[1],
-			 cl.freefly_origin[2] - DEFAULT_VIEWHEIGHT,
-			 trace.endpos[0],
-			 trace.endpos[1],
-			 trace.endpos[2],
-			 cl.mtime[0]);
+	if (!strcmp(arg, "move"))
+	{
+		snprintf(cam_buf, sizeof(cam_buf),
+				 "move %.1f %.1f %.1f\n"
+				 "pan %.1f %.1f %.1f\n"
+				 "%.2f\n",
+				 cl.freefly_origin[0],
+				 cl.freefly_origin[1],
+				 cl.freefly_origin[2] - DEFAULT_VIEWHEIGHT,
+				 trace.endpos[0],
+				 trace.endpos[1],
+				 trace.endpos[2],
+				 cl.mtime[0]);
+	} else if (!strcmp(arg, "stay")) {
+		snprintf(cam_buf, sizeof(cam_buf),
+				 "%.2f stay %.1f %.1f %.1f\n",
+				 cl.mtime[0],
+				 cl.freefly_origin[0],
+				 cl.freefly_origin[1],
+				 cl.freefly_origin[2] - DEFAULT_VIEWHEIGHT);
+	} else if (!strcmp(arg, "view")) {
+		snprintf(cam_buf, sizeof(cam_buf),
+				 "%.2f view %.1f %.1f %.1f\n",
+				 cl.mtime[0],
+				 trace.endpos[0],
+				 trace.endpos[1],
+				 trace.endpos[2]);
+	} else if (!strcmp(arg, "endmove")) {
+		snprintf(cam_buf, sizeof(cam_buf), "%.2f end move\n", cl.mtime[0]);
+	} else if (!strcmp(arg, "endpan")) {
+		snprintf(cam_buf, sizeof(cam_buf), "%.2f end pan\n", cl.mtime[0]);
+	} else {
+		Con_Printf("ERROR: invalid argument \"%s\"\n", arg);
+		return NULL;
+	}
 
 	return cam_buf;
 }
@@ -73,15 +97,23 @@ static void FreeFly_WriteCam_f (void)
 {
 	char path[MAX_OSPATH];
 	char *cmd;
+	const char *arg;
 	FILE *f;
 
-	if (Cmd_Argc() != 2)
+	if (Cmd_Argc() < 2 || Cmd_Argc() > 3)
 	{
-		Con_Printf("Usage: %s [filename]\n", Cmd_Argv(0));
+		Con_Printf("Usage: %s [filename] (move|stay|view|endmove|endpan)\n", Cmd_Argv(0));
 		return;
 	}
 
-	cmd = FreeFly_GetRemaicCommand();
+	if (Cmd_Argc() == 2)
+	{
+		arg = "move";  // For backwards compatibility assume "move" if not specified
+	} else {
+		arg = Cmd_Argv(2);
+	}
+
+	cmd = FreeFly_GetRemaicCommand(arg);
 	if (cmd == NULL)
 		return;
 
@@ -104,7 +136,17 @@ static void FreeFly_WriteCam_f (void)
 
 static void FreeFly_CopyCam_f (void)
 {
-	char *cmd = FreeFly_GetRemaicCommand();
+	char *cmd;
+	const char *arg;
+
+	if (Cmd_Argc() == 1)
+	{
+		arg = "move";  // For backwards compatibility assume "move" if not specified
+	} else {
+		arg = Cmd_Argv(1);
+	}
+
+	cmd = FreeFly_GetRemaicCommand(arg);
 
 	if (cmd != NULL && Sys_SetClipboardData(cmd))
 		Con_Printf("Remaic commands copy to clipboard:\n%s", cmd);
