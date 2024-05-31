@@ -1935,9 +1935,6 @@ void GL_Upload8 (byte *data, int width, int height, int mode)
 	}
 	else
 	{
-		if (size & 3)
-			Sys_Error ("GL_Upload8: bad size (%d)", size);
-
 		for (i = 0 ; i < size ; i++)
 			trans[i] = table[data[i]];
 	}
