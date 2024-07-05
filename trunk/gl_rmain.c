@@ -61,6 +61,10 @@ int DoWeaponInterpolation (void);
 
 int				cl_numtransvisedicts;
 entity_t		*cl_transvisedicts[MAX_VISEDICTS];
+int				cl_numplayers;
+entity_t		*cl_players[MAX_SCOREBOARD];
+
+qboolean draw_player_outlines = false;
 
 // view origin
 vec3_t	vup;
@@ -94,6 +98,8 @@ cvar_t	r_dynamic = {"r_dynamic", "1"};
 cvar_t	r_novis = {"r_novis", "0" };
 cvar_t	r_outline = { "r_outline", "0" };
 cvar_t	r_outline_surf = { "r_outline_surf", "0" };
+cvar_t	r_outline_players = { "r_outline_players", "0" };
+cvar_t	r_outline_color = {"r_outline_color", "0 0 0" };
 cvar_t	r_fullbrightskins = {"r_fullbrightskins", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_skycolor = {"r_skycolor", "4"};
@@ -741,8 +747,6 @@ void GLAlias_CreateShaders(void)
 		"uniform vec3 ShadeVector;\n"
 		"uniform vec4 LightColor;\n"
 		"uniform bool UseVertexLighting;\n"
-		"uniform float ShadeLight;\n"
-		"uniform float AmbientLight;\n"
 		"uniform float APitch;\n"
 		"uniform float AYaw;\n"
 		"uniform VlightData\n"
@@ -1075,17 +1079,19 @@ void R_DrawAliasOutlineFrame(int frame, aliashdr_t *paliashdr, entity_t *ent, in
 	float		lerpfrac;
 	trivertx_t	*verts1, *verts2;
 	qboolean	lerpmdl = true;
-	float		line_width = bound(1, r_outline.value, 3);
+	float		line_width = draw_player_outlines ? bound(1, r_outline_players.value, 3) : bound(1, r_outline.value, 3);
 
-	if (ent->transparency < 1.0f)
+	// Don't draw outlines on transparent models, except when drawing wallhacked teammates
+	if (ent->transparency < 1.0f && !draw_player_outlines)
 		return;
 
-	if (ent->model->modhint == MOD_EYES)//No outlines on eyes please!
+	// Don't draw outlines twice on player models, as they can overlap if different widths are used
+	if (ent->model->modhint == MOD_PLAYER && r_outline_players.value && r_outline.value && !draw_player_outlines)
 		return;
 
-	if (ent->model->modhint == MOD_FLAME)
+	// No outlines on certain models
+	if (ent->model->modhint == MOD_EYES || ent->model->modhint == MOD_FLAME)
 		return;
-
 
 	glCullFace(GL_FRONT);
 	glPolygonMode(GL_BACK, GL_LINE);
@@ -1693,6 +1699,11 @@ void R_DrawAliasModel (entity_t *ent)
 		extern int player_32bit_skins[14];
 		extern qboolean player_32bit_skins_loaded;
 
+		if (clmodel->modhint == MOD_PLAYER && cl_numplayers < MAX_SCOREBOARD)
+		{
+			cl_players[cl_numplayers++] = ent;
+		}
+
 		if (ent == &ghost_entity)
 		{
 			i = 1;	// currently only supporting 1 ghost player
@@ -1826,9 +1837,12 @@ void R_DrawAliasModel (entity_t *ent)
 		}
 	}
 	
-	if (r_outline.value)
+	if (r_outline.value || draw_player_outlines)
 	{
-		glColor4f(0, 0, 0, 1);
+		byte *col;
+		
+		col = StringToRGB(r_outline_color.string);
+		glColor3ubv(col);
 		R_DrawAliasOutlineFrame(ent->frame, paliashdr, ent, distance);
 		glColor4f(1, 1, 1, 1);
 	}
@@ -1842,7 +1856,7 @@ void R_DrawAliasModel (entity_t *ent)
 
 	glPopMatrix ();
 
-	if (r_shadows.value && !ent->noshadow)
+	if (r_shadows.value && !ent->noshadow && !draw_player_outlines)
 	{
 		int		farclip;
 		vec3_t	downmove;
@@ -2974,6 +2988,7 @@ void R_DrawEntitiesOnList ()
 	if (!r_drawentities.value)
 		return;
 
+	cl_numplayers = 0;
 	cl_numtransvisedicts = 0;
 
 	// draw sprites seperately, because of alpha blending
@@ -3103,6 +3118,31 @@ void R_DrawViewModel (void)
 	}
 
 	glDepthRange (0, 1);
+}
+
+void R_DrawPlayerOutlines()
+{
+	int			i;
+	float		playeralpha;
+
+	if (cl.gametype == GAME_DEATHMATCH || !r_drawentities.value || !r_outline_players.value)
+		return;
+
+	draw_player_outlines = true;
+	glDepthRange (0, 0.3);
+	for (i = 0; i < cl_numplayers; i++)
+	{
+		currententity = cl_players[i];
+
+		playeralpha = currententity->transparency;
+		currententity->transparency = 0.000001f;
+
+		R_DrawAliasModel (currententity);
+
+		currententity->transparency = playeralpha;
+	}
+	glDepthRange (0, 1);
+	draw_player_outlines = false;
 }
 
 /*
@@ -3456,6 +3496,8 @@ void R_Init (void)
 	Cvar_Register (&r_speeds);
 	Cvar_Register (&r_outline);
 	Cvar_Register (&r_outline_surf);
+	Cvar_Register (&r_outline_players);
+	Cvar_Register (&r_outline_color);
 	Cvar_Register (&r_fullbrightskins);
 	Cvar_Register (&r_fastsky);
 	Cvar_Register (&r_skycolor);
@@ -3580,6 +3622,8 @@ void R_RenderScene (void)
 	R_RenderDlights();
 
 	R_DrawParticles();
+
+	R_DrawPlayerOutlines();
 
 	Fog_DisableGFog(); //johnfitz
 
