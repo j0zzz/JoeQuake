@@ -816,6 +816,25 @@ void Ghost_Finish (char *map_name, double finish_time)
 }
 
 
+qboolean Ghost_AutoId (char *name, vec3_t origin)
+{
+    ghost_level_t *gcl = ghost_current_level;
+
+    if (ghost_current_level == NULL)
+        return false;
+    if (gcl->view_entity == 0)
+        return false;
+    if (gcl->view_entity - 1 >= GHOST_MAX_CLIENTS)
+        return false;
+    if (!Ghost_Update())
+        return false;
+
+    snprintf(name, MAX_SCOREBOARDNAME, "%s", gcl->client_names[gcl->view_entity - 1]);
+    VectorCopy(ghost_entity.origin, origin);
+
+    return true;
+}
+
 static void Ghost_PrintSummary (void)
 {
     extern char *skill_modes[];

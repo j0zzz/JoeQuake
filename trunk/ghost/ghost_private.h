@@ -50,6 +50,7 @@ typedef struct {
 typedef struct {
     char map_name[GHOST_MAP_NAME_SIZE];
 
+    int view_entity;
     char client_names[GHOST_MAX_CLIENTS][MAX_SCOREBOARDNAME];
     byte client_colors[GHOST_MAX_CLIENTS];
     float finish_time;

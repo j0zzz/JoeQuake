@@ -142,6 +142,8 @@ Ghost_SetView_cb (int entity_num, void *ctx)
     ghost_parse_ctx_t *pctx = ctx;
 
     pctx->view_entity = entity_num;
+    pctx->level->view_entity = entity_num;
+
     return DP_CBR_CONTINUE;
 }
 

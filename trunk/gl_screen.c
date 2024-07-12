@@ -681,7 +681,8 @@ typedef struct player_autoid_s
 	scoreboard_t	*player;
 } autoid_player_t;
 
-static	autoid_player_t	autoids[MAX_SCOREBOARDNAME];
+static	autoid_player_t	autoids[MAX_SCOREBOARD + 1];
+static	scoreboard_t autoid_ghost_scoreboard;
 static	int		autoid_count;
 
 #define ISDEAD(i) ((i) >= 41 && (i) <= 102)
@@ -690,6 +691,7 @@ void SCR_SetupAutoID (void)
 {
 	int		i, view[4];
 	float		model[16], project[16], winz, *origin;
+	vec3_t	ghost_origin;
 	entity_t	*state;
 	autoid_player_t	*id;
 
@@ -724,6 +726,19 @@ void SCR_SetupAutoID (void)
 		if (qglProject(origin[0], origin[1], origin[2] + 28, model, project, view, &id->x, &id->y, &winz))
 			autoid_count++;
 	}
+
+	id = &autoids[autoid_count];
+	id->player = &autoid_ghost_scoreboard;
+	if (Ghost_AutoId(autoid_ghost_scoreboard.name, ghost_origin))
+	{
+		if (!R_CullSphere(ghost_origin, 0)
+			&& qglProject(ghost_origin[0], ghost_origin[1], ghost_origin[2] + 28, model, project, view,
+						   &id->x, &id->y, &winz))
+		{
+			autoid_count++;
+		}
+	}
+
 }
 
 void SCR_DrawAutoID (void)

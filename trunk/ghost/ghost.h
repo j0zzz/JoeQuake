@@ -28,6 +28,7 @@ void Ghost_Draw (void);
 void Ghost_DrawGhostTime (qboolean intermission);
 void Ghost_Init (void);
 void Ghost_Finish (char *map_name, double finish_time);
+qboolean Ghost_AutoId (char *name, vec3_t origin);
 void Ghost_Shutdown (void);
 
 typedef struct {
