@@ -84,6 +84,8 @@ static char *FreeFly_GetRemaicCommand (const char *arg)
 		snprintf(cam_buf, sizeof(cam_buf), "%.2f end move\n", cl.mtime[0]);
 	} else if (!strcmp(arg, "endpan")) {
 		snprintf(cam_buf, sizeof(cam_buf), "%.2f end pan\n", cl.mtime[0]);
+	} else if (!strcmp(arg, "time")) {
+		snprintf(cam_buf, sizeof(cam_buf), "%.2f\n", cl.mtime[0]);
 	} else {
 		Con_Printf("ERROR: invalid argument \"%s\"\n", arg);
 		return NULL;
@@ -102,7 +104,7 @@ static void FreeFly_WriteCam_f (void)
 
 	if (Cmd_Argc() < 2 || Cmd_Argc() > 3)
 	{
-		Con_Printf("Usage: %s [filename] (move|stay|view|endmove|endpan)\n", Cmd_Argv(0));
+		Con_Printf("Usage: %s [filename] (move|stay|view|endmove|endpan|time)\n", Cmd_Argv(0));
 		return;
 	}
 
