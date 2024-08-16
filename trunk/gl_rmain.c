@@ -114,6 +114,7 @@ qboolean OnChange_r_skyfog(cvar_t *var, char *string);
 cvar_t	r_skyfog = { "r_skyfog", "0.5", 0, OnChange_r_skyfog };
 cvar_t	r_skyfog_default = { "r_skyfog_default", "0.5" };
 cvar_t	r_scale = { "r_scale", "1" };
+cvar_t  r_showclbboxes = { "r_showclbboxes", "0" };
 
 cvar_t	gl_clear = {"gl_clear", "1"};
 cvar_t	gl_cull = {"gl_cull", "1"};
@@ -1596,6 +1597,63 @@ void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *dist
 	}
 }
 
+
+static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
+{
+	int i, j, k;
+	int d2, d3;
+	vec3_t vert1, vert2;
+	vec3_t wmins, wmaxs;
+
+	VectorAdd(origin, mins, wmins);
+	VectorAdd(origin, maxs, wmaxs);
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	glCullFace(GL_FRONT);
+	glPolygonMode(GL_BACK, GL_LINE);
+	glLineWidth(1.0);
+	glEnable(GL_LINE_SMOOTH);
+	glDisable(GL_TEXTURE_2D);
+
+	glBegin(GL_LINES);
+
+	for (i = 0; i < 3; i++)
+	{
+		vert1[i] = wmins[i];
+		vert2[i] = wmaxs[i];
+
+		d2 = (i + 1) % 3;
+		d3 = (i + 2) % 3;
+
+		vert1[d2] = wmins[d2];
+		vert2[d2] = wmins[d2];
+		for (j = 0; j < 2; j++)
+		{
+			vert1[d3] = wmins[d3];
+			vert2[d3] = wmins[d3];
+			for (k = 0; k < 2; k++)
+			{
+				glVertex3fv(vert1);
+				glVertex3fv(vert2);
+				vert1[d3] = wmaxs[d3];
+				vert2[d3] = wmaxs[d3];
+			}
+			vert1[d2] = wmaxs[d2];
+			vert2[d2] = wmaxs[d2];
+		}
+	}
+
+	glEnd();
+
+	glDisable(GL_LINE_SMOOTH);
+	glEnable(GL_TEXTURE_2D);
+	glPolygonMode(GL_BACK, GL_FILL);
+	glCullFace(GL_BACK);
+}
+
+
+
 //johnfitz -- values for shadow matrix
 #define SHADOW_SKEW_X -0.7 //skew along x axis. -0.7 to mimic glquake shadows
 #define SHADOW_SKEW_Y 0 //skew along y axis. 0 to mimic glquake shadows
@@ -1856,6 +1914,9 @@ void R_DrawAliasModel (entity_t *ent)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	glPopMatrix ();
+
+    if (r_showclbboxes.value && clmodel->has_pr_bbox)
+        R_DrawBbox(ent->origin, clmodel->pr_mins, clmodel->pr_maxs);
 
 	if (r_shadows.value && !ent->noshadow && !draw_player_outlines)
 	{
@@ -3509,6 +3570,7 @@ void R_Init (void)
 	Cvar_Register (&r_skyfog);
 	Cvar_Register (&r_skyfog_default);
 	Cvar_Register (&r_scale);
+	Cvar_Register (&r_showclbboxes);
 	Cvar_Register(&r_waterquality);
 	Cvar_Register(&r_oldwater);
 	Cvar_Register(&r_waterwarp);

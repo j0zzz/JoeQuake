@@ -46,6 +46,58 @@ int	mod_numknown;
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "128", CVAR_ARCHIVE};
 cvar_t	external_ents = { "external_ents", "1", CVAR_ARCHIVE };
 
+
+typedef struct
+{
+	const char *name;
+	vec3_t mins, maxs;
+} id1_bbox_t;
+
+
+static id1_bbox_t id1_bboxes[] = {
+	{"progs/boss.mdl", {-128, -128, -24}, {128, 128, 256}},
+	{"progs/player.mdl", {-16, -16, -24}, {16, 16, 32}},
+	{"progs/demon.mdl", {-32, -32, -24}, {32, 32, 64}},
+	{"progs/dog.mdl", {-32, -32, -24}, {32, 32, 40}},
+	{"progs/enforcer.mdl", {-16, -16, -24}, {16, 16, 40}},
+	{"progs/fish.mdl", {-16, -16, -24}, {16, 16, 24}},
+	{"progs/hknight.mdl", {-16, -16, -24}, {16, 16, 40}},
+	{"progs/knight.mdl", {-16, -16, -24}, {16, 16, 40}},
+	{"progs/ogre.mdl", {-32, -32, -24}, {32, 32, 64}},
+	{"progs/oldone.mdl", {-160, -128, -24}, {160, 128, 256}},
+	{"progs/shalrath.mdl", {-32, -32, -24}, {32, 32, 64}},
+	{"progs/shambler.mdl", {-32, -32, -24}, {32, 32, 64}},
+	{"progs/soldier.mdl", {-16, -16, -24}, {16, 16, 40}},
+	{"progs/tarbaby.mdl", {-16, -16, -24}, {16, 16, 40}},
+	{"progs/wizard.mdl", {-16, -16, -24}, {16, 16, 40}},
+	{"progs/zombie.mdl", {-16, -16, -24}, {16, 16, 40}},
+};
+
+static const int num_id1_bboxes = sizeof(id1_bboxes) / sizeof(id1_bbox_t);
+
+
+static void SetModelPrBbox (model_t *mod)
+{
+	int i;
+	id1_bbox_t *id1_bbox;
+
+	for (i = 0; i < num_id1_bboxes; i++)
+	{
+		id1_bbox = &id1_bboxes[i];
+
+		if (!strcmp(id1_bbox->name, mod->name))
+		{
+			VectorCopy(id1_bbox->mins, mod->pr_mins);
+			VectorCopy(id1_bbox->maxs, mod->pr_maxs);
+			printf("!!!\n");
+			break;
+		}
+	}
+
+	mod->has_pr_bbox = (i < num_id1_bboxes);
+}
+
+
 qboolean OnChange_gl_picmip (cvar_t *var, char *string)
 {
 	int		i;
@@ -2588,6 +2640,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 		mod->modhint = MOD_ENFORCER;
 	else
 		mod->modhint = MOD_NORMAL;
+
+	SetModelPrBbox(mod);
 
 	start = Hunk_LowMark ();
 

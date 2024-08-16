@@ -538,6 +538,11 @@ typedef struct model_s
 	vec3_t		ymins, ymaxs; //johnfitz -- bounds for entities with nonzero yaw
 	vec3_t		rmins, rmaxs; //johnfitz -- bounds for entities with nonzero pitch or roll
 	float		radius;		//joe: only used for quake3 models now
+                            //
+
+	// estimated progs model bounds
+	qboolean    has_pr_bbox;
+	vec3_t		pr_mins, pr_maxs;
 
 // solid volume for clipping
 	qboolean	clipbox;
