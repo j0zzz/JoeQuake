@@ -114,7 +114,6 @@ qboolean OnChange_r_skyfog(cvar_t *var, char *string);
 cvar_t	r_skyfog = { "r_skyfog", "0.5", 0, OnChange_r_skyfog };
 cvar_t	r_skyfog_default = { "r_skyfog_default", "0.5" };
 cvar_t	r_scale = { "r_scale", "1" };
-cvar_t  r_showclbboxes = { "r_showclbboxes", "0" };
 
 cvar_t	gl_clear = {"gl_clear", "1"};
 cvar_t	gl_cull = {"gl_cull", "1"};
@@ -1735,6 +1734,12 @@ void R_DrawAliasModel (entity_t *ent)
 
 	VectorAdd (ent->origin, clmodel->mins, mins);	//joe: used only for shadows now
 
+	// If cl_bbox is enabled apply dead body filter here.
+	if (cl_deadbodyfilter.value &&
+			cl_bbox.value &&
+			Model_isDead(ent->modelindex, ent->frame))
+		return;
+
 	if (R_CullModelForEntity(ent))
 		return;
 
@@ -1972,9 +1977,6 @@ void R_DrawAliasModel (entity_t *ent)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	glPopMatrix ();
-
-    if (r_showclbboxes.value)
-        R_DrawEntBbox(ent);
 
 	if (r_shadows.value && !ent->noshadow && !draw_player_outlines)
 	{
@@ -3119,6 +3121,9 @@ void R_DrawEntitiesOnList ()
 		if (qmb_initialized && SetFlameModelState() == -1)
 			continue;
 
+		if (cl_bbox.value)
+			R_DrawEntBbox(currententity);
+
 		if (ISTRANSPARENT(currententity) && cl_numtransvisedicts < MAX_VISEDICTS)
 		{
 			cl_transvisedicts[cl_numtransvisedicts++] = currententity;
@@ -3628,7 +3633,6 @@ void R_Init (void)
 	Cvar_Register (&r_skyfog);
 	Cvar_Register (&r_skyfog_default);
 	Cvar_Register (&r_scale);
-	Cvar_Register (&r_showclbboxes);
 	Cvar_Register(&r_waterquality);
 	Cvar_Register(&r_oldwater);
 	Cvar_Register(&r_waterwarp);
