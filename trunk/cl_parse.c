@@ -160,6 +160,8 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_q3w_rock] = "progs/w_rock.md3";
 	cl_modelnames[mi_q3w_rock2] = "progs/w_rock2.md3";
 	cl_modelnames[mi_q3w_light] = "progs/w_light.md3";
+	cl_modelnames[mi_boss] = "progs/boss.mdl";
+	cl_modelnames[mi_oldone] = "progs/oldone.mdl";
 
 	for (i = 0 ; i < NUM_MODELINDEX ; i++)
 	{

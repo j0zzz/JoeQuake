@@ -352,6 +352,7 @@ typedef	enum modelindex_s {
 	mi_gib1, mi_gib2, mi_gib3, mi_vwplayer, mi_vwplayer_md3,
 	mi_w_shot, mi_w_shot2, mi_w_nail, mi_w_nail2, mi_w_rock, mi_w_rock2, mi_w_light, 
 	mi_q3w_shot, mi_q3w_shot2, mi_q3w_nail, mi_q3w_nail2, mi_q3w_rock, mi_q3w_rock2, mi_q3w_light,
+	mi_boss, mi_oldone,
 	NUM_MODELINDEX
 } modelindex_t;
 

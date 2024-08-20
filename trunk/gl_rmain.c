@@ -176,6 +176,43 @@ float	pitch_rot;
 float	q3legs_rot;
 #endif
 
+
+
+typedef struct
+{
+	int frame_min;
+	int frame_max;
+} frame_range_t;
+
+typedef struct
+{
+	modelindex_t mi;
+	vec3_t mins, maxs;
+	frame_range_t not_solid_frames[3];  // null terminated
+} id1_bbox_t;
+
+
+static id1_bbox_t id1_bboxes[] = {
+	{mi_boss, {-128, -128, -24}, {128, 128, 256}},
+	{mi_player, {-16, -16, -24}, {16, 16, 32}, {{41, 103}}},
+	{mi_fiend, {-32, -32, -24}, {32, 32, 64}, {{50, 54}}},
+	{mi_dog, {-32, -32, -24}, {32, 32, 40}, {{8, 26}}},
+	{mi_enforcer, {-16, -16, -24}, {16, 16, 40}, {{43, 55}, {57, 66}}},
+	{mi_fish, {-16, -16, -24}, {16, 16, 24}, {{38, 39}}},
+	{mi_hknight, {-16, -16, -24}, {16, 16, 40}, {{44, 54}, {56, 63}}},
+	{mi_knight, {-16, -16, -24}, {16, 16, 40}, {{78, 86}, {88, 97}}},
+	{mi_ogre, {-32, -32, -24}, {32, 32, 64}, {{114, 126}, {128, 136}}},
+	{mi_oldone, {-160, -128, -24}, {160, 128, 256}},
+	{mi_vore, {-32, -32, -24}, {32, 32, 64}, {{16, 23}}},
+	{mi_shambler, {-32, -32, -24}, {32, 32, 64}, {{85, 94}}},
+	{mi_soldier, {-16, -16, -24}, {16, 16, 40}, {{10, 18}, {20, 29}}},
+	{mi_spawn, {-16, -16, -24}, {16, 16, 40}},
+	{mi_scrag, {-16, -16, -24}, {16, 16, 40}, {{48, 54}}},
+	{mi_zombie, {-16, -16, -24}, {16, 16, 40}, {{171, 173}}},
+	{NUM_MODELINDEX}
+};
+
+
 void R_MarkSurfaces(void);
 void R_InitBubble (void);
 void R_Clear(void);
@@ -1597,24 +1634,13 @@ void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *dist
 	}
 }
 
-
-static void R_DrawBbox(vec3_t origin, int frame, frame_range_t *not_solid_frames,
-						vec3_t mins, vec3_t maxs)
+static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
 {
 	qboolean visible;
 	int i, j, k;
 	int d2, d3;
 	vec3_t vert1, vert2;
 	vec3_t wmins, wmaxs;
-	frame_range_t *range;
-
-	visible = true;
-	for (range = not_solid_frames; range->frame_max != 0; range ++)
-		if (range->frame_min <= frame && frame < range->frame_max)
-			visible = false;
-
-	if (!visible)
-		return;
 
 	VectorAdd(origin, mins, wmins);
 	VectorAdd(origin, maxs, wmaxs);
@@ -1661,6 +1687,27 @@ static void R_DrawBbox(vec3_t origin, int frame, frame_range_t *not_solid_frames
 	glEnable(GL_TEXTURE_2D);
 	glPolygonMode(GL_BACK, GL_FILL);
 	glCullFace(GL_BACK);
+}
+
+
+static void R_DrawEntBbox(entity_t *ent)
+{
+	frame_range_t *range;
+	id1_bbox_t *bbox_info;
+
+	for (bbox_info = id1_bboxes; bbox_info->mi != NUM_MODELINDEX; bbox_info++)
+		if (cl_modelindex[bbox_info->mi] == ent->modelindex)
+			break;
+
+	if (bbox_info->mi != NUM_MODELINDEX)
+	{
+		for (range = bbox_info->not_solid_frames; range->frame_max != 0; range++)
+			if (range->frame_min <= ent->frame && ent->frame < range->frame_max)
+				break;
+
+		if (range->frame_max == 0)
+			R_DrawBbox(ent->origin, bbox_info->mins, bbox_info->maxs);
+	}
 }
 
 
@@ -1926,11 +1973,8 @@ void R_DrawAliasModel (entity_t *ent)
 
 	glPopMatrix ();
 
-    if (r_showclbboxes.value && clmodel->has_pr_bbox)
-	{
-        R_DrawBbox(ent->origin, ent->frame, clmodel->pr_not_solid_frames,
-					clmodel->pr_mins, clmodel->pr_maxs);
-	}
+    if (r_showclbboxes.value)
+        R_DrawEntBbox(ent);
 
 	if (r_shadows.value && !ent->noshadow && !draw_player_outlines)
 	{
