@@ -1598,12 +1598,23 @@ void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *dist
 }
 
 
-static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
+static void R_DrawBbox(vec3_t origin, int frame, frame_range_t *not_solid_frames,
+						vec3_t mins, vec3_t maxs)
 {
+	qboolean visible;
 	int i, j, k;
 	int d2, d3;
 	vec3_t vert1, vert2;
 	vec3_t wmins, wmaxs;
+	frame_range_t *range;
+
+	visible = true;
+	for (range = not_solid_frames; range->frame_max != 0; range ++)
+		if (range->frame_min <= frame && frame < range->frame_max)
+			visible = false;
+
+	if (!visible)
+		return;
 
 	VectorAdd(origin, mins, wmins);
 	VectorAdd(origin, maxs, wmaxs);
@@ -1916,7 +1927,10 @@ void R_DrawAliasModel (entity_t *ent)
 	glPopMatrix ();
 
     if (r_showclbboxes.value && clmodel->has_pr_bbox)
-        R_DrawBbox(ent->origin, clmodel->pr_mins, clmodel->pr_maxs);
+	{
+        R_DrawBbox(ent->origin, ent->frame, clmodel->pr_not_solid_frames,
+					clmodel->pr_mins, clmodel->pr_maxs);
+	}
 
 	if (r_shadows.value && !ent->noshadow && !draw_player_outlines)
 	{

@@ -520,6 +520,13 @@ typedef enum
 #define EF_NOSHADOW 512		// don't cast a shadow
 #define	MF_HOLEY	(1u<<14)		// MarkV/QSS -- make index 255 transparent on mdl's
 
+
+typedef struct
+{
+	int frame_min;
+	int frame_max;
+} frame_range_t;
+
 typedef struct model_s
 {
 	char		name[MAX_QPATH];
@@ -543,6 +550,7 @@ typedef struct model_s
 	// estimated progs model bounds
 	qboolean    has_pr_bbox;
 	vec3_t		pr_mins, pr_maxs;
+	frame_range_t *pr_not_solid_frames;
 
 // solid volume for clipping
 	qboolean	clipbox;

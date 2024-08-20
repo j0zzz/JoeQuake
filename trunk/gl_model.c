@@ -47,38 +47,31 @@ cvar_t	gl_subdivide_size = {"gl_subdivide_size", "128", CVAR_ARCHIVE};
 cvar_t	external_ents = { "external_ents", "1", CVAR_ARCHIVE };
 
 
-
-typedef struct
-{
-	int frame_min;
-	int frame_max;
-} id1_not_solid_frames_t;
 typedef struct
 {
 	const char *name;
 	vec3_t mins, maxs;
-	int num_not_solid_ranges;
-	id1_not_solid_frames_t not_solid_ranges[5];
+	frame_range_t not_solid_frames[3];  // null terminated
 } id1_bbox_t;
 
 
 static id1_bbox_t id1_bboxes[] = {
 	{"progs/boss.mdl", {-128, -128, -24}, {128, 128, 256}},
-	{"progs/player.mdl", {-16, -16, -24}, {16, 16, 32}, 1, {{41, 103}}},
-	{"progs/demon.mdl", {-32, -32, -24}, {32, 32, 64}, 1, {{50, 54}}},
-	{"progs/dog.mdl", {-32, -32, -24}, {32, 32, 40}, 1, {{8, 26}}},
-	{"progs/enforcer.mdl", {-16, -16, -24}, {16, 16, 40}, 2, {{43, 55}, {57, 66}}},
-	{"progs/fish.mdl", {-16, -16, -24}, {16, 16, 24}, 1, {{38, 39}}},
-	{"progs/hknight.mdl", {-16, -16, -24}, {16, 16, 40}, 2, {{44, 54}, {56, 63}}},
-	{"progs/knight.mdl", {-16, -16, -24}, {16, 16, 40}, 2, {{78, 86}, {88, 97}}},
-	{"progs/ogre.mdl", {-32, -32, -24}, {32, 32, 64}, 2, {{114, 126}, {128, 136}}},
+	{"progs/player.mdl", {-16, -16, -24}, {16, 16, 32}, {{41, 103}}},
+	{"progs/demon.mdl", {-32, -32, -24}, {32, 32, 64}, {{50, 54}}},
+	{"progs/dog.mdl", {-32, -32, -24}, {32, 32, 40}, {{8, 26}}},
+	{"progs/enforcer.mdl", {-16, -16, -24}, {16, 16, 40}, {{43, 55}, {57, 66}}},
+	{"progs/fish.mdl", {-16, -16, -24}, {16, 16, 24}, {{38, 39}}},
+	{"progs/hknight.mdl", {-16, -16, -24}, {16, 16, 40}, {{44, 54}, {56, 63}}},
+	{"progs/knight.mdl", {-16, -16, -24}, {16, 16, 40}, {{78, 86}, {88, 97}}},
+	{"progs/ogre.mdl", {-32, -32, -24}, {32, 32, 64}, {{114, 126}, {128, 136}}},
 	{"progs/oldone.mdl", {-160, -128, -24}, {160, 128, 256}},
-	{"progs/shalrath.mdl", {-32, -32, -24}, {32, 32, 64}, 1, {{16, 23}}},
-	{"progs/shambler.mdl", {-32, -32, -24}, {32, 32, 64}, 1, {{85, 94}}},
-	{"progs/soldier.mdl", {-16, -16, -24}, {16, 16, 40}, 2, {{10, 18}, {20, 29}}},
+	{"progs/shalrath.mdl", {-32, -32, -24}, {32, 32, 64}, {{16, 23}}},
+	{"progs/shambler.mdl", {-32, -32, -24}, {32, 32, 64}, {{85, 94}}},
+	{"progs/soldier.mdl", {-16, -16, -24}, {16, 16, 40}, {{10, 18}, {20, 29}}},
 	{"progs/tarbaby.mdl", {-16, -16, -24}, {16, 16, 40}},
-	{"progs/wizard.mdl", {-16, -16, -24}, {16, 16, 40}, 1, {{48, 54}}},
-	{"progs/zombie.mdl", {-16, -16, -24}, {16, 16, 40}, 1, {{171, 173}}},
+	{"progs/wizard.mdl", {-16, -16, -24}, {16, 16, 40}, {{48, 54}}},
+	{"progs/zombie.mdl", {-16, -16, -24}, {16, 16, 40}, {{171, 173}}},
 };
 
 static const int num_id1_bboxes = sizeof(id1_bboxes) / sizeof(id1_bbox_t);
@@ -97,7 +90,7 @@ static void SetModelPrBbox (model_t *mod)
 		{
 			VectorCopy(id1_bbox->mins, mod->pr_mins);
 			VectorCopy(id1_bbox->maxs, mod->pr_maxs);
-			printf("!!!\n");
+			mod->pr_not_solid_frames = id1_bbox->not_solid_frames;
 			break;
 		}
 	}
