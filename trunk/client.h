@@ -358,6 +358,7 @@ typedef	enum modelindex_s {
 	mi_i_quad, mi_i_invuln, mi_i_suit, mi_i_invis, mi_i_armor,
 	mi_i_shell0, mi_i_shell1, mi_i_nail0, mi_i_nail1, mi_i_rock0, mi_i_rock1,
 	mi_i_batt0, mi_i_batt1,
+	mi_i_shot, mi_i_nail, mi_i_nail2, mi_i_rock, mi_i_rock2, mi_i_light,
 	NUM_MODELINDEX
 } modelindex_t;
 

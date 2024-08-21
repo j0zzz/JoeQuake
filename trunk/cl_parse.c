@@ -165,11 +165,6 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_i_bh10] = "maps/b_bh10.bsp";
 	cl_modelnames[mi_i_bh25] = "maps/b_bh25.bsp";
 	cl_modelnames[mi_i_bh100] = "maps/b_bh100.bsp";
-	cl_modelnames[mi_i_quad] = "progs/quaddama.mdl";
-	cl_modelnames[mi_i_invuln] = "progs/invulner.mdl";
-	cl_modelnames[mi_i_suit] = "progs/suit.mdl";
-	cl_modelnames[mi_i_invis] = "progs/invisibl.mdl";
-	cl_modelnames[mi_i_armor] = "progs/armor.mdl";
 	cl_modelnames[mi_i_shell0] = "maps/b_shell0.bsp";
 	cl_modelnames[mi_i_shell1] = "maps/b_shell1.bsp";
 	cl_modelnames[mi_i_nail0] = "maps/b_nail0.bsp";
@@ -178,6 +173,17 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_i_rock1] = "maps/b_rock1.bsp";
 	cl_modelnames[mi_i_batt0] = "maps/b_batt0.bsp";
 	cl_modelnames[mi_i_batt1] = "maps/b_batt1.bsp";
+	cl_modelnames[mi_i_quad] = "progs/quaddama.mdl";
+	cl_modelnames[mi_i_invuln] = "progs/invulner.mdl";
+	cl_modelnames[mi_i_suit] = "progs/suit.mdl";
+	cl_modelnames[mi_i_invis] = "progs/invisibl.mdl";
+	cl_modelnames[mi_i_armor] = "progs/armor.mdl";
+	cl_modelnames[mi_i_shot] = "progs/g_shot.mdl";
+	cl_modelnames[mi_i_nail] = "progs/g_nail.mdl";
+	cl_modelnames[mi_i_nail2] = "progs/g_nail2.mdl";
+	cl_modelnames[mi_i_rock] = "progs/g_rock.mdl";
+	cl_modelnames[mi_i_rock2] = "progs/g_rock2.mdl";
+	cl_modelnames[mi_i_light] = "progs/g_light.mdl";
 
 	for (i = 0 ; i < NUM_MODELINDEX ; i++)
 	{
