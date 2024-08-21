@@ -162,6 +162,22 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_q3w_light] = "progs/w_light.md3";
 	cl_modelnames[mi_boss] = "progs/boss.mdl";
 	cl_modelnames[mi_oldone] = "progs/oldone.mdl";
+	cl_modelnames[mi_i_bh10] = "maps/b_bh10.bsp";
+	cl_modelnames[mi_i_bh25] = "maps/b_bh25.bsp";
+	cl_modelnames[mi_i_bh100] = "maps/b_bh100.bsp";
+	cl_modelnames[mi_i_quad] = "progs/quaddama.mdl";
+	cl_modelnames[mi_i_invuln] = "progs/invulner.mdl";
+	cl_modelnames[mi_i_suit] = "progs/suit.mdl";
+	cl_modelnames[mi_i_invis] = "progs/invisibl.mdl";
+	cl_modelnames[mi_i_armor] = "progs/armor.mdl";
+	cl_modelnames[mi_i_shell0] = "maps/b_shell0.bsp";
+	cl_modelnames[mi_i_shell1] = "maps/b_shell1.bsp";
+	cl_modelnames[mi_i_nail0] = "maps/b_nail0.bsp";
+	cl_modelnames[mi_i_nail1] = "maps/b_nail1.bsp";
+	cl_modelnames[mi_i_rock0] = "maps/b_rock0.bsp";
+	cl_modelnames[mi_i_rock1] = "maps/b_rock1.bsp";
+	cl_modelnames[mi_i_batt0] = "maps/b_batt0.bsp";
+	cl_modelnames[mi_i_batt1] = "maps/b_batt1.bsp";
 
 	for (i = 0 ; i < NUM_MODELINDEX ; i++)
 	{
