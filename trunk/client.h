@@ -359,6 +359,10 @@ typedef	enum modelindex_s {
 	mi_i_shell0, mi_i_shell1, mi_i_nail0, mi_i_nail1, mi_i_rock0, mi_i_rock1,
 	mi_i_batt0, mi_i_batt1,
 	mi_i_shot, mi_i_nail, mi_i_nail2, mi_i_rock, mi_i_rock2, mi_i_light,
+	mi_i_wskey, mi_i_mskey, mi_i_wgkey, mi_i_mgkey,
+	mi_i_end1, mi_i_end2, mi_i_end3, mi_i_end4,
+	mi_i_backpack,
+
 	NUM_MODELINDEX
 } modelindex_t;
 

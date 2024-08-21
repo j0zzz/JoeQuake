@@ -184,6 +184,15 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_i_rock] = "progs/g_rock.mdl";
 	cl_modelnames[mi_i_rock2] = "progs/g_rock2.mdl";
 	cl_modelnames[mi_i_light] = "progs/g_light.mdl";
+	cl_modelnames[mi_i_wskey] = "progs/w_s_key.mdl";
+	cl_modelnames[mi_i_mskey] = "progs/m_s_key.mdl";
+	cl_modelnames[mi_i_wgkey] = "progs/w_g_key.mdl";
+	cl_modelnames[mi_i_mgkey] = "progs/m_g_key.mdl";
+	cl_modelnames[mi_i_end1] = "progs/end1.mdl";
+	cl_modelnames[mi_i_end2] = "progs/end2.mdl";
+	cl_modelnames[mi_i_end3] = "progs/end3.mdl";
+	cl_modelnames[mi_i_end4] = "progs/end4.mdl";
+	cl_modelnames[mi_i_backpack] = "progs/backpack.mdl";
 
 	for (i = 0 ; i < NUM_MODELINDEX ; i++)
 	{
