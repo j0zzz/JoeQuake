@@ -318,7 +318,7 @@ static qboolean Ghost_SetForLevel (void)
     }
 
     ghost_entity.skinnum = 0;
-    ghost_entity.modelindex = -1;
+    ghost_entity.modelindex = cl_modelindex[mi_player];
     ghost_entity.translate_start_time = 0.0f;
     ghost_entity.frame_start_time = 0.0f;
     ghost_entity.scale = ENTSCALE_DEFAULT;
@@ -462,6 +462,7 @@ void Ghost_Load (void)
 }
 
 void R_DrawAliasModel (entity_t *ent);
+void R_DrawEntBbox(entity_t *ent);
 void Ghost_Draw (void)
 {
     if (Ghost_SetForLevel()) {
@@ -483,6 +484,8 @@ void Ghost_Draw (void)
     if (Ghost_Update()) {
         currententity = &ghost_entity;
         R_DrawAliasModel (&ghost_entity);
+        if (cl_bbox.value)
+            R_DrawEntBbox(&ghost_entity);
     }
 }
 

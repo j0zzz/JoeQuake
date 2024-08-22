@@ -1732,7 +1732,7 @@ static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
 }
 
 
-static void R_DrawEntBbox(entity_t *ent)
+void R_DrawEntBbox(entity_t *ent)
 {
 	frame_range_t *range;
 	id1_bbox_t *bbox_info;
