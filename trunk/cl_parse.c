@@ -193,6 +193,7 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_i_end3] = "progs/end3.mdl";
 	cl_modelnames[mi_i_end4] = "progs/end4.mdl";
 	cl_modelnames[mi_i_backpack] = "progs/backpack.mdl";
+	cl_modelnames[mi_explobox] = "maps/b_explob.bsp";
 
 	for (i = 0 ; i < NUM_MODELINDEX ; i++)
 	{

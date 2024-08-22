@@ -248,6 +248,9 @@ static id1_bbox_t id1_bboxes[] = {
 	{mi_i_end4, {-32, -32, -25}, {32, 32, 33}},
 	{mi_i_backpack, {-32, -32, -1}, {32, 32, 57}},
 
+	// misc
+	{mi_explobox, {0, 0, 0}, {32, 32, 64}},
+
 	{NUM_MODELINDEX}
 };
 
