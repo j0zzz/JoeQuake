@@ -63,6 +63,8 @@ cvar_t	show_stats = {"show_stats", "1"};
 cvar_t	show_stats_small = {"show_stats_small", "0"};
 cvar_t	show_stats_length = {"show_stats_length", "0.5"};
 
+cvar_t	show_movekeys = {"show_movekeys", "0"};
+
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "2.0"};
 
@@ -1403,6 +1405,38 @@ void SCR_DrawVolume (void)
 
 /*
 ===============
+SCR_DrawMovementKeys
+===============
+*/
+void SCR_DrawMovementKeys (void)
+{
+	int		x, y, size = Sbar_GetScaledCharacterSize();
+	int		half_size = size / 2;
+	int		y_offset = 3 * size;
+	extern vrect_t	scr_vrect;
+	extern kbutton_t in_moveleft, in_moveright, in_forward, in_back, in_jump;
+
+	if (!show_movekeys.value)
+		return;
+
+	// get center of screen
+	x = scr_vrect.x + scr_vrect.width / 2;
+	y = scr_vrect.y + scr_vrect.height / 2;
+
+	if (in_forward.state & 1)
+		Draw_Character(x - half_size, y - half_size - size, '^', true);
+	if (in_back.state & 1)
+		Draw_Character(x - half_size, y - half_size + size, '_', true);
+	if (in_moveleft.state & 1)
+		Draw_Character(x - half_size - size, y - half_size, '<', true);
+	if (in_moveright.state & 1)
+		Draw_Character(x - half_size + size, y - half_size, '>', true);
+	if (in_jump.state & 1)
+		Draw_Character(x - half_size + size, y - half_size - size, 'j', true);
+}
+
+/*
+===============
 SCR_DrawPlaybackStats
 ===============
 */
@@ -1438,8 +1472,8 @@ void SCR_DrawPlaybackStats (void)
 	else
 		yofs = 24;
 
-	Draw_String (vid.width - 136, yofs, va("demo speed: %.1lfx", cl_demospeed.value));
-	Draw_String (vid.width - 136, yofs + 8, va("playback mode: %s", cl_demorewind.value ? "rewind" : "forward"));
+	Draw_String (vid.width - 136, yofs, va("demo speed: %.1lfx", cl_demospeed.value), true);
+	Draw_String (vid.width - 136, yofs + 8, va("playback mode: %s", cl_demorewind.value ? "rewind" : "forward"), true);
 #endif
 }
 
@@ -1611,6 +1645,8 @@ void V_Init (void)
 	Cvar_Register (&show_stats);
 	Cvar_Register (&show_stats_small);
 	Cvar_Register (&show_stats_length);
+
+	Cvar_Register (&show_movekeys);
 
 	Cvar_Register (&cl_rollspeed);
 	Cvar_Register (&cl_rollangle);

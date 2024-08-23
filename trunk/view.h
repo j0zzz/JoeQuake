@@ -77,6 +77,7 @@ void SCR_DrawSpeed (void);
 void SCR_DrawFPS (void);
 void SCR_DrawStats (void);
 void SCR_DrawVolume (void);
+void SCR_DrawMovementKeys(void);
 void SCR_DrawPlaybackStats (void);
 
 float V_CalcRoll (vec3_t angles, vec3_t velocity);
