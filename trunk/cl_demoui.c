@@ -33,6 +33,7 @@ typedef enum
 
 
 qboolean demoui_dragging_seek;
+qboolean demoui_freefly_move;
 static double last_event_time = -1.0f;
 static qboolean over_ui = false;
 static qboolean map_menu_open = false;
@@ -262,6 +263,7 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 
 	UpdateHover(&layout, ms);
 	over_ui = ms->y > layout.top || (map_menu_open && hover_map_idx != -1);
+	demoui_freefly_move = (ms->button_down == 2);
 
 	if (ms->button_down == 1)
 	{

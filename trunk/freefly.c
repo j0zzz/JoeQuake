@@ -100,7 +100,8 @@ static void FreeFly_CopyCam_f (void)
 
 qboolean FreeFly_Moving (void)
 {
-	return cl.freefly_enabled && (in_freeflymove.state & 1);
+	return cl.freefly_enabled
+		&& (cl_demoui.value == 0 || (in_freeflymove.state & 1) || demoui_freefly_move);
 }
 
 
