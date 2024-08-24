@@ -147,7 +147,7 @@ void FreeFly_UpdateOrigin (void)
 	frametime = time - cl.freefly_last_time;
 	cl.freefly_last_time = time;
 
-	if (!FreeFly_Moving())
+	if (!cl.freefly_enabled)
 		return;
 
 	AngleVectors (cl.freefly_angles, forward, right, up);
