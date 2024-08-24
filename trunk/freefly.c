@@ -11,8 +11,14 @@ static void FreeFly_Toggle_f (void)
 
 	if (cl.freefly_enabled)
 	{
+		Con_Printf("Freefly enabled.");
+		if (cl_demoui.value != 0)
+			Con_Printf(" Hold mouse2 or bind +freeflymove to change view.");
+		Con_Printf("\n");
 		cl.freefly_reset = true;
 		cl.freefly_last_time = Sys_DoubleTime();
+	} else {
+		Con_Printf("Freefly disabled.\n");
 	}
 }
 
