@@ -1053,14 +1053,21 @@ This command primarly aims to keep JoeQuake compatible with mods.
 ##### `freefly`
 
 Toggle freefly mode.  This is a free flying third-person camera that can be used
-during demo playback.  See below for how to control the camera.
+during demo playback.  When enabled, the usual inputs will manipulate the
+camera's position and angle (`+moveleft`, `+moveright`, `+forward`, `+back`,
+mouse movements, etc).
+
+If the demo UI is enabled (`cl_demoui 1`) then click and drag with mouse2 to
+change the camera angle, or bind `+freeflymove` (see below).  If the demo UI is
+disabled (`cl_demoui 0`) then mouse movements will effect the camera angle
+without need for extra key or button presses.
 
 ##### `+freeflymove` / `-freeflymove`
 
-Enable movement of the camera in freefly mode.  When enabled, the usual inputs
-will manipulate the camera's position (`+moveleft`, `+moveright`, `+forward`,
-`+back`, mouse movements, etc).  You'll typically want to bind this to a key,
-which should be held down to move the camera.
+When using freefly mode with the demo UI, this command makes mouse movements
+adjust the camera angle.  Use this as an alternative to mouse2.  You'll
+typically want to bind this to a key, which should be held down to adjust the
+camera angle.
 
 ##### `freefly_copycam`
 
