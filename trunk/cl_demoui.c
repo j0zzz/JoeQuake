@@ -411,6 +411,34 @@ TimeToSeekbarPos (double time, dseek_map_info_t *dsmi, layout_t *layout)
 }
 
 
+static char *
+Get_TooltipText (void)
+{
+	char *tooltip_text;
+	switch (hover)
+	{
+		case HOVER_PLAY_PAUSE:
+			tooltip_text = "toggle play/pause"; break;
+		case HOVER_SEEK:
+			tooltip_text = "seek through current level"; break;
+		case HOVER_SKIP_NEXT:
+			tooltip_text = "skip to next level in marathon"; break;
+		case HOVER_SKIP:
+			tooltip_text = "toggle marathon level menu"; break;
+		case HOVER_SKIP_PREV:
+			tooltip_text = "skip to previous level in marathon"; break;
+		case HOVER_SPEED_NEXT:
+			tooltip_text = "cycle forwards through playback speeds"; break;
+		case HOVER_SPEED:
+		case HOVER_SPEED_PREV:
+			tooltip_text = "cycle backwards through playback speeds"; break;
+		default:
+			tooltip_text = "";
+	}
+	return tooltip_text;
+}
+
+
 void DemoUI_Draw(void)
 {
 	float sbar_scale = Sbar_GetScaleAmount();
@@ -422,6 +450,7 @@ void DemoUI_Draw(void)
 	dseek_map_info_t *dsmi;
 	int map_num;
 	layout_t layout;
+	char *tooltip_text;
 
 	dsmi = CL_DemoGetCurrentMapInfo (&map_num);
 	if (dsmi == NULL)
@@ -530,4 +559,9 @@ void DemoUI_Draw(void)
 							demo_seek_info.maps[i].name, true);
 		}
 	}
+
+	// Tooltip
+	tooltip_text = Get_TooltipText();
+	Draw_String(vid.width - layout.char_size * strlen(tooltip_text),
+				layout.top - 3 * (layout.char_size >> 1), tooltip_text, true);
 }
