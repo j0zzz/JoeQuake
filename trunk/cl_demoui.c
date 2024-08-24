@@ -263,9 +263,13 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 
 	UpdateHover(&layout, ms);
 	over_ui = ms->y > layout.top || (map_menu_open && hover_map_idx != -1);
-	demoui_freefly_move = (ms->button_down == 2);
 
-	if (ms->button_down == 1)
+	demoui_freefly_move = ms->buttons[2];
+	if (ms->button_down == 2 || ms->button_up == 2)
+	{
+		handled = true;
+	}
+	else if (ms->button_down == 1)
 	{
 		handled = true;
 		switch (hover)
@@ -368,6 +372,7 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 			map_menu_open = false;
 		else
 			Cmd_ExecuteString("pause", src_command);
+		handled = true;
 	}
 
 	return handled;
