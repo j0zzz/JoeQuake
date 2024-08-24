@@ -3,6 +3,7 @@
 #define SPEED_DRAW_CHARS	6
 #define MAP_NAME_DRAW_CHARS	12
 #define PAUSE_PLAY_CHARS	2
+#define FREEFLY_CHARS	2
 
 
 typedef struct
@@ -14,6 +15,7 @@ typedef struct
 	int skip_prev_x, skip_next_x, skip_y;
 	int time_y;
 	int speed_prev_x, speed_next_x, speed_y;
+	int freefly_x, freefly_y;
 	int map_min_num, map_max_num, map_x, map_y, map_width, map_height;
 } layout_t;
 
@@ -29,6 +31,7 @@ typedef enum
 	HOVER_SPEED_PREV,
 	HOVER_SPEED,
 	HOVER_SPEED_NEXT,
+	HOVER_FREEFLY,
 } hover_t;
 
 
@@ -127,6 +130,10 @@ GetUILayout (layout_t *layout, int map_num)
 	layout->map_x = (int)(vid.width - show_frac * layout->char_size * MAP_NAME_DRAW_CHARS);
 	layout->map_width = (1 + MAP_NAME_DRAW_CHARS) * layout->char_size;
 
+	// Freefly toggle
+	layout->freefly_x = layout->skip_prev_x - layout->char_size * (FREEFLY_CHARS + 1);
+	layout->freefly_y = layout->top + layout->char_size / 2;
+
 	centre_y = (vid.height - backdrop_height - layout->char_size) / 2;
 	rows_above = max(0, centre_y / layout->char_size);
 	rows_below = max(0, (vid.height - layout->char_size * 3 - centre_y) / layout->char_size);
@@ -224,6 +231,13 @@ UpdateHover (layout_t *layout, const mouse_state_t* ms)
 	{
 		hover = HOVER_SPEED;
 	}
+	else if (ms->y >= layout->freefly_y
+		&& ms->y < layout->freefly_y + layout->char_size
+		&& ms->x >= layout->freefly_x
+		&& ms->x < layout->freefly_x + FREEFLY_CHARS * layout->char_size)
+	{
+		hover = HOVER_FREEFLY;
+	}
 
 	if (map_menu_open
 		&& ms->x >= layout->map_x
@@ -289,6 +303,8 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 				ChangeSpeed(1); break;
 			case HOVER_SPEED_PREV:
 				ChangeSpeed(-1); break;
+			case HOVER_FREEFLY:
+				Cmd_ExecuteString("freefly", src_command); break;
 			default:
 				handled = false; break;
 		}
@@ -432,6 +448,8 @@ Get_TooltipText (void)
 		case HOVER_SPEED:
 		case HOVER_SPEED_PREV:
 			tooltip_text = "cycle backwards through playback speeds"; break;
+		case HOVER_FREEFLY:
+			tooltip_text = "toggle between freefly and first person view"; break;
 		default:
 			tooltip_text = "";
 	}
@@ -451,6 +469,7 @@ void DemoUI_Draw(void)
 	int map_num;
 	layout_t layout;
 	char *tooltip_text;
+	char *freefly_label;
 
 	dsmi = CL_DemoGetCurrentMapInfo (&map_num);
 	if (dsmi == NULL)
@@ -559,6 +578,16 @@ void DemoUI_Draw(void)
 							demo_seek_info.maps[i].name, true);
 		}
 	}
+
+	// Freefly
+	if (cl.freefly_enabled)
+		freefly_label = "FF";
+	else
+		freefly_label = "1P";
+	if (hover == HOVER_FREEFLY)
+		Draw_String(layout.freefly_x, layout.freefly_y, freefly_label, true);
+	else
+		Draw_Alt_String(layout.freefly_x, layout.freefly_y, freefly_label, true);
 
 	// Tooltip
 	tooltip_text = Get_TooltipText();
