@@ -7,6 +7,13 @@ extern kbutton_t	in_freeflymove, in_forward, in_back, in_moveleft, in_moveright,
 
 static void FreeFly_Toggle_f (void)
 {
+	if (!cls.demoplayback)
+	{
+		Con_Printf("Must be playing a demo to enable freefly.\n");
+		cl.freefly_enabled = false;
+		return;
+	}
+
 	cl.freefly_enabled = !cl.freefly_enabled;
 
 	if (cl.freefly_enabled)
