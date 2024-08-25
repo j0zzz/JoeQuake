@@ -54,7 +54,7 @@ extern	byte	color_white[4], color_black[4];
 #define TEX_LUMA			8
 #define TEX_FULLBRIGHT		16
 
-#define	MAX_GLTEXTURES	4096	//joe: was 2048
+#define	MAX_GLTEXTURES	8192	//joe: was 2048
 
 //MHGLQFIX: polygons are not native to GPUs so use triangle fans instead
 #undef GL_POLYGON
