@@ -216,7 +216,7 @@ void Movie_StopPlayback (void)
 
 double Movie_FrameTime (void)
 {
-	return 1.0 / (!capture_fps.value ? 30 : bound(10, capture_fps.value, 1000));
+	return 1.0 / (!capture_fps.value ? 30 : bound(10, capture_fps.value, 100000));
 }
 
 void Movie_UpdateScreen (void)
