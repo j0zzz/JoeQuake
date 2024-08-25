@@ -101,6 +101,13 @@ Applies fog on the sky, valid values are from `0.0` to `1.0`. Used implicitly by
 It is only used if fog is also applied by using the `fog` command.
 Default value is `0.5`.
 
+##### `r_skyfog_default`
+
+Same as `r_skyfog`, but is used to initialize the fog amount at the start of a map only.
+Once `r_skyfog` is changed, it overrides this value.
+This is a workaround for when mods do not reset `r_skyfog` at the start of a map, causing whatever value from the end of the previous map to be used instead, which may not be intended.
+Default value is `0.5`.
+
 ##### `r_noshadow_list`
 
 Ignores drawing shadow for mdl files added to this list.

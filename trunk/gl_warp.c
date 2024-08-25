@@ -40,6 +40,7 @@ cvar_t r_waterwarp = { "r_waterwarp", "0" };
 
 extern	cvar_t	gl_subdivide_size;
 extern	cvar_t	r_skyfog;
+extern	cvar_t	r_skyfog_default;
 
 extern	byte *StringToRGB (char *s);
 
@@ -1141,7 +1142,7 @@ void Sky_NewMap(void)
 
 	// initially no sky
 	Cvar_Set(&r_skybox, "");
-	skyfog = r_skyfog.value;
+	skyfog = r_skyfog_default.value;
 
 	// read worldspawn (this is so ugly, and shouldn't it be done on the server?)
 	data = cl.worldmodel->entities;
