@@ -581,7 +581,7 @@ qboolean Host_FilterTime (double time)
 		frametime = Movie_FrameTime();
 #endif
 	else
-		frametime = 1.0 / (!cl_maxfps.value ? 1000 : bound(10, cl_maxfps.value, 1000));
+		frametime = 1.0 / (!cl_maxfps.value ? 100000 : bound(10, cl_maxfps.value, 100000));
 
 	result = false;
 
@@ -601,7 +601,7 @@ qboolean Host_FilterTime (double time)
 			host_frametime = host_framerate.value;
 		else
 			// don't allow really long or short frames
-			host_frametime = bound(0.001, host_frametime, 0.1);
+			host_frametime = bound(0.00001, host_frametime, 0.1);
 
 		result = true;
 	}
