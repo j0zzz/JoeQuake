@@ -2097,6 +2097,8 @@ static	gltexture_t	*current_texture = NULL;
 #define CHECK_TEXTURE_ALREADY_LOADED\
 	if (CheckTextureLoaded(mode))	\
 	{								\
+		image_width = current_texture->width; \
+		image_height = current_texture->height; \
 		current_texture = NULL;		\
 		fclose (f);					\
 		return NULL;				\
