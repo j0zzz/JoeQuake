@@ -305,6 +305,12 @@ Switches on alternative noclip movement where the player always moves towards
 the direction he's looking at.
 `1` by default.
 
+##### `sv_override_spawnparams`
+
+Allows to enable or disable overriding the spawn parameters on every spawn of a player.
+The overriding values can be set using the command `setspawnparam <paramnum> <value> [0]`.
+This allows to set starting stats for when starting levels with the `map` or `record` commands, e.g. for singleplayer segmented runs.
+
 ##### `sv_noclipspeed`
 
 Dedicated max speed value used only while noclip.
