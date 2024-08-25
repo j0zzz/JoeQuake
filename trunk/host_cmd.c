@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern	cvar_t	pausable;
 
 cvar_t	cl_confirmquit = {"cl_confirmquit", "1"};
+cvar_t	sv_override_spawnparams = {"sv_override_spawnparams", "0"};
 
 int	current_skill;
 
@@ -1061,6 +1062,8 @@ void Host_PreSpawn_f (void)
 	host_client->netconnection->encrypt = 2;
 }
 
+static float spawnparams_override[NUM_SPAWN_PARMS];
+
 /*
 ==================
 Host_Spawn_f
@@ -1139,6 +1142,9 @@ void Host_Spawn_f (void)
 		ent->v.team = (host_client->colors & 15) + 1;
 		ent->v.netname = PR_SetEngineString(host_client->name);
 
+		if (sv_override_spawnparams.value) {
+			memcpy (host_client->spawn_parms, spawnparams_override, sizeof(spawnparams_override));
+		}
 		// copy spawn parms out of the client_t
 		for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
 			(&pr_global_struct->parm1)[i] = host_client->spawn_parms[i];
@@ -1838,6 +1844,9 @@ void Host_SetSpawnParam_f (void)
 	}
 
 	svs.clients[client_num].spawn_parms[param_num] = value;
+	if (client_num == 0) {
+		spawnparams_override[param_num] = value;
+	}
 }
 
 struct spawn_params_to_write
@@ -2083,4 +2092,5 @@ void Host_InitCommands (void)
 	Cmd_AddCommand ("mcache", Mod_Print);
 
 	Cvar_Register (&cl_confirmquit);
+	Cvar_Register (&sv_override_spawnparams);
 }
