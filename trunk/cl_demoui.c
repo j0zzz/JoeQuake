@@ -591,6 +591,13 @@ void DemoUI_Draw(void)
 
 	// Tooltip
 	tooltip_text = Get_TooltipText();
-	Draw_String(vid.width - layout.char_size * strlen(tooltip_text),
-				layout.top - 3 * (layout.char_size >> 1), tooltip_text, true);
+	if (tooltip_text[0] != '\0')
+	{
+		Draw_AlphaFill(vid.width - layout.char_size * strlen(tooltip_text) - (layout.char_size >> 2),
+						layout.top - 3 * (layout.char_size >> 1),
+						((layout.char_size >> 2) + layout.char_size * strlen(tooltip_text)) / sbar_scale,
+						3 * (layout.char_size >> 1) / sbar_scale, 0, 0.7);
+		Draw_String(vid.width - layout.char_size * strlen(tooltip_text),
+					layout.top - 5 * (layout.char_size >> 2), tooltip_text, true);
+	}
 }
