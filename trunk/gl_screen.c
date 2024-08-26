@@ -681,7 +681,8 @@ typedef struct player_autoid_s
 	scoreboard_t	*player;
 } autoid_player_t;
 
-static	autoid_player_t	autoids[MAX_SCOREBOARDNAME];
+static	autoid_player_t	autoids[MAX_SCOREBOARD + 1];
+static	scoreboard_t autoid_ghost_scoreboard;
 static	int		autoid_count;
 
 #define ISDEAD(i) ((i) >= 41 && (i) <= 102)
@@ -689,7 +690,8 @@ static	int		autoid_count;
 void SCR_SetupAutoID (void)
 {
 	int		i, view[4];
-	float		model[16], project[16], winz, *origin;
+	float		model[16], project[16], winz;
+	vec3_t origin, ghost_origin;
 	entity_t	*state;
 	autoid_player_t	*id;
 
@@ -706,7 +708,9 @@ void SCR_SetupAutoID (void)
 	{
 		state = &cl_entities[1+i];
 
-		if (state == &cl_entities[cl.viewentity])
+		if (state == &cl_entities[cl.viewentity] &&
+				cl_thirdperson.value == 0 &&
+				!cl.freefly_enabled)
 		{
 			continue;
 		}
@@ -715,15 +719,30 @@ void SCR_SetupAutoID (void)
 		     state->modelindex == cl_modelindex[mi_h_player])
 			continue;
 
-		if (R_CullSphere(state->origin, 0))
+		VectorCopy(state->origin, origin);
+		origin[2] += 28;
+		if (R_CullSphere(origin, 0))
 			continue;
 
 		id = &autoids[autoid_count];
 		id->player = &cl.scores[i];
-		origin = state->origin;
-		if (qglProject(origin[0], origin[1], origin[2] + 28, model, project, view, &id->x, &id->y, &winz))
+		if (qglProject(origin[0], origin[1], origin[2], model, project, view, &id->x, &id->y, &winz))
 			autoid_count++;
 	}
+
+	id = &autoids[autoid_count];
+	id->player = &autoid_ghost_scoreboard;
+	if (Ghost_AutoId(autoid_ghost_scoreboard.name, ghost_origin))
+	{
+		ghost_origin[2] += 28;
+		if (!R_CullSphere(ghost_origin, 0)
+			&& qglProject(ghost_origin[0], ghost_origin[1], ghost_origin[2], model, project, view,
+						   &id->x, &id->y, &winz))
+		{
+			autoid_count++;
+		}
+	}
+
 }
 
 void SCR_DrawAutoID (void)
