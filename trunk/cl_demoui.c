@@ -444,8 +444,8 @@ Get_TooltipText (void)
 		case HOVER_SKIP_PREV:
 			tooltip_text = "skip to previous level in marathon"; break;
 		case HOVER_SPEED_NEXT:
-			tooltip_text = "cycle forwards through playback speeds"; break;
 		case HOVER_SPEED:
+			tooltip_text = "cycle forwards through playback speeds"; break;
 		case HOVER_SPEED_PREV:
 			tooltip_text = "cycle backwards through playback speeds"; break;
 		case HOVER_FREEFLY:
