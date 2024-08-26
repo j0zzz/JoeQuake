@@ -3,7 +3,7 @@
 #define SPEED_DRAW_CHARS	6
 #define MAP_NAME_DRAW_CHARS	12
 #define PAUSE_PLAY_CHARS	2
-#define FREEFLY_CHARS	2
+#define FREEFLY_CHARS	4
 
 
 typedef struct
@@ -449,7 +449,7 @@ Get_TooltipText (void)
 		case HOVER_SPEED_PREV:
 			tooltip_text = "cycle backwards through playback speeds"; break;
 		case HOVER_FREEFLY:
-			tooltip_text = "toggle between freefly and first person view"; break;
+			tooltip_text = "toggle between freefly (1) and first person view (0)"; break;
 		default:
 			tooltip_text = "";
 	}
@@ -580,14 +580,14 @@ void DemoUI_Draw(void)
 	}
 
 	// Freefly
-	if (cl.freefly_enabled)
-		freefly_label = "FF";
-	else
-		freefly_label = "1P";
 	if (hover == HOVER_FREEFLY)
-		Draw_String(layout.freefly_x, layout.freefly_y, freefly_label, true);
+		Draw_String(layout.freefly_x, layout.freefly_y, "FF:", true);
 	else
-		Draw_Alt_String(layout.freefly_x, layout.freefly_y, freefly_label, true);
+		Draw_Alt_String(layout.freefly_x, layout.freefly_y, "FF:", true);
+	if (cl.freefly_enabled)
+		Draw_String(layout.freefly_x + layout.char_size * 3, layout.freefly_y, "1", true);
+	else
+		Draw_String(layout.freefly_x + layout.char_size * 3, layout.freefly_y, "0", true);
 
 	// Tooltip
 	tooltip_text = Get_TooltipText();
