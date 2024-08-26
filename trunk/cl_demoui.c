@@ -469,7 +469,6 @@ void DemoUI_Draw(void)
 	int map_num;
 	layout_t layout;
 	char *tooltip_text;
-	char *freefly_label;
 
 	dsmi = CL_DemoGetCurrentMapInfo (&map_num);
 	if (dsmi == NULL)
