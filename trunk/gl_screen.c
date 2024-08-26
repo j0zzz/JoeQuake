@@ -708,7 +708,9 @@ void SCR_SetupAutoID (void)
 	{
 		state = &cl_entities[1+i];
 
-		if (state == &cl_entities[cl.viewentity])
+		if (state == &cl_entities[cl.viewentity] &&
+				cl_thirdperson.value == 0 &&
+				!cl.freefly_enabled)
 		{
 			continue;
 		}
