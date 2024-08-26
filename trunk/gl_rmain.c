@@ -3716,8 +3716,10 @@ void R_ScaleView(void)
 	glViewport(srcx, srcy, r_refdef.vrect.width, r_refdef.vrect.height);
 
 	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
 	glLoadIdentity();
 
 	// correction factor if we lack NPOT textures, normally these are 1.0f
@@ -3734,6 +3736,11 @@ void R_ScaleView(void)
 	glTexCoord2f(0, tmax);
 	glVertex2f(-1, 1);
 	glEnd();
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
 
 	// clear cached binding
 	currenttexture = -1;
