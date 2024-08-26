@@ -420,7 +420,7 @@ qboolean CL_DemoUIOpen(void);
 // cl_demoui.c
 typedef struct mouse_state_s mouse_state_t;
 extern qboolean demoui_dragging_seek;
-extern qboolean demoui_freefly_move;
+extern qboolean demoui_freefly_mlook;
 qboolean DemoUI_MouseEvent(const mouse_state_t* ms);
 void DemoUI_Draw(void);
 qboolean DemoUI_Visible(void);
@@ -493,7 +493,7 @@ void FreeFly_Init (void);
 void FreeFly_UpdateOrigin (void);
 void FreeFly_MouseMove (double x, double y);
 void FreeFly_SetRefdef (void);
-qboolean FreeFly_Moving (void);
+qboolean FreeFly_MLook (void);
 
 #ifdef GLQUAKE
 dlighttype_t SetDlightColor (float f, dlighttype_t def, qboolean random);

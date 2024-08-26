@@ -3,7 +3,7 @@
 
 cvar_t	freefly_speed = {"freefly_speed", "800"};
 
-extern kbutton_t	in_freeflymove, in_forward, in_back, in_moveleft, in_moveright, in_up, in_down, in_jump;
+extern kbutton_t	in_freeflymlook, in_forward, in_back, in_moveleft, in_moveright, in_up, in_down, in_jump;
 
 static void FreeFly_Toggle_f (void)
 {
@@ -20,7 +20,7 @@ static void FreeFly_Toggle_f (void)
 	{
 		Con_Printf("Freefly enabled.");
 		if (cl_demoui.value != 0)
-			Con_Printf(" Hold mouse2 or bind +freeflymove to change view.");
+			Con_Printf(" Hold mouse2 or bind +freeflymlook to change view.");
 		Con_Printf("\n");
 		cl.freefly_reset = true;
 		cl.freefly_last_time = Sys_DoubleTime();
@@ -111,10 +111,10 @@ static void FreeFly_CopyCam_f (void)
 }
 
 
-qboolean FreeFly_Moving (void)
+qboolean FreeFly_MLook (void)
 {
 	return cl.freefly_enabled
-		&& (cl_demoui.value == 0 || (in_freeflymove.state & 1) || demoui_freefly_move);
+		&& (cl_demoui.value == 0 || (in_freeflymlook.state & 1) || demoui_freefly_mlook);
 }
 
 
@@ -141,7 +141,7 @@ void FreeFly_SetRefdef (void)
 
 void FreeFly_MouseMove (double x, double y)
 {
-	if (!FreeFly_Moving())
+	if (!FreeFly_MLook())
 		return;
 
 	cl.freefly_angles[YAW] -= m_yaw.value * x;
