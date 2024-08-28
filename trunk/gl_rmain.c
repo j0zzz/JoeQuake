@@ -1678,7 +1678,6 @@ void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *dist
 
 static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
 {
-	qboolean visible;
 	int i, j, k;
 	int d2, d3;
 	vec3_t vert1, vert2;
