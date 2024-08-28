@@ -297,6 +297,18 @@ Server and Client framerates are independent. This setting is turned on by defau
 
 Set the speed the camera moves when in freefly mode.  `800` by default.
 
+##### `cl_bbox`
+
+When set to 1 during demo playback, display bounding boxes for non-map entities.
+The bounding boxes have the following limitations:
+
+- If using non-id1 progs, bounding boxes may be missing or incorrect.  This is
+  unavoidable since bounding box information is not stored in the demo, and are
+  defined in each mod's QuakeC.  It is therefore impossible, in general, for the
+  client to know the bounding boxes.
+- Bounding box origins may be wrong by up to 0.125 game units owing to fixed
+  precision in the demo format.
+
 #### Server
 
 ##### `sv_altnoclip`
