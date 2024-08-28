@@ -175,8 +175,6 @@ float	pitch_rot;
 float	q3legs_rot;
 #endif
 
-
-
 typedef struct
 {
 	int frame_min;
@@ -189,7 +187,6 @@ typedef struct
 	vec3_t mins, maxs;
 	frame_range_t not_solid_frames[3];  // null terminated
 } id1_bbox_t;
-
 
 static id1_bbox_t id1_bboxes[] = {
 	// player
@@ -253,7 +250,6 @@ static id1_bbox_t id1_bboxes[] = {
 
 	{NUM_MODELINDEX}
 };
-
 
 void R_MarkSurfaces(void);
 void R_InitBubble (void);
@@ -1730,7 +1726,6 @@ static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
 	glCullFace(GL_BACK);
 }
 
-
 void R_DrawEntBbox(entity_t *ent)
 {
 	frame_range_t *range;
@@ -1750,8 +1745,6 @@ void R_DrawEntBbox(entity_t *ent)
 			R_DrawBbox(ent->origin, bbox_info->mins, bbox_info->maxs);
 	}
 }
-
-
 
 //johnfitz -- values for shadow matrix
 #define SHADOW_SKEW_X -0.7 //skew along x axis. -0.7 to mimic glquake shadows
@@ -2019,7 +2012,6 @@ void R_DrawAliasModel (entity_t *ent)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	glPopMatrix ();
-
 	if (r_shadows.value && !ent->noshadow && !draw_player_outlines)
 	{
 		int		farclip;

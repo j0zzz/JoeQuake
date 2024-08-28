@@ -520,7 +520,6 @@ typedef enum
 #define EF_NOSHADOW 512		// don't cast a shadow
 #define	MF_HOLEY	(1u<<14)		// MarkV/QSS -- make index 255 transparent on mdl's
 
-
 typedef struct model_s
 {
 	char		name[MAX_QPATH];
@@ -539,7 +538,6 @@ typedef struct model_s
 	vec3_t		ymins, ymaxs; //johnfitz -- bounds for entities with nonzero yaw
 	vec3_t		rmins, rmaxs; //johnfitz -- bounds for entities with nonzero pitch or roll
 	float		radius;		//joe: only used for quake3 models now
-                            //
 
 // solid volume for clipping
 	qboolean	clipbox;

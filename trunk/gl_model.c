@@ -46,7 +46,6 @@ int	mod_numknown;
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "128", CVAR_ARCHIVE};
 cvar_t	external_ents = { "external_ents", "1", CVAR_ARCHIVE };
 
-
 qboolean OnChange_gl_picmip (cvar_t *var, char *string)
 {
 	int		i;
@@ -2589,7 +2588,6 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 		mod->modhint = MOD_ENFORCER;
 	else
 		mod->modhint = MOD_NORMAL;
-
 	start = Hunk_LowMark ();
 
 	pinmodel = (mdl_t *)buffer;
