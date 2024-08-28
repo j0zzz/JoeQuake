@@ -1779,7 +1779,7 @@ void R_DrawAliasModel (entity_t *ent)
 
 	// If cl_bbox is enabled apply dead body filter here.
 	if (cl_deadbodyfilter.value &&
-			cl_bbox.value &&
+			CL_ShowBBoxes() &&
 			Model_isDead(ent->modelindex, ent->frame))
 		return;
 
@@ -3164,7 +3164,7 @@ void R_DrawEntitiesOnList ()
 		if (qmb_initialized && SetFlameModelState() == -1)
 			continue;
 
-		if (cl_bbox.value)
+		if (CL_ShowBBoxes())
 			R_DrawEntBbox(currententity);
 
 		if (ISTRANSPARENT(currententity) && cl_numtransvisedicts < MAX_VISEDICTS)

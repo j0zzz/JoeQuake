@@ -484,7 +484,7 @@ void Ghost_Draw (void)
     if (Ghost_Update()) {
         currententity = &ghost_entity;
         R_DrawAliasModel (&ghost_entity);
-        if (cl_bbox.value)
+        if (CL_ShowBBoxes())
             R_DrawEntBbox(&ghost_entity);
     }
 }
