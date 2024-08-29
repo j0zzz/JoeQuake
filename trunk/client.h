@@ -332,6 +332,8 @@ void CL_Signon4 (void);
 void CL_Disconnect (void);
 void CL_Disconnect_f (void);
 int CL_NextDemo (void);
+qboolean Model_isDead (int modelindex, int frame);
+qboolean CL_ShowBBoxes(void);
 
 #define			MAX_VISEDICTS	4096	// larger, now we support BSP2 
 extern	int		cl_numvisedicts;
@@ -352,6 +354,15 @@ typedef	enum modelindex_s {
 	mi_gib1, mi_gib2, mi_gib3, mi_vwplayer, mi_vwplayer_md3,
 	mi_w_shot, mi_w_shot2, mi_w_nail, mi_w_nail2, mi_w_rock, mi_w_rock2, mi_w_light, 
 	mi_q3w_shot, mi_q3w_shot2, mi_q3w_nail, mi_q3w_nail2, mi_q3w_rock, mi_q3w_rock2, mi_q3w_light,
+	mi_boss, mi_oldone, mi_i_bh10, mi_i_bh25, mi_i_bh100,
+	mi_i_quad, mi_i_invuln, mi_i_suit, mi_i_invis, mi_i_armor,
+	mi_i_shell0, mi_i_shell1, mi_i_nail0, mi_i_nail1, mi_i_rock0, mi_i_rock1,
+	mi_i_batt0, mi_i_batt1,
+	mi_i_shot, mi_i_nail, mi_i_nail2, mi_i_rock, mi_i_rock2, mi_i_light,
+	mi_i_wskey, mi_i_mskey, mi_i_wgkey, mi_i_mgkey,
+	mi_i_end1, mi_i_end2, mi_i_end3, mi_i_end4,
+	mi_i_backpack, mi_explobox,
+
 	NUM_MODELINDEX
 } modelindex_t;
 

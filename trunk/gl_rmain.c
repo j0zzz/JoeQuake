@@ -175,6 +175,82 @@ float	pitch_rot;
 float	q3legs_rot;
 #endif
 
+typedef struct
+{
+	int frame_min;
+	int frame_max;
+} frame_range_t;
+
+typedef struct
+{
+	modelindex_t mi;
+	vec3_t mins, maxs;
+	frame_range_t not_solid_frames[3];  // null terminated
+} id1_bbox_t;
+
+static id1_bbox_t id1_bboxes[] = {
+	// player
+	{mi_player, {-16, -16, -24}, {16, 16, 32}, {{41, 103}}},
+	{mi_eyes, {-16, -16, -24}, {16, 16, 32}},
+
+	// monsters
+	{mi_boss, {-128, -128, -24}, {128, 128, 256}},
+	{mi_fiend, {-32, -32, -24}, {32, 32, 64}, {{50, 54}}},
+	{mi_dog, {-32, -32, -24}, {32, 32, 40}, {{8, 26}}},
+	{mi_enforcer, {-16, -16, -24}, {16, 16, 40}, {{43, 55}, {57, 66}}},
+	{mi_fish, {-16, -16, -24}, {16, 16, 24}, {{38, 39}}},
+	{mi_hknight, {-16, -16, -24}, {16, 16, 40}, {{44, 54}, {56, 63}}},
+	{mi_knight, {-16, -16, -24}, {16, 16, 40}, {{78, 86}, {88, 97}}},
+	{mi_ogre, {-32, -32, -24}, {32, 32, 64}, {{114, 126}, {128, 136}}},
+	{mi_oldone, {-160, -128, -24}, {160, 128, 256}},
+	{mi_vore, {-32, -32, -24}, {32, 32, 64}, {{16, 23}}},
+	{mi_shambler, {-32, -32, -24}, {32, 32, 64}, {{85, 94}}},
+	{mi_soldier, {-16, -16, -24}, {16, 16, 40}, {{10, 18}, {20, 29}}},
+	{mi_spawn, {-16, -16, -24}, {16, 16, 40}},
+	{mi_scrag, {-16, -16, -24}, {16, 16, 40}, {{48, 54}}},
+	{mi_zombie, {-16, -16, -24}, {16, 16, 40}, {{171, 173}}},
+
+	// bsp items
+	{mi_i_bh10, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_bh25, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_bh100, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_shell0, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_shell1, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_nail0, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_nail1, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_rock0, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_rock1, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_batt0, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_batt1, {-16, -16, -1}, {48, 48, 57}},
+
+	// mdl items
+	{mi_i_quad, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_invuln, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_suit, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_invis, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_armor, {-32, -32, -1}, {32, 32, 57}},
+	{mi_i_shot, {-32, -32, -1}, {32, 32, 57}},
+	{mi_i_nail, {-32, -32, -1}, {32, 32, 57}},
+	{mi_i_nail2, {-32, -32, -1}, {32, 32, 57}},
+	{mi_i_rock, {-32, -32, -1}, {32, 32, 57}},
+	{mi_i_rock2, {-32, -32, -1}, {32, 32, 57}},
+	{mi_i_light, {-32, -32, -1}, {32, 32, 57}},
+	{mi_i_wskey, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_mskey, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_wgkey, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_mgkey, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_end1, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_end2, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_end3, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_end4, {-32, -32, -25}, {32, 32, 33}},
+	{mi_i_backpack, {-32, -32, -1}, {32, 32, 57}},
+
+	// misc
+	{mi_explobox, {0, 0, 0}, {32, 32, 64}},
+
+	{NUM_MODELINDEX}
+};
+
 void R_MarkSurfaces(void);
 void R_InitBubble (void);
 void R_Clear(void);
@@ -1596,6 +1672,80 @@ void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *dist
 	}
 }
 
+static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
+{
+	int i, j, k;
+	int d2, d3;
+	vec3_t vert1, vert2;
+	vec3_t wmins, wmaxs;
+
+	VectorAdd(origin, mins, wmins);
+	VectorAdd(origin, maxs, wmaxs);
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	glCullFace(GL_FRONT);
+	glPolygonMode(GL_BACK, GL_LINE);
+	glLineWidth(1.0);
+	glEnable(GL_LINE_SMOOTH);
+	glDisable(GL_TEXTURE_2D);
+
+	glBegin(GL_LINES);
+
+	for (i = 0; i < 3; i++)
+	{
+		vert1[i] = wmins[i];
+		vert2[i] = wmaxs[i];
+
+		d2 = (i + 1) % 3;
+		d3 = (i + 2) % 3;
+
+		vert1[d2] = wmins[d2];
+		vert2[d2] = wmins[d2];
+		for (j = 0; j < 2; j++)
+		{
+			vert1[d3] = wmins[d3];
+			vert2[d3] = wmins[d3];
+			for (k = 0; k < 2; k++)
+			{
+				glVertex3fv(vert1);
+				glVertex3fv(vert2);
+				vert1[d3] = wmaxs[d3];
+				vert2[d3] = wmaxs[d3];
+			}
+			vert1[d2] = wmaxs[d2];
+			vert2[d2] = wmaxs[d2];
+		}
+	}
+
+	glEnd();
+
+	glDisable(GL_LINE_SMOOTH);
+	glEnable(GL_TEXTURE_2D);
+	glPolygonMode(GL_BACK, GL_FILL);
+	glCullFace(GL_BACK);
+}
+
+void R_DrawEntBbox(entity_t *ent)
+{
+	frame_range_t *range;
+	id1_bbox_t *bbox_info;
+
+	for (bbox_info = id1_bboxes; bbox_info->mi != NUM_MODELINDEX; bbox_info++)
+		if (cl_modelindex[bbox_info->mi] == ent->modelindex)
+			break;
+
+	if (bbox_info->mi != NUM_MODELINDEX)
+	{
+		for (range = bbox_info->not_solid_frames; range->frame_max != 0; range++)
+			if (range->frame_min <= ent->frame && ent->frame < range->frame_max)
+				break;
+
+		if (range->frame_max == 0)
+			R_DrawBbox(ent->origin, bbox_info->mins, bbox_info->maxs);
+	}
+}
+
 //johnfitz -- values for shadow matrix
 #define SHADOW_SKEW_X -0.7 //skew along x axis. -0.7 to mimic glquake shadows
 #define SHADOW_SKEW_Y 0 //skew along y axis. 0 to mimic glquake shadows
@@ -1618,6 +1768,12 @@ void R_DrawAliasModel (entity_t *ent)
 	float		scalefactor = 1.0f;
 
 	VectorAdd (ent->origin, clmodel->mins, mins);	//joe: used only for shadows now
+
+	// If cl_bbox is enabled apply dead body filter here.
+	if (cl_deadbodyfilter.value &&
+			CL_ShowBBoxes() &&
+			Model_isDead(ent->modelindex, ent->frame))
+		return;
 
 	if (R_CullModelForEntity(ent))
 		return;
@@ -2999,6 +3155,9 @@ void R_DrawEntitiesOnList ()
 
 		if (qmb_initialized && SetFlameModelState() == -1)
 			continue;
+
+		if (CL_ShowBBoxes())
+			R_DrawEntBbox(currententity);
 
 		if (ISTRANSPARENT(currententity) && cl_numtransvisedicts < MAX_VISEDICTS)
 		{

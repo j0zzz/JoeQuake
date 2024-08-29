@@ -57,6 +57,7 @@ cvar_t	cl_demorewind = {"cl_demorewind", "0"};
 cvar_t	cl_bobbing = {"cl_bobbing", "0"};
 cvar_t	cl_deadbodyfilter = {"cl_deadbodyfilter", "0"};
 cvar_t	cl_gibfilter = {"cl_gibfilter", "0"};
+static cvar_t	cl_bbox = {"cl_bbox", "0"};
 cvar_t	cl_maxfps = {"cl_maxfps", "72", CVAR_SERVER};
 cvar_t	cl_advancedcompletion = {"cl_advancedcompletion", "1"};
 cvar_t	cl_independentphysics = {"cl_independentphysics", "1", CVAR_INIT};
@@ -701,6 +702,14 @@ void GetQuake3ViewWeaponModel(int *vwep_modelindex)
 	}
 }
 
+
+
+qboolean CL_ShowBBoxes(void)
+{
+	return cl_bbox.value && !cls.demorecording;
+}
+
+
 qboolean r_loadviewweapons = false;
 entity_t view_weapons[MAX_SCOREBOARD];
 
@@ -813,8 +822,9 @@ void CL_RelinkEntities (void)
 			}
 		}
 
-		if (cl_deadbodyfilter.value && ent->model->type == mod_alias && 
-			Model_isDead(ent->modelindex, ent->frame))
+		if (cl_deadbodyfilter.value &&
+				!CL_ShowBBoxes() && ent->model->type == mod_alias && 
+				Model_isDead(ent->modelindex, ent->frame))
 			continue;
 
 		if (cl_gibfilter.value && ent->model->type == mod_alias && 
@@ -1442,6 +1452,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_bobbing);
 	Cvar_Register (&cl_deadbodyfilter);
 	Cvar_Register (&cl_gibfilter);
+	Cvar_Register (&cl_bbox);
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_advancedcompletion);
 	Cvar_Register (&cl_independentphysics);
