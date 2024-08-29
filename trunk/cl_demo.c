@@ -951,8 +951,8 @@ void CL_KeepDemo_f(void)
 {
 	int		mins, secs, millisecs, fname_counter = 1;
 	double	finishtime;
-	char	oldname[MAX_OSPATH*2], newname[MAX_OSPATH*2], *demoname_prefix, cleared_playername[16];
-	extern cvar_t cl_autodemo, cl_autodemo_name;
+	char	oldname[MAX_OSPATH*2], autodemo_name[MAX_OSPATH*2], *currentdemo_name, newname[MAX_OSPATH*2], basename[MAX_OSPATH*2], cleared_playername[16];
+	extern cvar_t cl_autodemo_format;
 
 	if (cmd_source != src_command)
 		return;
@@ -969,27 +969,30 @@ void CL_KeepDemo_f(void)
 		return;
 	}
 
-	if (cl_autodemo.value && !cl_autodemo_name.string[0])
-	{
-		Con_Printf("Keepdemo is only allowed if cl_autodemo is enabled and cl_autodemo_name is not empty\n");
-		return;
-	}
-
 	CL_Stop_f();
 
-	CL_ClearPlayerName(cleared_playername);
+	Q_snprintfz(oldname, sizeof(oldname), "%s/%s", com_gamedir, "current.dem");
 
-	Q_snprintfz(oldname, sizeof(oldname), "%s/%s.%s", com_gamedir, cl_autodemo_name.string, "dem");
-	demoname_prefix = cl_autodemo.value == 2 ? CL_MapName() : cl_autodemo_name.string;
+	CL_ClearPlayerName(cleared_playername);
 	finishtime = cls.marathon_level > 1 ? cls.marathon_time : cl.completed_time;
 	mins = finishtime / 60;
 	secs = finishtime - (mins * 60);
 	millisecs = (finishtime - floor(finishtime)) * 1000;
-	Q_snprintfz(newname, sizeof(newname), "%s/%s_%i%02i%03i_%i_%s", com_gamedir, demoname_prefix, mins, secs, millisecs, (int)skill.value, cleared_playername);
+
+	// construct autodemo filename by the cl_autodemo_format template
+	Q_strncpyz(autodemo_name, cl_autodemo_format.string, sizeof(autodemo_name));
+	currentdemo_name = autodemo_name;
+	currentdemo_name = Q_strreplace(currentdemo_name, "#map#", CL_MapName());
+	currentdemo_name = Q_strreplace(currentdemo_name, "#time#", va("%i%02i%03i", mins, secs, millisecs));
+	currentdemo_name = Q_strreplace(currentdemo_name, "#skill#", skill.string);
+	currentdemo_name = Q_strreplace(currentdemo_name, "#player#", cleared_playername);
+	
+	Q_snprintfz(newname, sizeof(newname), "%s/%s", com_gamedir, currentdemo_name);
 
 	// try with a different name if this file already exists
+	Q_strncpyz(basename, newname, sizeof(basename));
 	while (Sys_FileTime(va("%s.%s", newname, "dem")) == 1)
-		Q_snprintfz(newname, sizeof(newname), "%s_%03i", newname, fname_counter++);
+		Q_snprintfz(newname, sizeof(newname), "%s_%03i", basename, fname_counter++);
 
 	if (rename(oldname, va("%s.%s", newname, "dem")))
 		Con_Printf("Renaming of demo failed! %i\n", errno);

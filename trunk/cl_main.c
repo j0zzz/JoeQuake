@@ -62,7 +62,7 @@ cvar_t	cl_advancedcompletion = {"cl_advancedcompletion", "1"};
 cvar_t	cl_independentphysics = {"cl_independentphysics", "1", CVAR_INIT};
 cvar_t	cl_viewweapons = {"cl_viewweapons", "0"};
 cvar_t	cl_autodemo = { "cl_autodemo", "0" };
-cvar_t	cl_autodemo_name = { "cl_autodemo_name", "" };
+cvar_t	cl_autodemo_format = { "cl_autodemo_format", "#map#_#time#_#skill#_#player#" };
 cvar_t	cl_demoui = {"cl_demoui", "1", CVAR_ARCHIVE};
 cvar_t	cl_demouitimeout = {"cl_demouitimeout", "2.5", CVAR_ARCHIVE};
 cvar_t	cl_demouihidespeed = {"cl_demouihidespeed", "2", CVAR_ARCHIVE};
@@ -360,10 +360,7 @@ void CL_SignonReply (void)
 		SCR_EndLoadingPlaque ();	// allow normal screen updates
 		if (cl_autodemo.value && !cls.demoplayback && !cls.demorecording)
 		{
-			if (cl_autodemo_name.string[0])
-				Cmd_ExecuteString(va("record %s\n", cl_autodemo_name.string), src_command);
-			else
-				Cmd_ExecuteString("record\n", src_command);
+			Cmd_ExecuteString("record current\n", src_command);
 		}
 		if (!pr_qdqstats && !cls.demoplayback && sv.active)
 		{
@@ -1450,7 +1447,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_independentphysics);
 	Cvar_Register (&cl_viewweapons);
 	Cvar_Register(&cl_autodemo);
-	Cvar_Register(&cl_autodemo_name);
+	Cvar_Register(&cl_autodemo_format);
 	Cvar_Register(&cl_demoui);
 	Cvar_Register(&cl_demouitimeout);
 	Cvar_Register(&cl_demouihidespeed);
