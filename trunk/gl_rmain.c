@@ -2012,6 +2012,7 @@ void R_DrawAliasModel (entity_t *ent)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	glPopMatrix ();
+
 	if (r_shadows.value && !ent->noshadow && !draw_player_outlines)
 	{
 		int		farclip;

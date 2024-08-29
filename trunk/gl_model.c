@@ -2588,6 +2588,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 		mod->modhint = MOD_ENFORCER;
 	else
 		mod->modhint = MOD_NORMAL;
+
 	start = Hunk_LowMark ();
 
 	pinmodel = (mdl_t *)buffer;
