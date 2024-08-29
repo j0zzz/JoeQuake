@@ -299,15 +299,18 @@ Set the speed the camera moves when in freefly mode.  `800` by default.
 
 ##### `cl_bbox`
 
-When set to 1 during demo playback, display bounding boxes for non-map entities.
-The bounding boxes have the following limitations:
+When set to 1 display bounding boxes for non-map entities. The bounding boxes
+are derived from information available to the client, therefore they work while
+playing a demo as well as when playing a live game. However, the bounding boxes
+have the following limitations:
 
 - If using non-id1 progs, bounding boxes may be missing or incorrect.  This is
-  unavoidable since bounding box information is not stored in the demo, and are
-  defined in each mod's QuakeC.  It is therefore impossible, in general, for the
-  client to know the bounding boxes.
+  unavoidable since bounding box information is not sent to the client or stored
+  in the demo, and are defined in each mod's QuakeC.  It is therefore
+  impossible, in general, for the client to know the bounding boxes.
 - Bounding box origins may be wrong by up to 0.125 game units owing to fixed
-  precision in the demo format.
+  precision in the coordinates sent to the client and stored in the demo.
+- Bounding boxes are not displayed when *recording* a demo.
 
 #### Server
 

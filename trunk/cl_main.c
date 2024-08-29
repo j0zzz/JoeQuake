@@ -709,7 +709,7 @@ void GetQuake3ViewWeaponModel(int *vwep_modelindex)
 
 qboolean CL_ShowBBoxes(void)
 {
-	return cl_bbox.value && cls.demoplayback;
+	return cl_bbox.value && !cls.demorecording;
 }
 
 
