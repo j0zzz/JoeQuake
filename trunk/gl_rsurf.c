@@ -2008,7 +2008,7 @@ void R_DrawTextureChains(model_t *model, entity_t *ent, texchain_t chain)
 	
 	R_UploadLightmaps();
 
-	if (r_fullbright.value)
+	if (r_fullbright.value || !cl.worldmodel->lightdata)
 	{
 		R_BeginTransparentDrawing (entalpha);
 		R_DrawTextureChains_TextureOnly (model, chain);
