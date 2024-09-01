@@ -632,7 +632,7 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 			bits |= U_ANGLE3;
 
 		if (ent->v.movetype == MOVETYPE_STEP)
-			bits |= U_NOLERP;	// don't mess up the step animation
+			bits |= U_STEP;	// don't mess up the step animation
 
 		if (ent->baseline.colormap != ent->v.colormap)
 			bits |= U_COLORMAP;

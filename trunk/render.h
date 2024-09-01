@@ -80,8 +80,21 @@ typedef struct entity_s
 	qboolean noshadow;
 
 	// interpolation
-	byte	scale;
-	byte	lerpflags;			//johnfitz -- lerping
+	byte	 scale;
+	byte	 lerpflags;		//johnfitz -- lerping
+	float	 lerpstart;		//johnfitz -- animation lerping
+	float	 lerptime;		//johnfitz -- animation lerping
+	float	 lerpfinish;	//johnfitz -- lerping -- server sent us a more accurate interval, use it instead of 0.1
+	short	 previouspose;	//johnfitz -- animation lerping
+	short	 currentpose;	//johnfitz -- animation lerping
+//	short	 futurepose;	//johnfitz -- animation lerping
+	float	 movelerpstart;	//johnfitz -- transform lerping
+	vec3_t	 previousorigin;//johnfitz -- transform lerping
+	vec3_t	 currentorigin;	//johnfitz -- transform lerping
+	vec3_t	 previousangles;//johnfitz -- transform lerping
+	vec3_t	 currentangles;	//johnfitz -- transform lerping
+
+	//TEMP
 	float	frame_start_time;
 	float	frame_finish_time;	//johnfitz -- lerping -- server sent us a more accurate interval, use it instead of 0.1
 	float	frame_interval;
@@ -93,6 +106,7 @@ typedef struct entity_s
 
 	float	rotate_start_time;
 	vec3_t	angles1, angles2;
+	//TEMP
 
 	// nehahra support
 	float	transparency;

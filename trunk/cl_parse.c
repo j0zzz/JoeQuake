@@ -769,7 +769,7 @@ void CL_ParseUpdate (int bits)
 	}
 
 	//johnfitz -- lerping for movetype_step entities
-	if (bits & U_NOLERP)
+	if (bits & U_STEP)
 	{
 		ent->lerpflags |= LERP_MOVESTEP;
 		ent->forcelink = true;
@@ -799,6 +799,7 @@ void CL_ParseUpdate (int bits)
 		if (bits & U_LERPFINISH)
 		{
 			ent->frame_finish_time = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
+			ent->lerpfinish = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
 			ent->lerpflags |= LERP_FINISH;
 		}
 		else

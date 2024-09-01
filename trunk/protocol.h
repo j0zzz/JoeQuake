@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	U_ORIGIN2	(1<<2)
 #define	U_ORIGIN3	(1<<3)
 #define	U_ANGLE2	(1<<4)
-#define	U_NOLERP	(1<<5)		// don't interpolate movement
+#define	U_STEP		(1<<5)		//johnfitz -- was U_NOLERP, renamed since it's only used for MOVETYPE_STEP
 #define	U_FRAME		(1<<6)
 #define U_SIGNAL	(1<<7)		// just differentiates from other updates
 
