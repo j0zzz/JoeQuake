@@ -319,8 +319,8 @@ static qboolean Ghost_SetForLevel (void)
 
     ghost_entity.skinnum = 0;
     ghost_entity.modelindex = cl_modelindex[mi_player];
-    ghost_entity.translate_start_time = 0.0f;
-    ghost_entity.frame_start_time = 0.0f;
+    ghost_entity.movelerpstart = 0.0f;
+    ghost_entity.lerpstart = 0.0f;
     ghost_entity.scale = ENTSCALE_DEFAULT;
 
     ghost_shift = 0.0f;

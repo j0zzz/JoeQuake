@@ -798,7 +798,6 @@ void CL_ParseUpdate (int bits)
 			ent->modelindex = (ent->modelindex & 0x00FF) | (MSG_ReadByte() << 8);
 		if (bits & U_LERPFINISH)
 		{
-			ent->frame_finish_time = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
 			ent->lerpfinish = ent->msgtime + ((float)(MSG_ReadByte()) / 255);
 			ent->lerpflags |= LERP_FINISH;
 		}
