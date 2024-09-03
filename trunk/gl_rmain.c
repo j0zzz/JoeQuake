@@ -476,28 +476,28 @@ float R_CalculateLerpfracForEntity(entity_t *ent)
 	// if LERP_RESETMOVE, kill any lerps in progress
 	if (ent->lerpflags & LERP_RESETMOVE)
 	{
-		ent->translate_start_time = 0;
-		VectorCopy (ent->origin, ent->origin1);
-		VectorCopy (ent->origin, ent->origin2);
-		VectorCopy(ent->angles, ent->angles1);
-		VectorCopy(ent->angles, ent->angles2);
+		ent->movelerpstart = 0;
+		VectorCopy (ent->origin, ent->previousorigin);
+		VectorCopy (ent->origin, ent->currentorigin);
+		VectorCopy (ent->angles, ent->previousangles);
+		VectorCopy (ent->angles, ent->currentangles);
 		ent->lerpflags -= LERP_RESETMOVE;
 	}
-	else if (!VectorCompare(ent->origin, ent->origin2) || !VectorCompare(ent->angles, ent->angles2)) // origin/angles changed, start new lerp
+	else if (!VectorCompare(ent->origin, ent->currentorigin) || !VectorCompare(ent->angles, ent->currentangles)) // origin/angles changed, start new lerp
 	{
-		ent->translate_start_time = cl.time;
-		VectorCopy (ent->origin2, ent->origin1);
-		VectorCopy (ent->origin,  ent->origin2);
-		VectorCopy(ent->angles2, ent->angles1);
-		VectorCopy(ent->angles, ent->angles2);
+		ent->movelerpstart = cl.time;
+		VectorCopy (ent->currentorigin, ent->previousorigin);
+		VectorCopy (ent->origin,  ent->currentorigin);
+		VectorCopy (ent->currentangles, ent->previousangles);
+		VectorCopy (ent->angles, ent->currentangles);
 	}
 
 	if (gl_interpolate_moves.value && ent->lerpflags & LERP_MOVESTEP)
 	{
 		if (ent->lerpflags & LERP_FINISH)
-			lerpfrac = bound(0, (cl.time - ent->translate_start_time) / (ent->frame_finish_time - ent->translate_start_time), 1);
+			lerpfrac = bound(0, (cl.time - ent->movelerpstart) / (ent->lerpfinish - ent->movelerpstart), 1);
 		else
-			lerpfrac = bound(0, (cl.time - ent->translate_start_time) / 0.1, 1);
+			lerpfrac = bound(0, (cl.time - ent->movelerpstart) / 0.1, 1);
 	}
 	else
 		lerpfrac = 1;
@@ -509,7 +509,7 @@ void R_DoEntityTranslate(entity_t *ent, float lerpfrac)
 {
 	vec3_t	interpolated;
 
-	VectorInterpolate (ent->origin1, lerpfrac, ent->origin2, interpolated);
+	VectorInterpolate (ent->previousorigin, lerpfrac, ent->currentorigin, interpolated);
 	glTranslatef (interpolated[0], interpolated[1], interpolated[2]);
 }
 
@@ -518,7 +518,7 @@ void R_DoEntityRotate(entity_t *ent, float lerpfrac, qboolean shadow)
 	int		i;
 	vec3_t	d;
 
-	VectorSubtract (ent->angles2, ent->angles1, d);
+	VectorSubtract (ent->currentangles, ent->previousangles, d);
 
 	// always interpolate along the shortest path
 	for (i = 0 ; i < 3 ; i++)
@@ -529,10 +529,10 @@ void R_DoEntityRotate(entity_t *ent, float lerpfrac, qboolean shadow)
 			d[i] += 360;
 	}
 
-	glRotatef (ent->angles1[1] + (lerpfrac * d[1]), 0, 0, 1);
+	glRotatef (ent->previousangles[1] + (lerpfrac * d[1]), 0, 0, 1);
 	if (!shadow)
 	{
-		pitch_rot = -ent->angles1[0] + (-lerpfrac * d[0]);
+		pitch_rot = -ent->previousangles[0] + (-lerpfrac * d[0]);
 
 		// skip pitch rotation for the legs model
 		if (ent->modelindex != cl_modelindex[mi_q3legs])
@@ -553,7 +553,7 @@ void R_DoEntityRotate(entity_t *ent, float lerpfrac, qboolean shadow)
 			VectorCopy(ent->origin, oldorigin);
 		}
 #endif
-		glRotatef (ent->angles1[2] + (lerpfrac * d[2]), 1, 0, 0);
+		glRotatef (ent->previousangles[2] + (lerpfrac * d[2]), 1, 0, 0);
 	}
 }
 
@@ -2460,40 +2460,40 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 		frame = 0;
 	}
 
-	if (ent->pose1 >= pmd3hdr->numframes)
-		ent->pose1 = 0;
+	if (ent->previouspose >= pmd3hdr->numframes)
+		ent->previouspose = 0;
 
 	posenum = frame;
 	numposes = pmd3hdr->numframes;
 
 	if (!strcmp(clmodel->name, cl_modelnames[mi_q3legs]))
-		ent->frame_interval = anims[legsanim].interval;
+		ent->lerptime = anims[legsanim].interval;
 	else if (!strcmp(clmodel->name, cl_modelnames[mi_q3torso]))
-		ent->frame_interval = anims[bodyanim].interval;
+		ent->lerptime = anims[bodyanim].interval;
 	else
-		ent->frame_interval = 0.1;
+		ent->lerptime = 0.1;
 
 	if (ent->lerpflags & LERP_RESETANIM) //kill any lerp in progress
 	{
-		ent->frame_start_time = 0;
-		ent->pose1 = posenum;
-		ent->pose2 = posenum;
+		ent->lerpstart = 0;
+		ent->previouspose = posenum;
+		ent->currentpose = posenum;
 		ent->lerpflags -= LERP_RESETANIM;
 	}
-	else if (ent->pose2 != posenum) // pose changed, start new lerp
+	else if (ent->currentpose != posenum) // pose changed, start new lerp
 	{
 		if (ent->lerpflags & LERP_RESETANIM2) //defer lerping one more time
 		{
-			ent->frame_start_time = 0;
-			ent->pose1 = posenum;
-			ent->pose2 = posenum;
+			ent->lerpstart = 0;
+			ent->previouspose = posenum;
+			ent->currentpose = posenum;
 			ent->lerpflags -= LERP_RESETANIM2;
 		}
 		else
 		{
-			ent->frame_start_time = cl.time;
-			ent->pose1 = ent->pose2;
-			ent->pose2 = posenum;
+			ent->lerpstart = cl.time;
+			ent->previouspose = ent->currentpose;
+			ent->currentpose = posenum;
 		}
 	}
 
@@ -2501,23 +2501,23 @@ void R_DrawQ3Frame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, ent
 	if (gl_interpolate_anims.value)
 	{
 		if (ent->lerpflags & LERP_FINISH && numposes == 1)
-			ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / (ent->frame_finish_time - ent->frame_start_time), 1);
+			ent->framelerp = bound(0, (cl.time - ent->lerpstart) / (ent->lerpfinish - ent->lerpstart), 1);
 		else
-			ent->framelerp = bound(0, (cl.time - ent->frame_start_time) / ent->frame_interval, 1);
+			ent->framelerp = bound(0, (cl.time - ent->lerpstart) / ent->lerptime, 1);
 	}
 	else
 	{
 		ent->framelerp = 1;
-		ent->pose1 = posenum;
-		ent->pose2 = posenum;
+		ent->previouspose = posenum;
+		ent->currentpose = posenum;
 	}
 
 	verts = (md3vert_mem_t *)((byte *)pmd3hdr + pmd3surf->ofsverts);
 	tc = (md3tc_t *)((byte *)pmd3surf + pmd3surf->ofstc);
 	tris = (unsigned int *)((byte *)pmd3surf + pmd3surf->ofstris);
 	numtris = pmd3surf->numtris * 3;
-	pose1 = ent->pose1 * pmd3surf->numverts;
-	pose2 = ent->pose2 * pmd3surf->numverts;
+	pose1 = ent->previouspose * pmd3surf->numverts;
+	pose2 = ent->currentpose * pmd3surf->numverts;
 
 	if (surface_transparent)
 	{
@@ -2649,8 +2649,8 @@ void R_DrawQ3Shadow (entity_t *ent, int distance)
 		verts = (md3vert_mem_t *)((byte *)pmd3hdr + pmd3surf->ofsverts);
 		tris = (unsigned int *)((byte *)pmd3surf + pmd3surf->ofstris);
 		numtris = pmd3surf->numtris * 3;
-		pose1 = ent->pose1 * pmd3surf->numverts;
-		pose2 = ent->pose2 * pmd3surf->numverts;
+		pose1 = ent->previouspose * pmd3surf->numverts;
+		pose2 = ent->currentpose * pmd3surf->numverts;
 
 		glBegin (GL_TRIANGLES);
 		for (j = 0 ; j < numtris ; j++)
@@ -2677,7 +2677,7 @@ void R_DrawQ3Shadow (entity_t *ent, int distance)
 		return;
 
 	tag = (md3tag_t *)((byte *)pmd3hdr + pmd3hdr->ofstags);
-	tag += ent->pose2 * pmd3hdr->numtags;
+	tag += ent->currentpose * pmd3hdr->numtags;
 	for (i = 0 ; i < pmd3hdr->numtags ; i++, tag++)
 	{
 		if (ent->modelindex == cl_modelindex[mi_q3legs] && !strcmp(tag->name, "tag_torso"))
@@ -2726,7 +2726,7 @@ void R_DrawQ3Shadow (entity_t *ent, int distance)
 		if (newent->model)
 		{
 			glPushMatrix();
-			R_RotateForTagEntity(tagent, tag, m, ent->frame_interval);
+			R_RotateForTagEntity(tagent, tag, m, ent->lerptime);
 			glMultMatrixf(m);
 			R_DrawQ3Shadow(newent, distance);
 			glPopMatrix();
@@ -2925,7 +2925,7 @@ void R_SetupQ3Frame (entity_t *ent)
 		if (newent->model)
 		{
 			glPushMatrix();
-			R_RotateForTagEntity(tagent, tag, m, ent->frame_interval);
+			R_RotateForTagEntity(tagent, tag, m, ent->lerptime);
 			glMultMatrixf(m);
 
 			// apply pitch rotation from the torso model
@@ -2953,7 +2953,6 @@ void R_DrawQ3Model (entity_t *ent)
 	vec3_t		mins, maxs, md3_scale_origin = {0, 0, 0};
 	model_t		*clmodel = ent->model;
 	float		scalefactor = 1.0f;
-	lerpdata_t	lerpdata;
 
 	if (clmodel->modhint == MOD_Q3TELEPORT)
 		ent->origin[2] -= 30;
@@ -2984,10 +2983,7 @@ void R_DrawQ3Model (entity_t *ent)
 
 	glPushMatrix ();
 
-	if (ent == &cl.viewent)
-		R_RotateForEntity (lerpdata.origin, lerpdata.angles, ent->scale);	//joe-FIXME
-	else
-		R_RotateForEntityWithLerp (ent, false);
+	R_RotateForEntityWithLerp (ent, false);
 
 	scalefactor = ENTSCALE_DECODE(ent->scale);
 	if (scalefactor != 1.0f)

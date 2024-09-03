@@ -94,19 +94,8 @@ typedef struct entity_s
 	vec3_t	 previousangles;//johnfitz -- transform lerping
 	vec3_t	 currentangles;	//johnfitz -- transform lerping
 
-	//TEMP
-	float	frame_start_time;
-	float	frame_finish_time;	//johnfitz -- lerping -- server sent us a more accurate interval, use it instead of 0.1
-	float	frame_interval;
-	int		pose1, pose2;
+	// legacy field for Q3 models lerping
 	float	framelerp;
-
-	float	translate_start_time;
-	vec3_t	origin1, origin2;
-
-	float	rotate_start_time;
-	vec3_t	angles1, angles2;
-	//TEMP
 
 	// nehahra support
 	float	transparency;
