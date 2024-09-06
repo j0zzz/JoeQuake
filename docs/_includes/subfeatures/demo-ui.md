@@ -14,6 +14,7 @@ The interface has the following elements, from bottom-to-top, left-to-right:
   map.
 - **Speed**: Increase and decrease demo playback speed by clicking the arrow
   controls or by using the mouse wheel in this area.
+- **Freefly mode (FF)**: Toggles between freefly camera and first-person camera mode.
 - **Map selector**: Shows the current map.  On a multi-map (marathon) demo
   clicking the arrow controls or using the mouse wheel in this area will skip
   from map to map. Click between the arrows to toggle the map menu.
@@ -34,6 +35,7 @@ Tips and tricks:
   split times between the two demos.
 - Disable the UI with the `cl_demoui` cvar.  `demoseek` and `demoskip` commands
   will still work when the UI is disabled.
+- When in freefly mode, hold the right mouse button to control the camera's view angle.
 
 Skipping between maps of marathon demos is only currently supported for single
 file marathons.  Demos which consist of multiple individual demo files are not
