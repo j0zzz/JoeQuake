@@ -1,4 +1,48 @@
 
+ version 0.17.8 build 8039
+ -----------------------
+
+Fixed bug with rare warping entity positions when movement lerping was used (gl_interpolate_movement)
+	It was most noticable with torch models at map startups
+Always render unlit maps in fullbright mode (fixes lighting on e.g. map '180')
+Fixed a Sys_Error in lim_daviddg map from Liminal Spaces Jam (from QuakeSpasm)
+Fixed stack buffer overrun when loading lim_daviddg.bsp from the Liminal Spaces Jam (from QuakeSpasm)
+Added visible bounding boxes around models (by Matthew Earl)
+	New cvar: cl_bbox
+Reconsidered autodemo recording feature
+	Renamed cl_autodemo_name to cl_autodemo_format
+	cl_autodemo_format now contains a template with wildcards how the demo file to be named
+	cl_autodemo now only has 0 and 1 modes, spamming a new .dem files for every recording is removed
+Fixed autoid text not getting displayed if resolution scaling was used (by Matthew Earl)
+Show ghost name when scr_autoid set (by Matthew Earl)
+Allow overriding spawnparams (by Sphere)
+	An engine-side variant of what qdqstats provides, to work with custom mods too
+	New cvar: sv_override_spawnparams
+Fixed speedometer in multiplayer (by Sphere)
+	The less accurate fallback value is only used if really needed
+Workaround for skyfog value not being reset (by Sphere)
+	When the value of r_skyfog wasn't reset to a default value on the start of a map,
+	it used the value from the end of the previous map
+	New cvar: r_skyfog_default
+Allow higher framerate limits up to 100,000 fps (by Sphere)
+	This is useful for super high fps frame blending video renders
+Fixed wrong size for already loaded images (by Sphere)
+	On certain occasions the size of skybox images was messed up 
+	(e.g. loading another map after ad_tears)
+Added movement indicator UI
+	New cvar: show_movekeys
+Added Quake Champions style player outlines (with wallhack)
+	New cvars: r_outline_players, r_outline_color
+Fix potential infinite loop in S_PaintChannels (from QuakeSpasm/Ironwail)
+Removed deprecated texture size check to fix an issue with the map s3m1_fw
+Fix cl.onground for packets without clientdata (by Sphere)
+	This bug could break the view step smoothing when on elevators or slopes
+Added freefly mode during demo playback (i.e. live recam) (by Matthew Earl)
+Added DemoUI cvars and hide cursor (by Matthew Earl)
+	New cvars: cl_demouitimeout, cl_demouihidespeed
+Fixed coop marathon tracking when ghost was used (by Matthew Earl)
+	The problem was that non-host clients couldn't track marathons correctly
+
  version 0.17.7 build 7733
  -----------------------
 

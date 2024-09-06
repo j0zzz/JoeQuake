@@ -143,6 +143,24 @@ Toggles drawing of classic particles:
 `2` - Square shaped particles  
 Default value is `1`.
 
+##### `r_outline`
+
+Draws cartoon style outlines around dynamic models (monsters, rotating items, etc).  
+`0` - No outlines drawn  
+`1` - `3` - Outlines drawn with the set value as thickness
+Default value is `0`.
+
+##### `r_outline_players`
+
+Draws outlines around players through walls as well. This feature is only enabled single player and cooperative mode.
+`0` - No outlines drawn  
+`1` - `3` - Outlines drawn with the set value as thickness
+Default value is `0`.
+
+##### `r_outline_color`
+
+Sets the color of outlines using RGB format, `0 0 0` (white) by default.
+
 #### Client
 
 ##### `cl_r2g`
@@ -202,15 +220,21 @@ Changes the playback speed of a demo, `1` by default.
 Values < `1` mean slow motion, while > `1` result fast forward.
 
 ##### `cl_autodemo`  
-##### `cl_autodemo_name`
 
-These commands handle automatic demo recording.  
-- If `cl_autodemo` is `1`
-    - and `cl_autodemo_name` is `empty`, a new .dem file is recorded at every level start. The file naming format is `<map_name>_<date_of_recording>_<time_of_recording>.dem`
-    - and `cl_autodemo_name` is `not empty`, the `<cl_autodemo_name>.dem` file is recorded at every level start. To save the current recording session, use the `keepdemo` command. This command is only valid on the intermission/finale screen and renames the temporary recording using the following naming format: `<cl_autodemo_name>_<finished_time>_<skill>_<player_name>.dem`
-- If `cl_autodemo` is `2`, the naming format changes to the following:
-`<mapname>_<finished_time>_<skill>_<player_name>.dem`
-- If `cl_autodemo` is `0`, there is no automatic recording.
+Enables automatic demo recording. When switched on, a demo file named `current.dem` is recorded at every level start. When the run is completed, the `keepdemo` command is recommended to be used, which renames `current.dem` according to `cl_autodemo_format`.  
+Its value is `0` by default.
+
+##### `cl_autodemo_format`
+
+Defines how the automatically recorded demo (`current.dem`) to be renamed when the `keepdemo` command is used.  
+The following placeholders are available:
+ - `#map#`: name of the level, e.g. `e1m1`
+ - `#time#`: finishing time as `<minutes><seconds><milliseconds>`
+ - `#skill#`: skill level, e.g. `0` when playing on easy skill
+ - `#player#`: player name
+
+The default value is `#map#_#time#_#skill#_#player#`  
+For example, exiting e2m1 in 0:07.958 seconds on easy skill by player  'joe' will result the following demo name: `e2m1_007958_0_joe.dem`
 
 ##### `cl_maxfps`
 
@@ -808,6 +832,10 @@ Transparency of the speed bar can be changed with the `_alpha` value.
 Prints the framerate in frames per second.
 Position can be changed with the `_x` and `_y` coordinates.
 
+##### `show_movekeys`  
+
+Displays movement key indicators around the crosshair. `0` by deafult.
+
 ##### `cl_clock`  
 ##### `cl_clock_x`  
 ##### `cl_clock_y`
@@ -994,7 +1022,9 @@ Starts playing a demo and starts capturing it also with the same name.
 
 ##### `keepdemo`
 
-See description about `cl_autodemo` in the Cvars section.
+When automatic demo recording is switched on (`cl_autodemo` is `1`), using this command renames the temporary demo file to its final name, based on the `cl_autodemo_format` cvar.  
+This command is only valid on the intermission/finale screen!  
+See more details about `cl_autodemo` in the Cvars section.
 
 ##### `demoskip`
 
