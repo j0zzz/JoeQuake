@@ -1103,11 +1103,11 @@ camera's position and angle (`+moveleft`, `+moveright`, `+forward`, `+back`,
 mouse movements, etc).
 
 If the demo UI is enabled (`cl_demoui 1`) then click and drag with mouse2 to
-change the camera angle, or bind `+freeflymove` (see below).  If the demo UI is
+change the camera angle, or bind `+freeflymlook` (see below).  If the demo UI is
 disabled (`cl_demoui 0`) then mouse movements will effect the camera angle
 without need for extra key or button presses.
 
-##### `+freeflymove` / `-freeflymove`
+##### `+freeflymlook` / `-freeflymlook`
 
 When using freefly mode with the demo UI, this command makes mouse movements
 adjust the camera angle.  Use this as an alternative to mouse2.  You'll
