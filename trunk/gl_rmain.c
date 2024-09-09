@@ -1889,7 +1889,7 @@ void R_DrawAliasModel (entity_t *ent)
 	}
 	else if (ent == &cl.viewent)
 	{
-		float	scale = 1.0f, fovscale = 1.0f;
+		float	fovscale = 1.0f;
 		int		hand_offset = cl_hand.value == 1 ? -3 : cl_hand.value == 2 ? 3 : 0;
 		extern cvar_t scr_fov, cl_gun_fovscale;
 
@@ -1900,9 +1900,7 @@ void R_DrawAliasModel (entity_t *ent)
 		}
 
 		glTranslatef (paliashdr->scale_origin[0], (paliashdr->scale_origin[1] * fovscale) + hand_offset, paliashdr->scale_origin[2] * fovscale);
-
-		scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
-		glScalef (paliashdr->scale[0] * scale, paliashdr->scale[1] * fovscale, paliashdr->scale[2] * fovscale);
+		glScalef (paliashdr->scale[0], paliashdr->scale[1] * fovscale, paliashdr->scale[2] * fovscale);
 	}
 	else
 	{
@@ -2993,14 +2991,18 @@ void R_DrawQ3Model (entity_t *ent)
 
 	if (ent == &cl.viewent)
 	{
-		float scale = 1;
-		int hand_offset = cl_hand.value == 1 ? -3 : cl_hand.value == 2 ? 3 : 0;
-		extern cvar_t scr_fov;
+		float	fovscale = 1.0f;
+		int		hand_offset = cl_hand.value == 1 ? -3 : cl_hand.value == 2 ? 3 : 0;
+		extern cvar_t scr_fov, cl_gun_fovscale;
 
-		glTranslatef (md3_scale_origin[0], md3_scale_origin[1] + hand_offset, md3_scale_origin[2]);
+		if (scr_fov.value > 90.f && cl_gun_fovscale.value)
+		{
+			fovscale = tan(scr_fov.value * (0.5f * M_PI / 180.f));
+			fovscale = 1.f + (fovscale - 1.f) * cl_gun_fovscale.value;
+		}
 
-		scale = (scr_fov.value > 90) ? 1 - ((scr_fov.value - 90) / 250) : 1;
-		glScalef (scale, 1, 1);
+		glTranslatef (md3_scale_origin[0], (md3_scale_origin[1] * fovscale) + hand_offset, md3_scale_origin[2] * fovscale);
+		glScalef (1.0f, fovscale, fovscale);
 	}
 	else
 	{
