@@ -207,11 +207,11 @@ int CL_GetMessage (void)
 	float	f;
 	qboolean backwards;
 
-	if (seek_time < 0 && (cl.paused & 2 || demoui_dragging_seek))
-		return 0;
-
 	CheckDZipCompletion ();
 	if (dz_unpacking)
+		return 0;
+
+	if (seek_time < 0 && (cl.paused & 2 || demoui_dragging_seek))
 		return 0;
 
 	if (cls.demoplayback)
