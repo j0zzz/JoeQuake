@@ -857,9 +857,9 @@ void _Host_Frame (double time)
 		}
 		Cvar_SetValue (&r_fullbright, 0);
 		//Cvar_SetValue (&r_fullbrightskins, 0);
+		Cvar_SetValue (&r_ambient, 0);
 #ifndef GLQUAKE
 		Cvar_SetValue (&r_draworder, 0);
-		Cvar_SetValue (&r_ambient, 0);
 		Cvar_SetValue (&r_drawflat, 0);
 #endif
 	}
