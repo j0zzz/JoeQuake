@@ -594,6 +594,19 @@ qboolean OnChange_gl_overbright(cvar_t *var, char *string)
 	return true;
 }
 
+qboolean OnChange_r_ambient(cvar_t *var, char *string)
+{
+	float	newval = Q_atof(string);
+
+	if (newval == r_ambient.value)
+		return false;
+
+	Cvar_SetValue(&r_ambient, newval);
+	R_RebuildAllLightmaps();
+
+	return true;
+}
+
 /*
 ===============
 R_TextureAnimation
