@@ -471,7 +471,7 @@ int R_LightPoint (vec3_t p)
 	end[1] = p[1];
 	end[2] = p[2] - maxdist;
 
-	VectorClear (lightcolor);
+	lightcolor[0] = lightcolor[1] = lightcolor[2] = max(0, r_ambient.value);
 	RecursiveLightPoint(lightcolor, cl.worldmodel->nodes, p, p, end, &maxdist);
 
 	return ((lightcolor[0] + lightcolor[1] + lightcolor[2]) * (1.0f / 3.0f));

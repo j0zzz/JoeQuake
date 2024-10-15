@@ -371,7 +371,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 
 		// clear to ambient
 		bl = blocklights;
-		ambient_light = (unsigned int)(r_ambient.value) << 8;
+		ambient_light = (unsigned int)(max(0, r_ambient.value)) << 8;
 		for (i = 0; i < size; i++)
 		{
 			*bl++ = ambient_light;
