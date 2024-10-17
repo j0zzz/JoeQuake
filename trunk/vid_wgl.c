@@ -953,9 +953,15 @@ void AppActivate (BOOL fActive, BOOL minimize)
 
 			if (vid_canalttab && vid_wassuspended)
 			{
+				int cds_result;
+
 				vid_wassuspended = false;
-				if (ChangeDisplaySettings(&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
-					Sys_Error ("Couldn't set fullscreen DIB mode");
+				cds_result = ChangeDisplaySettings(&gdevmode, CDS_FULLSCREEN);
+				if (cds_result != DISP_CHANGE_SUCCESSFUL)
+				{
+					Con_DPrintf("AppActivate: ChangeDisplaySettings failed with %i\n", cds_result);
+					return;
+				}
 
 				ShowWindow (mainwindow, SW_SHOWNORMAL);
 				
