@@ -1347,6 +1347,19 @@ void PF_nextent (void)
 	}
 }
 
+qboolean OnChange_sv_aim(cvar_t *var, char *string);
+cvar_t	sv_aim = { "sv_aim", "1", 0, OnChange_sv_aim };
+
+qboolean OnChange_sv_aim(cvar_t *var, char *string)
+{
+	float	newval = Q_atof(string);
+
+	if (newval < 0.93)
+		Con_Printf("WARNING: Value below 0.93 is illegal for speedrunning!\n");
+
+	return false;
+}
+
 /*
 =============
 PF_aim
@@ -1355,7 +1368,6 @@ Pick a vector for the player to shoot along
 vector aim(entity, missilespeed)
 =============
 */
-cvar_t	sv_aim = {"sv_aim", "0.93"};
 void PF_aim (void)
 {
 	int	i, j;
