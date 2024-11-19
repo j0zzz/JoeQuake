@@ -342,6 +342,7 @@ extern	entity_t *cl_visedicts[MAX_VISEDICTS];
 extern	tagentity_t	q3player_body, q3player_head, q3player_weapon, q3player_weapon_flash;
 
 char *CL_MapName (void);
+void CL_CountReconnects (void);
 
 // model indexes
 typedef	enum modelindex_s {

@@ -92,6 +92,38 @@ extern qboolean physframe;
 extern double physframetime;
 extern char *skill_modes[];
 
+// Sphere -- Helper struct for LiveSplit autosplitter to automatically get the
+// correct memory addresses that it needs.
+// Ideally we should mark this to be packed, but luckily that seems to be done
+// already anyways with every member just being 4 bytes. So we can avoid that
+// platform-dependent code.
+// Make it volatile so that it is not optimized away by the compiler.
+volatile static struct {
+	unsigned char magic_identifier[40];
+	double* qdqstats_total_time;
+	double* ctime;
+	int* gamestate;
+	const char* mapname;
+	int reconnect_counter;
+} speedrun_exports_livesplit = {
+	{0x6D, 0x61, 0x67, 0x69, 0x63, 0x20,                    // magic
+	 0x69, 0x64, 0x20,                                      // id
+	 0x66, 0x6F, 0x72, 0x20,                                // for
+	 0x73, 0x70, 0x65, 0x65, 0x64, 0x72, 0x75, 0x6E, 0x20,  // speedrun
+	 0x64, 0x61, 0x74, 0x61, 0x20,                          // data
+	 0x66, 0x6F, 0x72, 0x20,                                // for
+	 0x6C, 0x69, 0x76, 0x65, 0x73, 0x70, 0x6C, 0x69, 0x74}, // livesplit
+	&cls.marathon_time,
+	&cl.ctime,
+	&cl.intermission,
+	sv.name,
+	0
+};
+
+void CL_CountReconnects(void) {
+	speedrun_exports_livesplit.reconnect_counter += 1;
+}
+
 unsigned CheckModel (char *mdl);
 
 static qboolean OnChange_cl_demospeed (cvar_t *var, char *string)

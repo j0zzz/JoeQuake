@@ -418,6 +418,7 @@ void Host_Reconnect_f (void)
 
 	SCR_BeginLoadingPlaque ();
 	cls.signon = 0;		// need new connection messages
+	CL_CountReconnects ();
 }
 
 extern	char	server_name[MAX_QPATH];
