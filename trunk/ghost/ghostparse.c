@@ -56,9 +56,10 @@ typedef struct {
 
 // on some maps an svc_cutscene message is sent when the level is finished
 // we need to handle such scenarios as if svc_intermission was sent
-static char *cutscene_maps[2] = {
+static char *cutscene_maps[] = {
     "hipend",
     "mexx8",
+    "r2m8",
 };
 
 qboolean MapHasCutsceneAsIntermission(char *map_name)
