@@ -1922,6 +1922,11 @@ void R_DrawAliasModel (entity_t *ent)
 	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 	islumaskin = paliashdr->islumaskin[skinnum][anim];
 
+	//if (Mod_IsMonsterModel(ent->modelindex) && !draw_player_outlines)
+	//{
+	//	cl_players[cl_numplayers++] = ent;
+	//}
+
 	// we can't dynamically colormap textures, so they are cached
 	// seperately for the players. Heads are just uncolored.
 	if (ent->colormap != vid.colormap && !gl_nocolors.value)
@@ -1929,7 +1934,7 @@ void R_DrawAliasModel (entity_t *ent)
 		extern int player_32bit_skins[14];
 		extern qboolean player_32bit_skins_loaded;
 
-		if (clmodel->modhint == MOD_PLAYER && cl_numplayers < MAX_SCOREBOARD)
+		if (clmodel->modhint == MOD_PLAYER && cl_numplayers < MAX_SCOREBOARD && !draw_player_outlines)
 		{
 			cl_players[cl_numplayers++] = ent;
 		}
@@ -2437,6 +2442,129 @@ void R_ReplaceQ3Frame (int frame)
 	oldlegsanim = legsanim;
 }
 
+/*
+=================
+R_DrawQ3OutlineFrame
+=================
+*/
+void R_DrawQ3OutlineFrame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3surf, entity_t *ent, int distance)
+{
+	int			i, numtris, posenum, numposes, pose1, pose2;
+	float		lerpfrac;
+	vec3_t		interpolated_verts;
+	unsigned int *tris;
+	md3tc_t		*tc;
+	md3vert_mem_t *verts, *v1, *v2;
+	model_t		*clmodel = ent->model;
+	float		line_width = draw_player_outlines ? bound(1, r_outline_players.value, 3) : bound(1, r_outline.value, 3);
+
+	if ((frame >= pmd3hdr->numframes) || (frame < 0))
+	{
+		Con_DPrintf ("R_DrawQ3OutlineFrame: no such frame %d\n", frame);
+		frame = 0;
+	}
+
+	// Don't draw outlines on transparent models, except when drawing wallhacked teammates
+	if (ent->transparency < 1.0f && !draw_player_outlines)
+		return;
+
+	// Don't draw outlines twice on player models, as they can overlap if different widths are used
+	if (ent->model->modhint == MOD_PLAYER && r_outline_players.value && r_outline.value && !draw_player_outlines)
+		return;
+
+	// No outlines on certain models
+	if (ent->model->modhint == MOD_EYES || ent->model->modhint == MOD_FLAME)
+		return;
+
+	glCullFace(GL_FRONT);
+	glPolygonMode(GL_BACK, GL_LINE);
+	glLineWidth(line_width);
+	glEnable(GL_LINE_SMOOTH);
+	GL_PolygonOffset(-0.7);
+	glDisable(GL_TEXTURE_2D);
+
+	if (ent->previouspose >= pmd3hdr->numframes)
+		ent->previouspose = 0;
+
+	posenum = frame;
+	numposes = pmd3hdr->numframes;
+
+	if (!strcmp(clmodel->name, cl_modelnames[mi_q3legs]))
+		ent->lerptime = anims[legsanim].interval;
+	else if (!strcmp(clmodel->name, cl_modelnames[mi_q3torso]))
+		ent->lerptime = anims[bodyanim].interval;
+	else
+		ent->lerptime = 0.1;
+
+	if (ent->lerpflags & LERP_RESETANIM) //kill any lerp in progress
+	{
+		ent->lerpstart = 0;
+		ent->previouspose = posenum;
+		ent->currentpose = posenum;
+		ent->lerpflags -= LERP_RESETANIM;
+	}
+	else if (ent->currentpose != posenum) // pose changed, start new lerp
+	{
+		if (ent->lerpflags & LERP_RESETANIM2) //defer lerping one more time
+		{
+			ent->lerpstart = 0;
+			ent->previouspose = posenum;
+			ent->currentpose = posenum;
+			ent->lerpflags -= LERP_RESETANIM2;
+		}
+		else
+		{
+			ent->lerpstart = cl.time;
+			ent->previouspose = ent->currentpose;
+			ent->currentpose = posenum;
+		}
+	}
+
+	//set up values
+	if (gl_interpolate_anims.value)
+	{
+		if (ent->lerpflags & LERP_FINISH && numposes == 1)
+			ent->framelerp = bound(0, (cl.time - ent->lerpstart) / (ent->lerpfinish - ent->lerpstart), 1);
+		else
+			ent->framelerp = bound(0, (cl.time - ent->lerpstart) / ent->lerptime, 1);
+	}
+	else
+	{
+		ent->framelerp = 1;
+		ent->previouspose = posenum;
+		ent->currentpose = posenum;
+	}
+
+	verts = (md3vert_mem_t *)((byte *)pmd3hdr + pmd3surf->ofsverts);
+	tc = (md3tc_t *)((byte *)pmd3surf + pmd3surf->ofstc);
+	tris = (unsigned int *)((byte *)pmd3surf + pmd3surf->ofstris);
+	numtris = pmd3surf->numtris * 3;
+	pose1 = ent->previouspose * pmd3surf->numverts;
+	pose2 = ent->currentpose * pmd3surf->numverts;
+
+	glBegin (GL_TRIANGLES);
+	for (i = 0 ; i < numtris ; i++)
+	{
+		v1 = verts + *tris + pose1;
+		v2 = verts + *tris + pose2;
+
+		lerpfrac = VectorL2Compare(v1->vec, v2->vec, distance) ? ent->framelerp : 1;
+
+		VectorInterpolate (v1->vec, lerpfrac, v2->vec, interpolated_verts);
+		glVertex3fv (interpolated_verts);
+
+		*tris++;
+	}
+	glEnd ();
+
+	glColor4f(1, 1, 1, 1);
+	GL_PolygonOffset(0);
+	glPolygonMode(GL_BACK, GL_FILL);
+	glDisable(GL_LINE_SMOOTH);
+	glCullFace(GL_BACK);
+	glEnable(GL_TEXTURE_2D);
+}
+
 qboolean	surface_transparent;
 
 /*
@@ -2846,6 +2974,16 @@ void R_SetupQ3Frame (entity_t *ent)
 				}
 			}
 
+			if (r_outline.value || draw_player_outlines)
+			{
+				byte *col;
+
+				col = StringToRGB(r_outline_color.string);
+				glColor3ubv(col);
+				R_DrawQ3OutlineFrame(frame, pmd3hdr, pmd3surf, ent, INTERP_MAXDIST);
+				glColor4f(1, 1, 1, 1);
+			}
+
 			pmd3surf = (md3surface_t *)((byte *)pmd3surf + pmd3surf->ofsend);
 		}
 	}
@@ -3023,6 +3161,15 @@ void R_DrawQ3Model (entity_t *ent)
 		}
 	}
 
+	//if (!strcmp(ent->model->name, "progs/end2.md3") && !draw_player_outlines)
+	//{
+	//	cl_players[cl_numplayers++] = ent;
+	//}
+	if (clmodel->modhint == MOD_PLAYER && cl_numplayers < MAX_SCOREBOARD && !draw_player_outlines)
+	{
+		cl_players[cl_numplayers++] = ent;
+	}
+
 	if (gl_smoothmodels.value)
 		glShadeModel (GL_SMOOTH);
 
@@ -3040,7 +3187,7 @@ void R_DrawQ3Model (entity_t *ent)
 
 	glPopMatrix ();
 
-	if (r_shadows.value && !ent->noshadow)
+	if (r_shadows.value && !ent->noshadow && !draw_player_outlines)
 	{
 		int		farclip;
 		vec3_t	downmove;
@@ -3355,6 +3502,15 @@ void R_DrawViewModel (void)
 	glDepthRange (0, 1);
 }
 
+/*
+=============
+R_DrawPlayerOutlines
+
+This is planned to be the common wallhack drawing routine in the future.
+Currently only players (in coop) are drawn in such way.
+Added support for md3 models, that's why we're differentiating via model type.
+=============
+*/
 void R_DrawPlayerOutlines()
 {
 	int			i;
@@ -3372,7 +3528,23 @@ void R_DrawPlayerOutlines()
 		playeralpha = currententity->transparency;
 		currententity->transparency = 0.000001f;
 
-		R_DrawAliasModel (currententity);
+		switch (currententity->model->type)
+		{
+		case mod_alias:
+			R_DrawAliasModel (currententity);
+			break;
+
+		case mod_md3:
+			R_DrawQ3Model (currententity);
+			break;
+
+		case mod_brush:
+			R_DrawBrushModel (currententity);
+			break;
+
+		default:
+			break;
+		}
 
 		currententity->transparency = playeralpha;
 	}
