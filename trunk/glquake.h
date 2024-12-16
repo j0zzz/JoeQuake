@@ -178,6 +178,7 @@ extern	cvar_t	r_wateralpha;
 extern	cvar_t	r_litwater;
 extern	cvar_t	r_dynamic;
 extern	cvar_t	r_novis;
+extern	cvar_t	r_outline_monsters;
 extern	cvar_t	r_fullbrightskins;
 extern	cvar_t	r_fastsky;
 extern	cvar_t	r_skycolor;

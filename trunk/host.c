@@ -869,6 +869,7 @@ void _Host_Frame (double time)
 		if (cls.demorecording)
 		{
 			Cvar_SetValue (&cl_truelightning, 0);
+			Cvar_SetValue (&r_outline_monsters, 0);
 
 			// don't allow higher than 72 fps during recording
 			if (!cl_independentphysics.value && (!cl_maxfps.value || cl_maxfps.value > 72))
