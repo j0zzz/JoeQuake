@@ -3759,23 +3759,23 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	M_Print(16, 32, title);
 
 	M_Print_GetPoint(16, 48, &colorchooser_window.x, &colorchooser_window.y, "           Red", colorchooser_cursor == 0);
-	r = red / 255.0F;
+	r = red / 255.0f;
 	M_DrawSliderInt(156, 48, r, red, &colorchooser_slider_red_window);
 
 	M_Print_GetPoint(16, 56, &lx, &ly, "         Green", colorchooser_cursor == 1);
-	r = green / 255.0F;
+	r = green / 255.0f;
 	M_DrawSliderInt(156, 56, r, green, &colorchooser_slider_green_window);
 
 	M_Print_GetPoint(16, 64, &lx, &ly, "          Blue", colorchooser_cursor == 2);
-	r = blue / 255.0F;
+	r = blue / 255.0f;
 	M_DrawSliderInt(156, 64, r, blue, &colorchooser_slider_blue_window);
 
-	M_Print_GetPoint(16, 80, &lx, &ly, "Accept changes", colorchooser_cursor == 4);
+	M_Print_GetPoint(16, 80, &lx, &ly, "Undo changes", colorchooser_cursor == 4);
 
 	colorchooser_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	colorchooser_window.h = ly - colorchooser_window.y + 8;
 
-	M_Print(16, 96, "Original");
+	M_Print(16, 96, "Old");
 	x = 16 + ((menuwidth - 320) >> 1);
 	y = 108 + m_yofs;
 #ifdef GLQUAKE
@@ -3790,7 +3790,7 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
 
-	M_Print(16 + square_size + 8, 96, "Current");
+	M_Print(16 + square_size + 8, 96, "New");
 	x = 16 + square_size + 8 + ((menuwidth - 320) >> 1);
 	y = 108 + m_yofs;
 	glDisable(GL_TEXTURE_2D);
@@ -3842,19 +3842,23 @@ void M_ColorChooser_KeyboardSlider(int dir)
 void M_ColorChooser_Key(int k, colorchooser_t cstype)
 {
 	char color[MAX_QPATH];
+	byte *col;
 
 	switch (k)
 	{
 	case K_ESCAPE:
 	case K_MOUSE2:
+		sprintf(color, "%i %i %i", red, green, blue);
 		switch (cstype)
 		{
 		case cs_crosshair:
+			Cvar_Set(&crosshaircolor, color);
 			M_Menu_Hud_f();
 			break;
 
 		case cs_sky:
 #ifdef GLQUAKE
+			Cvar_Set(&r_skycolor, color);
 			M_Menu_View_f();
 #endif
 			break;
@@ -3874,12 +3878,18 @@ void M_ColorChooser_Key(int k, colorchooser_t cstype)
 			switch (cstype)
 			{
 			case cs_crosshair:
-				Cvar_Set(&crosshaircolor, color);
+				col = StringToRGB(crosshaircolor.string);
+				red = col[0];
+				green = col[1];
+				blue = col[2];
 				break;
 
 			case cs_sky:
 #ifdef GLQUAKE
-				Cvar_Set(&r_skycolor, color);
+				col = StringToRGB(r_skycolor.string);
+				red = col[0];
+				green = col[1];
+				blue = col[2];
 #endif
 				break;
 
