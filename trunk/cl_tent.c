@@ -447,7 +447,7 @@ void CL_UpdateBeams (void)
 		{
 			VectorCopy (cl_entities[cl.viewentity].origin, b->start);
 			b->start[2] += cl.crouch;
-			if (cl_truelightning.value)
+			if (cl_truelightning_cheatsafe)
 			{
 				vec3_t	forward, v, org, ang;
 				float	f, delta;

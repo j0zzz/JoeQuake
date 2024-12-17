@@ -368,6 +368,8 @@ extern qboolean gl_glsl_gamma_able;
 extern qboolean gl_glsl_alias_able;
 extern qboolean gl_packed_pixels;
 
+extern qboolean r_outline_monsters_cheatsafe, cl_truelightning_cheatsafe;
+
 typedef struct glsl_attrib_binding_s {
 	const char *name;
 	GLuint attrib;

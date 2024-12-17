@@ -175,6 +175,8 @@ extern cvar_t r_waterquality;
 extern cvar_t r_oldwater;
 extern cvar_t r_waterwarp;
 
+qboolean r_outline_monsters_cheatsafe, cl_truelightning_cheatsafe;
+
 float	pitch_rot;
 #if 0
 float	q3legs_rot;
@@ -1140,7 +1142,7 @@ void R_DrawAliasOutlineFrame(aliashdr_t *paliashdr, lerpdata_t lerpdata, entity_
 	// Don't draw outlines twice on wallhacked models, as they can overlap if different widths are used
 	if (r_outline.value && !draw_wallhacked_outlines &&
 		((ent->model->modhint == MOD_PLAYER && r_outline_players.value) ||
-		 (Mod_IsMonsterModel(ent->modelindex) && r_outline_monsters.value)))
+		 (Mod_IsMonsterModel(ent->modelindex) && r_outline_monsters_cheatsafe)))
 		return;
 
 	// No outlines on certain models
@@ -1929,7 +1931,7 @@ void R_DrawAliasModel (entity_t *ent)
 	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 	islumaskin = paliashdr->islumaskin[skinnum][anim];
 
-	if (Mod_IsMonsterModel(ent->modelindex) && r_outline_monsters.value && cl_num_wallhacked_entities < MAX_WALLHACKED_ENTITIES && !draw_wallhacked_outlines)
+	if (Mod_IsMonsterModel(ent->modelindex) && r_outline_monsters_cheatsafe && cl_num_wallhacked_entities < MAX_WALLHACKED_ENTITIES && !draw_wallhacked_outlines)
 	{
 		cl_wallhacked_entities[cl_num_wallhacked_entities++] = ent;
 	}
@@ -2480,7 +2482,7 @@ void R_DrawQ3OutlineFrame (int frame, md3header_t *pmd3hdr, md3surface_t *pmd3su
 	// Don't draw outlines twice on wallhacked models, as they can overlap if different widths are used
 	if (r_outline.value && !draw_wallhacked_outlines &&
 		((ent->model->modhint == MOD_PLAYER && r_outline_players.value) ||
-		 (Mod_IsMonsterModel(ent->modelindex) && r_outline_monsters.value)))
+		 (Mod_IsMonsterModel(ent->modelindex) && r_outline_monsters_cheatsafe)))
 		return;
 
 	// No outlines on certain models
@@ -3527,7 +3529,7 @@ void R_DrawWallhackedOutlines()
 	int			i;
 	float		playeralpha;
 
-	if (cl.gametype == GAME_DEATHMATCH || !r_drawentities.value || (!r_outline_players.value && !r_outline_monsters.value))
+	if (cl.gametype == GAME_DEATHMATCH || !r_drawentities.value || (!r_outline_players.value && !r_outline_monsters_cheatsafe))
 		return;
 
 	draw_wallhacked_outlines = true;
@@ -3539,7 +3541,7 @@ void R_DrawWallhackedOutlines()
 
 		if (currententity->model->modhint == MOD_PLAYER && !r_outline_players.value)
 			continue;
-		else if (Mod_IsMonsterModel(currententity->modelindex) && !r_outline_monsters.value)
+		else if (Mod_IsMonsterModel(currententity->modelindex) && !r_outline_monsters_cheatsafe)
 			continue;
 
 		playeralpha = currententity->transparency;
@@ -3817,6 +3819,14 @@ void R_SetupFrame (void)
 	R_UpdateWarpTextures(); //johnfitz -- do this before R_Clear
 
 	R_Clear();
+
+	// cheat-protect some draw modes
+	r_outline_monsters_cheatsafe = cl_truelightning_cheatsafe = false;
+	if (!cls.demorecording)
+	{
+		if (r_outline_monsters.value) r_outline_monsters_cheatsafe = true;
+		if (cl_truelightning.value) cl_truelightning_cheatsafe = true;
+	}
 }
 
 void MYgluPerspective (GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
