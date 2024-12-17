@@ -2626,7 +2626,7 @@ void M_Mouse_Draw(void)
 	M_DrawPic((320 - p->width) >> 1, 4, p);
 
 	M_Print_GetPoint(16, 32, &mouse_window.x, &mouse_window.y, "   In-game sensitivity", mouse_cursor == 0);
-	r = (sensitivity.value - 0.5) / (10 - 0.5);
+	r = (sensitivity.value - 0.1) / (3 - 0.1);
 	M_DrawSliderFloat(220, 32, r, sensitivity.value, &mouse_slider_sensitivity_window);
 
 	M_Print_GetPoint(16, 40, &lx, &ly, "          Mouse filter", mouse_cursor == 1);
@@ -2636,11 +2636,11 @@ void M_Mouse_Draw(void)
 	M_DrawCheckbox(220, 48, m_pitch.value < 0);
 
 	M_Print_GetPoint(16, 64, &lx, &ly, "    Cursor sensitivity", mouse_cursor == 4);
-	r = (cursor_sensitivity.value - 0.5) / (5 - 0.5);
+	r = (cursor_sensitivity.value - 0.1) / (3 - 0.1);
 	M_DrawSliderFloat(220, 64, r, cursor_sensitivity.value, &mouse_slider_cursor_sensitivity_window);
 
 	M_Print_GetPoint(16, 72, &lx, &ly, "          Cursor scale", mouse_cursor == 5);
-	r = (scr_cursor_scale.value - 0.2) / (2 - 0.2);
+	r = (scr_cursor_scale.value - 0.1) / (2 - 0.1);
 	M_DrawSliderFloat(220, 72, r, scr_cursor_scale.value, &mouse_slider_cursor_scale_window);
 
 	M_Print_GetPoint(16, 88, &lx, &ly, "   Use mouse smoothing", mouse_cursor == 7);
@@ -2693,20 +2693,20 @@ void M_Mouse_KeyboardSlider(int dir)
 	switch (mouse_cursor)
 	{
 	case 0:	// in-game sensitivity
-		sensitivity.value += dir * 0.5;
-		sensitivity.value = bound(0, sensitivity.value, 10);
+		sensitivity.value += dir * 0.1;
+		sensitivity.value = bound(0.1, sensitivity.value, 3);
 		Cvar_SetValue(&sensitivity, sensitivity.value);
 		break;
 
-	case 4:	// menu sensitivity
-		cursor_sensitivity.value += dir * 0.5;
-		cursor_sensitivity.value = bound(0, cursor_sensitivity.value, 5);
+	case 4:	// menu cursor sensitivity
+		cursor_sensitivity.value += dir * 0.1;
+		cursor_sensitivity.value = bound(0.1, cursor_sensitivity.value, 3);
 		Cvar_SetValue(&cursor_sensitivity, cursor_sensitivity.value);
 		break;
 
-	case 5:	// menu sensitivity
-		scr_cursor_scale.value += dir * 0.2;
-		scr_cursor_scale.value = bound(0, scr_cursor_scale.value, 2);
+	case 5:	// menu cursor scale
+		scr_cursor_scale.value += dir * 0.1;
+		scr_cursor_scale.value = bound(0.1, scr_cursor_scale.value, 2);
 		Cvar_SetValue(&scr_cursor_scale, scr_cursor_scale.value);
 		break;
 
@@ -2835,20 +2835,20 @@ void M_Mouse_MouseSlider(int k, const mouse_state_t *ms)
 		switch (mouse_cursor)
 		{
 		case 0:	// in-game sensitivity
-			M_Mouse_Select_Column(&mouse_slider_sensitivity_window, ms, 20, &slider_pos);
-			sensitivity.value = bound(0, (slider_pos * 0.5) + 0.5, 10);
+			M_Mouse_Select_Column(&mouse_slider_sensitivity_window, ms, 30, &slider_pos);
+			sensitivity.value = bound(0.1, (slider_pos * 0.1) + 0.1, 3);
 			Cvar_SetValue(&sensitivity, sensitivity.value);
 			break;
 
-		case 4:	// menu sensitivity
-			M_Mouse_Select_Column(&mouse_slider_cursor_sensitivity_window, ms, 10, &slider_pos);
-			cursor_sensitivity.value = bound(0, (slider_pos * 0.5) + 0.5, 5);
+		case 4:	// menu cursor sensitivity
+			M_Mouse_Select_Column(&mouse_slider_cursor_sensitivity_window, ms, 30, &slider_pos);
+			cursor_sensitivity.value = bound(0.1, (slider_pos * 0.1) + 0.1, 3);
 			Cvar_SetValue(&cursor_sensitivity, cursor_sensitivity.value);
 			break;
 
-		case 5:	// menu sensitivity
-			M_Mouse_Select_Column(&mouse_slider_cursor_scale_window, ms, 10, &slider_pos);
-			scr_cursor_scale.value = bound(0, (slider_pos * 0.2) + 0.2, 2);
+		case 5:	// menu cursor scale
+			M_Mouse_Select_Column(&mouse_slider_cursor_scale_window, ms, 20, &slider_pos);
+			scr_cursor_scale.value = bound(0.1, (slider_pos * 0.1) + 0.1, 2);
 			Cvar_SetValue(&scr_cursor_scale, scr_cursor_scale.value);
 			break;
 
@@ -3127,7 +3127,7 @@ qboolean M_Misc_Mouse_Event(const mouse_state_t *ms)
 //=============================================================================
 /* HUD OPTIONS MENU */
 
-#define	HUD_ITEMS	21
+#define	HUD_ITEMS	22
 
 int	hud_cursor = 0;
 
@@ -3372,23 +3372,26 @@ void M_Hud_Draw(void)
 	M_Print_GetPoint(16, 160, &lx, &ly, "   Show stats in small", hud_cursor == 16);
 	M_DrawCheckbox(220, 160, show_stats_small.value);
 
-	M_Print_GetPoint(16, 176, &lx, &ly, "        Console height", hud_cursor == 18);
-	M_DrawSliderFloat(220, 176, scr_consize.value, scr_consize.value, &hud_slider_consize_window);
+	M_Print_GetPoint(16, 168, &lx, &ly, "    Show movement keys", hud_cursor == 17);
+	M_DrawCheckbox(220, 168, show_movekeys.value);
 
-	M_Print_GetPoint(16, 184, &lx, &ly, "         Console speed", hud_cursor == 19);
+	M_Print_GetPoint(16, 184, &lx, &ly, "        Console height", hud_cursor == 19);
+	M_DrawSliderFloat(220, 184, scr_consize.value, scr_consize.value, &hud_slider_consize_window);
+
+	M_Print_GetPoint(16, 192, &lx, &ly, "         Console speed", hud_cursor == 21);
 	r = (float)FindSliderItemIndex(console_speed_values, CONSOLE_SPEED_ITEMS, &scr_conspeed) / (CONSOLE_SPEED_ITEMS - 1);
-	M_DrawSliderInt(220, 184, r, scr_conspeed.value, &hud_slider_conspeed_window);
+	M_DrawSliderInt(220, 192, r, scr_conspeed.value, &hud_slider_conspeed_window);
 
-	M_Print_GetPoint(16, 192, &lx, &ly, "  Console transparency", hud_cursor == 20);
+	M_Print_GetPoint(16, 200, &lx, &ly, "  Console transparency", hud_cursor == 21);
 #ifdef GLQUAKE
-	M_DrawSliderFloat(220, 192, gl_conalpha.value, gl_conalpha.value, &hud_slider_conalpha_window);
+	M_DrawSliderFloat(220, 200, gl_conalpha.value, gl_conalpha.value, &hud_slider_conalpha_window);
 #endif
 
 	hud_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	hud_window.h = ly - hud_window.y + 8;
 
 	// don't draw cursor if we're on a spacing line
-	if (hud_cursor == 2 || hud_cursor == 17 || (hud_cursor >= 7 && hud_cursor <= 11))
+	if (hud_cursor == 2 || hud_cursor == 18 || (hud_cursor >= 7 && hud_cursor <= 11))
 		return;
 
 	// cursor
@@ -3421,17 +3424,17 @@ void M_Hud_KeyboardSlider(int dir)
 #endif
 		break;
 
-	case 18:// console height
+	case 19:// console height
 		scr_consize.value += dir * 0.1;
 		scr_consize.value = bound(0, scr_consize.value, 1);
 		Cvar_SetValue(&scr_consize, scr_consize.value);
 		break;
 
-	case 19: // console speed
+	case 20: // console speed
 		AdjustSliderBasedOnArrayOfValues(dir, console_speed_values, CONSOLE_SPEED_ITEMS, &scr_conspeed);
 		break;
 
-	case 20:// console alpha
+	case 21:// console alpha
 #ifdef GLQUAKE
 		gl_conalpha.value += dir * 0.1;
 		gl_conalpha.value = bound(0, gl_conalpha.value, 1);
@@ -3542,6 +3545,10 @@ void M_Hud_Key(int k)
 			Cvar_SetValue(&show_stats_small, !show_stats_small.value);
 			break;
 
+		case 17: // movement keys
+			Cvar_SetValue(&show_movekeys, !show_movekeys.value);
+			break;
+
 		default:
 			break;
 		}
@@ -3586,14 +3593,14 @@ void M_Hud_Key(int k)
 
 	if (k == K_UPARROW)
 	{
-		if (hud_cursor == 2 || hud_cursor == 17)
+		if (hud_cursor == 2 || hud_cursor == 18)
 			hud_cursor--;
 		else if (hud_cursor >= 7 && hud_cursor <= 11)
 			hud_cursor -= 5;
 	}
 	else if (k == K_DOWNARROW)
 	{
-		if (hud_cursor == 2 || hud_cursor == 17)
+		if (hud_cursor == 2 || hud_cursor == 18)
 			hud_cursor++;
 		else if (hud_cursor >= 7 && hud_cursor <= 11)
 			hud_cursor += 5;
@@ -3632,18 +3639,18 @@ void M_Hud_MouseSlider(int k, const mouse_state_t *ms)
 #endif
 			break;
 
-		case 18:// console height
+		case 19:// console height
 			M_Mouse_Select_Column(&hud_slider_consize_window, ms, 11, &slider_pos);
 			scr_consize.value = bound(0, slider_pos * 0.1, 1);
 			Cvar_SetValue(&scr_consize, scr_consize.value);
 			break;
 
-		case 19: // console speed
+		case 20: // console speed
 			M_Mouse_Select_Column(&hud_slider_conspeed_window, ms, CONSOLE_SPEED_ITEMS, &slider_pos);
 			Cvar_SetValue(&scr_conspeed, console_speed_values[slider_pos]);
 			break;
 
-		case 20:// console alpha
+		case 21:// console alpha
 #ifdef GLQUAKE
 			M_Mouse_Select_Column(&hud_slider_conalpha_window, ms, 11, &slider_pos);
 			gl_conalpha.value = bound(0, slider_pos * 0.1, 1);
@@ -4816,11 +4823,12 @@ qboolean M_Renderer_Mouse_Event(const mouse_state_t *ms)
 //=============================================================================
 /* TEXTURES MENU */
 
-#define	TEXTURES_ITEMS	12
+#define	TEXTURES_ITEMS	13
 
 int textures_cursor = 0;
 
 menu_window_t textures_window;
+menu_window_t textures_slider_anisotropy_window;
 menu_window_t textures_slider_picmip_window;
 menu_window_t textures_slider_maxsize_window;
 
@@ -4836,11 +4844,28 @@ char *sky_hud_texture_filters[] = {
 	"GL_LINEAR"
 };
 
+int num_max_anisotropy_values;
+float max_anisotropy_values[10];	//joe: I hope this would be enough
+
+void CollectAvailableAnisotropyValues()
+{
+	float current_anisotropy = 1.0;
+
+	num_max_anisotropy_values = 0;
+	while (current_anisotropy <= gl_max_anisotropy)
+	{
+		max_anisotropy_values[num_max_anisotropy_values++] = current_anisotropy;
+		current_anisotropy *= 2;
+	}
+}
+
 void M_Menu_Textures_f(void)
 {
 	key_dest = key_menu;
 	m_state = m_textures;
 	m_entersound = true;
+
+	CollectAvailableAnisotropyValues();
 }
 
 #define MAX_SIZE_ITEMS 7
@@ -4858,61 +4883,65 @@ void M_Textures_Draw(void)
 
 	M_Print_GetPoint(16, 32, &textures_window.x, &textures_window.y, "  World texture filter", textures_cursor == 0);
 	M_Print(220, 32, !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST") ? "linear (mipmap off)" :
-		!Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_LINEAR") ? "linear (mipmap on)" :
-		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_NEAREST") ? "nearest (mipmap off)" : 
-		!Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_LINEAR") ? "nearest (mipmap on)" : gl_texturemode.string);
+					 !Q_strcasecmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_LINEAR") ? "linear (mipmap on)" :
+					 !Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_NEAREST") ? "nearest (mipmap off)" : 
+					 !Q_strcasecmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_LINEAR") ? "nearest (mipmap on)" : gl_texturemode.string);
 
 	M_Print_GetPoint(8, 40, &lx, &ly, "Menu/Hud texture filter", textures_cursor == 1);
 	M_Print(220, 40, !Q_strcasecmp(gl_texturemode_hud.string, "GL_LINEAR") ? "linear" :
-		!Q_strcasecmp(gl_texturemode_hud.string, "GL_NEAREST") ? "nearest" : gl_texturemode_hud.string);
+					 !Q_strcasecmp(gl_texturemode_hud.string, "GL_NEAREST") ? "nearest" : gl_texturemode_hud.string);
 
 	M_Print_GetPoint(16, 48, &lx, &ly, "    Sky texture filter", textures_cursor == 2);
 	M_Print(220, 48, !Q_strcasecmp(gl_texturemode_sky.string, "GL_LINEAR") ? "linear" :
-		!Q_strcasecmp(gl_texturemode_sky.string, "GL_NEAREST") ? "nearest" : gl_texturemode_sky.string);
+					 !Q_strcasecmp(gl_texturemode_sky.string, "GL_NEAREST") ? "nearest" : gl_texturemode_sky.string);
 
-	M_Print_GetPoint(16, 56, &lx, &ly, "       Texture quality", textures_cursor == 3);
+	M_Print_GetPoint(16, 56, &lx, &ly, " Anisotropic filtering", textures_cursor == 3);
+	r = (float)FindSliderItemIndex(max_anisotropy_values, num_max_anisotropy_values, &gl_texture_anisotropy) / (num_max_anisotropy_values - 1);
+	M_DrawSliderInt(220, 56, r, gl_texture_anisotropy.value, &textures_slider_anisotropy_window);
+
+	M_Print_GetPoint(16, 64, &lx, &ly, "       Texture quality", textures_cursor == 4);
 	r = (4 - gl_picmip.value) * 0.25;
-	M_DrawSlider(220, 56, r, &textures_slider_picmip_window);
+	M_DrawSlider(220, 64, r, &textures_slider_picmip_window);
 
-	M_Print_GetPoint(16, 64, &lx, &ly, "     Detailed textures", textures_cursor == 4);
-	M_DrawCheckbox(220, 64, gl_detail.value);
+	M_Print_GetPoint(16, 72, &lx, &ly, "     Detailed textures", textures_cursor == 5);
+	M_DrawCheckbox(220, 72, gl_detail.value);
 
-	M_Print_GetPoint(16, 72, &lx, &ly, "      Max texture size", textures_cursor == 5);
+	M_Print_GetPoint(16, 80, &lx, &ly, "      Max texture size", textures_cursor == 6);
 	//r = (gl_max_size.value - max_size_values[0]) / (max_size_values[MAX_SIZE_ITEMS-1] - max_size_values[0]);
 	r = (float)FindSliderItemIndex(max_size_values, MAX_SIZE_ITEMS, &gl_max_size) / (MAX_SIZE_ITEMS - 1);
-	M_DrawSliderInt(220, 72, r, gl_max_size.value, &textures_slider_maxsize_window);
+	M_DrawSliderInt(220, 80, r, gl_max_size.value, &textures_slider_maxsize_window);
 
-	M_Print_GetPoint(-40, 88, &lx, &ly, "Enable external textures for:", false);
+	M_Print_GetPoint(-40, 96, &lx, &ly, "Enable external textures for:", false);
 
-	M_Print_GetPoint(16, 96, &lx, &ly, "                 World", textures_cursor == 8);
-	M_DrawCheckbox(220, 96, gl_externaltextures_world.value);
+	M_Print_GetPoint(16, 104, &lx, &ly, "                 World", textures_cursor == 9);
+	M_DrawCheckbox(220, 104, gl_externaltextures_world.value);
 
-	M_Print_GetPoint(16, 104, &lx, &ly, "        Static objects", textures_cursor == 9);
-	M_DrawCheckbox(220, 104, gl_externaltextures_bmodels.value);
+	M_Print_GetPoint(16, 112, &lx, &ly, "        Static objects", textures_cursor == 10);
+	M_DrawCheckbox(220, 112, gl_externaltextures_bmodels.value);
 
-	M_Print_GetPoint(16, 112, &lx, &ly, "       Dynamic objects", textures_cursor == 10);
-	M_DrawCheckbox(220, 112, gl_externaltextures_models.value);
+	M_Print_GetPoint(16, 120, &lx, &ly, "       Dynamic objects", textures_cursor == 11);
+	M_DrawCheckbox(220, 120, gl_externaltextures_models.value);
 
-	M_Print_GetPoint(16, 120, &lx, &ly, "              Menu/Hud", textures_cursor == 11);
-	M_DrawCheckbox(220, 120, gl_externaltextures_gfx.value);
+	M_Print_GetPoint(16, 128, &lx, &ly, "              Menu/Hud", textures_cursor == 12);
+	M_DrawCheckbox(220, 128, gl_externaltextures_gfx.value);
 
 	textures_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	textures_window.h = ly - textures_window.y + 8;
 
 	// don't draw cursor if we're on a spacing line
-	if (textures_cursor == 6 || textures_cursor == 7)
+	if (textures_cursor == 7 || textures_cursor == 8)
 		return;
 
 	// cursor
 	M_DrawCharacter(200, 32 + textures_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	if (textures_cursor == 9)
+	if (textures_cursor == 10)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Static objects are health boxes,");
 		M_Print(2 * 8, 176 + 8 * 4, "ammo boxes and explosion barrels");
 	}
-	else if (textures_cursor == 10)
+	else if (textures_cursor == 11)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Dynamic objects are players, monsters,");
@@ -4928,12 +4957,16 @@ void M_Textures_KeyboardSlider(int dir)
 	switch (textures_cursor)
 	{
 	case 3:
+		AdjustSliderBasedOnArrayOfValues(dir, max_anisotropy_values, num_max_anisotropy_values, &gl_texture_anisotropy);
+		break;
+	
+	case 4:
 		gl_picmip.value -= dir;
 		gl_picmip.value = bound(0, gl_picmip.value, 4);
 		Cvar_SetValue(&gl_picmip, gl_picmip.value);
 		break;
 
-	case 5:
+	case 6:
 		AdjustSliderBasedOnArrayOfValues(dir, max_size_values, MAX_SIZE_ITEMS, &gl_max_size);
 		break;
 	}
@@ -5018,23 +5051,23 @@ void M_Textures_Key(int k)
 			Cvar_Set(&gl_texturemode_sky, sky_hud_texture_filters[i + 1]);
 			break;
 
-		case 4:
+		case 5:
 			Cvar_SetValue(&gl_detail, !gl_detail.value);
 			break;
 
-		case 8:
+		case 9:
 			Cvar_SetValue(&gl_externaltextures_world, !gl_externaltextures_world.value);
 			break;
 
-		case 9:
+		case 10:
 			Cvar_SetValue(&gl_externaltextures_bmodels, !gl_externaltextures_bmodels.value);
 			break;
 
-		case 10:
+		case 11:
 			Cvar_SetValue(&gl_externaltextures_models, !gl_externaltextures_models.value);
 			break;
 
-		case 11:
+		case 12:
 			Cvar_SetValue(&gl_externaltextures_gfx, !gl_externaltextures_gfx.value);
 			break;
 
@@ -5043,9 +5076,9 @@ void M_Textures_Key(int k)
 		}
 	}
 
-	if (k == K_UPARROW && (textures_cursor == 6 || textures_cursor == 7))
+	if (k == K_UPARROW && (textures_cursor == 7 || textures_cursor == 8))
 		textures_cursor -= 2;
-	else if (k == K_DOWNARROW && (textures_cursor == 6 || textures_cursor == 7))
+	else if (k == K_DOWNARROW && (textures_cursor == 7 || textures_cursor == 8))
 		textures_cursor += 2;
 }
 
@@ -5062,12 +5095,17 @@ void M_Textures_MouseSlider(int k, const mouse_state_t *ms)
 		switch (textures_cursor)
 		{
 		case 3:
+			M_Mouse_Select_Column(&textures_slider_anisotropy_window, ms, num_max_anisotropy_values, &slider_pos);
+			Cvar_SetValue(&gl_texture_anisotropy, max_anisotropy_values[slider_pos]);
+			break;
+		
+		case 4:
 			M_Mouse_Select_Column(&textures_slider_picmip_window, ms, 5, &slider_pos);
 			gl_picmip.value = bound(0, 4 - slider_pos, 4);
 			Cvar_SetValue(&gl_picmip, gl_picmip.value);
 			break;
 
-		case 5:
+		case 6:
 			M_Mouse_Select_Column(&textures_slider_maxsize_window, ms, MAX_SIZE_ITEMS, &slider_pos);
 			Cvar_SetValue(&gl_max_size, max_size_values[slider_pos]);
 			break;
@@ -5473,7 +5511,7 @@ qboolean M_Decals_Mouse_Event(const mouse_state_t *ms)
 //=============================================================================
 /* WEAPON OPTIONS MENU */
 
-#define	WEAPONS_ITEMS	16
+#define	WEAPONS_ITEMS	17
 
 int	weapons_cursor = 0;
 
@@ -5678,44 +5716,47 @@ void M_Weapons_Draw(void)
 	M_Print_GetPoint(16, 32, &weapons_window.x, &weapons_window.y, "           Show weapon", weapons_cursor == 0);
 	DrawViewmodelType(220, 32);
 
-	M_Print_GetPoint(16, 40, &lx, &ly, "     Weapon handedness", weapons_cursor == 1);
-	DrawHandType(220, 40);
+	M_Print_GetPoint(16, 40, &lx, &ly, "      Weapon FOV scale", weapons_cursor == 1);
+	M_DrawSliderFloat(220, 40, cl_gun_fovscale.value, cl_gun_fovscale.value, &weapons_window);
 
-	M_Print_GetPoint(16, 48, &lx, &ly, "           Weapon kick", weapons_cursor == 2);
-	M_DrawCheckbox(220, 48, v_gunkick.value);
+	M_Print_GetPoint(16, 48, &lx, &ly, "     Weapon handedness", weapons_cursor == 2);
+	DrawHandType(220, 48);
 
-	M_Print_GetPoint(16, 56, &lx, &ly, "     Weapon fire light", weapons_cursor == 3);
-	M_DrawCheckbox(220, 56, cl_muzzleflash.value);
+	M_Print_GetPoint(16, 56, &lx, &ly, "           Weapon kick", weapons_cursor == 3);
+	M_DrawCheckbox(220, 56, v_gunkick.value);
 
-	M_Print_GetPoint(16, 64, &lx, &ly, "   Enable view weapons", weapons_cursor == 4);
-	M_DrawCheckbox(220, 64, cl_viewweapons.value);
+	M_Print_GetPoint(16, 64, &lx, &ly, "     Weapon fire light", weapons_cursor == 4);
+	M_DrawCheckbox(220, 64, cl_muzzleflash.value);
 
-	M_Print_GetPoint(16, 80, &lx, &ly, "        True lightning", weapons_cursor == 6);
-	M_DrawCheckbox(220, 80, cl_truelightning.value);
+	M_Print_GetPoint(16, 80, &lx, &ly, "   Enable view weapons", weapons_cursor == 6);
+	M_DrawCheckbox(220, 80, cl_viewweapons.value);
 
-	M_Print_GetPoint(16, 88, &lx, &ly, "     Rocket trail type", weapons_cursor == 7);
-	DrawRocketTrailType(220, 88);
+	M_Print_GetPoint(16, 88, &lx, &ly, "        True lightning", weapons_cursor == 7);
+	M_DrawCheckbox(220, 88, cl_truelightning.value);
 
-	M_Print_GetPoint(16, 96, &lx, &ly, "    Grenade trail type", weapons_cursor == 8);
-	DrawGrenadeTrailType(220, 96);
+	M_Print_GetPoint(16, 96, &lx, &ly, "     Rocket trail type", weapons_cursor == 8);
+	DrawRocketTrailType(220, 96);
 
-	M_Print_GetPoint(-32, 104, &lx, &ly, "Show grenade model as rocket", weapons_cursor == 9);
-	M_DrawCheckbox(220, 104, cl_rocket2grenade.value);
+	M_Print_GetPoint(16, 104, &lx, &ly, "    Grenade trail type", weapons_cursor == 9);
+	DrawGrenadeTrailType(220, 104);
 
-	M_Print_GetPoint(16, 120, &lx, &ly, "          Rocket light", weapons_cursor == 11);
-	M_DrawCheckbox(220, 120, r_rocketlight.value);
+	M_Print_GetPoint(-32, 120, &lx, &ly, "Show grenade model as rocket", weapons_cursor == 11);
+	M_DrawCheckbox(220, 120, cl_rocket2grenade.value);
 
-	M_Print_GetPoint(16, 128, &lx, &ly, "    Rocket light color", weapons_cursor == 12);
-	DrawColorType(220, 128, (int)(r_rocketlightcolor.value));
+	M_Print_GetPoint(16, 128, &lx, &ly, "          Rocket light", weapons_cursor == 12);
+	M_DrawCheckbox(220, 128, r_rocketlight.value);
 
-	M_Print_GetPoint(16, 136, &lx, &ly, "        Explosion type", weapons_cursor == 13);
-	DrawExplosionType(220, 136);
+	M_Print_GetPoint(16, 136, &lx, &ly, "    Rocket light color", weapons_cursor == 13);
+	DrawColorType(220, 136, (int)(r_rocketlightcolor.value));
 
-	M_Print_GetPoint(16, 144, &lx, &ly, "       Explosion light", weapons_cursor == 14);
-	M_DrawCheckbox(220, 144, r_explosionlight.value);
+	M_Print_GetPoint(16, 144, &lx, &ly, "        Explosion type", weapons_cursor == 14);
+	DrawExplosionType(220, 144);
 
-	M_Print_GetPoint(16, 152, &lx, &ly, " Explosion light color", weapons_cursor == 15);
-	DrawColorType(220, 152, (int)(r_explosionlightcolor.value));
+	M_Print_GetPoint(16, 152, &lx, &ly, "       Explosion light", weapons_cursor == 15);
+	M_DrawCheckbox(220, 152, r_explosionlight.value);
+
+	M_Print_GetPoint(16, 160, &lx, &ly, " Explosion light color", weapons_cursor == 16);
+	DrawColorType(220, 160, (int)(r_explosionlightcolor.value));
 
 	weapons_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	weapons_window.h = ly - weapons_window.y + 8;

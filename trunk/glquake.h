@@ -257,6 +257,8 @@ extern	cvar_t	gl_max_size;
 extern	cvar_t	gl_playermip;
 extern	cvar_t	gl_picmip;
 
+extern	cvar_t	scr_fov, cl_gun_fovscale;
+
 extern	int		mirrortexturenum;	// quake texturenum, not gltexturenum
 extern	qboolean	mirror;
 extern	mplane_t	*mirror_plane;
@@ -406,6 +408,7 @@ extern int turbsin[TURBSINSIZE];
 extern	cvar_t	gl_texturemode;
 extern	cvar_t	gl_texturemode_hud;
 extern	cvar_t	gl_texturemode_sky;
+extern	cvar_t	gl_texture_anisotropy;
 void GL_Set2D (void);
 byte *StringToRGB(char *s);
 void Draw_LoadPics(void);

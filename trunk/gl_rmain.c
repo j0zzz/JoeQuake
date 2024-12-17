@@ -1902,7 +1902,6 @@ void R_DrawAliasModel (entity_t *ent)
 	{
 		float	fovscale = 1.0f;
 		int		hand_offset = cl_hand.value == 1 ? -3 : cl_hand.value == 2 ? 3 : 0;
-		extern cvar_t scr_fov, cl_gun_fovscale;
 
 		if (scr_fov.value > 90.f && cl_gun_fovscale.value)
 		{
