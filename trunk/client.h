@@ -295,6 +295,7 @@ extern	cvar_t	cl_viewweapons;
 extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_confirmquit;
+extern	cvar_t	cl_bbox;
 
 extern	cvar_t	cl_demoui;
 extern	cvar_t	cl_demouitimeout;

@@ -30,6 +30,7 @@ enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_
 	m_net, m_options, m_keys, m_mouse, m_misc, m_hud, m_crosshair_colorchooser, m_sound, 
 #ifdef GLQUAKE
 	m_view, m_renderer, m_textures, m_particles, m_decals, m_weapons, m_screenflashes, m_sky_colorchooser,
+	m_outline_colorchooser,
 #endif
 	m_videomodes, m_nehdemos, m_maps, m_demos, m_mods, m_help, m_quit, m_serialconfig, m_modemconfig,
 	m_lanconfig, m_gameoptions, m_search, m_servers, m_slist, m_sedit} m_state;
@@ -3682,7 +3683,7 @@ qboolean M_Hud_Mouse_Event(const mouse_state_t *ms)
 
 typedef enum 
 { 
-	cs_crosshair, cs_sky 
+	cs_crosshair, cs_sky, cs_outline 
 } colorchooser_t;
 
 #define	COLORCHOOSER_ITEMS	5
@@ -3729,6 +3730,21 @@ void M_Menu_Sky_ColorChooser_f(void)
 #endif
 }
 
+void M_Menu_Outline_ColorChooser_f(void)
+{
+	byte *col;
+
+	key_dest = key_menu;
+	m_state = m_outline_colorchooser;
+	m_entersound = true;
+	colorchooser_cursor = 0;
+
+	col = StringToRGB(r_outline_color.string);
+	red = col[0];
+	green = col[1];
+	blue = col[2];
+}
+
 void M_ColorChooser_Draw(colorchooser_t cstype)
 {
 	mpic_t *p;
@@ -3753,6 +3769,11 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 #ifdef GLQUAKE
 		col = StringToRGB(r_skycolor.string);
 #endif
+		break;
+
+	case cs_outline:
+		sprintf(title, "Choose outline color");
+		col = StringToRGB(r_outline_color.string);
 		break;
 
 	default:
@@ -3870,6 +3891,11 @@ void M_ColorChooser_Key(int k, colorchooser_t cstype)
 #endif
 			break;
 
+		case cs_outline:
+			Cvar_Set(&r_outline_color, color);
+			M_Menu_View_f();
+			break;
+
 		default:
 			break;
 		}
@@ -3898,6 +3924,13 @@ void M_ColorChooser_Key(int k, colorchooser_t cstype)
 				green = col[1];
 				blue = col[2];
 #endif
+				break;
+
+			case cs_outline:
+				col = StringToRGB(r_outline_color.string);
+				red = col[0];
+				green = col[1];
+				blue = col[2];
 				break;
 
 			default:
@@ -4177,7 +4210,7 @@ qboolean M_Sound_Mouse_Event(const mouse_state_t *ms)
 
 #ifdef GLQUAKE
 
-#define	VIEW_ITEMS	14
+#define	VIEW_ITEMS	19
 
 int	view_cursor = 0;
 
@@ -4186,6 +4219,8 @@ menu_window_t view_slider_viewsize_window;
 menu_window_t view_slider_gamma_window;
 menu_window_t view_slider_contrast_window;
 menu_window_t view_slider_fov_window;
+menu_window_t view_slider_outline_players_window;
+menu_window_t view_slider_outline_monsters_window;
 
 void M_Menu_View_f (void)
 {
@@ -4245,32 +4280,58 @@ void M_View_Draw (void)
 	M_Print_GetPoint(16, 96, &lx, &ly, "          Powerup glow", view_cursor == 8);
 	M_DrawCheckbox(220, 96, r_powerupglow.value);
 
-	M_Print_GetPoint(16, 104, &lx, &ly, "        Show player id", view_cursor == 9);
-	M_DrawCheckbox(220, 104, scr_autoid.value);
+	M_Print_GetPoint(16, 112, &lx, &ly, "        Show player id", view_cursor == 10);
+	M_DrawCheckbox(220, 112, scr_autoid.value);
 
-	M_Print_GetPoint(16, 112, &lx, &ly, "      Fullbright skins", view_cursor == 10);
-	M_Print(220, 112, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
+	M_Print_GetPoint(16, 120, &lx, &ly, "  Show player outlines", view_cursor == 11);
+	r = r_outline_players.value / 3.0f;
+	M_DrawSliderInt(220, 120, r, r_outline_players.value, &view_slider_outline_players_window);
 
-	M_Print_GetPoint(16, 120, &lx, &ly, "Rotating items bobbing", view_cursor == 11);
-	M_DrawCheckbox(220, 120, cl_bobbing.value);
+	M_Print_GetPoint(16, 128, &lx, &ly, " Show monster outlines", view_cursor == 12);
+	r = r_outline_monsters.value / 3.0f;
+	M_DrawSliderInt(220, 128, r, r_outline_monsters.value, &view_slider_outline_monsters_window);
 
-	M_Print_GetPoint(16, 128, &lx, &ly, "      Hide dead bodies", view_cursor == 12);
-	M_DrawCheckbox(220, 128, cl_deadbodyfilter.value);
+	M_Print_GetPoint(16, 136, &lx, &ly, "         Outline color", view_cursor == 13);
+	x = 220 + ((menuwidth - 320) >> 1);
+	y = 136 + m_yofs;
+	col = StringToRGB(r_outline_color.string);
+	glDisable(GL_TEXTURE_2D);
+	glColor3ubv(col);
+	glBegin(GL_QUADS);
+	glVertex2f(x, y);
+	glVertex2f(x + 32, y);
+	glVertex2f(x + 32, y + 8);
+	glVertex2f(x, y + 8);
+	glEnd();
+	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
 
-	M_Print_GetPoint(16, 136, &lx, &ly, "             Hide gibs", view_cursor == 13);
-	M_DrawCheckbox(220, 136, cl_gibfilter.value);
+	M_Print_GetPoint(16, 144, &lx, &ly, "   Show bounding boxes", view_cursor == 14);
+	M_DrawCheckbox(220, 144, cl_bbox.value);
+
+	M_Print_GetPoint(16, 152, &lx, &ly, "      Fullbright skins", view_cursor == 15);
+	M_Print(220, 152, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
+
+	M_Print_GetPoint(16, 160, &lx, &ly, "Rotating items bobbing", view_cursor == 16);
+	M_DrawCheckbox(220, 160, cl_bobbing.value);
+
+	M_Print_GetPoint(16, 168, &lx, &ly, "      Hide dead bodies", view_cursor == 17);
+	M_DrawCheckbox(220, 168, cl_deadbodyfilter.value);
+
+	M_Print_GetPoint(16, 176, &lx, &ly, "             Hide gibs", view_cursor == 18);
+	M_DrawCheckbox(220, 176, cl_gibfilter.value);
 
 	view_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	view_window.h = ly - view_window.y + 8;
 
 	// don't draw cursor if we're on a spacing line
-	if (view_cursor == 3)
+	if (view_cursor == 3 || view_cursor == 9)
 		return;
 
 	// cursor
 	M_DrawCharacter (200, 32 + view_cursor * 8, 12+((int)(realtime*4)&1));
 
-	if (view_cursor == 9)
+	if (view_cursor == 10)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Shows the player's name on top");
@@ -4306,6 +4367,18 @@ void M_View_KeyboardSlider(int dir)
 		scr_fov.value += dir * 5;
 		scr_fov.value = bound(90, scr_fov.value, 130);
 		Cvar_SetValue(&scr_fov, scr_fov.value);
+		break;
+
+	case 11:// player outlines
+		r_outline_players.value += dir * 1;
+		r_outline_players.value = bound(0, r_outline_players.value, 3);
+		Cvar_SetValue(&r_outline_players, r_outline_players.value);
+		break;
+
+	case 12:// monster outlines
+		r_outline_monsters.value += dir * 1;
+		r_outline_monsters.value = bound(0, r_outline_monsters.value, 3);
+		Cvar_SetValue(&r_outline_monsters, r_outline_monsters.value);
 		break;
 	}
 }
@@ -4378,26 +4451,34 @@ void M_View_Key (int k)
 			Cvar_SetValue(&r_powerupglow, !r_powerupglow.value);
 			break;
 
-		case 9:
+		case 10:
 			Cvar_SetValue(&scr_autoid, !scr_autoid.value);
 			break;
 
-		case 10:
+		case 13:
+			M_Menu_Outline_ColorChooser_f();
+			break;
+
+		case 14:
+			Cvar_SetValue(&cl_bbox, !cl_bbox.value);
+			break;
+
+		case 15:
 			newvalue = r_fullbrightskins.value + 1;
 			if (newvalue > 2)
 				newvalue = 0;
 			Cvar_SetValue(&r_fullbrightskins, newvalue);
 			break;
 
-		case 11:
+		case 16:
 			Cvar_SetValue(&cl_bobbing, !cl_bobbing.value);
 			break;
 
-		case 12:
+		case 17:
 			Cvar_SetValue(&cl_deadbodyfilter, !cl_deadbodyfilter.value);
 			break;
 
-		case 13:
+		case 18:
 			Cvar_SetValue(&cl_gibfilter, !cl_gibfilter.value);
 			break;
 
@@ -4406,9 +4487,9 @@ void M_View_Key (int k)
 		}
 	}
 
-	if (k == K_UPARROW && view_cursor == 3)
+	if (k == K_UPARROW && (view_cursor == 3 || view_cursor == 9))
 		view_cursor--;
-	else if (k == K_DOWNARROW && view_cursor == 3)
+	else if (k == K_DOWNARROW && (view_cursor == 3 || view_cursor == 9))
 		view_cursor++;
 }
 
@@ -4446,6 +4527,18 @@ void M_View_MouseSlider(int k, const mouse_state_t *ms)
 			M_Mouse_Select_Column(&view_slider_fov_window, ms, 9, &slider_pos);
 			scr_fov.value = bound(90, (slider_pos * 5) + 90, 130);
 			Cvar_SetValue(&scr_fov, scr_fov.value);
+			break;
+
+		case 11:// player outlines
+			M_Mouse_Select_Column(&view_slider_outline_players_window, ms, 4, &slider_pos);
+			r_outline_players.value = bound(0, slider_pos, 3);
+			Cvar_SetValue(&r_outline_players, r_outline_players.value);
+			break;
+
+		case 12:// monster outlines
+			M_Mouse_Select_Column(&view_slider_outline_monsters_window, ms, 4, &slider_pos);
+			r_outline_monsters.value = bound(0, slider_pos, 3);
+			Cvar_SetValue(&r_outline_monsters, r_outline_monsters.value);
 			break;
 
 		default:
@@ -8567,6 +8660,10 @@ void M_Draw (void)
 	case m_sky_colorchooser:
 		M_ColorChooser_Draw(cs_sky);
 		break;
+
+	case m_outline_colorchooser:
+		M_ColorChooser_Draw(cs_outline);
+		break;
 #endif
 
 	case m_videomodes:
@@ -8682,6 +8779,7 @@ void M_Keydown (int key)
 	case m_weapons:			M_Weapons_Key(key); return;
 	case m_screenflashes:	M_ScreenFlashes_Key(key); return;
 	case m_sky_colorchooser: M_ColorChooser_Key(key, cs_sky); break;
+	case m_outline_colorchooser: M_ColorChooser_Key(key, cs_outline); break;
 #endif
 	case m_videomodes:		M_VideoModes_Key (key); return;
 	case m_nehdemos:		M_NehDemos_Key (key); return;
@@ -8740,6 +8838,7 @@ qboolean Menu_Mouse_Event(const mouse_state_t* ms)
 	case m_mods:			return M_Mods_Mouse_Event(ms);
 	case m_crosshair_colorchooser: return M_ColorChooser_Mouse_Event(ms, cs_crosshair);
 	case m_sky_colorchooser: return M_ColorChooser_Mouse_Event(ms, cs_sky);
+	case m_outline_colorchooser: return M_ColorChooser_Mouse_Event(ms, cs_outline);
 	case m_net:				return M_Net_Mouse_Event(ms);
 	case m_lanconfig:		return M_LanConfig_Mouse_Event(ms);
 	case m_quit:			return M_Quit_Mouse_Event(ms);
