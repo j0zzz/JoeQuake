@@ -1903,9 +1903,9 @@ void R_DrawAliasModel (entity_t *ent)
 		float	fovscale = 1.0f;
 		int		hand_offset = cl_hand.value == 1 ? -3 : cl_hand.value == 2 ? 3 : 0;
 
-		if (scr_fov.value > 90.f && cl_gun_fovscale.value)
+		if (r_refdef.basefov > 90.f && cl_gun_fovscale.value)
 		{
-			fovscale = tan(scr_fov.value * (0.5f * M_PI / 180.f));
+			fovscale = tan(r_refdef.basefov * (0.5f * M_PI / 180.f));
 			fovscale = 1.f + (fovscale - 1.f) * cl_gun_fovscale.value;
 		}
 

@@ -257,6 +257,8 @@ void IN_Commands (void)
 
 static void IN_MouseMove (usercmd_t *cmd)
 {
+	float	sens;
+	
 	if (m_filter.value)
 	{
 		mouse_x = (mx + old_mouse_x) * 0.5;
@@ -283,8 +285,11 @@ static void IN_MouseMove (usercmd_t *cmd)
 		}
 		else
 		{
-			mouse_x *= ((mousespeed * m_accel_factor) + sensitivity.value);
-			mouse_y *= ((mousespeed * m_accel_factor) + sensitivity.value);
+			sens = tan(DEG2RAD(r_refdef.basefov) * 0.5f) / tan(DEG2RAD(scr_fov.value) * 0.5f);
+			sens *= ((mousespeed * m_accel_factor) + sensitivity.value);
+
+			mouse_x *= sens;
+			mouse_y *= sens;
 		}
 	}
 	else
@@ -296,8 +301,11 @@ static void IN_MouseMove (usercmd_t *cmd)
 		}
 		else
 		{
-			mouse_x *= sensitivity.value;
-			mouse_y *= sensitivity.value;
+			sens = tan(DEG2RAD(r_refdef.basefov) * 0.5f) / tan(DEG2RAD(scr_fov.value) * 0.5f);
+			sens *= sensitivity.value;
+
+			mouse_x *= sens;
+			mouse_y *= sens;
 		}
 	}
 

@@ -83,6 +83,8 @@ float		scr_conlines;		// lines of console to display
 float		oldscreensize, oldfov, oldsbar, oldwidescreenfov, oldsbarscale;
 cvar_t		scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
 cvar_t		scr_fov = {"fov", "100"};	// 10 - 170
+cvar_t		scr_zoomfov = {"zoom_fov", "30"};	// 10 - 170
+cvar_t		scr_zoomspeed = {"zoom_speed", "8"};
 cvar_t		scr_consize = {"scr_consize", "0.5"};
 cvar_t		scr_conspeed = {"scr_conspeed", "1000"};
 cvar_t		scr_centertime = {"scr_centertime", "2"};
@@ -272,6 +274,64 @@ float InvCalcFov (float fov_y, float width, float height)
 }
 
 /*
+====================
+SCR_ToggleZoom_f
+====================
+*/
+static void SCR_ToggleZoom_f (void)
+{
+	if (cl.zoomdir)
+		cl.zoomdir = -cl.zoomdir;
+	else
+		cl.zoomdir = cl.zoom > 0.5f ? -1.f : 1.f;
+}
+
+/*
+====================
+SCR_ZoomDown_f
+====================
+*/
+static void SCR_ZoomDown_f (void)
+{
+	cl.zoomdir = 1.f;
+}
+
+/*
+====================
+SCR_ZoomUp_f
+====================
+*/
+static void SCR_ZoomUp_f (void)
+{
+	cl.zoomdir = -1.f;
+}
+
+/*
+====================
+SCR_UpdateZoom
+====================
+*/
+void SCR_UpdateZoom (void)
+{
+	float delta = cl.zoomdir * scr_zoomspeed.value * (cl.time - cl.oldtime);
+	if (!delta)
+		return;
+
+	cl.zoom += delta;
+	if (cl.zoom >= 1.f)
+	{
+		cl.zoom = 1.f;
+		cl.zoomdir = 0.f;
+	}
+	else if (cl.zoom <= 0.f)
+	{
+		cl.zoom = 0.f;
+		cl.zoomdir = 0.f;
+	}
+	vid.recalc_refdef = 1;
+}
+
+/*
 =================
 SCR_CalcRefdef
 
@@ -281,8 +341,8 @@ Internal use only
 */
 static void SCR_CalcRefdef (void)
 {
-	int		h, scaled_sb_lines;
-	float		size;
+	int			h, scaled_sb_lines;
+	float		size, zoom;
 	qboolean	full = false;
 
 	scr_fullupdate = 0;		// force a background redraw
@@ -304,6 +364,10 @@ static void SCR_CalcRefdef (void)
 		Cvar_SetValue (&scr_fov, 10);
 	if (scr_fov.value > 170)
 		Cvar_SetValue (&scr_fov, 170);
+	if (scr_zoomfov.value < 10)
+		Cvar_SetValue (&scr_zoomfov, 10);
+	if (scr_zoomfov.value > 170)
+		Cvar_SetValue (&scr_zoomfov, 170);
 
 // intermission is always full screen	
 	size = cl.intermission ? 120 : scr_viewsize.value;
@@ -363,7 +427,10 @@ static void SCR_CalcRefdef (void)
 	else 
 		r_refdef.vrect.y = (h - r_refdef.vrect.height) / 2;
 
-	r_refdef.fov_x = scr_fov.value;
+	zoom = cl.zoom;
+	zoom *= zoom * (3.f - 2.f * zoom); // smoothstep
+	r_refdef.basefov = LERP(scr_fov.value, scr_zoomfov.value, zoom);
+	r_refdef.fov_x = r_refdef.basefov;
 	if (scr_widescreen_fov.value)
 	{
 		float aspectRatio = (float)r_refdef.vrect.width / (float)r_refdef.vrect.height;
@@ -435,6 +502,8 @@ SCR_Init
 void SCR_Init (void)
 {
 	Cvar_Register (&scr_fov);
+	Cvar_Register (&scr_zoomfov);
+	Cvar_Register (&scr_zoomspeed);
 	Cvar_Register (&scr_viewsize);
 	Cvar_Register (&scr_consize);
 	Cvar_Register (&scr_conspeed);
@@ -459,6 +528,9 @@ void SCR_Init (void)
 	Cmd_AddCommand ("screenshot", SCR_ScreenShot_f);
 	Cmd_AddCommand ("sizeup", SCR_SizeUp_f);
 	Cmd_AddCommand ("sizedown", SCR_SizeDown_f);
+	Cmd_AddCommand ("togglezoom", SCR_ToggleZoom_f);
+	Cmd_AddCommand ("+zoom", SCR_ZoomDown_f);
+	Cmd_AddCommand ("-zoom", SCR_ZoomUp_f);
 
 	SCR_LoadPics();
 	SCR_LoadCursorImage();

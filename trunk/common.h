@@ -47,6 +47,8 @@ typedef enum {false, true}	qboolean;
 
 #define bound(a, b, c) ((a) >= (c) ? (a) : (b) < (a) ? (a) : (b) > (c) ? (c) : (b))
 
+#define LERP(a, b, t) ((a) + ((b)-(a))*(t))
+
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
 
 //============================================================================

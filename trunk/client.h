@@ -254,6 +254,9 @@ typedef struct
 	double		freefly_last_time;
 	vec3_t		freefly_origin;
 	vec3_t		freefly_angles;
+
+	float		zoom;
+	float		zoomdir;
 } client_state_t;
 
 extern	client_state_t	cl;
