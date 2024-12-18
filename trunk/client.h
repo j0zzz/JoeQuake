@@ -292,6 +292,7 @@ extern	cvar_t	cl_demospeed;
 extern	cvar_t	cl_maxfps;
 extern	cvar_t	cl_advancedcompletion;
 extern	cvar_t	cl_viewweapons;
+extern	cvar_t	cl_autodemo;
 extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_confirmquit;

@@ -2892,7 +2892,7 @@ qboolean M_Mouse_Mouse_Event(const mouse_state_t *ms)
 //=============================================================================
 /* MISC OPTIONS MENU */
 
-#define	MISC_ITEMS	7
+#define	MISC_ITEMS	11
 
 int	misc_cursor = 0;
 
@@ -2925,43 +2925,55 @@ void M_Misc_Draw(void)
 	M_Print_GetPoint(16, 40, &lx, &ly, "    Power Bunnyhopping", misc_cursor == 1);
 	M_DrawCheckbox(220, 40, cl_forwardspeed.value == 200 && (in_speed.state & 1));
 
-	M_Print_GetPoint(16, 48, &lx, &ly, "   Demo playback speed", misc_cursor == 2);
+	M_Print_GetPoint(16, 48, &lx, &ly, "           Demo player", misc_cursor == 2);
+	M_DrawCheckbox(220, 48, cl_demoui.value);
+
+	M_Print_GetPoint(16, 56, &lx, &ly, "   Demo playback speed", misc_cursor == 3);
 	//r = (cl_demospeed.value - demo_speed_values[0]) / (demo_speed_values[DEMO_SPEED_ITEMS-1] - demo_speed_values[0]);
 	r = (float)FindSliderItemIndex(demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed) / (DEMO_SPEED_ITEMS - 1);
-	M_DrawSliderFloat2(220, 48, r, cl_demospeed.value, &misc_slider_demospeed_window);
+	M_DrawSliderFloat2(220, 56, r, cl_demospeed.value, &misc_slider_demospeed_window);
 
-	M_Print_GetPoint(-24, 64, &lx, &ly, "Advanced command completion", misc_cursor == 4);
-	M_DrawCheckbox(220, 64, cl_advancedcompletion.value);
+	M_Print_GetPoint(0, 64, &lx, &ly, "Automatic demo recording", misc_cursor == 4);
+	M_DrawCheckbox(220, 64, cl_autodemo.value);
 
-	M_Print_GetPoint(16, 72, &lx, &ly, "      Cvar saving mode", misc_cursor == 5);
-	M_Print(220, 72, !cvar_savevars.value ? "default" : cvar_savevars.value == 2 ? "save all" : "save modified");
+	M_Print_GetPoint(-8, 72, &lx, &ly, "Precise intermission time", misc_cursor == 5);
+	M_DrawCheckbox(220, 72, scr_precisetime.value);
 
-	M_Print_GetPoint(16, 80, &lx, &ly, "     Confirm when quit", misc_cursor == 6);
-	M_DrawCheckbox(220, 80, cl_confirmquit.value);
+	M_Print_GetPoint(16, 88, &lx, &ly, "            Aim assist", misc_cursor == 7);
+	M_DrawCheckbox(220, 88, sv_aim.value < 1);
+
+	M_Print_GetPoint(-24, 96, &lx, &ly, "Advanced command completion", misc_cursor == 8);
+	M_DrawCheckbox(220, 96, cl_advancedcompletion.value);
+
+	M_Print_GetPoint(16, 104, &lx, &ly, "      Cvar saving mode", misc_cursor == 9);
+	M_Print(220, 104, !cvar_savevars.value ? "default" : cvar_savevars.value == 2 ? "save all" : "save modified");
+
+	M_Print_GetPoint(16, 112, &lx, &ly, "     Confirm when quit", misc_cursor == 10);
+	M_DrawCheckbox(220, 112, cl_confirmquit.value);
 
 	misc_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	misc_window.h = ly - misc_window.y + 8;
 
 	// don't draw cursor if we're on a spacing line
-	if (misc_cursor == 3)
+	if (misc_cursor == 6)
 		return;
 
 	// cursor
 	M_DrawCharacter(200, 32 + misc_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 
-	if (misc_cursor == 4)
+	if (misc_cursor == 8)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Shows a list of relevant commands when");
 		M_Print(2 * 8, 176 + 8 * 4, "pressing the TAB key for completion");
 	}
-	else if (misc_cursor == 5)
+	else if (misc_cursor == 9)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Defines which console variables");
 		M_Print(2 * 8, 176 + 8 * 4, "are saved when exiting the game");
 	}
-	else if (misc_cursor == 6)
+	else if (misc_cursor == 10)
 	{
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Shows a confirmation screen");
@@ -2975,7 +2987,7 @@ void M_Misc_KeyboardSlider(int dir)
 
 	switch (misc_cursor)
 	{
-	case 2:	// demo speed
+	case 3:	// demo speed
 		AdjustSliderBasedOnArrayOfValues(dir, demo_speed_values, DEMO_SPEED_ITEMS, &cl_demospeed);
 		break;
 
@@ -3026,18 +3038,37 @@ void M_Misc_Key(int k)
 			}
 			break;
 
+		case 2:
+			Cvar_SetValue(&cl_demoui, !cl_demoui.value);
+			break;
+
 		case 4:
-			Cvar_SetValue(&cl_advancedcompletion, !cl_advancedcompletion.value);
+			Cvar_SetValue(&cl_autodemo, !cl_autodemo.value);
 			break;
 
 		case 5:
+			Cvar_SetValue(&scr_precisetime, !scr_precisetime.value);
+			break;
+
+		case 7:
+			if (sv_aim.value == 1)
+				Cvar_SetValue (&sv_aim, 0.93);
+			else
+				Cvar_SetValue (&sv_aim, 1);
+			break;
+
+		case 8:
+			Cvar_SetValue(&cl_advancedcompletion, !cl_advancedcompletion.value);
+			break;
+
+		case 9:
 			newvalue = cvar_savevars.value + 1;
 			if (newvalue > 2)
 				newvalue = 0;
 			Cvar_SetValue(&cvar_savevars, newvalue);
 			break;
 
-		case 6:
+		case 10:
 			Cvar_SetValue(&cl_confirmquit, !cl_confirmquit.value);
 			break;
 
@@ -3083,9 +3114,9 @@ void M_Misc_Key(int k)
 		break;
 	}
 
-	if (k == K_UPARROW && misc_cursor == 3)
+	if (k == K_UPARROW && misc_cursor == 6)
 		misc_cursor--;
-	else if (k == K_DOWNARROW && misc_cursor == 3)
+	else if (k == K_DOWNARROW && misc_cursor == 6)
 		misc_cursor++;
 }
 
@@ -3101,7 +3132,7 @@ void M_Misc_MouseSlider(int k, const mouse_state_t *ms)
 	case K_MOUSE1:
 		switch (misc_cursor)
 		{
-		case 2:	// demo speed
+		case 3:	// demo speed
 			M_Mouse_Select_Column(&misc_slider_demospeed_window, ms, DEMO_SPEED_ITEMS, &slider_pos);
 			Cvar_SetValue(&cl_demospeed, demo_speed_values[slider_pos]);
 			break;
@@ -4336,6 +4367,18 @@ void M_View_Draw (void)
 		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
 		M_Print(2 * 8, 176 + 8 * 3, "Shows the player's name on top");
 		M_Print(2 * 8, 176 + 8 * 4, "of him when watching from outside");
+	}
+	else if (view_cursor == 11)
+	{
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Shows outlines of coop teammates");
+		M_Print(2 * 8, 176 + 8 * 4, "through walls");
+	}
+	else if (view_cursor == 12)
+	{
+		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 176 + 8 * 3, "Shows outlines of monsters through");
+		M_Print(2 * 8, 176 + 8 * 4, "walls (disabled for demo recording)");
 	}
 }
 
