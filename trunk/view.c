@@ -1408,13 +1408,13 @@ void SCR_DrawVolume (void)
 SCR_DrawMovementKeys
 ===============
 */
-void SCR_DrawMovementKeys (void)
+void SCR_DrawMovementKeys ()
 {
 	int		x, y, size = Sbar_GetScaledCharacterSize();
 	int		half_size = size / 2;
 	int		y_offset = 3 * size;
 	extern vrect_t	scr_vrect;
-	extern kbutton_t in_moveleft, in_moveright, in_forward, in_back, in_jump;
+	extern int show_movekeys_states[5];
 
 	if (!show_movekeys.value)
 		return;
@@ -1423,15 +1423,15 @@ void SCR_DrawMovementKeys (void)
 	x = scr_vrect.x + scr_vrect.width / 2;
 	y = scr_vrect.y + scr_vrect.height / 2;
 
-	if (in_forward.state & 1)
+	if (show_movekeys_states[0] & 1)
 		Draw_Character(x - half_size, y - half_size - size, '^', true);
-	if (in_back.state & 1)
+	if (show_movekeys_states[1] & 1)
 		Draw_Character(x - half_size, y - half_size + size, '_', true);
-	if (in_moveleft.state & 1)
+	if (show_movekeys_states[2] & 1)
 		Draw_Character(x - half_size - size, y - half_size, '<', true);
-	if (in_moveright.state & 1)
+	if (show_movekeys_states[3] & 1)
 		Draw_Character(x - half_size + size, y - half_size, '>', true);
-	if (in_jump.state & 1)
+	if (show_movekeys_states[4] & 1)
 		Draw_Character(x - half_size + size, y - half_size - size, 'j', true);
 }
 

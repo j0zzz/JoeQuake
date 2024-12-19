@@ -62,7 +62,8 @@ int messagesReceived = 0;
 int unreliableMessagesSent = 0;
 int unreliableMessagesReceived = 0;
 
-cvar_t	net_messagetimeout = {"net_messagetimeout", "300"};
+static qboolean OnChange_net_messagetimeout (cvar_t *var, char *string);
+cvar_t	net_messagetimeout = {"net_messagetimeout", "300", 0, OnChange_net_messagetimeout};
 cvar_t	net_connectsearch = {"net_connectsearch", "1"};
 cvar_t	net_connecttimeout = {"net_connecttimeout", "10"};	// joe: qkick/qflood protection from ProQuake
 cvar_t	net_getdomainname = {"net_getdomainname", "0"};
@@ -124,6 +125,25 @@ unsigned _lrotr (unsigned x, int s)
 	return (x >> s) | (x << (32 - s));
 }
 #endif
+
+int show_movekeys_states[5];
+
+static qboolean OnChange_net_messagetimeout (cvar_t *var, char *string)
+{
+	// look for movement keys information
+	if (strlen(string) == 7 && strstr(string, "mk") == string)
+	{
+		//Con_Printf("%s\n", string);
+		for (int i = 0; i < 5; i++)
+		{
+			show_movekeys_states[i] = string[i+2] - '0';
+		}
+		return true;
+	}
+	
+	// if no movement key info found, update the cvar the regular way
+	return false;
+}
 
 /*
 ===================

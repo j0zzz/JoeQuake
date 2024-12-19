@@ -456,6 +456,8 @@ void SV_ReadClientMove (usercmd_t *move)
 		host_client->edict->v.impulse = i;
 }
 
+extern kbutton_t in_moveleft, in_moveright, in_forward, in_back, in_jump;
+
 /*
 ===================
 SV_ReadClientMessage
@@ -480,6 +482,9 @@ nextmsg:
 			return true;
 
 		MSG_BeginReading ();
+
+		//joe: send movement keys
+		Host_ClientCommands("net_messagetimeout mk%i%i%i%i%i\n", in_forward.state, in_back.state, in_moveleft.state, in_moveright.state, in_jump.state);
 
 		while (1)
 		{
