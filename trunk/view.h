@@ -68,6 +68,11 @@ float _view_temp_float;
 (_view_temp_int = Sbar_GetScaledCharacterSize(), _view_temp_float = Sbar_GetScaleAmount(),\
 ((var##_y.value < 0) ? vid.height - (int)(sb_lines * _view_temp_float) + _view_temp_int * var##_y.value : _view_temp_int * var##_y.value))
 
+typedef enum
+{
+	mk_forward, mk_back, mk_moveleft, mk_moveright, mk_jump, NUM_MOVEMENT_KEYS
+} movekeytype_t;
+
 void V_Init (void);
 void V_RenderView (void);
 

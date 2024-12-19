@@ -126,16 +126,16 @@ unsigned _lrotr (unsigned x, int s)
 }
 #endif
 
-int show_movekeys_states[5];
+movekeytype_t show_movekeys_states[NUM_MOVEMENT_KEYS];
 
 static qboolean OnChange_net_messagetimeout (cvar_t *var, char *string)
 {
 	char *mkstart;
 	
 	// look for movement keys information
-	if ((mkstart = strstr(string, "mk")) && strlen(mkstart) == 7)
+	if ((mkstart = strstr(string, "mk")) && strlen(mkstart) == (NUM_MOVEMENT_KEYS + 2))
 	{
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < NUM_MOVEMENT_KEYS; i++)
 			show_movekeys_states[i] = mkstart[i+2] - '0';
 		return true;
 	}
