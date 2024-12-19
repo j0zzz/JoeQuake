@@ -130,14 +130,14 @@ int show_movekeys_states[5];
 
 static qboolean OnChange_net_messagetimeout (cvar_t *var, char *string)
 {
+	char *mkstart;
+	
 	// look for movement keys information
-	if (strlen(string) == 7 && strstr(string, "mk") == string)
+	if ((mkstart = strstr(string, "mk")) && strlen(mkstart) == 7)
 	{
 		//Con_Printf("%s\n", string);
 		for (int i = 0; i < 5; i++)
-		{
-			show_movekeys_states[i] = string[i+2] - '0';
-		}
+			show_movekeys_states[i] = mkstart[i+2] - '0';
 		return true;
 	}
 	
