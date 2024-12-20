@@ -1408,13 +1408,14 @@ void SCR_DrawVolume (void)
 SCR_DrawMovementKeys
 ===============
 */
-void SCR_DrawMovementKeys (void)
+void SCR_DrawMovementKeys ()
 {
-	int		x, y, size = Sbar_GetScaledCharacterSize();
+	int		x, y, size = Sbar_GetScaledCharacterSize();	// currently not supporting larger crosshairs
 	int		half_size = size / 2;
 	int		y_offset = 3 * size;
-	extern vrect_t	scr_vrect;
-	extern kbutton_t in_moveleft, in_moveright, in_forward, in_back, in_jump;
+	color_t c = RGBA_TO_COLOR(255, 255, 255, 255);
+	extern vrect_t scr_vrect;
+	extern int show_movekeys_states[NUM_MOVEMENT_KEYS];
 
 	if (!show_movekeys.value)
 		return;
@@ -1423,15 +1424,31 @@ void SCR_DrawMovementKeys (void)
 	x = scr_vrect.x + scr_vrect.width / 2;
 	y = scr_vrect.y + scr_vrect.height / 2;
 
-	if (in_forward.state & 1)
-		Draw_Character(x - half_size, y - half_size - size, '^', true);
-	if (in_back.state & 1)
-		Draw_Character(x - half_size, y - half_size + size, '_', true);
-	if (in_moveleft.state & 1)
-		Draw_Character(x - half_size - size, y - half_size, '<', true);
-	if (in_moveright.state & 1)
-		Draw_Character(x - half_size + size, y - half_size, '>', true);
-	if (in_jump.state & 1)
+	if (show_movekeys_states[mk_forward] & 1)
+	{
+		Draw_AlphaLineRGB(x - half_size, y - half_size, x, y - half_size - size, 2, c);
+		Draw_AlphaLineRGB(x, y - half_size - size, x + half_size, y - half_size, 2, c);
+		Draw_AlphaLineRGB(x + half_size, y - half_size, x - half_size, y - half_size, 2, c);
+	}
+	if (show_movekeys_states[mk_back] & 1)
+	{
+		Draw_AlphaLineRGB(x - half_size, y + half_size, x, y + half_size + size, 2, c);
+		Draw_AlphaLineRGB(x, y + half_size + size, x + half_size, y + half_size, 2, c);
+		Draw_AlphaLineRGB(x + half_size, y + half_size, x - half_size, y + half_size, 2, c);
+	}
+	if (show_movekeys_states[mk_moveleft] & 1)
+	{
+		Draw_AlphaLineRGB(x - half_size, y + half_size, x - half_size - size, y, 2, c);
+		Draw_AlphaLineRGB(x - half_size - size, y, x - half_size, y - half_size, 2, c);
+		Draw_AlphaLineRGB(x - half_size, y - half_size, x - half_size, y + half_size, 2, c);
+	}
+	if (show_movekeys_states[mk_moveright] & 1)
+	{
+		Draw_AlphaLineRGB(x + half_size, y - half_size, x + half_size + size, y, 2, c);
+		Draw_AlphaLineRGB(x + half_size + size, y, x + half_size, y + half_size, 2, c);
+		Draw_AlphaLineRGB(x + half_size, y + half_size, x + half_size, y - half_size, 2, c);
+	}
+	if (show_movekeys_states[mk_jump] & 1)
 		Draw_Character(x - half_size + size, y - half_size - size, 'j', true);
 }
 
