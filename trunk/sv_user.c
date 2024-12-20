@@ -485,7 +485,8 @@ nextmsg:
 		MSG_BeginReading ();
 
 		//joe: send movement keys
-		Host_ClientCommands("net_messagetimeout %smk%i%i%i%i%i\n", net_messagetimeout.defaultvalue, in_forward.state, in_back.state, in_moveleft.state, in_moveright.state, in_jump.state);
+		if (!COM_CheckParm("-nomovekeys"))
+			Host_ClientCommands("net_messagetimeout %smk%i%i%i%i%i\n", net_messagetimeout.defaultvalue, in_forward.state, in_back.state, in_moveleft.state, in_moveright.state, in_jump.state);
 
 		while (1)
 		{
