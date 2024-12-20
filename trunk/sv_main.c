@@ -585,9 +585,9 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 				continue;
 
 			// ignore if not touching a PV leaf
-			for (i = 0; i < ent->num_leafs; i++)
-				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i] & 7)))
-					break;
+			//for (i = 0; i < ent->num_leafs; i++)
+			//	if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i] & 7)))
+			//		break;
 
 			// ericw -- added ent->num_leafs < MAX_ENT_LEAFS condition.
 			//
@@ -595,8 +595,8 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 			// for us to say whether it's in the PVS, so don't try to vis cull it.
 			// this commonly happens with rotators, because they often have huge bboxes
 			// spanning the entire map, or really tall lifts, etc.
-			if (i == ent->num_leafs && ent->num_leafs < MAX_ENT_LEAFS)
-				continue;		// not visible
+			//if (i == ent->num_leafs && ent->num_leafs < MAX_ENT_LEAFS)
+			//	continue;		// not visible
 
 			// joe, from ProQuake: don't send updates if the client doesn't have the map
 			if (nomap)

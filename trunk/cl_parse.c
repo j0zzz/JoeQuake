@@ -94,6 +94,7 @@ char *svc_strings[] =
 	"svc_localsound" // 56
 };
 
+vec3_t player_previous_origin;
 //=============================================================================
 
 void CL_InitModelnames (void)
@@ -830,6 +831,11 @@ void CL_ParseUpdate (int bits)
 		VectorCopy (ent->msg_angles[0], ent->angles);
 		ent->forcelink = true;
 	}
+
+	if (ent->modelindex == cl_modelindex[mi_player])
+	{
+		VectorCopy (ent->origin, player_previous_origin);
+	}
 }
 
 /*
@@ -1562,9 +1568,10 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_intermission:
-			HandleFinish(1);
-			vid.recalc_refdef = true;	// go to full screen
-			V_RestoreAngles ();
+			//HandleFinish(1);
+			//vid.recalc_refdef = true;	// go to full screen
+			//V_RestoreAngles ();
+			R_TeleportSplash(player_previous_origin);
 			break;
 
 		case svc_finale:
