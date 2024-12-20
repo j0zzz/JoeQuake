@@ -1003,6 +1003,10 @@ SV_SendClientDatagram
 */
 qboolean SV_SendClientDatagram (client_t *client)
 {
+	extern	cvar_t		net_messagetimeout;
+	extern	kbutton_t	in_moveleft, in_moveright, in_forward, in_back, in_jump;
+	char cmd[1024];
+
 	byte		buf[MAX_DATAGRAM];
 	sizebuf_t	msg;
 
@@ -1017,6 +1021,17 @@ qboolean SV_SendClientDatagram (client_t *client)
 
 	MSG_WriteByte (&msg, svc_time);
 	MSG_WriteFloat (&msg, sv.time);
+
+	//joe: send movement keys
+	if (!COM_CheckParm("-nomovekeys"))
+	{
+		snprintf(cmd, sizeof(cmd), "net_messagetimeout %smk%i%i%i%i%i\n",
+				 net_messagetimeout.defaultvalue, in_forward.state, in_back.state,
+				 in_moveleft.state, in_moveright.state, in_jump.state);
+
+		MSG_WriteByte (&msg, svc_stufftext);
+		MSG_WriteString (&msg, cmd);
+	}
 
 // add the client specific data to the datagram
 	SV_WriteClientdataToMessage (client->edict, &msg);
