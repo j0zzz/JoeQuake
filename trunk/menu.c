@@ -2082,6 +2082,19 @@ void M_Menu_Options_f (void)
 	CheckMPOptimized ();
 }
 
+void M_DebugWindow(menu_window_t *w)
+{
+#ifdef _DEBUG
+	{
+		color_t c = RGBA_TO_COLOR(255, 0, 0, 255);
+		Draw_AlphaLineRGB(w->x, w->y, w->x + w->w, w->y, 2, c);
+		Draw_AlphaLineRGB(w->x, w->y, w->x, w->y + w->h, 2, c);
+		Draw_AlphaLineRGB(w->x, w->y + w->h, w->x + w->w, w->y + w->h, 2, c);
+		Draw_AlphaLineRGB(w->x + w->w, w->y, w->x + w->w, w->y + w->h, 2, c);
+	}
+#endif
+}
+
 void M_DrawSlider(int x, int y, float range, menu_window_t *w)
 {
 	int	i;
@@ -2098,15 +2111,7 @@ void M_DrawSlider(int x, int y, float range, menu_window_t *w)
 	w->w = SLIDER_RANGE * 8;
 	w->h = 8;
 
-//#ifdef _DEBUG
-//	{
-//		color_t c = RGBA_TO_COLOR(255, 0, 0, 255);
-//		Draw_AlphaLineRGB(w->x, w->y, w->x + w->w, w->y, 2, c);
-//		Draw_AlphaLineRGB(w->x, w->y, w->x, w->y + w->h, 2, c);
-//		Draw_AlphaLineRGB(w->x, w->y + w->h, w->x + w->w, w->y + w->h, 2, c);
-//		Draw_AlphaLineRGB(w->x + w->w, w->y, w->x + w->w, w->y + w->h, 2, c);
-//	}
-//#endif
+	//M_DebugWindow(w);
 }
 
 void M_DrawSliderInt(int x, int y, float range, int value, menu_window_t *w)
@@ -3717,15 +3722,19 @@ typedef enum
 	cs_crosshair, cs_sky, cs_outline 
 } colorchooser_t;
 
-#define	COLORCHOOSER_ITEMS	5
+#define	COLORCHOOSER_ITEMS			5
+#define	COLORCHOOSER_PALETTE_SIZE	16
 
 int red, green, blue;
 int	colorchooser_cursor = 0;
+int	colorchooser_palette_row, colorchooser_palette_column;
+qboolean is_palette_selected;
 
 menu_window_t colorchooser_window;
 menu_window_t colorchooser_slider_red_window;
 menu_window_t colorchooser_slider_green_window;
 menu_window_t colorchooser_slider_blue_window;
+menu_window_t colorchooser_palette_window;
 
 void M_Menu_Crosshair_ColorChooser_f(void)
 {
@@ -3781,9 +3790,9 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	mpic_t *p;
 	float r;
 	char title[MAX_QPATH];
-	int x, y, square_size = 96, lx = 0, ly = 0;;
+	int x, y, square_size = 48, lx = 0, ly = 0;
 #ifdef GLQUAKE
-	byte *col;
+	byte *col, *palcol;
 #endif
 
 	switch (cstype)
@@ -3834,10 +3843,34 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	colorchooser_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	colorchooser_window.h = ly - colorchooser_window.y + 8;
 
-	M_Print(16, 96, "Old");
-	x = 16 + ((menuwidth - 320) >> 1);
-	y = 108 + m_yofs;
-#ifdef GLQUAKE
+	glDisable(GL_TEXTURE_2D);
+	y = 96 + m_yofs;
+	for (int i = 0; i < COLORCHOOSER_PALETTE_SIZE; i++, y += 8)
+	{
+		x = 16 + ((menuwidth - 320) >> 1);
+		for (int j = 0; j < COLORCHOOSER_PALETTE_SIZE; j++, x += 8)
+		{
+			palcol = (byte *)&d_8to24table[j+(i*COLORCHOOSER_PALETTE_SIZE)];
+			glColor3ub(palcol[0], palcol[1], palcol[2]);
+			palcol += 3;
+			glBegin(GL_QUADS);
+			glVertex2f(x, y);
+			glVertex2f(x + 8, y);
+			glVertex2f(x + 8, y + 8);
+			glVertex2f(x, y + 8);
+			glEnd();
+		}
+	}
+	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
+	colorchooser_palette_window.x = 16 + ((menuwidth - 320) >> 1);
+	colorchooser_palette_window.y = 96 + m_yofs;
+	colorchooser_palette_window.w = 
+	colorchooser_palette_window.h = COLORCHOOSER_PALETTE_SIZE * 8;
+
+	M_Print(176, 96, "Old");
+	x = 176 + ((menuwidth - 320) >> 1);
+	y = 104 + m_yofs;
 	glDisable(GL_TEXTURE_2D);
 	glColor3ubv(col);
 	glBegin(GL_QUADS);
@@ -3849,9 +3882,9 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
 
-	M_Print(16 + square_size + 8, 96, "New");
-	x = 16 + square_size + 8 + ((menuwidth - 320) >> 1);
-	y = 108 + m_yofs;
+	M_Print(176 + square_size, 96, "New");
+	x = 176 + square_size + ((menuwidth - 320) >> 1);
+	y = 104 + m_yofs;
 	glDisable(GL_TEXTURE_2D);
 	glColor3ub(red, green, blue);
 	glBegin(GL_QUADS);
@@ -3862,7 +3895,8 @@ void M_ColorChooser_Draw(colorchooser_t cstype)
 	glEnd();
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
-#endif
+
+	//M_DebugWindow(&colorchooser_palette_window);
 
 	// don't draw cursor if we're on a spacing line
 	if (colorchooser_cursor == 3)
@@ -3901,7 +3935,7 @@ void M_ColorChooser_KeyboardSlider(int dir)
 void M_ColorChooser_Key(int k, colorchooser_t cstype)
 {
 	char color[MAX_QPATH];
-	byte *col;
+	byte *col, *palcol;
 
 	switch (k)
 	{
@@ -3935,42 +3969,52 @@ void M_ColorChooser_Key(int k, colorchooser_t cstype)
 	case K_ENTER:
 	case K_MOUSE1:
 		S_LocalSound("misc/menu2.wav");
-		switch (colorchooser_cursor)
+		if (is_palette_selected)
 		{
-		case 4:
-			sprintf(color, "%i %i %i", red, green, blue);
-			switch (cstype)
+			palcol = (byte *)&d_8to24table[colorchooser_palette_column+(colorchooser_palette_row*COLORCHOOSER_PALETTE_SIZE)];
+			red = palcol[0];
+			green = palcol[1];
+			blue = palcol[2];
+		}
+		else
+		{
+			switch (colorchooser_cursor)
 			{
-			case cs_crosshair:
-				col = StringToRGB(crosshaircolor.string);
-				red = col[0];
-				green = col[1];
-				blue = col[2];
-				break;
+			case 4:
+				sprintf(color, "%i %i %i", red, green, blue);
+				switch (cstype)
+				{
+				case cs_crosshair:
+					col = StringToRGB(crosshaircolor.string);
+					red = col[0];
+					green = col[1];
+					blue = col[2];
+					break;
 
-			case cs_sky:
+				case cs_sky:
 #ifdef GLQUAKE
-				col = StringToRGB(r_skycolor.string);
-				red = col[0];
-				green = col[1];
-				blue = col[2];
+					col = StringToRGB(r_skycolor.string);
+					red = col[0];
+					green = col[1];
+					blue = col[2];
 #endif
-				break;
+					break;
 
-			case cs_outline:
-				col = StringToRGB(r_outline_color.string);
-				red = col[0];
-				green = col[1];
-				blue = col[2];
+				case cs_outline:
+					col = StringToRGB(r_outline_color.string);
+					red = col[0];
+					green = col[1];
+					blue = col[2];
+					break;
+
+				default:
+					break;
+				}
 				break;
 
 			default:
 				break;
 			}
-			break;
-
-		default:
-			break;
 		}
 		return;
 
@@ -4051,7 +4095,9 @@ void M_ColorChooser_MouseSlider(int k, const mouse_state_t *ms)
 
 qboolean M_ColorChooser_Mouse_Event(const mouse_state_t *ms, colorchooser_t cstype)
 {
-	M_Mouse_Select(&colorchooser_window, ms, COLORCHOOSER_ITEMS, &colorchooser_cursor);
+	is_palette_selected = M_Mouse_Select_RowColumn(&colorchooser_palette_window, ms, COLORCHOOSER_PALETTE_SIZE, &colorchooser_palette_row, COLORCHOOSER_PALETTE_SIZE, &colorchooser_palette_column);
+	if (!is_palette_selected)
+		M_Mouse_Select(&colorchooser_window, ms, COLORCHOOSER_ITEMS, &colorchooser_cursor);
 
 	if (ms->button_up == 1) M_ColorChooser_Key(K_MOUSE1, cstype);
 	if (ms->button_up == 2) M_ColorChooser_Key(K_MOUSE2, cstype);
