@@ -152,7 +152,14 @@ Default value is `0`.
 
 ##### `r_outline_players`
 
-Draws outlines around players through walls as well. This feature is only enabled single player and cooperative mode.
+Draws outlines around players through walls. This feature is only enabled single player and cooperative mode.
+`0` - No outlines drawn  
+`1` - `3` - Outlines drawn with the set value as thickness
+Default value is `0`.
+
+##### `r_outline_monsters`
+
+Draws outlines around monsters through walls. This feature is disabled while demo recording.
 `0` - No outlines drawn  
 `1` - `3` - Outlines drawn with the set value as thickness
 Default value is `0`.
@@ -160,6 +167,12 @@ Default value is `0`.
 ##### `r_outline_color`
 
 Sets the color of outlines using RGB format, `0 0 0` (white) by default.
+
+##### `r_ambient`
+
+Overrides the ambient light level on any map.
+Allowed values are positive integer numbers which set the amount the light level to be increased with.
+Default value is `0`.
 
 #### Client
 
@@ -722,6 +735,14 @@ Default value is `90`.
 Show two decimal places of precision on the intermission screen time, `0` by
 default.
 
+##### `zoom_fov`
+
+Sets the FOV when zoomed in, `30` by default.
+
+##### `zoom_speed`
+
+Sets the speed of the zoom animation, `8` by default.
+
 #### Console
 
 ##### `gl_conalpha`
@@ -1131,3 +1152,14 @@ This command currently does not work on the win32 build.
 
 Like `freefly_copycam`, but append commands to the provided filename instead.
 This command is available on all builds.
+
+##### `togglezoom`
+
+Toggles between zoomed in and zoomed out views.
+The FOV of the zoomed in view is controlled by the `zoom_fov` cvar.
+The speed of the zoom animation is controlled by the `zoom_speed` cvar.
+
+##### `+zoom`
+##### `-zoom`
+
+Same as togglezoom, but with 2 different commands (aliases) for zooming in and out separately.

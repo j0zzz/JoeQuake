@@ -1,4 +1,43 @@
 
+ version 0.17.9 build 8148
+ -----------------------
+
+Added slightly better looking movement keys UI
+Added new feature to store movement keys in demo files
+	Movement keys stored as of now: +forward, +back, +moveleft, +moveright, +jump
+Added nicely animated zoom FOV and related commands from Ironwail (per user request)
+	New cvars: zoom_fov, zoom_speed
+	New commands: togglezoom, +zoom, -zoom
+Various changes in the Options menu
+	Color chooser menus: changes are auto-saved from now, instead you can Undo your pending changes
+	Color chooser menus: offering the entire Quake palette colors to select from
+	Mouse menu: sensitivity slider has higher resolution allowing lower values to set
+	Weapon menu: added slider for cl_gun_fovscale
+	Hud menu: added option for show_movekeys
+	Textures menu: added slider for anisotropic filtering
+	View menu: added new options to switch on players/monster wallhacked outlines, bounding boxes
+	Misc menu: added new options to toggle demo player UI, automatic demo recording, precise intermission time
+Added experimental wallhack for monster models by drawing their model outlines
+	New cvar: r_outline_monsters
+	The color of the outlines can controlled by the existing r_outline_color cvar
+	IMPORTANT: This feature is denied while demo recording!
+Supporting md3 models for r_outline_players cvar
+Fixed a bug on r2m8 when the timing ended on a cutscene (by Matthew Earl)
+Added support for LiveSplit autosplitter (by Sphere)
+	Any new JoeQuake version will immediately have autosplitting support
+Fixed crash with playdemo dzip and pause (by Matthew Earl)
+Fixed bug when JoeQuake sometimes showed an error "Couldn't set fullscreen DIB mode" after ALT-TAB
+Got rid of default auto-aim setting: changed value of sv_aim to 1 (was 0.93 by default)
+	A warning message is displayed if value < 0.93 is set (which is illegal for speedrunning)
+Added r_ambient cvar to control ambient light level of maps
+	Works the same way as it did in the software version of Quake
+	Valid values arte positive integer numbers, e.g.
+	0: no ambient light level added (default)
+	10: slightly lighter
+	50: very light
+	100: extremely light
+Got rid of legacy code which changed weapon position based on FOV
+
  version 0.17.8 build 8039
  -----------------------
 
