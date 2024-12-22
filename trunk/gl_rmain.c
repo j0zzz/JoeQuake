@@ -1832,7 +1832,7 @@ void R_DrawEntBbox(entity_t *ent)
 				break;
 
 		if (range->frame_max == 0)
-			R_DrawBbox(ent->origin, bbox_info->mins, bbox_info->maxs);
+			R_DrawBbox(ent->msg_origins[1], bbox_info->mins, bbox_info->maxs);
 	}
 }
 
