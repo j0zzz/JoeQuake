@@ -3415,7 +3415,7 @@ void M_Hud_Draw(void)
 	M_Print_GetPoint(16, 184, &lx, &ly, "        Console height", hud_cursor == 19);
 	M_DrawSliderFloat(220, 184, scr_consize.value, scr_consize.value, &hud_slider_consize_window);
 
-	M_Print_GetPoint(16, 192, &lx, &ly, "         Console speed", hud_cursor == 21);
+	M_Print_GetPoint(16, 192, &lx, &ly, "         Console speed", hud_cursor == 20);
 	r = (float)FindSliderItemIndex(console_speed_values, CONSOLE_SPEED_ITEMS, &scr_conspeed) / (CONSOLE_SPEED_ITEMS - 1);
 	M_DrawSliderInt(220, 192, r, scr_conspeed.value, &hud_slider_conspeed_window);
 
@@ -5698,6 +5698,7 @@ qboolean M_Decals_Mouse_Event(const mouse_state_t *ms)
 int	weapons_cursor = 0;
 
 menu_window_t weapons_window;
+menu_window_t weapons_slider_gun_fovscale_window;
 
 void M_Menu_Weapons_f(void)
 {
@@ -5899,7 +5900,7 @@ void M_Weapons_Draw(void)
 	DrawViewmodelType(220, 32);
 
 	M_Print_GetPoint(16, 40, &lx, &ly, "      Weapon FOV scale", weapons_cursor == 1);
-	M_DrawSliderFloat(220, 40, cl_gun_fovscale.value, cl_gun_fovscale.value, &weapons_window);
+	M_DrawSliderFloat(220, 40, cl_gun_fovscale.value, cl_gun_fovscale.value, &weapons_slider_gun_fovscale_window);
 
 	M_Print_GetPoint(16, 48, &lx, &ly, "     Weapon handedness", weapons_cursor == 2);
 	DrawHandType(220, 48);
@@ -5910,8 +5911,8 @@ void M_Weapons_Draw(void)
 	M_Print_GetPoint(16, 64, &lx, &ly, "     Weapon fire light", weapons_cursor == 4);
 	M_DrawCheckbox(220, 64, cl_muzzleflash.value);
 
-	M_Print_GetPoint(16, 80, &lx, &ly, "   Enable view weapons", weapons_cursor == 6);
-	M_DrawCheckbox(220, 80, cl_viewweapons.value);
+	M_Print_GetPoint(16, 72, &lx, &ly, "   Enable view weapons", weapons_cursor == 5);
+	M_DrawCheckbox(220, 72, cl_viewweapons.value);
 
 	M_Print_GetPoint(16, 88, &lx, &ly, "        True lightning", weapons_cursor == 7);
 	M_DrawCheckbox(220, 88, cl_truelightning.value);
@@ -5922,8 +5923,8 @@ void M_Weapons_Draw(void)
 	M_Print_GetPoint(16, 104, &lx, &ly, "    Grenade trail type", weapons_cursor == 9);
 	DrawGrenadeTrailType(220, 104);
 
-	M_Print_GetPoint(-32, 120, &lx, &ly, "Show grenade model as rocket", weapons_cursor == 11);
-	M_DrawCheckbox(220, 120, cl_rocket2grenade.value);
+	M_Print_GetPoint(-32, 112, &lx, &ly, "Show grenade model as rocket", weapons_cursor == 10);
+	M_DrawCheckbox(220, 112, cl_rocket2grenade.value);
 
 	M_Print_GetPoint(16, 128, &lx, &ly, "          Rocket light", weapons_cursor == 12);
 	M_DrawCheckbox(220, 128, r_rocketlight.value);
@@ -5944,7 +5945,7 @@ void M_Weapons_Draw(void)
 	weapons_window.h = ly - weapons_window.y + 8;
 
 	// don't draw cursor if we're on a spacing line
-	if (weapons_cursor == 5 || weapons_cursor == 10)
+	if (weapons_cursor == 6 || weapons_cursor == 11)
 		return;
 
 	// cursor
@@ -6006,73 +6007,73 @@ void M_Weapons_Key(int k)
 			Cvar_SetValue(&r_drawviewmodel, newvalue);
 			break;
 
-		case 1:
+		case 2:
 			newvalue = cl_hand.value + 1;
 			if (newvalue > 2)
 				newvalue = 0;
 			Cvar_SetValue(&cl_hand, newvalue);
 			break;
 
-		case 2:
+		case 3:
 			if (v_gunkick.value != 0)
 				Cvar_SetValue(&v_gunkick, 0);
 			else
 				Cvar_SetValue(&v_gunkick, 2);
 			break;
 
-		case 3:
+		case 4:
 			Cvar_SetValue(&cl_muzzleflash, !cl_muzzleflash.value);
 			break;
 
-		case 4:
+		case 5:
 			Cvar_SetValue(&cl_viewweapons, !cl_viewweapons.value);
 			break;
 
-		case 6:
+		case 7:
 			Cvar_SetValue(&cl_truelightning, !cl_truelightning.value);
 			break;
 
-		case 7:
+		case 8:
 			newvalue = r_rockettrail.value + 1;
 			if (newvalue > 3)
 				newvalue = 0;
 			Cvar_SetValue(&r_rockettrail, newvalue);
 			break;
 
-		case 8:
+		case 9:
 			newvalue = r_grenadetrail.value + 1;
 			if (newvalue > 3)
 				newvalue = 0;
 			Cvar_SetValue(&r_grenadetrail, newvalue);
 			break;
 
-		case 9:
+		case 10:
 			Cvar_SetValue(&cl_rocket2grenade, !cl_rocket2grenade.value);
 			break;
 
-		case 11:
+		case 12:
 			Cvar_SetValue(&r_rocketlight, !r_rocketlight.value);
 			break;
 
-		case 12:
+		case 13:
 			newvalue = r_rocketlightcolor.value + 1;
 			if (newvalue > 5)
 				newvalue = 0;
 			Cvar_SetValue(&r_rocketlightcolor, newvalue);
 			break;
 
-		case 13:
+		case 14:
 			newvalue = r_explosiontype.value + 1;
 			if (newvalue > 3)
 				newvalue = 0;
 			Cvar_SetValue(&r_explosiontype, newvalue);
 			break;
 
-		case 14:
+		case 15:
 			Cvar_SetValue(&r_explosionlight, !r_explosionlight.value);
 			break;
 
-		case 15:
+		case 16:
 			newvalue = r_explosionlightcolor.value + 1;
 			if (newvalue > 5)
 				newvalue = 0;
@@ -6084,9 +6085,9 @@ void M_Weapons_Key(int k)
 		}
 	}
 
-	if (k == K_UPARROW && (weapons_cursor == 5 || weapons_cursor == 10))
+	if (k == K_UPARROW && (weapons_cursor == 6 || weapons_cursor == 11))
 		weapons_cursor--;
-	else if (k == K_DOWNARROW && (weapons_cursor == 5 || weapons_cursor == 10))
+	else if (k == K_DOWNARROW && (weapons_cursor == 6 || weapons_cursor == 11))
 		weapons_cursor++;
 }
 
