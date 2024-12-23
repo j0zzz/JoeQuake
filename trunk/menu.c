@@ -5952,6 +5952,20 @@ void M_Weapons_Draw(void)
 	M_DrawCharacter(200, 32 + weapons_cursor * 8, 12 + ((int)(realtime * 4) & 1));
 }
 
+void M_Weapons_KeyboardSlider(int dir)
+{
+	S_LocalSound("misc/menu3.wav");
+
+	switch (weapons_cursor)
+	{
+	case 1:
+		cl_gun_fovscale.value += dir * 0.1;
+		cl_gun_fovscale.value = bound(0, cl_gun_fovscale.value, 1);
+		Cvar_SetValue(&cl_gun_fovscale, cl_gun_fovscale.value);
+		break;
+	}
+}
+
 void M_Weapons_Key(int k)
 {
 	float newvalue;
@@ -5992,7 +6006,11 @@ void M_Weapons_Key(int k)
 		break;
 
 	case K_LEFTARROW:
+		M_Weapons_KeyboardSlider(-1);
+		break;
+
 	case K_RIGHTARROW:
+		M_Weapons_KeyboardSlider(1);
 		break;
 
 	case K_ENTER:
@@ -6091,12 +6109,39 @@ void M_Weapons_Key(int k)
 		weapons_cursor++;
 }
 
+void M_Weapons_MouseSlider(int k, const mouse_state_t *ms)
+{
+	int slider_pos;
+
+	switch (k)
+	{
+	case K_MOUSE2:
+		break;
+
+	case K_MOUSE1:
+		switch (weapons_cursor)
+		{
+		case 1:
+			M_Mouse_Select_Column(&weapons_slider_gun_fovscale_window, ms, 11, &slider_pos);
+			cl_gun_fovscale.value = bound(0, slider_pos * 0.1, 1);
+			Cvar_SetValue(&cl_gun_fovscale, cl_gun_fovscale.value);
+			break;
+
+		default:
+			break;
+		}
+		return;
+	}
+}
+
 qboolean M_Weapons_Mouse_Event(const mouse_state_t *ms)
 {
 	M_Mouse_Select(&weapons_window, ms, WEAPONS_ITEMS, &weapons_cursor);
 
 	if (ms->button_up == 1) M_Weapons_Key(K_MOUSE1);
 	if (ms->button_up == 2) M_Weapons_Key(K_MOUSE2);
+
+	if (ms->buttons[1]) M_Weapons_MouseSlider(K_MOUSE1, ms);
 
 	return true;
 }
