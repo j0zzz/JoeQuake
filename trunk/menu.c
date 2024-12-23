@@ -2930,7 +2930,7 @@ void M_Misc_Draw(void)
 	M_Print_GetPoint(16, 40, &lx, &ly, "    Power Bunnyhopping", misc_cursor == 1);
 	M_DrawCheckbox(220, 40, cl_forwardspeed.value == 200 && (in_speed.state & 1));
 
-	M_Print_GetPoint(16, 48, &lx, &ly, "           Demo player", misc_cursor == 2);
+	M_Print_GetPoint(16, 48, &lx, &ly, "        Demo player UI", misc_cursor == 2);
 	M_DrawCheckbox(220, 48, cl_demoui.value);
 
 	M_Print_GetPoint(16, 56, &lx, &ly, "   Demo playback speed", misc_cursor == 3);
@@ -3657,7 +3657,7 @@ void M_Hud_MouseSlider(int k, const mouse_state_t *ms)
 		switch (hud_cursor)
 		{
 		case 0:	// sbar scale
-			M_Mouse_Select_Column(&hud_slider_sbarscale_window, ms, 7, &slider_pos);
+			M_Mouse_Select_Column(&hud_slider_sbarscale_window, ms, 11, &slider_pos);
 			scr_sbarscale_amount.value = bound(1, (slider_pos * 0.5) + 1, scr_sbarscale_amount_max);
 			Cvar_SetValue(&scr_sbarscale_amount, scr_sbarscale_amount.value);
 			break;
