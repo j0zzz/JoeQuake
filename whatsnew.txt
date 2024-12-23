@@ -9,7 +9,7 @@ Added nicely animated zoom FOV and related commands from Ironwail (per user requ
 	New cvars: zoom_fov, zoom_speed
 	New commands: togglezoom, +zoom, -zoom
 Various changes in the Options menu
-	Color chooser menus: changes are auto-saved from now, instead you can Undo your pending changes
+	Color chooser menus: changes are auto-saved from now, instead you can undo your pending changes
 	Color chooser menus: offering the entire Quake palette colors to select from
 	Mouse menu: sensitivity slider has higher resolution allowing lower values to set
 	Weapon menu: added slider for cl_gun_fovscale
@@ -31,11 +31,11 @@ Got rid of default auto-aim setting: changed value of sv_aim to 1 (was 0.93 by d
 	A warning message is displayed if value < 0.93 is set (which is illegal for speedrunning)
 Added r_ambient cvar to control ambient light level of maps
 	Works the same way as it did in the software version of Quake
-	Valid values arte positive integer numbers, e.g.
-	0: no ambient light level added (default)
-	10: slightly lighter
-	50: very light
-	100: extremely light
+	Valid values are positive integer numbers, e.g.
+		0: no ambient light level added (default)
+		10: slightly lighter
+		50: very light
+		100: extremely light
 Got rid of legacy code which changed weapon position based on FOV
 
  version 0.17.8 build 8039
