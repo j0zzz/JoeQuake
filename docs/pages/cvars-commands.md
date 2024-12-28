@@ -334,6 +334,15 @@ Server and Client framerates are independent. This setting is turned on by defau
 
 Set the speed the camera moves when in freefly mode.  `800` by default.
 
+##### `freefly_drawpos`
+##### `freefly_drawpos_x`
+##### `freefly_drawpos_y`
+##### `freefly_drawpos_dp`
+
+Show the freefly camera's current origin.
+Position can be changed with the `_x` and `_y` coordinates.
+The number of decimal places can be changed with the `_dp` variable.
+
 ##### `cl_bbox`
 
 When set to 1 display bounding boxes for non-map entities. The bounding boxes
@@ -1145,6 +1154,15 @@ likewise the copied `move` and `pan` command must be themselves prefixed with a
 timestamp from the previous command.  This is because ReMaic's move and pan
 commands indicate when the movement should *start* rather than when it should
 end, so timestamps need to be shifted on by one.
+
+In addition, the command takes an optional argument with one of the following
+values, which changes the Remaic command that is copied:
+- `move`:  Output `move` and `pan` commands as described above.
+- `stay`:  Output a `stay` command at the camera's origin.
+- `view`:  Output a `view` command for the point the camera is looking at.
+- `endmove`:  Output an `end move` command.
+- `endpan`:  Output an `end pan` command.
+- `time`: Output the current time.
 
 This command currently does not work on the win32 build.
 

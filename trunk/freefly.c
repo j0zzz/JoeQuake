@@ -239,11 +239,11 @@ void FreeFly_DrawPos (void)
 	vec3_t pos;
 
 	if (cls.state != ca_connected || !cl.freefly_enabled || !freefly_show_pos.value)
-        return;
+		return;
 
 	dp = (int)freefly_show_pos_dp.value;
-    VectorCopy(cl.freefly_origin, pos);
-    pos[2] -= DEFAULT_VIEWHEIGHT;
+	VectorCopy(cl.freefly_origin, pos);
+	pos[2] -= DEFAULT_VIEWHEIGHT;
 
 	snprintf(str, sizeof(str), "\xd8\xba%+*.*f \xd9\xba%+*.*f \xda\xba%+*.*f",
 				dp + 6, dp, pos[0],
