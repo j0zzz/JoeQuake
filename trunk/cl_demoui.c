@@ -269,9 +269,9 @@ ChangeCam (int dir)
 	}
 	else
 	{
-		mode--;
 		if (mode == 0)
 			mode = DEMOCAM_MODE_COUNT;
+		mode--;
 	}
 
 	snprintf(cmd, sizeof(cmd), "democam_mode %d", mode);
