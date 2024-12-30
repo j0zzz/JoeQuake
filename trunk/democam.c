@@ -52,7 +52,7 @@ static qboolean DemoCam_CameraModeChange (struct cvar_s *var, char *value)
 }
 
 
-static void DemoCam_Toggle_f (void)
+static void DemoCam_FreeFly_Toggle_f (void)
 {
 	if (!cls.demoplayback)
 	{
@@ -331,7 +331,7 @@ void DemoCam_Init (void)
 	Cvar_Register(&democam_orbit_speed);
 	Cvar_Register(&democam_mode);
 
-	Cmd_AddCommand("freefly", DemoCam_Toggle_f);
+	Cmd_AddCommand("freefly", DemoCam_FreeFly_Toggle_f);
 	Cmd_AddCommand("orbit", DemoCam_Orbit_Toggle_f);
 	Cmd_AddCommand("freefly_copycam", DemoCam_CopyCam_f);
 	Cmd_AddCommand("freefly_writecam", DemoCam_WriteCam_f);
