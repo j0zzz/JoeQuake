@@ -330,9 +330,20 @@ Server and Client framerates are independent. This setting is turned on by defau
 +set cl_independentphysics 0
 ```
 
-##### `freefly_speed`
+##### `democam_mode`
 
-Set the speed the camera moves when in freefly mode.  `800` by default.
+Set the camera mode for demo playback.  This is an alternative to using the
+`freefly` and `orbit` toggles:
+
+- `0`:  First person mode.
+- `1`:  Freefly mode. See the `freefly` command for details.
+- `2`:  Orbit mode. See the `orbit` command for details.
+
+##### `freefly_speed`
+##### `orbit_speed`
+
+Set the speed the camera moves when in freefly or orbit mode (respectively).
+`800` / `200` by default.
 
 ##### `freefly_show_pos`
 ##### `freefly_show_pos_x`
@@ -1126,23 +1137,28 @@ Overrides the default `15` (NetQuake) protocol version with given value. Recogni
 This command primarly aims to keep JoeQuake compatible with mods.
 
 ##### `freefly`
+##### `orbit`
 
-Toggle freefly mode.  This is a free flying third-person camera that can be used
-during demo playback.  When enabled, the usual inputs will manipulate the
-camera's position and angle (`+moveleft`, `+moveright`, `+forward`, `+back`,
-mouse movements, etc).
+Toggle freefly / orbit mode.  Freefly is a free flying third-person camera that
+can be used during demo playback.  When enabled, the usual inputs will
+manipulate the camera's position and angle (`+moveleft`, `+moveright`,
+`+forward`, `+back`, mouse movements, etc).
 
-If the demo UI is enabled (`cl_demoui 1`) then click and drag with mouse2 to
-change the camera angle, or bind `+freeflymlook` (see below).  If the demo UI is
-disabled (`cl_demoui 0`) then mouse movements will effect the camera angle
-without need for extra key or button presses.
+Orbit is a camera that is locked to have the player in the centre of the screen.
+When enabled `+forward` and `+back` will move the camera closer and further from
+the player, and mouse movements will change the angle.
+
+In either mode, if the demo UI is enabled (`cl_demoui 1`) then click and drag
+with mouse2 to change the camera angle, or bind `+freeflymlook` (see below).  If
+the demo UI is disabled (`cl_demoui 0`) then mouse movements will effect the
+camera angle without need for extra key or button presses.
 
 ##### `+freeflymlook` / `-freeflymlook`
 
-When using freefly mode with the demo UI, this command makes mouse movements
-adjust the camera angle.  Use this as an alternative to mouse2.  You'll
-typically want to bind this to a key, which should be held down to adjust the
-camera angle.
+When using freefly or orbit mode with the demo UI, this command makes mouse
+movements adjust the camera angle.  Use this as an alternative to mouse2.
+You'll typically want to bind this to a key, which should be held down to adjust
+the camera angle.
 
 ##### `freefly_copycam`
 
