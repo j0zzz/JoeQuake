@@ -334,10 +334,10 @@ Server and Client framerates are independent. This setting is turned on by defau
 
 Set the speed the camera moves when in freefly mode.  `800` by default.
 
-##### `freefly_drawpos`
-##### `freefly_drawpos_x`
-##### `freefly_drawpos_y`
-##### `freefly_drawpos_dp`
+##### `freefly_show_pos`
+##### `freefly_show_pos_x`
+##### `freefly_show_pos_y`
+##### `freefly_show_pos_dp`
 
 Show the freefly camera's current origin.
 Position can be changed with the `_x` and `_y` coordinates.
