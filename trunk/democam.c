@@ -8,6 +8,7 @@ static cvar_t	democam_freefly_show_pos = {"freefly_show_pos", "0"};
 static cvar_t	democam_freefly_show_pos_x = { "freefly_show_pos_x", "-5" }; 
 static cvar_t	democam_freefly_show_pos_y = { "freefly_show_pos_y", "-3" };
 static cvar_t	democam_freefly_show_pos_dp = {"freefly_show_pos_dp", "1"};
+static cvar_t	democam_orbit_speed = {"orbit_speed", "200"};
 
 extern kbutton_t	in_freeflymlook, in_forward, in_back, in_moveleft, in_moveright, in_up, in_down, in_jump;
 
@@ -286,7 +287,7 @@ void DemoCam_UpdateOrigin (void)
 	}
 	else if (cl.democam_mode == DEMOCAM_MODE_ORBIT)
 	{
-		cl.democam_orbit_distance += -democam_freefly_speed.value * frametime
+		cl.democam_orbit_distance += -democam_orbit_speed.value * frametime
 			* (CL_KeyState(&in_forward) - CL_KeyState(&in_back));
 		cl.democam_orbit_distance = max(0, cl.democam_orbit_distance);
 	}
@@ -327,6 +328,7 @@ void DemoCam_Init (void)
 	Cvar_Register(&democam_freefly_show_pos_x);
 	Cvar_Register(&democam_freefly_show_pos_y);
 	Cvar_Register(&democam_freefly_show_pos_dp);
+	Cvar_Register(&democam_orbit_speed);
 	Cvar_Register(&democam_mode);
 
 	Cmd_AddCommand("freefly", DemoCam_Toggle_f);
