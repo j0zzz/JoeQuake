@@ -1818,6 +1818,7 @@ static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
 
 void R_DrawEntBbox(entity_t *ent)
 {
+	float *origin;
 	frame_range_t *range;
 	id1_bbox_t *bbox_info;
 
@@ -1832,7 +1833,13 @@ void R_DrawEntBbox(entity_t *ent)
 				break;
 
 		if (range->frame_max == 0)
-			R_DrawBbox(ent->msg_origins[1], bbox_info->mins, bbox_info->maxs);
+		{
+			if (gl_interpolate_moves.value)
+				origin = ent->origin;
+			else
+				origin = ent->msg_origins[0];
+			R_DrawBbox(origin, bbox_info->mins, bbox_info->maxs);
+		}
 	}
 }
 
