@@ -330,15 +330,6 @@ Server and Client framerates are independent. This setting is turned on by defau
 +set cl_independentphysics 0
 ```
 
-##### `democam_mode`
-
-Set the camera mode for demo playback.  This is an alternative to using the
-`freefly` and `orbit` toggles:
-
-- `0`:  First person mode.
-- `1`:  Freefly mode. See the `freefly` command for details.
-- `2`:  Orbit mode. See the `orbit` command for details.
-
 ##### `freefly_speed`
 ##### `orbit_speed`
 
@@ -1152,6 +1143,15 @@ In either mode, if the demo UI is enabled (`cl_demoui 1`) then click and drag
 with mouse2 to change the camera angle, or bind `+freeflymlook` (see below).  If
 the demo UI is disabled (`cl_demoui 0`) then mouse movements will effect the
 camera angle without need for extra key or button presses.
+
+##### `democam_mode`
+
+Set the camera mode for demo playback.  This is an alternative to using the
+`freefly` and `orbit` toggles:
+
+- `0`:  First person mode.
+- `1`:  Freefly mode. See the `freefly` command for details.
+- `2`:  Orbit mode. See the `orbit` command for details.
 
 ##### `+freeflymlook` / `-freeflymlook`
 

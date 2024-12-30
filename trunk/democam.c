@@ -1,8 +1,6 @@
 #include "quakedef.h"
 
 
-static qboolean	DemoCam_CameraModeChange (struct cvar_s *var, char *value);
-static cvar_t	democam_mode = {"democam_mode", "0", 0, DemoCam_CameraModeChange};
 static cvar_t	democam_freefly_speed = {"freefly_speed", "800"};
 static cvar_t	democam_freefly_show_pos = {"freefly_show_pos", "0"};
 static cvar_t	democam_freefly_show_pos_x = { "freefly_show_pos_x", "-5" }; 
@@ -13,21 +11,10 @@ static cvar_t	democam_orbit_speed = {"orbit_speed", "200"};
 extern kbutton_t	in_freeflymlook, in_forward, in_back, in_moveleft, in_moveright, in_up, in_down, in_jump;
 
 
-static qboolean DemoCam_CameraModeChange (struct cvar_s *var, char *value)
+
+static void DemoCam_SetMode (democam_mode_t mode)
 {
-	float float_val;
-	int int_val;
-
-	float_val = Q_atof(value);
-	int_val = (int)float_val;
-
-	if (int_val != float_val || int_val >= DEMOCAM_MODE_COUNT || int_val < 0)
-	{
-		Con_Printf("Invalid camera mode %f\n", float_val);
-		return false;
-	}
-
-	cl.democam_mode = int_val;
+	cl.democam_mode = mode;
 
 	if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
 	{
@@ -44,10 +31,43 @@ static qboolean DemoCam_CameraModeChange (struct cvar_s *var, char *value)
 		Con_Printf("\n");
 		cl.democam_last_time = Sys_DoubleTime();
 	} else {
-		Con_Printf("Freefly disabled.\n");
+		Con_Printf("First person mode enabled.\n");
+	}
+}
+
+
+static void DemoCam_Mode_f (void)
+{
+	int int_val;
+
+	if (!cls.demoplayback)
+	{
+		Con_Printf("Must be playing a demo to use demo cam.\n");
+		return;
 	}
 
-	return true;
+	if (Cmd_Argc() != 2)
+	{
+		Con_Printf("Camera mode is: %d\n"
+					"Usage:\n"
+					" %s   : show current mode\n"
+					" %s 0 : set first person mode\n"
+					" %s 1 : set freefly mode\n"
+					" %s 2 : set orbit mode\n",
+					cl.democam_mode,
+					Cmd_Argv(0), Cmd_Argv(0), Cmd_Argv(0), Cmd_Argv(0));
+		return;
+	}
+
+	int_val = Q_atoi(Cmd_Argv(1));
+
+	if (int_val >= DEMOCAM_MODE_COUNT || int_val < 0)
+	{
+		Con_Printf("Invalid camera mode %d\n", int_val);
+		return;
+	}
+
+	DemoCam_SetMode (int_val);
 }
 
 
@@ -60,9 +80,9 @@ static void DemoCam_FreeFly_Toggle_f (void)
 	}
 
 	if (cl.democam_mode != DEMOCAM_MODE_FREEFLY)
-		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_FREEFLY);
+		DemoCam_SetMode(DEMOCAM_MODE_FREEFLY);
 	else
-		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_FIRST_PERSON);
+		DemoCam_SetMode(DEMOCAM_MODE_FIRST_PERSON);
 }
 
 
@@ -75,9 +95,9 @@ static void DemoCam_Orbit_Toggle_f (void)
 	}
 
 	if (cl.democam_mode != DEMOCAM_MODE_ORBIT)
-		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_ORBIT);
+		DemoCam_SetMode(DEMOCAM_MODE_ORBIT);
 	else
-		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_FIRST_PERSON);
+		DemoCam_SetMode(DEMOCAM_MODE_FIRST_PERSON);
 }
 
 
@@ -218,9 +238,10 @@ void DemoCam_SetRefdef (void)
 	vec3_t forward, right, up;
 
 	if (!cls.demoplayback)
-		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_FIRST_PERSON);
-
-	if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
+	{
+		if (cl.democam_mode != DEMOCAM_MODE_FIRST_PERSON)
+			DemoCam_SetMode(DEMOCAM_MODE_FIRST_PERSON);
+	} else if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
 	{
 		if (cl.democam_freefly_reset)
 		{
@@ -329,11 +350,13 @@ void DemoCam_DrawPos (void)
 	Draw_String (x, y, str, true);
 }
 
+
 void DemoCam_InitClient (void)
 {
 	// Set any variables that shouldn't be zero.
 	cl.democam_orbit_distance = 300.;
 }
+
 
 void DemoCam_Init (void)
 {
@@ -343,8 +366,8 @@ void DemoCam_Init (void)
 	Cvar_Register(&democam_freefly_show_pos_y);
 	Cvar_Register(&democam_freefly_show_pos_dp);
 	Cvar_Register(&democam_orbit_speed);
-	Cvar_Register(&democam_mode);
 
+	Cmd_AddCommand("democam_mode", DemoCam_Mode_f);
 	Cmd_AddCommand("freefly", DemoCam_FreeFly_Toggle_f);
 	Cmd_AddCommand("orbit", DemoCam_Orbit_Toggle_f);
 	Cmd_AddCommand("freefly_copycam", DemoCam_CopyCam_f);
