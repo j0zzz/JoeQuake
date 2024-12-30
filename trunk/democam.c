@@ -43,7 +43,6 @@ static qboolean DemoCam_CameraModeChange (struct cvar_s *var, char *value)
 			Con_Printf(" Hold mouse2 or bind +freeflymlook to change view.");
 		Con_Printf("\n");
 		cl.democam_last_time = Sys_DoubleTime();
-		cl.democam_orbit_distance = 300;
 	} else {
 		Con_Printf("Freefly disabled.\n");
 	}
@@ -99,7 +98,7 @@ static char *DemoCam_GetRemaicCommand (const char *arg)
 		return NULL;
 	}
 
-	AngleVectors (cl.democam_angles, forward, right, up);
+	AngleVectors (cl.democam_freefly_angles, forward, right, up);
 	VectorMA(cl.democam_freefly_origin, 2048, forward, end);
 
 	memset (&trace, 0, sizeof(trace));
@@ -226,32 +225,42 @@ void DemoCam_SetRefdef (void)
 		if (cl.democam_freefly_reset)
 		{
 			VectorCopy (r_refdef.vieworg, cl.democam_freefly_origin);
-			VectorCopy (r_refdef.viewangles, cl.democam_angles);
-			cl.democam_angles[ROLL] = 0.;
+			VectorCopy (r_refdef.viewangles, cl.democam_freefly_angles);
+			cl.democam_freefly_angles[ROLL] = 0.;
 			cl.democam_freefly_reset = false;
 		} else {
 			VectorCopy (cl.democam_freefly_origin, r_refdef.vieworg);
-			VectorCopy (cl.democam_angles, r_refdef.viewangles);
+			VectorCopy (cl.democam_freefly_angles, r_refdef.viewangles);
 		}
 	}
 	else if (cl.democam_mode == DEMOCAM_MODE_ORBIT)
 	{
-		AngleVectors (cl.democam_angles, forward, right, up);
+		AngleVectors (cl.democam_orbit_angles, forward, right, up);
 		VectorMA(r_refdef.vieworg, -cl.democam_orbit_distance, forward,
 				r_refdef.vieworg);
-		VectorCopy (cl.democam_angles, r_refdef.viewangles);
+		VectorCopy (cl.democam_orbit_angles, r_refdef.viewangles);
 	}
 }
 
 
 void DemoCam_MouseMove (double x, double y)
 {
+	float *angles = NULL;
+
 	if (!DemoCam_MLook())
 		return;
 
-	cl.democam_angles[YAW] -= m_yaw.value * x;
-	cl.democam_angles[PITCH] += m_pitch.value * y;
-	cl.democam_angles[PITCH] = bound(-90, cl.democam_angles[PITCH], 90);
+	if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
+		angles = cl.democam_freefly_angles;
+	else if (cl.democam_mode == DEMOCAM_MODE_ORBIT)
+		angles = cl.democam_orbit_angles;
+
+	if (angles != NULL)
+	{
+		angles[YAW] -= m_yaw.value * x;
+		angles[PITCH] += m_pitch.value * y;
+		angles[PITCH] = bound(-90, angles[PITCH], 90);
+	}
 }
 
 
@@ -267,7 +276,7 @@ void DemoCam_UpdateOrigin (void)
 
 	if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
 	{
-		AngleVectors (cl.democam_angles, forward, right, up);
+		AngleVectors (cl.democam_freefly_angles, forward, right, up);
 		VectorScale(forward,
 					CL_KeyState (&in_forward) - CL_KeyState (&in_back),
 					vel);
@@ -320,6 +329,11 @@ void DemoCam_DrawPos (void)
 	Draw_String (x, y, str, true);
 }
 
+void DemoCam_InitClient (void)
+{
+	// Set any variables that shouldn't be zero.
+	cl.democam_orbit_distance = 300.;
+}
 
 void DemoCam_Init (void)
 {

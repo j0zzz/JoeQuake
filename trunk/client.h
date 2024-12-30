@@ -262,8 +262,9 @@ typedef struct
 	qboolean	democam_freefly_reset;
 	double		democam_last_time;
 	vec3_t		democam_freefly_origin;
+	vec3_t		democam_freefly_angles;
 	float		democam_orbit_distance;
-	vec3_t		democam_angles;
+	vec3_t		democam_orbit_angles;
 
 	float		zoom;
 	float		zoomdir;
@@ -517,6 +518,7 @@ void DZip_Cleanup(dzip_context_t *ctx);
 
 // democam.c
 void DemoCam_Init (void);
+void DemoCam_InitClient (void);
 void DemoCam_UpdateOrigin (void);
 void DemoCam_MouseMove (double x, double y);
 void DemoCam_SetRefdef (void);

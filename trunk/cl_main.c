@@ -172,6 +172,8 @@ void CL_ClearState (void)
 		cl.free_efrags[i].entnext = &cl.free_efrags[i+1];
 	cl.free_efrags[i].entnext = NULL;
 
+	DemoCam_InitClient();
+
 #ifdef GLQUAKE
 	if (nehahra)
 		SHOWLMP_clear ();
