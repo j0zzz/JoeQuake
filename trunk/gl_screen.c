@@ -782,7 +782,7 @@ void SCR_SetupAutoID (void)
 
 		if (state == &cl_entities[cl.viewentity] &&
 				cl_thirdperson.value == 0 &&
-				!cl.freefly_enabled)
+				cl.democam_mode == DEMOCAM_MODE_FIRST_PERSON)
 		{
 			continue;
 		}

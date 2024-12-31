@@ -1206,7 +1206,8 @@ void CL_RelinkEntities (void)
 		}
 #endif
 
-		if (i == cl.viewentity && !cl_thirdperson.value && !cl.freefly_enabled)
+		if (i == cl.viewentity && !cl_thirdperson.value
+				&& cl.democam_mode == DEMOCAM_MODE_FIRST_PERSON)
 			continue;
 
 		// nehahra support

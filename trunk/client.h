@@ -122,6 +122,15 @@ typedef enum
 } cactive_t;
 
 
+typedef enum
+{
+	DEMOCAM_MODE_FIRST_PERSON,
+	DEMOCAM_MODE_FREEFLY,
+	DEMOCAM_MODE_ORBIT,
+	DEMOCAM_MODE_COUNT,
+} democam_mode_t;
+
+
 // the client_static_t structure is persistant through an arbitrary number
 // of server connections
 typedef struct
@@ -249,11 +258,12 @@ typedef struct
 	unsigned	protocolflags;
 
 // freefly
-	qboolean	freefly_enabled;
-	qboolean	freefly_reset;
-	double		freefly_last_time;
-	vec3_t		freefly_origin;
-	vec3_t		freefly_angles;
+	democam_mode_t	democam_mode;
+	qboolean	democam_freefly_reset;
+	double		democam_last_time;
+	vec3_t		democam_freefly_origin;
+	float		democam_orbit_distance;
+	vec3_t		democam_angles;
 
 	float		zoom;
 	float		zoomdir;

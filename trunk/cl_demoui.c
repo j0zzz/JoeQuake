@@ -3,7 +3,7 @@
 #define SPEED_DRAW_CHARS	6
 #define MAP_NAME_DRAW_CHARS	12
 #define PAUSE_PLAY_CHARS	2
-#define FREEFLY_CHARS	4
+#define CAM_CHARS	6
 
 
 typedef struct
@@ -15,7 +15,7 @@ typedef struct
 	int skip_prev_x, skip_next_x, skip_y;
 	int time_y;
 	int speed_prev_x, speed_next_x, speed_y;
-	int freefly_x, freefly_y;
+	int cam_x, cam_y;
 	int map_min_num, map_max_num, map_x, map_y, map_width, map_height;
 } layout_t;
 
@@ -31,7 +31,7 @@ typedef enum
 	HOVER_SPEED_PREV,
 	HOVER_SPEED,
 	HOVER_SPEED_NEXT,
-	HOVER_FREEFLY,
+	HOVER_CAM
 } hover_t;
 
 
@@ -131,8 +131,8 @@ GetUILayout (layout_t *layout, int map_num)
 	layout->map_width = (1 + MAP_NAME_DRAW_CHARS) * layout->char_size;
 
 	// Freefly toggle
-	layout->freefly_x = layout->skip_prev_x - layout->char_size * (FREEFLY_CHARS + 1);
-	layout->freefly_y = layout->top + layout->char_size / 2;
+	layout->cam_x = layout->skip_prev_x - layout->char_size * (CAM_CHARS + 1);
+	layout->cam_y = layout->top + layout->char_size / 2;
 
 	centre_y = (vid.height - backdrop_height - layout->char_size) / 2;
 	rows_above = max(0, centre_y / layout->char_size);
@@ -231,12 +231,12 @@ UpdateHover (layout_t *layout, const mouse_state_t* ms)
 	{
 		hover = HOVER_SPEED;
 	}
-	else if (ms->y >= layout->freefly_y
-		&& ms->y < layout->freefly_y + layout->char_size
-		&& ms->x >= layout->freefly_x
-		&& ms->x < layout->freefly_x + FREEFLY_CHARS * layout->char_size)
+	else if (ms->y >= layout->cam_y
+		&& ms->y < layout->cam_y + layout->char_size
+		&& ms->x >= layout->cam_x
+		&& ms->x < layout->cam_x + CAM_CHARS * layout->char_size)
 	{
-		hover = HOVER_FREEFLY;
+		hover = HOVER_CAM;
 	}
 
 	if (map_menu_open
@@ -251,6 +251,31 @@ UpdateHover (layout_t *layout, const mouse_state_t* ms)
 	{
 		hover_map_idx = -1;
 	}
+}
+
+
+static void
+ChangeCam (int dir)
+{
+	char cmd[64];
+	democam_mode_t mode;
+
+	mode = cl.democam_mode;
+	if (dir > 0)
+	{
+		mode++;
+		if (mode == DEMOCAM_MODE_COUNT)
+			mode = 0;
+	}
+	else
+	{
+		mode--;
+		if (mode == 0)
+			mode = DEMOCAM_MODE_COUNT;
+	}
+
+	snprintf(cmd, sizeof(cmd), "democam_mode %d", mode);
+	Cmd_ExecuteString(cmd, src_command);
 }
 
 
@@ -303,8 +328,8 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 				ChangeSpeed(1); break;
 			case HOVER_SPEED_PREV:
 				ChangeSpeed(-1); break;
-			case HOVER_FREEFLY:
-				Cmd_ExecuteString("freefly", src_command); break;
+			case HOVER_CAM:
+				ChangeCam(1); break;
 			default:
 				handled = false; break;
 		}
@@ -342,6 +367,12 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 					ChangeSpeed(-1);
 				else
 					ChangeSpeed(1);
+				break;
+			case HOVER_CAM:
+				if (ms->button_down == K_MWHEELUP)
+					ChangeCam(-1);
+				else
+					ChangeCam(1);
 				break;
 			default:
 				handled = false; break;
@@ -448,8 +479,8 @@ Get_TooltipText (void)
 			tooltip_text = "cycle forwards through playback speeds"; break;
 		case HOVER_SPEED_PREV:
 			tooltip_text = "cycle backwards through playback speeds"; break;
-		case HOVER_FREEFLY:
-			tooltip_text = "toggle between freefly (1) and first person view (0)"; break;
+		case HOVER_CAM:
+			tooltip_text = "cycle through camera modes"; break;
 		default:
 			tooltip_text = "";
 	}
@@ -579,14 +610,16 @@ void DemoUI_Draw(void)
 	}
 
 	// Freefly
-	if (hover == HOVER_FREEFLY)
-		Draw_String(layout.freefly_x, layout.freefly_y, "FF:", true);
+	if (hover == HOVER_CAM)
+		Draw_String(layout.cam_x, layout.cam_y, "CAM:", true);
 	else
-		Draw_Alt_String(layout.freefly_x, layout.freefly_y, "FF:", true);
-	if (cl.freefly_enabled)
-		Draw_String(layout.freefly_x + layout.char_size * 3, layout.freefly_y, "1", true);
-	else
-		Draw_String(layout.freefly_x + layout.char_size * 3, layout.freefly_y, "0", true);
+		Draw_Alt_String(layout.cam_x, layout.cam_y, "CAM:", true);
+	if (cl.democam_mode == DEMOCAM_MODE_FIRST_PERSON)
+		Draw_String(layout.cam_x + layout.char_size * 4, layout.cam_y, "1P", true);
+	else if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
+		Draw_String(layout.cam_x + layout.char_size * 4, layout.cam_y, "FF", true);
+	else if (cl.democam_mode == DEMOCAM_MODE_ORBIT)
+		Draw_String(layout.cam_x + layout.char_size * 4, layout.cam_y, "OR", true);
 
 	// Tooltip
 	tooltip_text = Get_TooltipText();

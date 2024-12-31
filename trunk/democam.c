@@ -1,36 +1,83 @@
 #include "quakedef.h"
 
 
-cvar_t	democam_freefly_speed = {"democam_freefly_speed", "800"};
-cvar_t	democam_freefly_show_pos = {"freefly_show_pos", "0"};
-cvar_t  democam_freefly_show_pos_x = { "freefly_show_pos_x", "-5" }; 
-cvar_t  democam_freefly_show_pos_y = { "freefly_show_pos_y", "-3" };
-cvar_t  democam_freefly_show_pos_dp = {"freefly_show_pos_dp", "1"};
+static qboolean	DemoCam_CameraModeChange (struct cvar_s *var, char *value);
+static cvar_t	democam_mode = {"democam_mode", "0", 0, DemoCam_CameraModeChange};
+static cvar_t	democam_freefly_speed = {"freefly_speed", "800"};
+static cvar_t	democam_freefly_show_pos = {"freefly_show_pos", "0"};
+static cvar_t	democam_freefly_show_pos_x = { "freefly_show_pos_x", "-5" }; 
+static cvar_t	democam_freefly_show_pos_y = { "freefly_show_pos_y", "-3" };
+static cvar_t	democam_freefly_show_pos_dp = {"freefly_show_pos_dp", "1"};
 
 extern kbutton_t	in_freeflymlook, in_forward, in_back, in_moveleft, in_moveright, in_up, in_down, in_jump;
+
+
+static qboolean DemoCam_CameraModeChange (struct cvar_s *var, char *value)
+{
+	float float_val;
+	int int_val;
+
+	float_val = Q_atof(value);
+	int_val = (int)float_val;
+
+	if (int_val != float_val || int_val >= DEMOCAM_MODE_COUNT || int_val < 0)
+	{
+		Con_Printf("Invalid camera mode %f\n", float_val);
+		return false;
+	}
+
+	cl.democam_mode = int_val;
+
+	if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
+	{
+		Con_Printf("Freefly enabled.");
+		if (cl_demoui.value != 0)
+			Con_Printf(" Hold mouse2 or bind +freeflymlook to change view.");
+		Con_Printf("\n");
+		cl.democam_freefly_reset = true;
+		cl.democam_last_time = Sys_DoubleTime();
+	} else if (cl.democam_mode == DEMOCAM_MODE_ORBIT) {
+		Con_Printf("Orbit enabled.");
+		if (cl_demoui.value != 0)
+			Con_Printf(" Hold mouse2 or bind +freeflymlook to change view.");
+		Con_Printf("\n");
+		cl.democam_last_time = Sys_DoubleTime();
+		cl.democam_orbit_distance = 300;
+	} else {
+		Con_Printf("Freefly disabled.\n");
+	}
+
+	return true;
+}
+
 
 static void DemoCam_Toggle_f (void)
 {
 	if (!cls.demoplayback)
 	{
 		Con_Printf("Must be playing a demo to enable freefly.\n");
-		cl.freefly_enabled = false;
 		return;
 	}
 
-	cl.freefly_enabled = !cl.freefly_enabled;
+	if (cl.democam_mode != DEMOCAM_MODE_FREEFLY)
+		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_FREEFLY);
+	else
+		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_FIRST_PERSON);
+}
 
-	if (cl.freefly_enabled)
+
+static void DemoCam_Orbit_Toggle_f (void)
+{
+	if (!cls.demoplayback)
 	{
-		Con_Printf("Freefly enabled.");
-		if (cl_demoui.value != 0)
-			Con_Printf(" Hold mouse2 or bind +freeflymlook to change view.");
-		Con_Printf("\n");
-		cl.freefly_reset = true;
-		cl.freefly_last_time = Sys_DoubleTime();
-	} else {
-		Con_Printf("Freefly disabled.\n");
+		Con_Printf("Must be playing a demo to enable orbit.\n");
+		return;
 	}
+
+	if (cl.democam_mode != DEMOCAM_MODE_ORBIT)
+		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_ORBIT);
+	else
+		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_FIRST_PERSON);
 }
 
 
@@ -45,17 +92,17 @@ static char *DemoCam_GetRemaicCommand (const char *arg)
 		Con_Printf("ERROR: You must be connected\n");
 		return NULL;
 	}
-	if (!cl.freefly_enabled)
+	if (cl.democam_mode != DEMOCAM_MODE_FREEFLY)
 	{
 		Con_Printf("ERROR: freefly not enabled\n");
 		return NULL;
 	}
 
-	AngleVectors (cl.freefly_angles, forward, right, up);
-	VectorMA(cl.freefly_origin, 2048, forward, end);
+	AngleVectors (cl.democam_angles, forward, right, up);
+	VectorMA(cl.democam_freefly_origin, 2048, forward, end);
 
 	memset (&trace, 0, sizeof(trace));
-	SV_RecursiveHullCheck (cl.worldmodel->hulls, 0, 0, 1, cl.freefly_origin, end, &trace);
+	SV_RecursiveHullCheck (cl.worldmodel->hulls, 0, 0, 1, cl.democam_freefly_origin, end, &trace);
 
 	if (!strcmp(arg, "move"))
 	{
@@ -63,9 +110,9 @@ static char *DemoCam_GetRemaicCommand (const char *arg)
 				 "move %.1f %.1f %.1f\n"
 				 "pan %.1f %.1f %.1f\n"
 				 "%.2f\n",
-				 cl.freefly_origin[0],
-				 cl.freefly_origin[1],
-				 cl.freefly_origin[2] - DEFAULT_VIEWHEIGHT,
+				 cl.democam_freefly_origin[0],
+				 cl.democam_freefly_origin[1],
+				 cl.democam_freefly_origin[2] - DEFAULT_VIEWHEIGHT,
 				 trace.endpos[0],
 				 trace.endpos[1],
 				 trace.endpos[2],
@@ -74,9 +121,9 @@ static char *DemoCam_GetRemaicCommand (const char *arg)
 		snprintf(cam_buf, sizeof(cam_buf),
 				 "%.2f stay %.1f %.1f %.1f\n",
 				 cl.mtime[0],
-				 cl.freefly_origin[0],
-				 cl.freefly_origin[1],
-				 cl.freefly_origin[2] - DEFAULT_VIEWHEIGHT);
+				 cl.democam_freefly_origin[0],
+				 cl.democam_freefly_origin[1],
+				 cl.democam_freefly_origin[2] - DEFAULT_VIEWHEIGHT);
 	} else if (!strcmp(arg, "view")) {
 		snprintf(cam_buf, sizeof(cam_buf),
 				 "%.2f view %.1f %.1f %.1f\n",
@@ -161,28 +208,37 @@ static void DemoCam_CopyCam_f (void)
 
 qboolean DemoCam_MLook (void)
 {
-	return cl.freefly_enabled
+	return cl.democam_mode != DEMOCAM_MODE_FIRST_PERSON
 		&& (cl_demoui.value == 0 || (in_freeflymlook.state & 1) || demoui_freefly_mlook);
 }
 
 
 void DemoCam_SetRefdef (void)
 {
-    if (!cls.demoplayback)
-        cl.freefly_enabled = false;
+	vec3_t forward, right, up;
 
-	if (cl.freefly_enabled)
+	if (!cls.demoplayback)
+		Cvar_SetValue(&democam_mode, DEMOCAM_MODE_FIRST_PERSON);
+
+	if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
 	{
-		if (cl.freefly_reset)
+		if (cl.democam_freefly_reset)
 		{
-			VectorCopy (r_refdef.vieworg, cl.freefly_origin);
-			VectorCopy (r_refdef.viewangles, cl.freefly_angles);
-			cl.freefly_angles[ROLL] = 0.;
-			cl.freefly_reset = false;
+			VectorCopy (r_refdef.vieworg, cl.democam_freefly_origin);
+			VectorCopy (r_refdef.viewangles, cl.democam_angles);
+			cl.democam_angles[ROLL] = 0.;
+			cl.democam_freefly_reset = false;
 		} else {
-			VectorCopy (cl.freefly_origin, r_refdef.vieworg);
-			VectorCopy (cl.freefly_angles, r_refdef.viewangles);
+			VectorCopy (cl.democam_freefly_origin, r_refdef.vieworg);
+			VectorCopy (cl.democam_angles, r_refdef.viewangles);
 		}
+	}
+	else if (cl.democam_mode == DEMOCAM_MODE_ORBIT)
+	{
+		AngleVectors (cl.democam_angles, forward, right, up);
+		VectorMA(r_refdef.vieworg, -cl.democam_orbit_distance, forward,
+				r_refdef.vieworg);
+		VectorCopy (cl.democam_angles, r_refdef.viewangles);
 	}
 }
 
@@ -192,9 +248,9 @@ void DemoCam_MouseMove (double x, double y)
 	if (!DemoCam_MLook())
 		return;
 
-	cl.freefly_angles[YAW] -= m_yaw.value * x;
-	cl.freefly_angles[PITCH] += m_pitch.value * y;
-	cl.freefly_angles[PITCH] = bound(-90, cl.freefly_angles[PITCH], 90);
+	cl.democam_angles[YAW] -= m_yaw.value * x;
+	cl.democam_angles[PITCH] += m_pitch.value * y;
+	cl.democam_angles[PITCH] = bound(-90, cl.democam_angles[PITCH], 90);
 }
 
 
@@ -205,29 +261,35 @@ void DemoCam_UpdateOrigin (void)
 	vec3_t world_up = {0, 0, 1};
 
 	time = Sys_DoubleTime();
-	frametime = time - cl.freefly_last_time;
-	cl.freefly_last_time = time;
+	frametime = time - cl.democam_last_time;
+	cl.democam_last_time = time;
 
-	if (!cl.freefly_enabled)
-		return;
-
-	AngleVectors (cl.freefly_angles, forward, right, up);
-	VectorScale(forward,
-				CL_KeyState (&in_forward) - CL_KeyState (&in_back),
-				vel);
-	VectorMA(vel,
-			 CL_KeyState (&in_moveright) - CL_KeyState (&in_moveleft),
-			 right,
-			 vel);
-	VectorMA(vel,
-			 CL_KeyState (&in_up)
-			 + CL_KeyState (&in_jump)
-			 - CL_KeyState (&in_down),
-			 world_up,
-			 vel);
-	VectorNormalize(vel);
-	VectorScale(vel, democam_freefly_speed.value, vel);
-	VectorMA(cl.freefly_origin, frametime, vel, cl.freefly_origin);
+	if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
+	{
+		AngleVectors (cl.democam_angles, forward, right, up);
+		VectorScale(forward,
+					CL_KeyState (&in_forward) - CL_KeyState (&in_back),
+					vel);
+		VectorMA(vel,
+				 CL_KeyState (&in_moveright) - CL_KeyState (&in_moveleft),
+				 right,
+				 vel);
+		VectorMA(vel,
+				 CL_KeyState (&in_up)
+				 + CL_KeyState (&in_jump)
+				 - CL_KeyState (&in_down),
+				 world_up,
+				 vel);
+		VectorNormalize(vel);
+		VectorScale(vel, democam_freefly_speed.value, vel);
+		VectorMA(cl.democam_freefly_origin, frametime, vel, cl.democam_freefly_origin);
+	}
+	else if (cl.democam_mode == DEMOCAM_MODE_ORBIT)
+	{
+		cl.democam_orbit_distance += -democam_freefly_speed.value * frametime
+			* (CL_KeyState(&in_forward) - CL_KeyState(&in_back));
+		cl.democam_orbit_distance = max(0, cl.democam_orbit_distance);
+	}
 }
 
 
@@ -238,12 +300,13 @@ void DemoCam_DrawPos (void)
 	char str[128];
 	vec3_t pos;
 
-	if (cls.state != ca_connected || !cl.freefly_enabled
+	if (cls.state != ca_connected
+			|| cl.democam_mode != DEMOCAM_MODE_FREEFLY
 			|| !democam_freefly_show_pos.value)
 		return;
 
 	dp = (int)democam_freefly_show_pos_dp.value;
-	VectorCopy(cl.freefly_origin, pos);
+	VectorCopy(cl.democam_freefly_origin, pos);
 	pos[2] -= DEFAULT_VIEWHEIGHT;
 
 	snprintf(str, sizeof(str), "\xd8\xba%+*.*f \xd9\xba%+*.*f \xda\xba%+*.*f",
@@ -264,8 +327,10 @@ void DemoCam_Init (void)
 	Cvar_Register(&democam_freefly_show_pos_x);
 	Cvar_Register(&democam_freefly_show_pos_y);
 	Cvar_Register(&democam_freefly_show_pos_dp);
+	Cvar_Register(&democam_mode);
 
 	Cmd_AddCommand("freefly", DemoCam_Toggle_f);
+	Cmd_AddCommand("orbit", DemoCam_Orbit_Toggle_f);
 	Cmd_AddCommand("freefly_copycam", DemoCam_CopyCam_f);
 	Cmd_AddCommand("freefly_writecam", DemoCam_WriteCam_f);
 }
