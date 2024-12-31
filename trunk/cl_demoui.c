@@ -254,31 +254,6 @@ UpdateHover (layout_t *layout, const mouse_state_t* ms)
 }
 
 
-static void
-ChangeCam (int dir)
-{
-	char cmd[64];
-	democam_mode_t mode;
-
-	mode = cl.democam_mode;
-	if (dir > 0)
-	{
-		mode++;
-		if (mode == DEMOCAM_MODE_COUNT)
-			mode = 0;
-	}
-	else
-	{
-		if (mode == 0)
-			mode = DEMOCAM_MODE_COUNT;
-		mode--;
-	}
-
-	snprintf(cmd, sizeof(cmd), "democam_mode %d", mode);
-	Cmd_ExecuteString(cmd, src_command);
-}
-
-
 qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 {
 	char command[64];
@@ -329,7 +304,7 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 			case HOVER_SPEED_PREV:
 				ChangeSpeed(-1); break;
 			case HOVER_CAM:
-				ChangeCam(1); break;
+				Cmd_ExecuteString("democam_mode +1", src_command);  break;
 			default:
 				handled = false; break;
 		}
@@ -370,9 +345,9 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 				break;
 			case HOVER_CAM:
 				if (ms->button_down == K_MWHEELUP)
-					ChangeCam(-1);
+					Cmd_ExecuteString("democam_mode -1", src_command);
 				else
-					ChangeCam(1);
+					Cmd_ExecuteString("democam_mode +1", src_command);
 				break;
 			default:
 				handled = false; break;

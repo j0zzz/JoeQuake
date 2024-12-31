@@ -38,7 +38,8 @@ static void DemoCam_SetMode (democam_mode_t mode)
 
 static void DemoCam_Mode_f (void)
 {
-	int int_val;
+
+	democam_mode_t next_mode;
 
 	if (!cls.demoplayback)
 	{
@@ -50,24 +51,38 @@ static void DemoCam_Mode_f (void)
 	{
 		Con_Printf("Camera mode is: %d\n"
 					"Usage:\n"
-					" %s   : show current mode\n"
-					" %s 0 : set first person mode\n"
-					" %s 1 : set freefly mode\n"
-					" %s 2 : set orbit mode\n",
+					" %s    : show current mode\n"
+					" %s 0  : set first person mode\n"
+					" %s 1  : set freefly mode\n"
+					" %s 2  : set orbit mode\n",
+					" %s +1 : cycle forwards through modes\n",
+					" %s -1 : cycle backwards through modes\n",
 					cl.democam_mode,
 					Cmd_Argv(0), Cmd_Argv(0), Cmd_Argv(0), Cmd_Argv(0));
 		return;
 	}
 
-	int_val = Q_atoi(Cmd_Argv(1));
-
-	if (int_val >= DEMOCAM_MODE_COUNT || int_val < 0)
+	if (!strcmp(Cmd_Argv(1), "+1"))
 	{
-		Con_Printf("Invalid camera mode %d\n", int_val);
-		return;
+		if (cl.democam_mode == DEMOCAM_MODE_COUNT - 1)
+			next_mode = 0;
+		else
+			next_mode = cl.democam_mode + 1;
+	} else if (!strcmp(Cmd_Argv(1), "-1")) {
+		if (cl.democam_mode == 0)
+			next_mode = DEMOCAM_MODE_COUNT - 1;
+		else
+			next_mode = cl.democam_mode - 1;
+	} else {
+		next_mode = Q_atoi(Cmd_Argv(1));
+		if (next_mode >= DEMOCAM_MODE_COUNT || next_mode < 0)
+		{
+			Con_Printf("Invalid camera mode %d\n", next_mode);
+			return;
+		}
 	}
 
-	DemoCam_SetMode (int_val);
+	DemoCam_SetMode (next_mode);
 }
 
 
