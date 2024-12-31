@@ -1152,6 +1152,8 @@ Set the camera mode for demo playback.  This is an alternative to using the
 - `0`:  First person mode.
 - `1`:  Freefly mode. See the `freefly` command for details.
 - `2`:  Orbit mode. See the `orbit` command for details.
+- `+1`: Cycle forward through modes.
+- `-1`: Cycle backwards through modes.
 
 ##### `+freeflymlook` / `-freeflymlook`
 
