@@ -597,7 +597,7 @@
     <ClCompile Include="..\..\trunk\world.c" />
     <ClCompile Include="..\..\trunk\zone.c" />
     <ClCompile Include="..\..\trunk\sys_win.c" />
-    <ClCompile Include="..\..\trunk\freefly.c" />
+    <ClCompile Include="..\..\trunk\democam.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\trunk\fakegl.h" />

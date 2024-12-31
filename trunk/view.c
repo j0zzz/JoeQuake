@@ -1078,7 +1078,7 @@ void V_CalcIntermissionRefdef (void)
 	V_AddIdle ();
 	v_idlescale.value = old;
 
-	FreeFly_SetRefdef ();
+	DemoCam_SetRefdef ();
 
 }
 
@@ -1153,7 +1153,7 @@ void V_CalcRefdef (void)
 	if (cl_thirdperson.value)
 		Chase_Update ();
 
-	FreeFly_SetRefdef ();
+	DemoCam_SetRefdef ();
 
 // bound minpitch/maxpitch
 	if (cl_minpitch.value < -90)

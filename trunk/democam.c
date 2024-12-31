@@ -1,15 +1,15 @@
 #include "quakedef.h"
 
 
-cvar_t	freefly_speed = {"freefly_speed", "800"};
-cvar_t	freefly_show_pos = {"freefly_show_pos", "0"};
-cvar_t  freefly_show_pos_x = { "freefly_show_pos_x", "-5" }; 
-cvar_t  freefly_show_pos_y = { "freefly_show_pos_y", "-3" };
-cvar_t  freefly_show_pos_dp = {"freefly_show_pos_dp", "1"};
+cvar_t	democam_freefly_speed = {"democam_freefly_speed", "800"};
+cvar_t	democam_freefly_show_pos = {"freefly_show_pos", "0"};
+cvar_t  democam_freefly_show_pos_x = { "freefly_show_pos_x", "-5" }; 
+cvar_t  democam_freefly_show_pos_y = { "freefly_show_pos_y", "-3" };
+cvar_t  democam_freefly_show_pos_dp = {"freefly_show_pos_dp", "1"};
 
 extern kbutton_t	in_freeflymlook, in_forward, in_back, in_moveleft, in_moveright, in_up, in_down, in_jump;
 
-static void FreeFly_Toggle_f (void)
+static void DemoCam_Toggle_f (void)
 {
 	if (!cls.demoplayback)
 	{
@@ -34,7 +34,7 @@ static void FreeFly_Toggle_f (void)
 }
 
 
-static char *FreeFly_GetRemaicCommand (const char *arg)
+static char *DemoCam_GetRemaicCommand (const char *arg)
 {
 	trace_t	trace;
 	vec3_t	forward, right, up, end;
@@ -99,7 +99,7 @@ static char *FreeFly_GetRemaicCommand (const char *arg)
 }
 
 
-static void FreeFly_WriteCam_f (void)
+static void DemoCam_WriteCam_f (void)
 {
 	char path[MAX_OSPATH];
 	char *cmd;
@@ -119,7 +119,7 @@ static void FreeFly_WriteCam_f (void)
 		arg = Cmd_Argv(2);
 	}
 
-	cmd = FreeFly_GetRemaicCommand(arg);
+	cmd = DemoCam_GetRemaicCommand(arg);
 	if (cmd == NULL)
 		return;
 
@@ -140,7 +140,7 @@ static void FreeFly_WriteCam_f (void)
 }
 
 
-static void FreeFly_CopyCam_f (void)
+static void DemoCam_CopyCam_f (void)
 {
 	char *cmd;
 	const char *arg;
@@ -152,21 +152,21 @@ static void FreeFly_CopyCam_f (void)
 		arg = Cmd_Argv(1);
 	}
 
-	cmd = FreeFly_GetRemaicCommand(arg);
+	cmd = DemoCam_GetRemaicCommand(arg);
 
 	if (cmd != NULL && Sys_SetClipboardData(cmd))
 		Con_Printf("Remaic commands copy to clipboard:\n%s", cmd);
 }
 
 
-qboolean FreeFly_MLook (void)
+qboolean DemoCam_MLook (void)
 {
 	return cl.freefly_enabled
 		&& (cl_demoui.value == 0 || (in_freeflymlook.state & 1) || demoui_freefly_mlook);
 }
 
 
-void FreeFly_SetRefdef (void)
+void DemoCam_SetRefdef (void)
 {
     if (!cls.demoplayback)
         cl.freefly_enabled = false;
@@ -187,9 +187,9 @@ void FreeFly_SetRefdef (void)
 }
 
 
-void FreeFly_MouseMove (double x, double y)
+void DemoCam_MouseMove (double x, double y)
 {
-	if (!FreeFly_MLook())
+	if (!DemoCam_MLook())
 		return;
 
 	cl.freefly_angles[YAW] -= m_yaw.value * x;
@@ -198,7 +198,7 @@ void FreeFly_MouseMove (double x, double y)
 }
 
 
-void FreeFly_UpdateOrigin (void)
+void DemoCam_UpdateOrigin (void)
 {
 	double time, frametime;
 	vec3_t forward, right, up, vel;
@@ -226,22 +226,23 @@ void FreeFly_UpdateOrigin (void)
 			 world_up,
 			 vel);
 	VectorNormalize(vel);
-	VectorScale(vel, freefly_speed.value, vel);
+	VectorScale(vel, democam_freefly_speed.value, vel);
 	VectorMA(cl.freefly_origin, frametime, vel, cl.freefly_origin);
 }
 
 
-void FreeFly_DrawPos (void)
+void DemoCam_DrawPos (void)
 {
 	int x, y;
 	int dp;
 	char str[128];
 	vec3_t pos;
 
-	if (cls.state != ca_connected || !cl.freefly_enabled || !freefly_show_pos.value)
+	if (cls.state != ca_connected || !cl.freefly_enabled
+			|| !democam_freefly_show_pos.value)
 		return;
 
-	dp = (int)freefly_show_pos_dp.value;
+	dp = (int)democam_freefly_show_pos_dp.value;
 	VectorCopy(cl.freefly_origin, pos);
 	pos[2] -= DEFAULT_VIEWHEIGHT;
 
@@ -250,21 +251,21 @@ void FreeFly_DrawPos (void)
 				dp + 6, dp, pos[1],
 				dp + 6, dp, pos[2]);
 
-	x = ELEMENT_X_COORD(freefly_show_pos);
-	y = ELEMENT_Y_COORD(freefly_show_pos);
+	x = ELEMENT_X_COORD(democam_freefly_show_pos);
+	y = ELEMENT_Y_COORD(democam_freefly_show_pos);
 	Draw_String (x, y, str, true);
 }
 
 
-void FreeFly_Init (void)
+void DemoCam_Init (void)
 {
-	Cvar_Register(&freefly_speed);
-	Cvar_Register(&freefly_show_pos);
-	Cvar_Register(&freefly_show_pos_x);
-	Cvar_Register(&freefly_show_pos_y);
-	Cvar_Register(&freefly_show_pos_dp);
+	Cvar_Register(&democam_freefly_speed);
+	Cvar_Register(&democam_freefly_show_pos);
+	Cvar_Register(&democam_freefly_show_pos_x);
+	Cvar_Register(&democam_freefly_show_pos_y);
+	Cvar_Register(&democam_freefly_show_pos_dp);
 
-	Cmd_AddCommand("freefly", FreeFly_Toggle_f);
-	Cmd_AddCommand("freefly_copycam", FreeFly_CopyCam_f);
-	Cmd_AddCommand("freefly_writecam", FreeFly_WriteCam_f);
+	Cmd_AddCommand("freefly", DemoCam_Toggle_f);
+	Cmd_AddCommand("freefly_copycam", DemoCam_CopyCam_f);
+	Cmd_AddCommand("freefly_writecam", DemoCam_WriteCam_f);
 }

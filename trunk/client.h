@@ -505,13 +505,13 @@ dzip_status_t DZip_Open(dzip_context_t *ctx, const char *name, FILE **demo_file_
 void DZip_Cleanup(dzip_context_t *ctx);
 
 
-// cl_freefly.c
-void FreeFly_Init (void);
-void FreeFly_UpdateOrigin (void);
-void FreeFly_MouseMove (double x, double y);
-void FreeFly_SetRefdef (void);
-qboolean FreeFly_MLook (void);
-void FreeFly_DrawPos (void);
+// democam.c
+void DemoCam_Init (void);
+void DemoCam_UpdateOrigin (void);
+void DemoCam_MouseMove (double x, double y);
+void DemoCam_SetRefdef (void);
+qboolean DemoCam_MLook (void);
+void DemoCam_DrawPos (void);
 
 #ifdef GLQUAKE
 dlighttype_t SetDlightColor (float f, dlighttype_t def, qboolean random);

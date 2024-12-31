@@ -1061,7 +1061,7 @@ static void SCR_DrawCursor(void)
 	cursor_y = scr_pointer_state.y;
 
 	// Disable the cursor in all but following client parts
-	if ((CL_DemoUIOpen() && FreeFly_MLook()) || (!CL_DemoUIOpen() && key_dest != key_menu))
+	if ((CL_DemoUIOpen() && DemoCam_MLook()) || (!CL_DemoUIOpen() && key_dest != key_menu))
 		return;
 
 	if (scr_pointer_state.x != scr_pointer_state.x_old || scr_pointer_state.y != scr_pointer_state.y_old)
@@ -1260,7 +1260,7 @@ void SCR_UpdateScreen (void)
 		Sbar_Draw ();
 		SCR_DrawConsole ();
 		M_Draw ();
-		FreeFly_DrawPos ();
+		DemoCam_DrawPos ();
 	}
 
 	if (CL_DemoUIOpen() && key_dest == key_game)
