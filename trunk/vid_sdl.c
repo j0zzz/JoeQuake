@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <SDL.h>
 
 #include "quakedef.h"
+#include "bgmusic.h"
 #ifdef _WIN32
 #include "winquake.h"
 #endif
@@ -323,6 +324,7 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 	scr_disabled_for_loading = true;
 
 	CDAudio_Pause ();
+	BGM_Pause ();
 	// TODO: Stop non-CD audio
 
 	/* z-buffer depth */
@@ -405,6 +407,7 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 		Sys_Error("Couldn't set mouse mode: %s", SDL_GetError());
 
 	CDAudio_Resume ();
+	BGM_Resume ();
 	// TODO: Start non-CD audio
 	scr_disabled_for_loading = temp;
 

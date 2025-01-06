@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // host.c -- coordinates spawning and killing of local servers
 
 #include "quakedef.h"
+#include "bgmusic.h"
 #ifdef _WIN32
 #include "movie.h"
 #endif
@@ -817,6 +818,7 @@ void _Host_Frame (double time)
 	if (host_speeds.value)
 		time2 = Sys_DoubleTime ();
 
+    BGM_Update();
 	if (cls.signon == SIGNONS)
 	{
 		// update audio
@@ -1053,6 +1055,7 @@ void Host_Init (quakeparms_t *parms)
 		GFX_Init();
 		S_Init ();
 		CDAudio_Init ();
+        BGM_Init();
 		CL_Init ();
 
 		FMOD_LoadLibrary();
@@ -1137,6 +1140,7 @@ void Host_Shutdown (void)
 	}
 
 	SList_Shutdown ();
+    BGM_Shutdown ();
 	CDAudio_Shutdown ();
 	NET_Shutdown ();
 	S_Shutdown ();

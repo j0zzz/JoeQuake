@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DWORD	unsigned long
 #endif
 
-#define	PAINTBUFFER_SIZE	512
+#define	PAINTBUFFER_SIZE	2048
 portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
 int		snd_scaletable[32][256];
 int 	*snd_p, snd_linear_count, snd_vol;
@@ -307,6 +307,27 @@ void S_PaintChannels(int endtime)
 				}
 			}
 															  
+		}
+
+	// paint in the music
+		if (s_rawend >= paintedtime)
+		{	// copy from the streaming sound source
+			int		s;
+			int		stop;
+
+			stop = (end < s_rawend) ? end : s_rawend;
+
+			for (i = paintedtime; i < stop; i++)
+			{
+				s = i & (MAX_RAW_SAMPLES - 1);
+			// lower music by 6db to match sfx
+				paintbuffer[i - paintedtime].left += s_rawsamples[s].left / 256;
+				paintbuffer[i - paintedtime].right += s_rawsamples[s].right / 256;
+			}
+			//	if (i != end)
+			//		Con_Printf ("partial stream\n");
+			//	else
+			//		Con_Printf ("full stream\n");
 		}
 
 	// transfer out according to DMA format

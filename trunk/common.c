@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "unzip.h"
+#include <errno.h>
 
 #define NUM_SAFE_ARGVS  7
 
@@ -408,7 +409,7 @@ char *Q_strreplace(char *s, const char *s1, const char *s2)
 ============================================================================
 */
 
-qboolean bigendien;
+qboolean bigendian;
 
 short (*BigShort)(short l);
 short (*LittleShort)(short l);
@@ -902,7 +903,7 @@ void COM_StripExtension (char *in, char *out)
 COM_FileExtension
 ============
 */
-char *COM_FileExtension (char *in)
+char *COM_FileExtension (const char *in)
 {
 	static	char	exten[8];
 	int		i;
@@ -1255,7 +1256,7 @@ void COM_Init (char *basedir)
 // set the byte swapping variables in a portable manner 
 	if (*(short *)swaptest == 1)
 	{
-		bigendien = false;
+		bigendian = false;
 		BigShort = ShortSwap;
 		LittleShort = ShortNoSwap;
 		BigLong = LongSwap;
@@ -1265,7 +1266,7 @@ void COM_Init (char *basedir)
 	}
 	else
 	{
-		bigendien = true;
+		bigendian = true;
 		BigShort = ShortNoSwap;
 		LittleShort = ShortSwap;
 		BigLong = LongNoSwap;
@@ -2063,6 +2064,174 @@ void COM_InitFilesystem (void)
         	COM_AddGameDirectory (va("%s/%s", com_basedir, com_argv[i+1]));
 }
 
+/* The following FS_*() stdio replacements are necessary if one is
+ * to perform non-sequential reads on files reopened on pak files
+ * because we need the bookkeeping about file start/end positions.
+ * Allocating and filling in the fshandle_t structure is the users'
+ * responsibility when the file is initially opened. */
+
+size_t FS_fread(void *ptr, size_t size, size_t nmemb, fshandle_t *fh)
+{
+	long byte_size;
+	long bytes_read;
+	size_t nmemb_read;
+
+	if (!fh) {
+		errno = EBADF;
+		return 0;
+	}
+	if (!ptr) {
+		errno = EFAULT;
+		return 0;
+	}
+	if (!size || !nmemb) {	/* no error, just zero bytes wanted */
+		errno = 0;
+		return 0;
+	}
+
+	byte_size = nmemb * size;
+	if (byte_size > fh->length - fh->pos)	/* just read to end */
+		byte_size = fh->length - fh->pos;
+	bytes_read = fread(ptr, 1, byte_size, fh->file);
+	fh->pos += bytes_read;
+
+	/* fread() must return the number of elements read,
+	 * not the total number of bytes. */
+	nmemb_read = bytes_read / size;
+	/* even if the last member is only read partially
+	 * it is counted as a whole in the return value. */
+	if (bytes_read % size)
+		nmemb_read++;
+
+	return nmemb_read;
+}
+
+int FS_fseek(fshandle_t *fh, long offset, int whence)
+{
+/* I don't care about 64 bit off_t or fseeko() here.
+ * the quake/hexen2 file system is 32 bits, anyway. */
+	int ret;
+
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+
+	/* the relative file position shouldn't be smaller
+	 * than zero or bigger than the filesize. */
+	switch (whence)
+	{
+	case SEEK_SET:
+		break;
+	case SEEK_CUR:
+		offset += fh->pos;
+		break;
+	case SEEK_END:
+		offset = fh->length + offset;
+		break;
+	default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (offset < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (offset > fh->length)	/* just seek to end */
+		offset = fh->length;
+
+	ret = fseek(fh->file, fh->start + offset, SEEK_SET);
+	if (ret < 0)
+		return ret;
+
+	fh->pos = offset;
+	return 0;
+}
+
+int FS_fclose(fshandle_t *fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	return fclose(fh->file);
+}
+
+long FS_ftell(fshandle_t *fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	return fh->pos;
+}
+
+void FS_rewind(fshandle_t *fh)
+{
+	if (!fh) return;
+	clearerr(fh->file);
+	fseek(fh->file, fh->start, SEEK_SET);
+	fh->pos = 0;
+}
+
+int FS_feof(fshandle_t *fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	if (fh->pos >= fh->length)
+		return -1;
+	return 0;
+}
+
+int FS_ferror(fshandle_t *fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	return ferror(fh->file);
+}
+
+int FS_fgetc(fshandle_t *fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return EOF;
+	}
+	if (fh->pos >= fh->length)
+		return EOF;
+	fh->pos += 1;
+	return fgetc(fh->file);
+}
+
+char *FS_fgets(char *s, int size, fshandle_t *fh)
+{
+	char *ret;
+
+	if (FS_feof(fh))
+		return NULL;
+
+	if (size > (fh->length - fh->pos) + 1)
+		size = (fh->length - fh->pos) + 1;
+
+	ret = fgets(s, size, fh->file);
+	fh->pos = ftell(fh->file) - fh->start;
+
+	return ret;
+}
+
+long FS_filelength (fshandle_t *fh)
+{
+	if (!fh) {
+		errno = EBADF;
+		return -1;
+	}
+	return fh->length;
+}
 /*
 ============================================================================
 
