@@ -1574,7 +1574,7 @@ void CL_ParseServerMessage (void)
 				}
 				else
 				{
-					CDAudio_Play ((byte)cls.cdtrack, true);
+					CDAudio_Play ((byte)cl.cdtrack, true);
 #ifndef _WIN32
 					BGM_PlayCDtrack ((byte)cl.cdtrack, true);
 #endif
