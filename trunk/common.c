@@ -1407,7 +1407,7 @@ qboolean COM_FindFile (char *filename)
 	searchpath_t	*search;
 	pack_t		*pak;
     
-    file_from_pak = 0;
+	file_from_pak = 0;
 
 	for (search = com_searchpaths ; search ; search = search->next)
 	{
@@ -1415,10 +1415,11 @@ qboolean COM_FindFile (char *filename)
 		{
 			pak = search->pack;
 			for (i=0 ; i<pak->numfiles ; i++)
-				if (!strcmp(pak->files[i].name, filename)){
-                    file_from_pak = 1;
+				if (!strcmp(pak->files[i].name, filename))
+				{
+					file_from_pak = 1;
 					return true;
-                }
+				}
 		}
 		else
 		{
@@ -2073,7 +2074,9 @@ void COM_InitFilesystem (void)
  * to perform non-sequential reads on files reopened on pak files
  * because we need the bookkeeping about file start/end positions.
  * Allocating and filling in the fshandle_t structure is the users'
- * responsibility when the file is initially opened. */
+ * responsibility when the file is initially opened. 
+ *
+ * From ironwail.*/
 
 size_t FS_fread(void *ptr, size_t size, size_t nmemb, fshandle_t *fh)
 {

@@ -1500,15 +1500,15 @@ void CL_ParseServerMessage (void)
 
 		case svc_setpause:
 			if ((cl.paused = MSG_ReadByte()))
-            {
+			{
 				CDAudio_Pause ();
-                BGM_Pause ();
-            }
+				BGM_Pause ();
+			}
 			else
-            {
+			{
 				CDAudio_Resume ();
-                BGM_Resume ();
-            }
+				BGM_Resume ();
+			}
 			break;
 
 		case svc_signonnum:
@@ -1562,9 +1562,15 @@ void CL_ParseServerMessage (void)
 			else
 			{
 				if ((cls.demoplayback || cls.demorecording) && (cls.forcetrack != -1))
+				{
+					CDAudio_Play ((byte)cls.forcetrack, true);
 					BGM_PlayCDtrack ((byte)cls.forcetrack, true);
+				}
 				else
+				{
+					CDAudio_Play ((byte)cls.cdtrack, true);
 					BGM_PlayCDtrack ((byte)cl.cdtrack, true);
+				}
 			}
 			break;
 

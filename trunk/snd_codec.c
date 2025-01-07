@@ -55,14 +55,14 @@ void S_CodecInit (void)
 	snd_codec_t *codec;
 	codecs = NULL;
 
-    Con_Printf("Init Codecs\n");
 	/* Register in the inverse order
 	 * of codec choice preference: */
 #ifdef USE_CODEC_MP3
+    Con_Printf("Initialising MP3 codec\n");
 	S_CodecRegister(&mp3_codec);
 #endif
 #ifdef USE_CODEC_VORBIS
-    Con_Printf("Init Vorbis\n");
+	Con_Printf("Initialising Vorbis codec\n");
 	S_CodecRegister(&vorbis_codec);
 #endif
 
@@ -125,7 +125,8 @@ snd_stream_t *S_CodecOpenStreamType (const char *filename, unsigned int type, qb
 			stream->status = STREAM_PLAY;
 			stream->volume = 1.f;
 		}
-		else	S_CodecUtilClose(&stream);
+		else
+			S_CodecUtilClose(&stream);
 	}
 	return stream;
 }
@@ -162,7 +163,8 @@ snd_stream_t *S_CodecOpenStreamExt (const char *filename, qboolean loop)
 			stream->status = STREAM_PLAY;
 			stream->volume = 1.f;
 		}
-		else	S_CodecUtilClose(&stream);
+		else
+			S_CodecUtilClose(&stream);
 	}
 	return stream;
 }

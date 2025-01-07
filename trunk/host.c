@@ -1056,7 +1056,7 @@ void Host_Init (quakeparms_t *parms)
 		GFX_Init();
 		S_Init ();
 		CDAudio_Init ();
-        BGM_Init();
+		BGM_Init();
 		CL_Init ();
 
 		FMOD_LoadLibrary();
@@ -1141,7 +1141,7 @@ void Host_Shutdown (void)
 	}
 
 	SList_Shutdown ();
-    BGM_Shutdown ();
+	BGM_Shutdown ();
 	CDAudio_Shutdown ();
 	NET_Shutdown ();
 	S_Shutdown ();
