@@ -1353,6 +1353,7 @@ typedef struct
 char	com_gamedir[MAX_OSPATH];
 char	com_basedir[MAX_OSPATH];
 char	com_gamedirname[MAX_OSPATH];
+THREAD_LOCAL int	file_from_pak;		// ZOID: global indicating that file came from a pak
 
 searchpath_t	*com_base_searchpaths;	// without id1 and its packs
 
@@ -1405,6 +1406,8 @@ qboolean COM_FindFile (char *filename)
 	char		netpath[MAX_OSPATH];
 	searchpath_t	*search;
 	pack_t		*pak;
+    
+    file_from_pak = 0;
 
 	for (search = com_searchpaths ; search ; search = search->next)
 	{
@@ -1412,8 +1415,10 @@ qboolean COM_FindFile (char *filename)
 		{
 			pak = search->pack;
 			for (i=0 ; i<pak->numfiles ; i++)
-				if (!strcmp(pak->files[i].name, filename))
+				if (!strcmp(pak->files[i].name, filename)){
+                    file_from_pak = 1;
 					return true;
+                }
 		}
 		else
 		{

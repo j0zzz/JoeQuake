@@ -249,6 +249,18 @@ struct	cache_user_s;
 extern	char	com_gamedir[MAX_OSPATH];
 extern	char	com_basedir[MAX_OSPATH];
 
+#if defined(_MSC_VER)
+#define THREAD_LOCAL __declspec(thread)
+#elif (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
+#define THREAD_LOCAL _Thread_local
+#elif defined(__GNUC__)
+#define THREAD_LOCAL __thread
+#else
+#error TLS not supported
+#endif
+
+extern	THREAD_LOCAL int	file_from_pak;	// global indicating that file came from a pak
+
 typedef struct
 {
 	char	name[MAX_QPATH];

@@ -54,9 +54,9 @@ typedef struct music_handler_s
 
 static music_handler_t wanted_handlers[] =
 {
-	{ CODECTYPE_VORBIS,BGM_STREAMER,-1,  "ogg", MUSIC_DIRNAME, NULL },
-	{ CODECTYPE_MP3,  BGM_STREAMER, -1,  "mp3", MUSIC_DIRNAME, NULL },
-	{ CODECTYPE_NONE, BGM_NONE,     -1,   NULL,         NULL,  NULL }
+	{ CODECTYPE_VORBIS,BGM_STREAMER,-1, "ogg", MUSIC_DIRNAME, NULL },
+	{ CODECTYPE_MP3,  BGM_STREAMER, -1, "mp3", MUSIC_DIRNAME, NULL },
+	{ CODECTYPE_NONE, BGM_NONE,     -1,  NULL,          NULL, NULL }
 };
 
 static music_handler_t *music_handlers = NULL;
@@ -98,10 +98,10 @@ static void BGM_Loop_f (void)
 {
 	if (Cmd_Argc() == 2) {
 		if (Q_strcasecmp(Cmd_Argv(1),  "0") == 0 ||
-		    Q_strcasecmp(Cmd_Argv(1),"off") == 0)
+				Q_strcasecmp(Cmd_Argv(1),"off") == 0)
 			bgmloop = false;
 		else if (Q_strcasecmp(Cmd_Argv(1), "1") == 0 ||
-			 Q_strcasecmp(Cmd_Argv(1),"on") == 0)
+				Q_strcasecmp(Cmd_Argv(1),"on") == 0)
 			bgmloop = true;
 		else if (Q_strcasecmp(Cmd_Argv(1),"toggle") == 0)
 			bgmloop = !bgmloop;
@@ -152,17 +152,16 @@ qboolean BGM_Init (void)
 	{
 		switch (wanted_handlers[i].player)
 		{
-		case BGM_MIDIDRV:
-		/* not supported in quake */
-			break;
-		case BGM_STREAMER:
-			wanted_handlers[i].is_available =
-				S_CodecIsAvailable(wanted_handlers[i].type);
-            Con_Printf ("Loading codec %i %i\n", wanted_handlers[i].type, wanted_handlers[i].is_available);
-			break;
-		case BGM_NONE:
-		default:
-			break;
+			case BGM_MIDIDRV:
+				/* not supported in quake */
+				break;
+			case BGM_STREAMER:
+				wanted_handlers[i].is_available =
+					S_CodecIsAvailable(wanted_handlers[i].type);
+				break;
+			case BGM_NONE:
+			default:
+				break;
 		}
 		if (wanted_handlers[i].is_available != -1)
 		{
@@ -185,8 +184,8 @@ qboolean BGM_Init (void)
 void BGM_Shutdown (void)
 {
 	BGM_Stop();
-/* sever our connections to
- * midi_drv and snd_codec */
+	/* sever our connections to
+	 * midi_drv and snd_codec */
 	music_handlers = NULL;
 }
 
@@ -209,20 +208,20 @@ static void BGM_Play_noext (const char *filename, unsigned int allowed_types)
 			continue;
 		}
 		Q_snprintfz(tmp, sizeof(tmp), "%s/%s.%s",
-			   handler->dir, filename, handler->ext);
+				handler->dir, filename, handler->ext);
 		switch (handler->player)
 		{
-		case BGM_MIDIDRV:
-		/* not supported in quake */
-			break;
-		case BGM_STREAMER:
-			bgmstream = S_CodecOpenStreamType(tmp, handler->type, bgmloop);
-			if (bgmstream)
-				return;		/* success */
-			break;
-		case BGM_NONE:
-		default:
-			break;
+			case BGM_MIDIDRV:
+				/* not supported in quake */
+				break;
+			case BGM_STREAMER:
+				bgmstream = S_CodecOpenStreamType(tmp, handler->type, bgmloop);
+				if (bgmstream)
+					return;		/* success */
+				break;
+			case BGM_NONE:
+			default:
+				break;
 		}
 		handler = handler->next;
 	}
@@ -258,7 +257,7 @@ void BGM_Play (const char *filename)
 	while (handler)
 	{
 		if (handler->is_available &&
-		    !Q_strcasecmp(ext, handler->ext))
+				!Q_strcasecmp(ext, handler->ext))
 			break;
 		handler = handler->next;
 	}
@@ -270,17 +269,17 @@ void BGM_Play (const char *filename)
 	Q_snprintfz(tmp, sizeof(tmp), "%s/%s", handler->dir, filename);
 	switch (handler->player)
 	{
-	case BGM_MIDIDRV:
-	/* not supported in quake */
-		break;
-	case BGM_STREAMER:
-		bgmstream = S_CodecOpenStreamType(tmp, handler->type, bgmloop);
-		if (bgmstream)
-			return;		/* success */
-		break;
-	case BGM_NONE:
-	default:
-		break;
+		case BGM_MIDIDRV:
+			/* not supported in quake */
+			break;
+		case BGM_STREAMER:
+			bgmstream = S_CodecOpenStreamType(tmp, handler->type, bgmloop);
+			if (bgmstream)
+				return;		/* success */
+			break;
+		case BGM_NONE:
+		default:
+			break;
 	}
 
 	Con_Printf("Couldn't handle music file %s\n", filename);
@@ -288,13 +287,13 @@ void BGM_Play (const char *filename)
 
 void BGM_PlayCDtrack (byte track, qboolean looping)
 {
-/* instead of searching by the order of music_handlers, do so by
- * the order of searchpath priority: the file from the searchpath
- * with the highest path_id is most likely from our own gamedir
- * itself. This way, if a mod has track02 as a *.mp3 file, which
- * is below *.ogg in the music_handler order, the mp3 will still
- * have priority over track02.ogg from, say, id1.
- */
+	/* instead of searching by the order of music_handlers, do so by
+	 * the order of searchpath priority: the file from the searchpath
+	 * with the highest path_id is most likely from our own gamedir
+	 * itself. This way, if a mod has track02 as a *.mp3 file, which
+	 * is below *.ogg in the music_handler order, the mp3 will still
+	 * have priority over track02.ogg from, say, id1.
+	 */
 	char tmp[MAX_QPATH];
 	const char *ext;
 	unsigned int path_id, prev_id, type;
@@ -312,9 +311,9 @@ void BGM_PlayCDtrack (byte track, qboolean looping)
 	}
 
 	BGM_Stop();
-    /* TODO: change these to be int so they return success
-	if (CDAudio_Play(track, looping) == 0)
-		return;			// success */
+	/* TODO: change these to be int so they return success
+	   if (CDAudio_Play(track, looping) == 0)
+	   return;			// success */
 
 	if (music_handlers == NULL)
 		return;
@@ -330,8 +329,8 @@ void BGM_PlayCDtrack (byte track, qboolean looping)
 	{
 		if (! handler->is_available)
 			goto _next;
-	//	if (! CDRIPTYPE(handler->type))
-	//		goto _next;
+		if (! CDRIPTYPE(handler->type))
+			goto _next;
 		Q_snprintfz(tmp, sizeof(tmp), "%s/track%02d.%s",
 				MUSIC_DIRNAME, (int)track, handler->ext);
 		if (! COM_FindFile(tmp))
@@ -342,7 +341,7 @@ void BGM_PlayCDtrack (byte track, qboolean looping)
 			type = handler->type;
 			ext = handler->ext;
 		}
-	_next:
+_next:
 		handler = handler->next;
 	}
 	if (ext == NULL)
@@ -431,7 +430,7 @@ static void BGM_UpdateStream (void)
 		{
 			fileBytes = (int) sizeof(raw);
 			fileSamples = fileBytes /
-					  (bgmstream->info.width * bgmstream->info.channels);
+				(bgmstream->info.width * bgmstream->info.channels);
 		}
 
 		/* Read */
@@ -445,9 +444,9 @@ static void BGM_UpdateStream (void)
 		if (res > 0)	/* data: add to raw buffer */
 		{
 			S_RawSamples(fileSamples, bgmstream->info.rate,
-							bgmstream->info.width,
-							bgmstream->info.channels,
-							raw, bgmvolume.value * bgmstream->volume);
+					bgmstream->info.width,
+					bgmstream->info.channels,
+					raw, bgmvolume.value * bgmstream->volume);
 			did_rewind = false;
 		}
 		else if (res == 0)	/* EOF */
@@ -489,10 +488,10 @@ void BGM_Update (void)
 {
 	if (old_volume != bgmvolume.value)
 	{
-		if (bgmvolume.value < 0)
-			Cvar_Set(&bgmvolume, "0");
-		else if (bgmvolume.value > 1)
-			Cvar_Set(&bgmvolume, "1");
+		if (bgmvolume.value < 0.0)
+			Cvar_Set(&bgmvolume, "0.0");
+		else if (bgmvolume.value > 1.0)
+			Cvar_Set(&bgmvolume, "1.0");
 		old_volume = bgmvolume.value;
 	}
 	if (bgmstream)

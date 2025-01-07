@@ -818,7 +818,8 @@ void _Host_Frame (double time)
 	if (host_speeds.value)
 		time2 = Sys_DoubleTime ();
 
-    BGM_Update();
+	// update audio
+	BGM_Update();
 	if (cls.signon == SIGNONS)
 	{
 		// update audio

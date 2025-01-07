@@ -320,9 +320,8 @@ void S_PaintChannels(int endtime)
 			for (i = paintedtime; i < stop; i++)
 			{
 				s = i & (MAX_RAW_SAMPLES - 1);
-			// lower music by 6db to match sfx
-				paintbuffer[i - paintedtime].left += s_rawsamples[s].left / 256;
-				paintbuffer[i - paintedtime].right += s_rawsamples[s].right / 256;
+				paintbuffer[i - paintedtime].left += s_rawsamples[s].left >> 8;
+				paintbuffer[i - paintedtime].right += s_rawsamples[s].right >> 8;
 			}
 			//	if (i != end)
 			//		Con_Printf ("partial stream\n");
