@@ -220,7 +220,9 @@ void CL_Disconnect (void)
 
 // stop sounds (especially looping!)
 	S_StopAllSounds (true);
+#ifndef _WIN32
 	BGM_Pause ();
+#endif
 	
 	if (streamplaying)
 		FMOD_Stop_Stream_f();
@@ -282,7 +284,9 @@ void CL_Disconnect (void)
 void CL_Disconnect_f (void)
 {
 	CL_Disconnect ();
+#ifndef _WIN32
 	BGM_Stop ();
+#endif
 	if (sv.active)
 		Host_ShutdownServer (false);
 }

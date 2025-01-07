@@ -819,7 +819,9 @@ void _Host_Frame (double time)
 		time2 = Sys_DoubleTime ();
 
 	// update audio
+#ifndef _WIN32
 	BGM_Update();
+#endif
 	if (cls.signon == SIGNONS)
 	{
 		// update audio
@@ -1056,7 +1058,9 @@ void Host_Init (quakeparms_t *parms)
 		GFX_Init();
 		S_Init ();
 		CDAudio_Init ();
+#ifndef _WIN32
 		BGM_Init();
+#endif
 		CL_Init ();
 
 		FMOD_LoadLibrary();
@@ -1141,7 +1145,9 @@ void Host_Shutdown (void)
 	}
 
 	SList_Shutdown ();
+#ifndef _WIN32
 	BGM_Shutdown ();
+#endif
 	CDAudio_Shutdown ();
 	NET_Shutdown ();
 	S_Shutdown ();

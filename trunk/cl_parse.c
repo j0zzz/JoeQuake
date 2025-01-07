@@ -1502,12 +1502,16 @@ void CL_ParseServerMessage (void)
 			if ((cl.paused = MSG_ReadByte()))
 			{
 				CDAudio_Pause ();
+#ifndef _WIN32
 				BGM_Pause ();
+#endif
 			}
 			else
 			{
 				CDAudio_Resume ();
+#ifndef _WIN32
 				BGM_Resume ();
+#endif
 			}
 			break;
 
@@ -1564,12 +1568,16 @@ void CL_ParseServerMessage (void)
 				if ((cls.demoplayback || cls.demorecording) && (cls.forcetrack != -1))
 				{
 					CDAudio_Play ((byte)cls.forcetrack, true);
+#ifndef _WIN32
 					BGM_PlayCDtrack ((byte)cls.forcetrack, true);
+#endif
 				}
 				else
 				{
 					CDAudio_Play ((byte)cls.cdtrack, true);
+#ifndef _WIN32
 					BGM_PlayCDtrack ((byte)cl.cdtrack, true);
+#endif
 				}
 			}
 			break;
