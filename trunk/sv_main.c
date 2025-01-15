@@ -604,10 +604,11 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 				if (i == ent->num_leafs && ent->num_leafs < MAX_ENT_LEAFS)
 					continue;		// not visible
 
-				// joe, from ProQuake: don't send updates if the client doesn't have the map
-				if (nomap)
-					continue;
 			}
+
+			// joe, from ProQuake: don't send updates if the client doesn't have the map
+			if (nomap)
+				continue;
 		}
 
 		//johnfitz -- max size for protocol 15 is 18 bytes, not 16 as originally
