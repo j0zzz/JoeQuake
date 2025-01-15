@@ -35,6 +35,7 @@ int			sv_protocol = PROTOCOL_NETQUAKE;
 extern qboolean	pr_alpha_supported; //johnfitz 
 
 vec3_t		sv_velocity;	//joe: for more accurate player speed value
+static cvar_t	sv_novis = {"sv_novis", "0"};
 
 //============================================================================
 
@@ -95,6 +96,7 @@ void SV_Init (void)
 	Cvar_Register (&sv_nostep);
 	Cvar_Register (&sv_altnoclip); //johnfitz
 	Cvar_Register (&sv_noclipspeed);
+	Cvar_Register (&sv_novis);
 
 	Cmd_AddCommand("sv_protocol", &SV_Protocol_f); //johnfitz
 
@@ -567,7 +569,9 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 
 // find the client's PVS
 	VectorAdd (clent->v.origin, clent->v.view_ofs, org);
-	pvs = SV_FatPVS (org, sv.worldmodel);
+
+	if (!sv_novis.value)
+		pvs = SV_FatPVS (org, sv.worldmodel);
 
 // send over all entities (excpet the client) that touch the pvs
 	ent = NEXT_EDICT(sv.edicts);
@@ -584,23 +588,26 @@ void SV_WriteEntitiesToClient (edict_t *clent, sizebuf_t *msg, qboolean nomap)
 			if (sv.protocol == PROTOCOL_NETQUAKE && (int)ent->v.modelindex & 0xFF00)
 				continue;
 
-			// ignore if not touching a PV leaf
-			for (i = 0; i < ent->num_leafs; i++)
-				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i] & 7)))
-					break;
+			if (!sv_novis.value)
+			{
+				// ignore if not touching a PV leaf
+				for (i = 0; i < ent->num_leafs; i++)
+					if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i] & 7)))
+						break;
 
-			// ericw -- added ent->num_leafs < MAX_ENT_LEAFS condition.
-			//
-			// if ent->num_leafs == MAX_ENT_LEAFS, the ent is visible from too many leafs
-			// for us to say whether it's in the PVS, so don't try to vis cull it.
-			// this commonly happens with rotators, because they often have huge bboxes
-			// spanning the entire map, or really tall lifts, etc.
-			if (i == ent->num_leafs && ent->num_leafs < MAX_ENT_LEAFS)
-				continue;		// not visible
+				// ericw -- added ent->num_leafs < MAX_ENT_LEAFS condition.
+				//
+				// if ent->num_leafs == MAX_ENT_LEAFS, the ent is visible from too many leafs
+				// for us to say whether it's in the PVS, so don't try to vis cull it.
+				// this commonly happens with rotators, because they often have huge bboxes
+				// spanning the entire map, or really tall lifts, etc.
+				if (i == ent->num_leafs && ent->num_leafs < MAX_ENT_LEAFS)
+					continue;		// not visible
 
-			// joe, from ProQuake: don't send updates if the client doesn't have the map
-			if (nomap)
-				continue;
+				// joe, from ProQuake: don't send updates if the client doesn't have the map
+				if (nomap)
+					continue;
+			}
 		}
 
 		//johnfitz -- max size for protocol 15 is 18 bytes, not 16 as originally
