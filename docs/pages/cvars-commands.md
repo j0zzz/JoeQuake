@@ -379,6 +379,17 @@ This allows to set starting stats for when starting levels with the `map` or `re
 Dedicated max speed value used only while noclip.
 Its value is `320` by default.
 
+##### `sv_novis`
+
+When set to 1, entities are not PVS culled before being sent to the client.  In
+practice this means that all enemies are visible when `r_outline_monsters` is
+used, and that all monsters are recorded in demos.  The latter is useful for
+being able to see entities that the player can't see in recams or when using the
+freefly feature.
+
+This naturally inflates demo size, so be careful using it with entity heavy
+maps.
+
 #### Network
 
 ##### `net_connectsearch`
