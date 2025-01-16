@@ -1502,16 +1502,12 @@ void CL_ParseServerMessage (void)
 			if ((cl.paused = MSG_ReadByte()))
 			{
 				CDAudio_Pause ();
-#ifndef _WIN32
 				BGM_Pause ();
-#endif
 			}
 			else
 			{
 				CDAudio_Resume ();
-#ifndef _WIN32
 				BGM_Resume ();
-#endif
 			}
 			break;
 
@@ -1561,24 +1557,16 @@ void CL_ParseServerMessage (void)
 		case svc_cdtrack:
 			cl.cdtrack = MSG_ReadByte ();
 			cl.looptrack = MSG_ReadByte ();
-			if (fmod_loaded)
-				FMOD_PlayTrack(cl.cdtrack);
+
+			if ((cls.demoplayback || cls.demorecording) && (cls.forcetrack != -1))
+			{
+				CDAudio_Play ((byte)cls.forcetrack, true);
+				BGM_PlayCDtrack ((byte)cls.forcetrack, true);
+			}
 			else
 			{
-				if ((cls.demoplayback || cls.demorecording) && (cls.forcetrack != -1))
-				{
-					CDAudio_Play ((byte)cls.forcetrack, true);
-#ifndef _WIN32
-					BGM_PlayCDtrack ((byte)cls.forcetrack, true);
-#endif
-				}
-				else
-				{
-					CDAudio_Play ((byte)cl.cdtrack, true);
-#ifndef _WIN32
-					BGM_PlayCDtrack ((byte)cl.cdtrack, true);
-#endif
-				}
+				CDAudio_Play ((byte)cl.cdtrack, true);
+				BGM_PlayCDtrack ((byte)cl.cdtrack, true);
 			}
 			break;
 

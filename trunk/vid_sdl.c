@@ -324,9 +324,7 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 	scr_disabled_for_loading = true;
 
 	CDAudio_Pause ();
-#ifndef _WIN32
 	BGM_Pause ();
-#endif
 	// TODO: Stop non-CD audio
 
 	/* z-buffer depth */
@@ -409,10 +407,7 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 		Sys_Error("Couldn't set mouse mode: %s", SDL_GetError());
 
 	CDAudio_Resume ();
-#ifndef _WIN32
 	BGM_Resume ();
-#endif
-	// TODO: Start non-CD audio
 	scr_disabled_for_loading = temp;
 
 // fix the leftover Alt from any Alt-Tab or the like that switched us away

@@ -578,7 +578,7 @@ void S_ClearBuffer (void)
 	else
 #endif
 		memset (shm->buffer, clear, shm->samples * shm->samplebits/8);
-    memset (s_rawsamples, 0, sizeof (s_rawsamples));
+	memset (s_rawsamples, 0, sizeof (s_rawsamples));
 }
 
 /*

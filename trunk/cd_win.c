@@ -387,27 +387,22 @@ LONG CDAudio_MessageHandler (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void CDAudio_Update (void)
 {
-	if (fmod_loaded)
-		FMOD_ChangeVolume(bgmvolume.value);
-	else
-	{
-		if (!enabled)
-			return;
+	if (!enabled)
+		return;
 
-		if (bgmvolume.value != cdvolume)
+	if (bgmvolume.value != cdvolume)
+	{
+		if (cdvolume)
 		{
-			if (cdvolume)
-			{
-				Cvar_SetValue(&bgmvolume, 0.0);
-				cdvolume = bgmvolume.value;
-				CDAudio_Pause();
-			}
-			else
-			{
-				Cvar_SetValue(&bgmvolume, 1.0);
-				cdvolume = bgmvolume.value;
-				CDAudio_Resume();
-			}
+			Cvar_SetValue(&bgmvolume, 0.0);
+			cdvolume = bgmvolume.value;
+			CDAudio_Pause();
+		}
+		else
+		{
+			Cvar_SetValue(&bgmvolume, 1.0);
+			cdvolume = bgmvolume.value;
+			CDAudio_Resume();
 		}
 	}
 }
