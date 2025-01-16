@@ -4173,7 +4173,7 @@ void M_Sound_KeyboardSlider(int dir)
 
 	case 1:	// bgm volume
 		bgmvolume.value += dir * 0.1;
-		bgmvolume.value = bound(0, bgmvolume.value, 1);
+		bgmvolume.value = bound(0.0f, bgmvolume.value, 1.0f);
 		Cvar_SetValue(&bgmvolume, bgmvolume.value);
 		break;
 	}
