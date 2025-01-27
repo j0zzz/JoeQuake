@@ -427,6 +427,8 @@ static qboolean Ghost_Update (void)
         // TODO: lerp animation frames
         ghost_entity.frame = rec_after->frame;
 
+        VectorCopy(rec_before->origin, ghost_entity.msg_origins[0]);
+        VectorCopy(rec_after->origin, ghost_entity.msg_origins[1]);
         Ghost_LerpOrigin(rec_before->origin, rec_after->origin,
                          frac,
                          ghost_entity.origin);
@@ -476,6 +478,7 @@ void Ghost_Draw (void)
      *  - skinnum
      *  - colormap
      *  - transparency
+     *  - msg_origins
      *  - origin
      *  - angles
      *  - modelindex
