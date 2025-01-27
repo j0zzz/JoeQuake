@@ -1479,6 +1479,37 @@ void Draw_AlphaFill(int x, int y, int w, int h, int c, float alpha)
 
 /*
 =============
+Draw_AlphaFill
+
+Fills a box of pixels with a transparent color
+=============
+*/
+void Draw_AlphaFillRGB(int x, int y, int w, int h, int c, float alpha)
+{
+	float	sbar_scale;
+
+	sbar_scale = Sbar_GetScaleAmount();
+
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND); //johnfitz -- for alpha
+	glDisable(GL_ALPHA_TEST); //johnfitz -- for alpha
+	glColor4f((c & 0xFF) / 255.0 , (c>>8 & 0xFF) / 255.0, (c>>16 & 0xFF) / 255.0, alpha); //johnfitz -- added alpha
+
+	glBegin(GL_QUADS);
+	glVertex2f(x, y);
+	glVertex2f(x + (int)(w * sbar_scale), y);
+	glVertex2f(x + (int)(w * sbar_scale), y + (int)(h * sbar_scale));
+	glVertex2f(x, y + (int)(h * sbar_scale));
+	glEnd();
+
+	glDisable(GL_BLEND); //johnfitz -- for alpha
+	glEnable(GL_ALPHA_TEST); //johnfitz -- for alpha
+	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
+}
+
+/*
+=============
 Draw_Fill
 
 Fills a box of pixels with a single color

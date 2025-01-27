@@ -30,6 +30,9 @@ static	vec3_t	forward, right, up;
 vec3_t	wishdir;
 float	wishspeed;
 
+vec3_t pre_sv_velocity;
+vec3_t post_friction_velocity;
+
 // world
 float	*angles;
 float	*origin;
@@ -152,6 +155,8 @@ void SV_UserFriction (void)
 	vel[0] = vel[0] * newspeed;
 	vel[1] = vel[1] * newspeed;
 	vel[2] = vel[2] * newspeed;
+    
+    VectorCopy(vel, post_friction_velocity); /* dex: for bhop data calculations */
 }
 
 /*
@@ -378,6 +383,8 @@ void SV_ClientThink (void)
 
 	origin = sv_player->v.origin;
 	velocity = sv_player->v.velocity;
+
+    VectorCopy(velocity, pre_sv_velocity); /* dex: copying for read in bhop stats */
 
 	DropPunchAngle ();
 
