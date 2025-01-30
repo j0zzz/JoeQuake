@@ -20,10 +20,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // snd_dma.c -- main control for any streaming sound output device
 
 #include "quakedef.h"
+#include "sound.h"
 #include "winquake.h"
 #ifdef _WIN32
 #include "movie.h"
 #endif
+#include "bgmusic.h"
+#include "snd_codec.h"
 
 void S_Play_f (void);
 void S_Play2_f (void);
@@ -59,6 +62,9 @@ float	sound_nominal_clip_dist=1000.0;
 int		soundtime;		// sample PAIRS
 int   	paintedtime; 	// sample PAIRS
 
+int     s_rawend;
+portable_samplepair_t s_rawsamples[MAX_RAW_SAMPLES];
+
 sfx_t	*known_sfx;		// hunk allocated [MAX_SFX]
 int		num_sfx;
 
@@ -69,7 +75,7 @@ int 	desired_bits = 16;
 
 int		sound_started = 0;
 
-cvar_t	bgmvolume = {"bgmvolume", "1", CVAR_ARCHIVE};
+cvar_t	bgmvolume = {"bgmvolume", "0.0", CVAR_ARCHIVE};
 cvar_t	s_volume = {"volume", "0.5", CVAR_ARCHIVE};
 cvar_t	s_nosound = {"nosound", "0"};
 cvar_t	s_precache = {"precache", "1"};
@@ -227,6 +233,8 @@ void S_Init (void)
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
 
+	S_CodecInit ();
+
 	S_StopAllSounds (true);
 }
 
@@ -245,6 +253,8 @@ void S_Shutdown (void)
 
 	shm = 0;
 	sound_started = 0;
+
+	S_CodecShutdown();
 
 	if (!fakedma)
 		SNDDMA_Shutdown ();
@@ -569,6 +579,7 @@ void S_ClearBuffer (void)
 	else
 #endif
 		memset (shm->buffer, clear, shm->samples * shm->samplebits/8);
+	memset (s_rawsamples, 0, sizeof (s_rawsamples));
 }
 
 /*
@@ -660,6 +671,91 @@ void S_UpdateAmbientSounds (void)
 		}
 
 		chan->leftvol = chan->rightvol = chan->master_vol;
+	}
+}
+
+/*
+===================
+S_RawSamples		(from QuakeII)
+
+Streaming music support. Byte swapping
+of data must be handled by the codec.
+Expects data in signed 16 bit, or unsigned
+8 bit format.
+===================
+*/
+void S_RawSamples (int samples, int rate, int width, int channels, byte *data, float volume)
+{
+	int i;
+	int src, dst;
+	float scale;
+	int intVolume;
+
+	if (s_rawend < paintedtime)
+		s_rawend = paintedtime;
+
+	scale = (float) rate / shm->speed;
+	intVolume = (int) (256 * volume);
+
+	if (channels == 2 && width == 2)
+	{
+		for (i = 0; ; i++)
+		{
+			src = i * scale;
+			if (src >= samples)
+				break;
+			dst = s_rawend & (MAX_RAW_SAMPLES - 1);
+			s_rawend++;
+			s_rawsamples [dst].left = ((short *) data)[src * 2] * intVolume;
+			s_rawsamples [dst].right = ((short *) data)[src * 2 + 1] * intVolume;
+		}
+	}
+	else if (channels == 1 && width == 2)
+	{
+		for (i = 0; ; i++)
+		{
+			src = i * scale;
+			if (src >= samples)
+				break;
+			dst = s_rawend & (MAX_RAW_SAMPLES - 1);
+			s_rawend++;
+			s_rawsamples [dst].left = ((short *) data)[src] * intVolume;
+			s_rawsamples [dst].right = ((short *) data)[src] * intVolume;
+		}
+	}
+	else if (channels == 2 && width == 1)
+	{
+		intVolume *= 256;
+
+		for (i = 0; ; i++)
+		{
+			src = i * scale;
+			if (src >= samples)
+				break;
+			dst = s_rawend & (MAX_RAW_SAMPLES - 1);
+			s_rawend++;
+		//	s_rawsamples [dst].left = ((signed char *) data)[src * 2] * intVolume;
+		//	s_rawsamples [dst].right = ((signed char *) data)[src * 2 + 1] * intVolume;
+			s_rawsamples [dst].left = (((byte *) data)[src * 2] - 128) * intVolume;
+			s_rawsamples [dst].right = (((byte *) data)[src * 2 + 1] - 128) * intVolume;
+		}
+	}
+	else if (channels == 1 && width == 1)
+	{
+		intVolume *= 256;
+
+		for (i = 0; ; i++)
+		{
+			src = i * scale;
+			if (src >= samples)
+				break;
+			dst = s_rawend & (MAX_RAW_SAMPLES - 1);
+			s_rawend++;
+		//	s_rawsamples [dst].left = ((signed char *) data)[src] * intVolume;
+		//	s_rawsamples [dst].right = ((signed char *) data)[src] * intVolume;
+			s_rawsamples [dst].left = (((byte *) data)[src] - 128) * intVolume;
+			s_rawsamples [dst].right = (((byte *) data)[src] - 128) * intVolume;
+		}
 	}
 }
 
@@ -951,6 +1047,7 @@ void S_VolumeDown_f (void)
 	s_volume.value = bound(0, s_volume.value, 1);
 	Cvar_SetValue (&s_volume, s_volume.value);
 	volume_changed = true;
+	SND_InitScaletable();
 }
 
 void S_VolumeUp_f (void)
@@ -960,6 +1057,7 @@ void S_VolumeUp_f (void)
 	s_volume.value = bound(0, s_volume.value, 1);
 	Cvar_SetValue (&s_volume, s_volume.value);
 	volume_changed = true;
+	SND_InitScaletable();
 }
 
 void S_LocalSound (char *sound)

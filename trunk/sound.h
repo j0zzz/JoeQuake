@@ -114,6 +114,10 @@ channel_t *SND_PickChannel(int entnum, int entchannel);
 // spatializes a channel
 void SND_Spatialize(channel_t *ch);
 
+// music stream support
+void S_RawSamples(int samples, int rate, int width, int channels, byte * data, float volume);
+				/* Expects data in signed 16 bit, or unsigned 8 bit format. */
+
 // initializes cycling through a DMA buffer and returns information on it
 qboolean SNDDMA_Init(void);
 
@@ -161,9 +165,16 @@ extern	cvar_t	s_volume;
 extern	cvar_t	s_loadas8bit;
 extern	cvar_t	s_khz;
 
+extern	int	s_rawend;
+
+#define	MAX_RAW_SAMPLES	8192
+extern	portable_samplepair_t s_rawsamples[MAX_RAW_SAMPLES];
+
 extern qboolean	snd_initialized;
 
 extern	int	snd_blocked;
+
+#define LERP(a, b, t) ((a) + ((b)-(a))*(t))
 
 void S_LocalSound (char *s);
 sfxcache_t *S_LoadSound (sfx_t *s);
