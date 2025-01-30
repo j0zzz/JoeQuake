@@ -175,7 +175,7 @@ snd_stream_t *S_CodecOpenStreamAny (const char *filename, qboolean loop)
 	snd_stream_t *stream;
 	const char *ext;
 
-	ext = COM_FileExtension(filename);
+	ext = COM_FileExtension((char *) filename);
 	if (! *ext)	/* try all available */
 	{
 		char tmp[MAX_QPATH];
@@ -274,7 +274,7 @@ snd_stream_t *S_CodecUtilOpen(const char *filename, snd_codec_t *codec, qboolean
 	long length;
 
 	/* Try to open the file */
-	length = (long) COM_FOpenFile(filename, &handle);
+	length = (long) COM_FOpenFile((char *) filename, &handle);
 	pak = file_from_pak;
 	if (length == -1)
 	{

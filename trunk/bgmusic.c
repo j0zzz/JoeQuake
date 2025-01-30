@@ -246,7 +246,7 @@ void BGM_Play (const char *filename)
 		return;
 	}
 
-	ext = COM_FileExtension(filename);
+	ext = COM_FileExtension((char *) filename);
 	if (! *ext)	/* try all things */
 	{
 		BGM_Play_noext(filename, ANY_CODECTYPE);
