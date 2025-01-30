@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // snd_dma.c -- main control for any streaming sound output device
 
 #include "quakedef.h"
+#include "sound.h"
 #include "winquake.h"
 #ifdef _WIN32
 #include "movie.h"
@@ -1046,6 +1047,7 @@ void S_VolumeDown_f (void)
 	s_volume.value = bound(0, s_volume.value, 1);
 	Cvar_SetValue (&s_volume, s_volume.value);
 	volume_changed = true;
+	SND_InitScaletable();
 }
 
 void S_VolumeUp_f (void)
@@ -1055,6 +1057,7 @@ void S_VolumeUp_f (void)
 	s_volume.value = bound(0, s_volume.value, 1);
 	Cvar_SetValue (&s_volume, s_volume.value);
 	volume_changed = true;
+	SND_InitScaletable();
 }
 
 void S_LocalSound (char *sound)

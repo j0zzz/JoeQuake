@@ -174,6 +174,8 @@ extern qboolean	snd_initialized;
 
 extern	int	snd_blocked;
 
+#define LERP(a, b, t) ((a) + ((b)-(a))*(t))
+
 void S_LocalSound (char *s);
 sfxcache_t *S_LoadSound (sfx_t *s);
 

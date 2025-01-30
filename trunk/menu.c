@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // menu.c
 
 #include "quakedef.h"
+#include "sound.h"
 #include "winquake.h"
 
 qboolean vid_windowedmouse = true;
@@ -4177,6 +4178,8 @@ void M_Sound_KeyboardSlider(int dir)
 		Cvar_SetValue(&bgmvolume, bgmvolume.value);
 		break;
 	}
+
+	SND_InitScaletable();
 }
 
 void M_Sound_Key(int k)
