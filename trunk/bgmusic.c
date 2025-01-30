@@ -287,16 +287,9 @@ void BGM_Play (const char *filename)
 
 void BGM_PlayCDtrack (byte track, qboolean looping)
 {
-	/* instead of searching by the order of music_handlers, do so by
-	 * the order of searchpath priority: the file from the searchpath
-	 * with the highest path_id is most likely from our own gamedir
-	 * itself. This way, if a mod has track02 as a *.mp3 file, which
-	 * is below *.ogg in the music_handler order, the mp3 will still
-	 * have priority over track02.ogg from, say, id1.
-	 */
 	char tmp[MAX_QPATH];
 	const char *ext;
-	unsigned int path_id, prev_id, type;
+	unsigned int type;
 	music_handler_t *handler;
 
 	/* if replaying the same track, just resume playing instead of stopping and restarting*/
@@ -321,7 +314,6 @@ void BGM_PlayCDtrack (byte track, qboolean looping)
 	if (no_extmusic || !bgm_extmusic.value)
 		return;
 
-	prev_id = 0;
 	type = 0;
 	ext  = NULL;
 	handler = music_handlers;
@@ -335,12 +327,8 @@ void BGM_PlayCDtrack (byte track, qboolean looping)
 				MUSIC_DIRNAME, (int)track, handler->ext);
 		if (! COM_FindFile(tmp))
 			goto _next;
-		if (path_id > prev_id)
-		{
-			prev_id = path_id;
-			type = handler->type;
-			ext = handler->ext;
-		}
+		type = handler->type;
+		ext = handler->ext;
 _next:
 		handler = handler->next;
 	}

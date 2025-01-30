@@ -118,7 +118,7 @@ snd_stream_t *S_CodecOpenStreamType (const char *filename, unsigned int type, qb
 		Con_Printf("Unknown type for %s\n", filename);
 		return NULL;
 	}
-	stream = S_CodecUtilOpen(filename, codec, loop);
+	stream = S_CodecUtilOpen((char *)filename, codec, loop);
 	if (stream) {
 		if (codec->codec_open(stream))
 		{
@@ -137,7 +137,7 @@ snd_stream_t *S_CodecOpenStreamExt (const char *filename, qboolean loop)
 	snd_stream_t *stream;
 	const char *ext;
 
-	ext = COM_FileExtension(filename);
+	ext = COM_FileExtension((char *) filename);
 	if (! *ext)
 	{
 		Con_Printf("No extension for %s\n", filename);

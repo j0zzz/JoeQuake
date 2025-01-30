@@ -903,7 +903,7 @@ void COM_StripExtension (char *in, char *out)
 COM_FileExtension
 ============
 */
-char *COM_FileExtension (const char *in)
+char *COM_FileExtension (char *in)
 {
 	static	char	exten[8];
 	int		i;
