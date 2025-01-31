@@ -1479,7 +1479,7 @@ void Draw_AlphaFill(int x, int y, int w, int h, int c, float alpha)
 
 /*
 =============
-Draw_AlphaFill
+Draw_AlphaFillRGB
 
 Fills a box of pixels with a transparent color
 =============
@@ -1506,6 +1506,22 @@ void Draw_AlphaFillRGB(int x, int y, int w, int h, int c, float alpha)
 	glEnable(GL_ALPHA_TEST); //johnfitz -- for alpha
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
+}
+
+/*
+=============
+Draw_BoxScaledOrigin
+
+Fills a box of pixels with a transparent color. Takes into account
+scaling on the origin.
+=============
+*/
+void Draw_BoxScaledOrigin(int x, int y, int w, int h, int c, float alpha)
+{
+	float sbar_scale;
+	
+	sbar_scale = Sbar_GetScaleAmount();
+	void Draw_AlphaFillRGB(x * sbar_scale, y * sbar_scale, w, h, c, alpha);
 }
 
 /*

@@ -40,8 +40,7 @@ cvar_t show_bhop_window = {"show_bhop_window", "144"};
 /* this is intended as a FIFO structure; new items will be added at the beginning */
 bhop_data_t *bhop_history = NULL;
 bhop_mark_t bhop_last_ground;
-int window;
-float lastangle;
+static float lastangle;
 
 extern qboolean onground;
 extern usercmd_t cmd;
@@ -146,6 +145,16 @@ float * bhop_speed_array(bhop_data_t * history, int window) {
     }
 
     return frames;
+}
+
+int bhop_get_fwd_color(bhop_data_t * history){
+    if (!history)
+        return 0;
+
+    if (history->on_ground)
+        return history->movement.fwd ? BHOP_GREEN_RGB : BHOP_RED_RGB;
+    else
+        return history->movement.fwd ? BHOP_LRED_RGB : 0;
 }
 
 int ** bhop_key_arrays(bhop_data_t * history, int window) {
@@ -398,16 +407,25 @@ void bhop_gather_data(void) {
         return;
 
     bhop_data_t * data_frame = malloc(sizeof(bhop_data_t));
-    bhop_keystate_t keystate = {.fwd = CL_KeyState(&in_forward), .left = CL_KeyState(&in_moveleft), .right = CL_KeyState(&in_moveright)};
-    data_frame->on_ground = onground;
+
+    VectorCopy(sv_player->v.velocity, data_frame->velocity);
+
+    bhop_keystate_t keystate = {
+        .fwd = CL_KeyState(&in_forward), 
+        .left = CL_KeyState(&in_moveleft), 
+        .right = CL_KeyState(&in_moveright)
+    };
     data_frame->movement = keystate;
+
+    data_frame->on_ground = onground;
     data_frame->angle_change = lastangle - sv_player->v.angles[1];
     data_frame->viewangle = lastangle = sv_player->v.angles[1];
-    VectorCopy(sv_player->v.velocity, data_frame->velocity);
+
     data_frame->friction_loss = 
         sqrt(pre_sv_velocity[0]*pre_sv_velocity[0] + pre_sv_velocity[1]*pre_sv_velocity[1]);
     data_frame->friction_loss -= data_frame->speed = 
         sqrt(data_frame->velocity[0]*data_frame->velocity[0] + data_frame->velocity[1]*data_frame->velocity[1]);
+
     data_frame->speed_gain = data_frame->speed - (bhop_history ? bhop_history->speed : 0);
 
     data_frame->next = bhop_history;
@@ -451,10 +469,11 @@ void BHOP_Shutdown (void) {
 
 void SCR_DrawBHOP (void)
 {
-    int		x, y;
+    int     x, y;
     int     charsize;
     int     scale;
-    char	str[80];
+    char    str[80];
+    static int window;
 
     x = ELEMENT_X_COORD(show_bhop_stats);
     y = ELEMENT_Y_COORD(show_bhop_stats);
@@ -475,7 +494,12 @@ void SCR_DrawBHOP (void)
 
     if((int)show_bhop_stats.value & BHOP_KEYPRESSES) {
         bhop_summary_t summary = bhop_get_summary(bhop_history, window);
-        Q_snprintfz (str, sizeof(str), "f%% %03.f/%03.f s%% %03.f", summary.fwd_on_ground_percent, summary.fwd_percent, summary.strafe_percent);
+        Q_snprintfz (
+            str, sizeof(str), "f%% %03.f/%03.f s%% %03.f", 
+            summary.fwd_on_ground_percent, 
+            summary.fwd_percent, 
+            summary.strafe_percent
+        );
         Draw_String (x, y, str, true);
         y += charsize;
     }
