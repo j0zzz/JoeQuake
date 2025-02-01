@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_main.c -- client main loop
 
 #include "quakedef.h"
+#include "bgmusic.h"
 
 // we need to declare some mouse variables here, because the menu system
 // references them even when on a unix system.
@@ -219,13 +220,8 @@ void CL_Disconnect (void)
 
 // stop sounds (especially looping!)
 	S_StopAllSounds (true);
+	BGM_Pause ();
 	
-	if (streamplaying)
-		FMOD_Stop_Stream_f();
-
-#ifdef GLQUAKE
-	FMOD_Stop_f ();
-#endif
 
 // if running a local server, shut it down
 	if (cls.demoplayback)
@@ -280,6 +276,7 @@ void CL_Disconnect (void)
 void CL_Disconnect_f (void)
 {
 	CL_Disconnect ();
+	BGM_Stop ();
 	if (sv.active)
 		Host_ShutdownServer (false);
 }

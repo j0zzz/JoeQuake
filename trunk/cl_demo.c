@@ -119,8 +119,6 @@ void CL_StopPlayback (void)
 	Movie_StopPlayback ();
 #endif
 
-	if (streamplaying)
-		FMOD_Stop_Stream_f();
 }
 
 /*

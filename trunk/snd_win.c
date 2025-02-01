@@ -157,10 +157,6 @@ void FreeSound (void)
 	dsound_init = false;
 	wav_init = false;
 
-#ifdef GLQUAKE
-	if (nehahra)
-	        FMOD_Close ();
-#endif
 }
 
 /*

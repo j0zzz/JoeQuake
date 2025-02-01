@@ -44,8 +44,6 @@ void CDAudio_Resume(void)
 
 void CDAudio_Update(void)
 {
-	if (fmod_loaded)
-		FMOD_ChangeVolume(bgmvolume.value);
 }
 
 
