@@ -72,4 +72,5 @@ void Draw_AdjustConback(void);
 
 #ifdef GLQUAKE
 void Draw_AlphaFillRGB(int x, int y, int w, int h, int c, float alpha);
+void Draw_BoxScaledOrigin(int x, int y, int w, int h, int c, float alpha);
 #endif

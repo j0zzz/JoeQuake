@@ -1521,7 +1521,7 @@ void Draw_BoxScaledOrigin(int x, int y, int w, int h, int c, float alpha)
 	float sbar_scale;
 	
 	sbar_scale = Sbar_GetScaleAmount();
-	void Draw_AlphaFillRGB(x * sbar_scale, y * sbar_scale, w, h, c, alpha);
+	Draw_AlphaFillRGB(x * sbar_scale, y * sbar_scale, w, h, c, alpha);
 }
 
 /*

@@ -76,6 +76,7 @@ extern cvar_t show_bhop_stats_x;
 extern cvar_t show_bhop_stats_y;
 extern cvar_t show_bhop_histlen;
 extern cvar_t show_bhop_window;
+extern cvar_t show_bhop_frames;
 extern bhop_data_t *bhop_history;
 
 /* general history graphs */
@@ -104,6 +105,7 @@ extern bhop_data_t *bhop_history;
 #define BHOP_RED 79
 #define BHOP_WHITE 13
 
+#define BHOP_WHITE_RGB 255 + (255 << 8) + (255 << 16)
 #define BHOP_RED_RGB 255
 #define BHOP_LRED_RGB 96
 #define BHOP_ORANGE_RGB 255 + (165<<8)
@@ -122,6 +124,10 @@ void bhop_cull_history(bhop_data_t * history, int num);
 void bhop_gather_data(void);
 int bhop_histlen(bhop_data_t * history);
 void bhop_print_summary(void);
+
+int bhop_get_fwd_color(bhop_data_t * history);
+int bhop_get_lstrafe_color(bhop_data_t * history);
+int bhop_get_rstrafe_color(bhop_data_t * history);
 
 void BHOP_Init (void);
 void BHOP_Shutdown (void);

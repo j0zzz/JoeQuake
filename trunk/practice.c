@@ -27,8 +27,8 @@
  *
  */
 
-#include "quakedef.h"
 #include <string.h>
+#include "quakedef.h"
 #include "practice.h"
 
 cvar_t show_bhop_stats = {"show_bhop_stats", "0"};
@@ -36,11 +36,13 @@ cvar_t show_bhop_stats_x = {"show_bhop_stats_x", "1"};
 cvar_t show_bhop_stats_y = {"show_bhop_stats_y", "4"};
 cvar_t show_bhop_histlen = {"show_bhop_histlen", "0"};
 cvar_t show_bhop_window = {"show_bhop_window", "144"};
+cvar_t show_bhop_frames = {"show_bhop_frames", "7"};
 
 /* this is intended as a FIFO structure; new items will be added at the beginning */
 bhop_data_t *bhop_history = NULL;
 bhop_mark_t bhop_last_ground;
 static float lastangle;
+static float last_ground_speed;
 
 extern qboolean onground;
 extern usercmd_t cmd;
@@ -55,8 +57,14 @@ extern vec3_t pre_sv_velocity;
 extern vec3_t post_friction_velocity;
 extern double sv_frametime;
 
+int bhop_inverse_scale(int x){
+    int scale = Sbar_GetScaleAmount();
+    return x / scale;
+}
 
-/* cull history after <num> newest datapoints */
+/* 
+ * cull history after <num> newest datapoints 
+ */
 void bhop_cull_history(bhop_data_t * history, int num) {
     bhop_data_t * prev = NULL;
 
@@ -75,8 +83,11 @@ void bhop_cull_history(bhop_data_t * history, int num) {
     }
 }
 
+/*
+ * get entire history len
+ */
 int bhop_histlen(bhop_data_t * history) {
-    int len;
+    int len = 0;
 
     while(history){
         history = history->next;
@@ -157,6 +168,34 @@ int bhop_get_fwd_color(bhop_data_t * history){
         return history->movement.fwd ? BHOP_LRED_RGB : 0;
 }
 
+int bhop_get_lstrafe_color(bhop_data_t * history){
+    int color = 0;
+    if (!history)
+        return color;
+
+    if (history->movement.left)
+        color = BHOP_LRED_RGB;
+
+    if (history->angle_change < 0.0)
+        color |= BHOP_LGREEN_RGB;
+
+    return color;
+}
+
+int bhop_get_rstrafe_color(bhop_data_t * history){
+    int color = 0;
+    if (!history)
+        return color;
+
+    if (history->movement.right)
+        color = BHOP_LRED_RGB;
+
+    if (history->angle_change > 0.0)
+        color |= BHOP_LGREEN_RGB;
+
+    return color;
+}
+
 int ** bhop_key_arrays(bhop_data_t * history, int window) {
     if (window < 0)
         return NULL;
@@ -167,22 +206,11 @@ int ** bhop_key_arrays(bhop_data_t * history, int window) {
 
     while (history && window--) {
         /* fwd structure */
-        if (history->on_ground) 
-            frames[0][window] = history->movement.fwd ? BHOP_GREEN_RGB : BHOP_RED_RGB;
-        else
-            frames[0][window] = history->movement.fwd ? BHOP_LRED_RGB : 0;
+        frames[0][window] = bhop_get_fwd_color(history);
 
         /* strafing */
-        if (history->movement.left && history->angle_change < 0.0)
-            frames[1][window] = BHOP_LRED_RGB;
-        if (history->movement.right)
-            frames[2][window] = BHOP_LRED_RGB;
-
-        /* angle */
-        if (history->angle_change < 0.0)
-            frames[1][window] |= BHOP_LGREEN_RGB;
-        if (history->angle_change > 0.0)
-            frames[2][window] |= BHOP_LGREEN_RGB;
+        frames[1][window] = bhop_get_lstrafe_color(history);
+        frames[2][window] = bhop_get_rstrafe_color(history);
 
         history = history->next;
     }
@@ -267,7 +295,7 @@ bhop_mark_t bhop_calculate_ground_bar(vec3_t velocity, vec3_t angles, float foca
         angle_pixel = atan((x - vid.width/2.0) / focal_len);
         delta_v[cmd.sidemove < 0 ? vid.width - x - 1 : x] = bhop_ground_delta_v(vel_speed, wish_speed, angle_pixel - acos(dot_product), bar.friction_loss);
     }
-    
+
     return bar;
 }
 
@@ -350,7 +378,7 @@ void bhop_draw_angle_mark(bhop_data_t * history, int scale) {
         bar = bhop_calculate_ground_bar(vel, angles, focal_len);
     }
     /* display */
-    y = scr_vrect.y + scr_vrect.height / 2.0 + 20;
+    y = scr_vrect.y + scr_vrect.height / 2.0 + 10 * scale;
 
     if(bar.x_start != bar.x_end){
         Draw_AlphaFill(bar.x_start, y, (bar.x_end - bar.x_start) / scale, 1, BHOP_WHITE, 0.8);
@@ -360,46 +388,63 @@ void bhop_draw_angle_mark(bhop_data_t * history, int scale) {
     } 
 }
 
-void bhop_draw_crosshair_squares(bhop_data_t * history, int scale) {
-    int ** frames = bhop_key_arrays(history, 36);
-    int count = -1; 
+/*
+ * draw squares representing frames around the last grounding, forward taps.
+ */
+void bhop_draw_crosshair_squares(bhop_data_t * history) {
     int x, y;
-    char str[50];
+    char str[20];
+
+    bhop_data_t * history_it = history;
+    int count = -1; 
+    int i = 0, j = 0;
     float alpha = 1.0;
 
-    for (int i = 36; i; i--){
-        if (count == -1 && frames[0][i] == BHOP_GREEN_RGB || frames[0][i] == BHOP_RED_RGB)
+    if (!history)
+        return;
+
+    /* find the first on_ground */
+    while (history && i < 36 && count == -1) {
+        if (history->on_ground)
             count = i;
-    }
-
-    if (count == -1 || count + 5 > 36)
-        goto clean_up;
-
-    alpha = min((count - 11) / 10.0, 1.0);
-    y = scr_vrect.y + scr_vrect.height / 2.0 - 20 * scale;
-    x = scr_vrect.x + scr_vrect.width / 2.0 - 28 * scale;
-    for (int i = -5; i <= 5; i++){
-        Draw_AlphaFill(x, y, 5, 1, BHOP_WHITE, alpha);
-        Draw_AlphaFill(x, y + 1 * scale, 1, 4, BHOP_WHITE, alpha);
-        Draw_AlphaFillRGB(x + 1 * scale, y + 1 * scale, 4, 4, frames[0][count + i], alpha);
-        Draw_AlphaFill(x, y + 5 * scale, 5, 1, BHOP_WHITE, alpha);
-        x = x + 5 * scale;
-    }
-    Draw_AlphaFill(x, y, 1, 6, BHOP_WHITE, alpha);
-
-    for (int i = 0; i < 36 - count - 1; i++)
+        i++;
         history = history->next;
+    }
 
-    x = scr_vrect.x + scr_vrect.width / 2.0 - 40 * scale;
-    Q_snprintfz (str, sizeof(str), "%3.1f", history->speed_gain);
-    Draw_String(x, y + 10 * scale, str, true);
-    Q_snprintfz (str, sizeof(str), "%3.1f", history->friction_loss);
-    Draw_String(x + 50 * scale, y + 10 * scale, str, true);
-    
-clean_up:
-    for (int i = 0; i < 3; i++)
-        free(frames[i]);
-    free(frames);
+    if (count < show_bhop_frames.value) 
+        return;
+
+    history = history_it;
+    alpha = min((36 - 10 - count) / 10.0, 1.0);
+    y = bhop_inverse_scale(scr_vrect.y + scr_vrect.height / 2.0) - 12;
+    x = bhop_inverse_scale(scr_vrect.x + scr_vrect.width / 2.0) - 2 + (show_bhop_frames.value - 1) * 5;
+    i = 0;
+
+    while (history && i < count + show_bhop_frames.value) {
+        if (i > count - show_bhop_frames.value){
+            if (i - count == 0){ /* central box */
+                Draw_BoxScaledOrigin(x - 1, y + j - 1, 1, 6, BHOP_ORANGE_RGB, alpha);
+                Draw_BoxScaledOrigin(x + 4, y + j - 1, 1, 6, BHOP_ORANGE_RGB, alpha);
+                Draw_BoxScaledOrigin(x, y + j - 1, 4, 1, BHOP_ORANGE_RGB, alpha);
+                Draw_BoxScaledOrigin(x, y + j + 4, 4, 1, BHOP_ORANGE_RGB, alpha);
+
+                Q_snprintfz (str, sizeof(str), "air: %3.1f gr: %3.1f", history->speed_gain + history->friction_loss, -history->friction_loss);
+                Draw_String (x * Sbar_GetScaleAmount(), y * Sbar_GetScaleAmount(), str, true);
+            } else { /* other boxes */
+                if (i - count < 0)
+                    Draw_BoxScaledOrigin(x + 4, y + j - 1, 1, 6, BHOP_WHITE_RGB, alpha);
+                else
+                    Draw_BoxScaledOrigin(x - 1, y + j - 1, 1, 6, BHOP_WHITE_RGB, alpha);
+                Draw_BoxScaledOrigin(x, y + j - 1, 4, 1, BHOP_WHITE_RGB, alpha);
+                Draw_BoxScaledOrigin(x, y + j + 4, 4, 1, BHOP_WHITE_RGB, alpha);
+            }
+            Draw_BoxScaledOrigin(x, y, 4, 4, bhop_get_fwd_color(history), alpha);
+            x -= 5;
+        }
+
+        i++;
+        history = history->next;
+    }
 }
 
 void bhop_gather_data(void) {
@@ -426,7 +471,11 @@ void bhop_gather_data(void) {
     data_frame->friction_loss -= data_frame->speed = 
         sqrt(data_frame->velocity[0]*data_frame->velocity[0] + data_frame->velocity[1]*data_frame->velocity[1]);
 
-    data_frame->speed_gain = data_frame->speed - (bhop_history ? bhop_history->speed : 0);
+    data_frame->speed_gain = 0;
+    if (data_frame->on_ground){
+        data_frame->speed_gain = data_frame->speed - last_ground_speed;
+        last_ground_speed = data_frame->speed;
+    }
 
     data_frame->next = bhop_history;
     bhop_history = data_frame;
@@ -450,11 +499,13 @@ void BHOP_Init (void) {
 	Cvar_Register (&show_bhop_stats_y);
 	Cvar_Register (&show_bhop_histlen);
 	Cvar_Register (&show_bhop_window);
+	Cvar_Register (&show_bhop_frames);
 }
 
 void BHOP_Start (void) {
     bhop_history = NULL;
     lastangle = 0;
+    last_ground_speed = 0;
 }
 
 void BHOP_Stop (void) {
@@ -555,7 +606,7 @@ void SCR_DrawBHOP (void)
         Draw_AlphaFill(x + scale * window, y + 17 * scale, -2, 1, BHOP_WHITE, 1.0);
         Draw_AlphaFill(x + scale * window, y + 9 * scale, -1, 1, BHOP_WHITE, 1.0);
         Draw_AlphaFill(x + scale * window, y + 25 * scale, -1, 1, BHOP_WHITE, 1.0);
-        
+
         free(frames);
         y += 36 * scale;
     }
@@ -601,11 +652,8 @@ void SCR_DrawBHOP (void)
     }
 
     if((int)show_bhop_stats.value & BHOP_CROSSHAIR_INFO) {
-        // draw 10 frames around last grounding, as squares
-        // also draw square for bhop, whether it was pressed
-        bhop_draw_crosshair_squares(bhop_history, scale);
+        bhop_draw_crosshair_squares(bhop_history);
         // draw velocity gain during last jump and loss/gain on ground
-
         // draw optimal speed loss/gain on ground
     }
 
