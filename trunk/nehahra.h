@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // nehahra.h
 
-#include "fmod.h"
 
 #define NEHAHRA_VERSION	2.54
 
@@ -38,8 +37,6 @@ extern	cvar_t	gl_fogenable, gl_fogdensity, gl_fogred, gl_foggreen, gl_fogblue;
 extern	sfx_t	*known_sfx;
 extern	int	num_sfx, num_sfxorig;
 
-void FMOD_Stop_f (void);
-void FMOD_Close (void);
 void Neh_DoBindings (void);
 void Neh_Init (void);
 void Neh_SetupFrame (void);
