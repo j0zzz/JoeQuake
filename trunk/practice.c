@@ -269,7 +269,7 @@ float * bhop_air_gain_roots(vec3_t velocity) {
 /*
  * gets the delta-v dependent on angle
  */
-float bhop_ground_delta_v(float vel_len, float angle, float friction_loss) {
+float bhop_ground_delta_v(float vel_len, float angle) {
     float w_len, delta_v;
 
     w_len = max(320 - vel_len * cos(angle), 0.0);
@@ -280,7 +280,8 @@ float bhop_ground_delta_v(float vel_len, float angle, float friction_loss) {
 
     delta_v += w_len * w_len * sin(angle) * sin(angle);
 
-    delta_v = sqrt(delta_v) - vel_len - friction_loss;
+    delta_v = sqrt(delta_v) - vel_len;
+
 
     return delta_v;
 }
@@ -292,13 +293,10 @@ float bhop_ground_delta_v(float vel_len, float angle, float friction_loss) {
 bhop_mark_t bhop_calculate_ground_bar(vec3_t velocity, vec3_t angles, float focal_len) {
     vec3_t wishvel;
     vec3_t fwd_vec, right_vec, up_vec;
-    bhop_mark_t bar = {.x_start = 0, .x_end = 0, .x_mid = 0};
+    bhop_mark_t bar = {.x_start = -10, .x_end = -10, .x_mid = -10};
     int x, best_x;
     float angle_pixel, wish_speed, vel_speed, dot_product;
-    float * delta_v = calloc(vid.width, sizeof(float));
-
-    bar.friction_loss = sqrt(pre_sv_velocity[0]*pre_sv_velocity[0] + pre_sv_velocity[1]*pre_sv_velocity[1]);
-    bar.friction_loss -= vel_speed = sqrt(velocity[0]*velocity[0] + velocity[1]*velocity[1]);
+    float max_delta = -99999.0, temp;
 
     AngleVectors(angles, fwd_vec, right_vec, up_vec);
 
@@ -308,12 +306,11 @@ bhop_mark_t bhop_calculate_ground_bar(vec3_t velocity, vec3_t angles, float foca
     fwd_vec[2] = 0;
 
     wish_speed = VectorNormalize(wishvel);
-    if (wish_speed == 0){
-        for (x = 0; x < vid.width; x++) 
-            delta_v[x] = -10000;
+    if (wish_speed == 0)
         return bar;
-    }
+
     VectorNormalize(fwd_vec);
+    vel_speed = VectorNormalize(velocity);
 
     dot_product = DotProduct(wishvel, fwd_vec);
     if(dot_product > 1.0)
@@ -323,8 +320,14 @@ bhop_mark_t bhop_calculate_ground_bar(vec3_t velocity, vec3_t angles, float foca
 
     for (x = 0; x < vid.width; x++) {
         angle_pixel = atan((x - vid.width/2.0) / focal_len);
-        delta_v[cmd.sidemove < 0 ? vid.width - x - 1 : x] = bhop_ground_delta_v(vel_speed, angle_pixel - acos(dot_product), bar.friction_loss);
+        temp = bhop_ground_delta_v(vel_speed, angle_pixel - acos(dot_product));
+        if (temp > max_delta){
+            best_x = x;
+            max_delta = temp;
+        }
     }
+
+    bar.x_start = bar.x_end = bar.x_mid = best_x;
 
     return bar;
 }
@@ -368,7 +371,6 @@ bhop_mark_t bhop_calculate_air_bar(vec3_t velocity, vec3_t angles, float focal_l
 
     free(bhop_roots);
 
-    bar.friction_loss = 0.0;
     return bar;
 }
 
@@ -391,12 +393,15 @@ bhop_mark_t bhop_calculate_air_bar(vec3_t velocity, vec3_t angles, float focal_l
     }
 }*/
 
+/*
+ * draw the markings for optimal angles
+ */
 void bhop_draw_angle_mark(bhop_data_t *history, int scale) {
     vec3_t vel, angles;
     float y, last_gain, d_last_gain;
     int x;
     float focal_len = (vid.width / 2.0) / tan( r_refdef.fov_x * M_PI / 360.0);
-    bhop_mark_t bar = {.x_start = 0, .x_end = 0, .x_mid = 0};
+    bhop_mark_t bar;
 
     if(!history)
         return;
@@ -409,18 +414,22 @@ void bhop_draw_angle_mark(bhop_data_t *history, int scale) {
     } else if (history->on_ground) {
         VectorCopy(post_friction_velocity, vel);
         bar = bhop_calculate_ground_bar(vel, angles, focal_len);
+    } else {
+        return;
     }
+
     /* display */
     y = scr_vrect.y + scr_vrect.height / 2.0 + 12 * scale;
 
-    if(bar.x_start != bar.x_end){
-        Draw_AlphaFill(bar.x_start, y, (bar.x_end - bar.x_start) / scale, 1, BHOP_WHITE, 0.8);
-        Draw_AlphaFillRGB(bar.x_start, y + 1 * scale, (bar.x_end - bar.x_start) / scale, 4, BHOP_LGREEN_RGB, 0.5);
-        Draw_AlphaFillRGB(bar.x_mid - 1 * scale, y + 1 * scale, 2, 4, BHOP_RED_RGB, 1.0);
-        Draw_AlphaFill(bar.x_start, y + 5 * scale, (bar.x_end - bar.x_start) / scale, 1, BHOP_WHITE, 0.8);
-    } 
+    Draw_AlphaFill(bar.x_start, y, (bar.x_end - bar.x_start) / scale, 1, BHOP_WHITE, 0.8);
+    Draw_AlphaFillRGB(bar.x_start, y + 1 * scale, (bar.x_end - bar.x_start) / scale, 4, BHOP_LGREEN_RGB, 0.5);
+    Draw_AlphaFillRGB(bar.x_mid - 1 * scale, y + 1 * scale, 2, 4, BHOP_RED_RGB, 1.0);
+    Draw_AlphaFill(bar.x_start, y + 5 * scale, (bar.x_end - bar.x_start) / scale, 1, BHOP_WHITE, 0.8);
 }
 
+/*
+ * gather the history data necessary for stats
+ */
 void bhop_gather_data(void) {
     if (sv_player->v.health <= 0 || cl.intermission)
         return;
@@ -458,6 +467,9 @@ void bhop_gather_data(void) {
         bhop_cull_history(bhop_history, (int) show_bhop_histlen.value);
 }
 
+/*
+ * print a summary to console
+ */
 void bhop_print_summary(void) {
     bhop_summary_t summary = bhop_get_summary(bhop_history, bhop_histlen(bhop_history));
     Con_Printf(
@@ -466,6 +478,9 @@ void bhop_print_summary(void) {
     );
 }
 
+/*
+ * draw graph showing keypresses for strafes and forward taps
+ */
 void bhop_draw_key_graph(bhop_data_t *bhop_history, int window, int x, int y) {
     int ** frames = bhop_key_arrays(bhop_history, window);
     for (int i = 0; i < window; i++){
@@ -482,6 +497,9 @@ void bhop_draw_key_graph(bhop_data_t *bhop_history, int window, int x, int y) {
     free(frames);
 }
 
+/*
+ * draw graph showing speed
+ */
 void bhop_draw_speed_graph(bhop_data_t *bhop_history, int window, int x, int y) {
     /* works like the speed bar */
     float * frames = bhop_speed_array(bhop_history, window);
@@ -519,6 +537,9 @@ void bhop_draw_speed_graph(bhop_data_t *bhop_history, int window, int x, int y) 
     free(frames);
 }
 
+/*
+ * draw acceleration on a logarithmic scale
+ */
 void bhop_draw_accel_graph(bhop_data_t *bhop_history, int window, int x, int y) {
     float * frames = bhop_speed_array(bhop_history, window);
     float prev_speed = -1.0;
@@ -604,6 +625,9 @@ void bhop_draw_crosshair_squares(bhop_data_t *history, int x, int y) {
     }
 }
 
+/*
+ * draw info around crosshair
+ */
 void bhop_draw_crosshair_gain(bhop_data_t *history, int x, int y, int scale, int charsize) {
     bhop_data_t * history_it = history;
     char str[20];
@@ -631,7 +655,9 @@ void bhop_draw_crosshair_gain(bhop_data_t *history, int x, int y, int scale, int
     }
 }
 
-
+/*
+ * BHOP_Init() initialises cvars and global vars
+ */
 void BHOP_Init (void) {
     bhop_history = NULL;
 	Cvar_Register (&show_bhop_stats);
@@ -642,22 +668,34 @@ void BHOP_Init (void) {
 	Cvar_Register (&show_bhop_frames);
 }
 
+/*
+ * BHOP_Start() runs every map restart
+ */
 void BHOP_Start (void) {
     bhop_history = NULL;
     lastangle = 0;
     last_ground_speed = 0;
 }
 
+/*
+ * BHOP_Stop() runs when gameplay finishes
+ */
 void BHOP_Stop (void) {
     bhop_print_summary();
     bhop_cull_history(bhop_history, 0);
     bhop_history = NULL;
 }
 
+/*
+ * BHOP_Shutdown() runs on shutdown (duh)
+ */
 void BHOP_Shutdown (void) {
     BHOP_Stop();
 }
 
+/*
+ * Function for drawing live stats and markings during gameplay
+ */
 void SCR_DrawBHOP (void)
 {
     int     x, y;
@@ -728,4 +766,32 @@ void SCR_DrawBHOP (void)
     //if((int)show_bhop_stats.value & BHOP_ANGLE_MARK) {
     //    bhop_draw_ground_mark(bhop_history);       
     //}
+}
+
+/*
+ * Function for drawing summary on intermission screen
+ */
+void SCR_DrawBHOPIntermission(void)
+{
+    int     x, y;
+    int     charsize;
+    int     scale;
+    char    str[80];
+    static int window;
+
+    x = ELEMENT_X_COORD(show_bhop_stats);
+    y = ELEMENT_Y_COORD(show_bhop_stats);
+
+    charsize = Sbar_GetScaledCharacterSize();
+    scale = Sbar_GetScaleAmount();
+
+    if (!sv.active && !cls.demoplayback) return;
+
+    window = (int)show_bhop_window.value;
+
+    if((int)show_bhop_stats.value & BHOP_AVG_SPEED) {
+        Q_snprintfz (str, sizeof(str), "dupa %3.1f", bhop_speed_avg(bhop_history, window));
+        Draw_String (x, y, str, true);
+        y += charsize;
+    }
 }

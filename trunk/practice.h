@@ -44,7 +44,6 @@ typedef struct bhop_mark_s
     int x_start;
     int x_mid;
     int x_end;
-    float friction_loss;
 } bhop_mark_t;
 
 typedef struct bhop_data_s
@@ -118,7 +117,7 @@ extern bhop_data_t *bhop_history;
 int bhop_inverse_scale(int x);
 float bhop_speed(bhop_data_t *data);
 float bhop_speed_avg(bhop_data_t *history, int num);
-float bhop_ground_delta_v(float vel_len, float angle, float friction_loss);
+float bhop_ground_delta_v(float vel_len, float angle);
 bhop_summary_t bhop_get_summary(bhop_data_t *history, int window);
 
 void bhop_gather_data(void);
@@ -145,6 +144,7 @@ void BHOP_Shutdown (void);
 void BHOP_Start (void);
 void BHOP_Stop (void);
 
-void SCR_DrawBHOP (void);
+void SCR_DrawBHOP(void);
+void SCR_DrawBHOPIntermission(void);
 
 #endif /* _PRACTICE_H_ */

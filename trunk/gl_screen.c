@@ -1220,6 +1220,9 @@ void SCR_UpdateScreen (void)
 		if (con_notify_intermission.value)
 			SCR_DrawConsole();
 
+		if (!cls.demorecording && !cls.demoplayback)
+			SCR_DrawBHOPIntermission();
+
 		Ghost_DrawGhostTime (true);
 	}
 	else if (cl.intermission == 2 && key_dest == key_game)
