@@ -105,6 +105,7 @@ extern bhop_data_t *bhop_history;
 #define BHOP_RED 79
 #define BHOP_WHITE 13
 
+#define BHOP_BLACK_RGB 0
 #define BHOP_WHITE_RGB 255 + (255 << 8) + (255 << 16)
 #define BHOP_RED_RGB 255
 #define BHOP_LRED_RGB 96
@@ -114,20 +115,30 @@ extern bhop_data_t *bhop_history;
 #define BHOP_BLUE_RGB 255<<16
 #define BHOP_LBLUE_RGB 96<<16
 
-float bhop_angle_deviation_from_optimal(bhop_data_t * data);
-float bhop_calculate_optimal_angle(bhop_data_t * data);
-float bhop_speed(bhop_data_t * data);
-int ** bhop_key_arrays(bhop_data_t * history, int window);
-float bhop_speed_avg(bhop_data_t * history, int num);
-bhop_summary_t bhop_get_summary(bhop_data_t * history, int window);
-void bhop_cull_history(bhop_data_t * history, int num);
-void bhop_gather_data(void);
-int bhop_histlen(bhop_data_t * history);
-void bhop_print_summary(void);
+int bhop_inverse_scale(int x);
+float bhop_speed(bhop_data_t *data);
+float bhop_speed_avg(bhop_data_t *history, int num);
+float bhop_ground_delta_v(float vel_len, float angle, float friction_loss);
+bhop_summary_t bhop_get_summary(bhop_data_t *history, int window);
 
-int bhop_get_fwd_color(bhop_data_t * history);
-int bhop_get_lstrafe_color(bhop_data_t * history);
-int bhop_get_rstrafe_color(bhop_data_t * history);
+void bhop_gather_data(void);
+void bhop_cull_history(bhop_data_t *history, int num);
+int bhop_histlen(bhop_data_t *history);
+
+int bhop_get_fwd_color(bhop_data_t *history);
+int bhop_get_lstrafe_color(bhop_data_t *history);
+int bhop_get_rstrafe_color(bhop_data_t *history);
+float * bhop_speed_array(bhop_data_t *history, int window);
+int ** bhop_key_arrays(bhop_data_t *history, int window);
+float * bhop_air_gain_roots(vec3_t velocity);
+
+bhop_mark_t bhop_calculate_ground_bar(vec3_t velocity, vec3_t angles, float focal_len);
+bhop_mark_t bhop_calculate_air_bar(vec3_t velocity, vec3_t angles, float focal_len);
+
+void bhop_draw_angle_mark(bhop_data_t *history, int scale);
+void bhop_draw_crosshair_squares(bhop_data_t *history, int x, int y);
+void bhop_draw_crosshair_gain(bhop_data_t *history, int x, int y, int scale, int charsize);
+void bhop_print_summary(void);
 
 void BHOP_Init (void);
 void BHOP_Shutdown (void);
@@ -136,4 +147,4 @@ void BHOP_Stop (void);
 
 void SCR_DrawBHOP (void);
 
-#endif	/* _PRACTICE_H_ */
+#endif /* _PRACTICE_H_ */
