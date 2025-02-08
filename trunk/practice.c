@@ -41,6 +41,7 @@ cvar_t show_bhop_frames = {"show_bhop_frames", "7"};
 /* this is intended as a FIFO structure; new items will be added at the beginning */
 bhop_data_t *bhop_history = NULL;
 bhop_mark_t bhop_last_ground;
+bhop_summary_t *bhop_summary = NULL;
 static float lastangle;
 static float last_ground_speed;
 
@@ -53,8 +54,8 @@ extern vec3_t post_friction_velocity;
 extern double sv_frametime;
 
 /* screen size stuff */
-extern vrect_t	scr_vrect;
-extern refdef_t	r_refdef;
+extern vrect_t scr_vrect;
+extern refdef_t r_refdef;
 extern viddef_t vid;
 extern int glx, glwidth;
 
@@ -63,7 +64,7 @@ int bhop_inverse_scale(int x){
     return x / scale;
 }
 
-/* 
+/*
  * cull history after <num> newest datapoints 
  */
 void bhop_cull_history(bhop_data_t * history, int num) {
@@ -123,14 +124,21 @@ float bhop_speed_avg(bhop_data_t * history, int num){
 /*
  * retrieve summary for entire window of history
  */
-bhop_summary_t bhop_get_summary(bhop_data_t * history, int window){
+bhop_summary_t bhop_get_summary(bhop_data_t * history, int window, qboolean get_keys){
     int i = 0, i_ground = 0;
     float strafesum;
     bhop_summary_t summary = {
         .fwd_on_ground_percent = 0.0,
         .fwd_percent = 0.0,
-        .strafe_percent = 0.0
+        .strafe_percent = 0.0,
+        .keys = NULL,
+        .speeds = NULL
     };
+
+    if(get_keys){
+        summary.keys = bhop_key_arrays(history, window);
+        summary.speeds = bhop_speed_array(history, window);
+    }
 
     while (i < window && history){
         /* fwd */
@@ -157,6 +165,7 @@ bhop_summary_t bhop_get_summary(bhop_data_t * history, int window){
         summary.fwd_on_ground_percent = 0.0;
     summary.fwd_percent = 100.0 * summary.fwd_percent / i;
     summary.strafe_percent = 100.0 * summary.strafe_percent / i;
+
 
     return summary;
 }
@@ -362,13 +371,6 @@ bhop_mark_t bhop_calculate_air_bar(vec3_t velocity, vec3_t angles, float focal_l
     bar.x_mid = (int)(tan(midpoint) * focal_len) + vid.width / 2;
     bar.x_end = (int)(tan(bhop_roots[1]) * focal_len) + vid.width / 2;
 
-    /* flip angles if moving to the left */
-    if(cmd.sidemove < 0){
-        bar.x_start = vid.width - bar.x_start;
-        bar.x_mid = vid.width - bar.x_mid;
-        bar.x_end = vid.width - bar.x_end;
-    }
-
     free(bhop_roots);
 
     return bar;
@@ -416,6 +418,13 @@ void bhop_draw_angle_mark(bhop_data_t *history, int scale) {
         bar = bhop_calculate_ground_bar(vel, angles, focal_len);
     } else {
         return;
+    }
+
+    /* flip angles if moving to the left */
+    if(cmd.sidemove < 0){
+        bar.x_start = vid.width - bar.x_start;
+        bar.x_mid = vid.width - bar.x_mid;
+        bar.x_end = vid.width - bar.x_end;
     }
 
     /* display */
@@ -471,7 +480,7 @@ void bhop_gather_data(void) {
  * print a summary to console
  */
 void bhop_print_summary(void) {
-    bhop_summary_t summary = bhop_get_summary(bhop_history, bhop_histlen(bhop_history));
+    bhop_summary_t summary = bhop_get_summary(bhop_history, bhop_histlen(bhop_history), false);
     Con_Printf(
         "overall bhop summary:\n+forward ground accuracy: %3.1f%%\n+forward overall accuracy: %3.1f%%\nstrafe accuracy: %3.1f\n%%",
         summary.fwd_on_ground_percent, summary.fwd_percent, summary.strafe_percent
@@ -656,10 +665,51 @@ void bhop_draw_crosshair_gain(bhop_data_t *history, int x, int y, int scale, int
 }
 
 /*
+ * draw info about prestrafe
+ */
+void bhop_draw_crosshair_prestrafe(bhop_data_t *history, int x, int y, int scale, int charsize) {
+    bhop_data_t * history_it = history;
+    char str[20];
+    int i = 0, j = 0, lastground = 0;
+    float speed = 0.0;
+
+    if (!history || history->on_ground)
+        return;
+
+
+    /* find the first on_ground */
+    while (history && i++ < 36 * 4) {
+        if (history->on_ground) {
+            if (!lastground){
+                lastground = i;
+                speed = history->speed;
+            }
+
+            if (speed && history->speed <= 321.0)
+                break;
+            j++;
+        } else if (speed != 0.0) {
+            break;
+        }
+        history = history->next;
+    }
+
+    if (!speed || lastground >= 36 || lastground < show_bhop_frames.value)
+        return;
+
+    Q_snprintfz (str, sizeof(str), "v: %3.0f", speed);
+    Draw_String (x * scale - (strlen(str) + 1) * charsize, y * scale, str, true);
+
+    Q_snprintfz (str, sizeof(str), "t: %1.2f", j / 72.0);
+    Draw_String (x * scale + 1 * charsize, y * scale, str, true);
+}
+
+/*
  * BHOP_Init() initialises cvars and global vars
  */
 void BHOP_Init (void) {
     bhop_history = NULL;
+    bhop_summary = NULL;
 	Cvar_Register (&show_bhop_stats);
 	Cvar_Register (&show_bhop_stats_x);
 	Cvar_Register (&show_bhop_stats_y);
@@ -673,6 +723,7 @@ void BHOP_Init (void) {
  */
 void BHOP_Start (void) {
     bhop_history = NULL;
+    bhop_summary = NULL;
     lastangle = 0;
     last_ground_speed = 0;
 }
@@ -684,6 +735,16 @@ void BHOP_Stop (void) {
     bhop_print_summary();
     bhop_cull_history(bhop_history, 0);
     bhop_history = NULL;
+    if (bhop_summary){
+        if (bhop_summary->speeds)
+            free(bhop_summary->speeds);
+        if (bhop_summary->keys) {
+            for (int i = 0; i < 3; i++)
+                free(bhop_summary->keys[i]);
+            free(bhop_summary->keys);
+        }
+        bhop_summary = NULL;
+    }
 }
 
 /*
@@ -722,7 +783,7 @@ void SCR_DrawBHOP (void)
     }
 
     if((int)show_bhop_stats.value & BHOP_KEYPRESSES) {
-        bhop_summary_t summary = bhop_get_summary(bhop_history, window);
+        bhop_summary_t summary = bhop_get_summary(bhop_history, window, false);
         Q_snprintfz (
             str, sizeof(str), "f%% %03.f/%03.f s%% %03.f", 
             summary.fwd_on_ground_percent, 
@@ -760,7 +821,8 @@ void SCR_DrawBHOP (void)
         bhop_draw_crosshair_squares(bhop_history, x - 2 + (show_bhop_frames.value - 1) * 5, y - 12);
 
         bhop_draw_crosshair_gain(bhop_history, x, y - 24, scale, charsize);
-        // draw optimal speed loss/gain on ground
+
+        bhop_draw_crosshair_prestrafe(bhop_history, x, y - 24 - charsize / scale, scale, charsize);
     }
 
     //if((int)show_bhop_stats.value & BHOP_ANGLE_MARK) {
@@ -773,25 +835,66 @@ void SCR_DrawBHOP (void)
  */
 void SCR_DrawBHOPIntermission(void)
 {
-    int     x, y;
-    int     charsize;
-    int     scale;
-    char    str[80];
-    static int window;
+    int  x, y;
+    int  charsize;
+    int  scale;
+    char str[80];
+    static int histlen = -1;
+    static int offset = -72;
 
-    x = ELEMENT_X_COORD(show_bhop_stats);
-    y = ELEMENT_Y_COORD(show_bhop_stats);
+    x = scr_vrect.x + scr_vrect.width / 2.0;
+    y = scr_vrect.y + 2.0 * scr_vrect.height / 3.0;
 
     charsize = Sbar_GetScaledCharacterSize();
     scale = Sbar_GetScaleAmount();
 
     if (!sv.active && !cls.demoplayback) return;
 
-    window = (int)show_bhop_window.value;
+    if(!bhop_summary){
+        offset = -72;
+        histlen = bhop_histlen(bhop_history);
+        bhop_summary = malloc(sizeof(bhop_summary_t));
+        *bhop_summary = bhop_get_summary(bhop_history, histlen, true);
+    }
 
     if((int)show_bhop_stats.value & BHOP_AVG_SPEED) {
-        Q_snprintfz (str, sizeof(str), "dupa %3.1f", bhop_speed_avg(bhop_history, window));
-        Draw_String (x, y, str, true);
+        Q_snprintfz (str, sizeof(str), "avg speed: %3.1f", bhop_speed_avg(bhop_history, histlen));
+        Draw_String (x - (strlen(str) + 1) * charsize / 2.0, y, str, true);
         y += charsize;
     }
+
+    if((int)show_bhop_stats.value & BHOP_KEYPRESSES) {
+        Q_snprintfz (
+            str, sizeof(str), "fwd gr: %.1f%% | fwd air: %.1f%% | strafe: %.1f%%", 
+            bhop_summary->fwd_on_ground_percent,
+            bhop_summary->fwd_percent,
+            bhop_summary->strafe_percent
+        );
+        Draw_String (x - (strlen(str) + 1) * charsize / 2.0, y, str, true);
+        y += charsize;
+    }
+
+    x = bhop_inverse_scale(x);
+    y = bhop_inverse_scale(y);
+
+    if((int)show_bhop_stats.value & BHOP_FORWARD_HISTORY_GRAPH) {
+        int offset_temp = offset > histlen - 320 ? histlen - 320 : offset;
+        offset_temp = offset_temp < 0 ? 0 : offset_temp;
+        for (int i = 0; i < 320 && offset_temp + i < histlen; i++){
+            Draw_BoxScaledOrigin(x - 160 + i, y     , 1, 1, BHOP_WHITE_RGB, 1.0);
+            Draw_BoxScaledOrigin(x - 160 + i, y + 1 , 1, 6, bhop_summary->keys[0][i + offset_temp], 1.0);
+            Draw_BoxScaledOrigin(x - 160 + i, y + 7 , 1, 1, BHOP_WHITE_RGB, 1.0);
+            Draw_BoxScaledOrigin(x - 160 + i, y + 8 , 1, 4, bhop_summary->keys[1][i + offset_temp], 1.0);
+            Draw_BoxScaledOrigin(x - 160 + i, y + 12, 1, 4, bhop_summary->keys[2][i + offset_temp], 1.0);
+            Draw_BoxScaledOrigin(x - 160 + i, y + 16, 1, 1, BHOP_WHITE_RGB, 1.0);
+        }
+        y += 20 * scale;
+    }
+
+    if((int)show_bhop_stats.value & BHOP_SPEED_HISTORY_GRAPH) {
+        y += 36 * scale;
+    }
+
+    offset++;
+    offset = offset % histlen;
 }

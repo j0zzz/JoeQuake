@@ -68,6 +68,8 @@ typedef struct bhop_summary_s
     float fwd_percent;
     float fwd_on_ground_percent;
     float strafe_percent;
+    int **keys;
+    float *speeds;
 } bhop_summary_t;
 
 extern cvar_t show_bhop_stats;
@@ -118,7 +120,7 @@ int bhop_inverse_scale(int x);
 float bhop_speed(bhop_data_t *data);
 float bhop_speed_avg(bhop_data_t *history, int num);
 float bhop_ground_delta_v(float vel_len, float angle);
-bhop_summary_t bhop_get_summary(bhop_data_t *history, int window);
+bhop_summary_t bhop_get_summary(bhop_data_t *history, int window, qboolean get_keys);
 
 void bhop_gather_data(void);
 void bhop_cull_history(bhop_data_t *history, int num);
@@ -137,6 +139,7 @@ bhop_mark_t bhop_calculate_air_bar(vec3_t velocity, vec3_t angles, float focal_l
 void bhop_draw_angle_mark(bhop_data_t *history, int scale);
 void bhop_draw_crosshair_squares(bhop_data_t *history, int x, int y);
 void bhop_draw_crosshair_gain(bhop_data_t *history, int x, int y, int scale, int charsize);
+void bhop_draw_crosshair_prestrafe(bhop_data_t *history, int x, int y, int scale, int charsize);
 void bhop_print_summary(void);
 
 void BHOP_Init (void);
