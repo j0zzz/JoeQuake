@@ -175,6 +175,7 @@ qboolean SNDDMA_Init (void)
 			desired.freq, desired.samples, desired.channels);
 	{
 		const char *driver = SDL_GetCurrentAudioDriver();
+		SDL_GetNumAudioDevices(SDL_FALSE);
 		const char *device = SDL_GetAudioDeviceName(0, SDL_FALSE);
 		snprintf(drivername, sizeof(drivername), "%s - %s",
 			driver != NULL ? driver : "(UNKNOWN)",
