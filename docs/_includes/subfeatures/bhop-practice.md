@@ -8,6 +8,7 @@ The available displays are as follows:
 * display of speed for each frame; the entire bar corresponds to 320 units, and fills up with other colors when this value is exceeded.
 * display of acceleration for each frame, in a logarithmic form. So, even small gains in air will show as 1-2 pixels, while a sharper gain or loss of speed will be a larger spike, but not one going out of bounds of the bar.
 * display under crosshair of the accuracy of viewangle: the green portion of the mark shows the area where speed would be gained during the last frame, while the red mark shows the optimal viewangle. Frames preceding the latest show only the optimal point; the more closely it aligns with the center line, the better.
+* display above crosshair of stats during latest contact with the ground: speed on leaving the ground, time spent on ground, speed gained in air prior to the jump, and friction loss on ground. In addition, boxes for more clear display of forward tap accuracy are shown: the ground frame is directly above crosshair and is the only frame you want `+forward` to be pressed. Green means it was, red means it wasn't. The other frames are the frames preceding or following the ground frame. For them, empty means `+forward` wasn't pressed, and red means it was.
 
 Graphs are also shown and scrolled during intermission.
 
@@ -44,5 +45,3 @@ The defaults are as follows:
 * `show_bhop_frames` is `7`.
 
 To display some of the graphs, a lot of rectangles are drawn. So you might lose some FPS due to that.
-
-
