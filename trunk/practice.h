@@ -108,6 +108,14 @@ extern bhop_data_t *bhop_history;
 #define BHOP_BLUE_RGB 255<<16
 #define BHOP_LBLUE_RGB 96<<16
 
+/* width of bars constants */
+enum bhop_width {
+    BHOP_GAP = 2,
+    BHOP_SMALL = 4,
+    BHOP_MEDIUM = 17,
+    BHOP_BIG = 32,
+};
+
 int bhop_inverse_scale(int x);
 float bhop_speed(bhop_data_t *data);
 float bhop_speed_avg(bhop_data_t *history, int num);
