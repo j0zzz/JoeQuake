@@ -3,6 +3,7 @@
 #define SPEED_DRAW_CHARS	6
 #define MAP_NAME_DRAW_CHARS	12
 #define PAUSE_PLAY_CHARS	2
+#define BBOX_CHARS	4
 #define CAM_CHARS	6
 
 
@@ -15,6 +16,9 @@ typedef struct
 	int skip_prev_x, skip_next_x, skip_y;
 	int time_y;
 	int speed_prev_x, speed_next_x, speed_y;
+	qboolean bbox_hidden;
+	int bbox_x, bbox_y;
+	qboolean cam_hidden;
 	int cam_x, cam_y;
 	int map_min_num, map_max_num, map_x, map_y, map_width, map_height;
 } layout_t;
@@ -31,7 +35,8 @@ typedef enum
 	HOVER_SPEED_PREV,
 	HOVER_SPEED,
 	HOVER_SPEED_NEXT,
-	HOVER_CAM
+	HOVER_BBOX,
+	HOVER_CAM,
 } hover_t;
 
 
@@ -62,6 +67,19 @@ ChangeSpeed (int change)
 	Cvar_SetValue(&cl_demospeed, levels[current_level]);
 }
 
+
+static void
+ToggleBBox (void)
+{
+	float next_value;
+
+	if (cl_bbox.value  == 0)
+		next_value = 1.0f;
+	else
+		next_value = 0.0f;
+
+	Cvar_SetValue(&cl_bbox, next_value);
+}
 
 static float
 GetShowFrac (void)
@@ -133,6 +151,12 @@ GetUILayout (layout_t *layout, int map_num)
 	// Freefly toggle
 	layout->cam_x = layout->skip_prev_x - layout->char_size * (CAM_CHARS + 1);
 	layout->cam_y = layout->top + layout->char_size / 2;
+	layout->cam_hidden = (layout->cam_x < layout->speed_next_x + 2 * layout->char_size);
+
+	// BBox toggle
+	layout->bbox_x = layout->cam_x - layout->char_size * (BBOX_CHARS + 1);
+	layout->bbox_y = layout->top + layout->char_size / 2;
+	layout->bbox_hidden = (layout->bbox_x < layout->speed_next_x + 2 * layout->char_size);
 
 	centre_y = (vid.height - backdrop_height - layout->char_size) / 2;
 	rows_above = max(0, centre_y / layout->char_size);
@@ -231,12 +255,21 @@ UpdateHover (layout_t *layout, const mouse_state_t* ms)
 	{
 		hover = HOVER_SPEED;
 	}
-	else if (ms->y >= layout->cam_y
+	else if (!layout->cam_hidden
+		&& ms->y >= layout->cam_y
 		&& ms->y < layout->cam_y + layout->char_size
 		&& ms->x >= layout->cam_x
 		&& ms->x < layout->cam_x + CAM_CHARS * layout->char_size)
 	{
 		hover = HOVER_CAM;
+	}
+	else if (!layout->bbox_hidden
+		&& ms->y >= layout->bbox_y
+		&& ms->y < layout->bbox_y + layout->char_size
+		&& ms->x >= layout->bbox_x
+		&& ms->x < layout->bbox_x + BBOX_CHARS * layout->char_size)
+	{
+		hover = HOVER_BBOX;
 	}
 
 	if (map_menu_open
@@ -305,6 +338,8 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 				ChangeSpeed(-1); break;
 			case HOVER_CAM:
 				Cmd_ExecuteString("democam_mode +1", src_command);  break;
+			case HOVER_BBOX:
+				ToggleBBox(); break;
 			default:
 				handled = false; break;
 		}
@@ -348,6 +383,9 @@ qboolean DemoUI_MouseEvent(const mouse_state_t* ms)
 					Cmd_ExecuteString("democam_mode -1", src_command);
 				else
 					Cmd_ExecuteString("democam_mode +1", src_command);
+				break;
+			case HOVER_BBOX:
+				ToggleBBox();
 				break;
 			default:
 				handled = false; break;
@@ -456,6 +494,8 @@ Get_TooltipText (void)
 			tooltip_text = "cycle backwards through playback speeds"; break;
 		case HOVER_CAM:
 			tooltip_text = "cycle through camera modes"; break;
+		case HOVER_BBOX:
+			tooltip_text = "toggle bounding boxes"; break;
 		default:
 			tooltip_text = "";
 	}
@@ -585,16 +625,32 @@ void DemoUI_Draw(void)
 	}
 
 	// Freefly
-	if (hover == HOVER_CAM)
-		Draw_String(layout.cam_x, layout.cam_y, "CAM:", true);
-	else
-		Draw_Alt_String(layout.cam_x, layout.cam_y, "CAM:", true);
-	if (cl.democam_mode == DEMOCAM_MODE_FIRST_PERSON)
-		Draw_String(layout.cam_x + layout.char_size * 4, layout.cam_y, "1P", true);
-	else if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
-		Draw_String(layout.cam_x + layout.char_size * 4, layout.cam_y, "FF", true);
-	else if (cl.democam_mode == DEMOCAM_MODE_ORBIT)
-		Draw_String(layout.cam_x + layout.char_size * 4, layout.cam_y, "OR", true);
+	if (!layout.cam_hidden)
+	{
+		if (hover == HOVER_CAM)
+			Draw_String(layout.cam_x, layout.cam_y, "CAM:", true);
+		else
+			Draw_Alt_String(layout.cam_x, layout.cam_y, "CAM:", true);
+		if (cl.democam_mode == DEMOCAM_MODE_FIRST_PERSON)
+			Draw_String(layout.cam_x + layout.char_size * 4, layout.cam_y, "1P", true);
+		else if (cl.democam_mode == DEMOCAM_MODE_FREEFLY)
+			Draw_String(layout.cam_x + layout.char_size * 4, layout.cam_y, "FF", true);
+		else if (cl.democam_mode == DEMOCAM_MODE_ORBIT)
+			Draw_String(layout.cam_x + layout.char_size * 4, layout.cam_y, "OR", true);
+	}
+
+	// BBox toggle
+	if (!layout.bbox_hidden)
+	{
+		if (hover == HOVER_BBOX)
+			Draw_String(layout.bbox_x, layout.bbox_y, "BB:", true);
+		else
+			Draw_Alt_String(layout.bbox_x, layout.bbox_y, "BB:", true);
+		if (cl_bbox.value == 0)
+			Draw_String(layout.bbox_x + layout.char_size * 3, layout.cam_y, "0", true);
+		else
+			Draw_String(layout.bbox_x + layout.char_size * 3, layout.cam_y, "1", true);
+	}
 
 	// Tooltip
 	tooltip_text = Get_TooltipText();
