@@ -252,6 +252,16 @@ static id1_bbox_t id1_bboxes[] = {
 	{mi_i_end4, {-32, -32, -25}, {32, 32, 33}},
 	{mi_i_backpack, {-32, -32, -1}, {32, 32, 57}},
 
+	// projectiles
+	{mi_rocket, {0, 0, 0}, {0, 0, 0}},
+	{mi_grenade, {0, 0, 0}, {0, 0, 0}},
+	{mi_k_spike, {0, 0, 0}, {0, 0, 0}},
+	{mi_s_spike, {0, 0, 0}, {0, 0, 0}},
+	{mi_v_spike, {0, 0, 0}, {0, 0, 0}},
+	{mi_w_spike, {0, 0, 0}, {0, 0, 0}},
+	{mi_laser, {0, 0, 0}, {0, 0, 0}},
+	{mi_spike, {0, 0, 0}, {0, 0, 0}},
+
 	// misc
 	{mi_explobox, {0, 0, 0}, {32, 32, 64}},
 
@@ -1762,6 +1772,68 @@ void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *dist
 	}
 }
 
+static void R_DrawCross(vec3_t origin)
+{
+	static const float line_length = 8;
+	static const float shift_amount = 16;
+	vec3_t offset;
+	float dist, scale;
+	float diag_line_length = line_length / sqrt(3);
+
+	// Shift everything towards the camera a little so the cross is visible.
+	VectorSubtract(r_refdef.vieworg, origin, offset);
+	dist = VectorLength(offset);
+	scale = max(dist - shift_amount, line_length) / dist;
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glScalef(scale, scale, scale);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glTranslatef(origin[0], origin[1], origin[2]);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glCullFace(GL_FRONT);
+	glPolygonMode(GL_BACK, GL_LINE);
+	glLineWidth(1.0);
+	glEnable(GL_LINE_SMOOTH);
+	glDisable(GL_TEXTURE_2D);
+
+	glBegin(GL_LINES);
+
+	glVertex3f(-line_length, 0.0f, 0.0f);
+	glVertex3f(line_length, 0.0f, 0.0f);
+
+	glVertex3f(0.0f, -line_length, 0.0f);
+	glVertex3f(0.0f, line_length, 0.0f);
+
+	glVertex3f(0.0f, 0.0f, -line_length);
+	glVertex3f(0.0f, 0.0f, line_length);
+
+	glVertex3f(-diag_line_length, -diag_line_length, -diag_line_length);
+	glVertex3f(diag_line_length, diag_line_length, diag_line_length);
+
+	glVertex3f(-diag_line_length, diag_line_length, -diag_line_length);
+	glVertex3f(diag_line_length, -diag_line_length, diag_line_length);
+
+	glVertex3f(diag_line_length, -diag_line_length, -diag_line_length);
+	glVertex3f(-diag_line_length, diag_line_length, diag_line_length);
+
+	glVertex3f(diag_line_length, diag_line_length, -diag_line_length);
+	glVertex3f(-diag_line_length, -diag_line_length, diag_line_length);
+
+	glEnd();
+
+	glDisable(GL_LINE_SMOOTH);
+	glEnable(GL_TEXTURE_2D);
+	glPolygonMode(GL_BACK, GL_FILL);
+	glCullFace(GL_BACK);
+	glPopMatrix();
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
+
 static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
 {
 	int i, j, k;
@@ -1838,7 +1910,12 @@ void R_DrawEntBbox(entity_t *ent)
 				origin = ent->origin;
 			else
 				origin = ent->msg_origins[0];
-			R_DrawBbox(origin, bbox_info->mins, bbox_info->maxs);
+
+			if (VectorLength(bbox_info->mins) < 1e-2
+					&& VectorLength(bbox_info->maxs) < 1e-2)
+				R_DrawCross(origin);
+			else
+				R_DrawBbox(origin, bbox_info->mins, bbox_info->maxs);
 		}
 	}
 }

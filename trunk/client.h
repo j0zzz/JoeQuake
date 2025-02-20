@@ -379,6 +379,7 @@ typedef	enum modelindex_s {
 	mi_i_wskey, mi_i_mskey, mi_i_wgkey, mi_i_mgkey,
 	mi_i_end1, mi_i_end2, mi_i_end3, mi_i_end4,
 	mi_i_backpack, mi_explobox,
+	mi_k_spike, mi_s_spike, mi_v_spike, mi_w_spike, mi_laser, mi_spike,
 
 	NUM_MODELINDEX
 } modelindex_t;
