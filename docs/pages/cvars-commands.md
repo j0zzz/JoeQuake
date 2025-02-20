@@ -360,6 +360,8 @@ have the following limitations:
   precision in the coordinates sent to the client and stored in the demo.
 - Bounding boxes are not displayed when *recording* a demo.
 
+Set to 2 to make the boxes white rather than being colored according to entity
+
 #### Server
 
 ##### `sv_altnoclip`
