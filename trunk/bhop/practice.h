@@ -116,39 +116,39 @@ enum bhop_width {
     BHOP_BIG = 32,
 };
 
-int bhop_inverse_scale(int x);
-float bhop_speed(bhop_data_t *data);
-float bhop_speed_avg(bhop_data_t *history, int num);
-float bhop_ground_delta_v(float vel_len, float angle);
-bhop_summary_t bhop_get_summary(bhop_data_t *history, int window, qboolean get_keys);
-int bhop_get_fwd_color(bhop_data_t * history);
-int bhop_get_lstrafe_color(bhop_data_t * history);
-int bhop_get_rstrafe_color(bhop_data_t * history);
+int Bhop_InverseScale(int x);
+float Bhop_Speed(bhop_data_t *data);
+float Bhop_SpeedAvg(bhop_data_t *history, int num);
+float Bhop_GroundDeltaV(float vel_len, float angle);
+bhop_summary_t Bhop_GetSummary(bhop_data_t *history, int window, qboolean get_keys);
+int Bhop_GetFwdColor(bhop_data_t * history);
+int Bhop_GetLStrafeColor(bhop_data_t * history);
+int Bhop_GetRStrafeColor(bhop_data_t * history);
 
-void bhop_gather_data(void);
-void bhop_cull_history(bhop_data_t *history, int num);
-int bhop_histlen(bhop_data_t *history);
+void Bhop_GatherData(void);
+void Bhop_CullHistory(bhop_data_t *history, int num);
+int Bhop_Len(bhop_data_t *history);
 
-int bhop_get_fwd_color(bhop_data_t *history);
-int bhop_get_lstrafe_color(bhop_data_t *history);
-int bhop_get_rstrafe_color(bhop_data_t *history);
-float * bhop_speed_array(bhop_data_t *history, int window);
-int ** bhop_key_arrays(bhop_data_t *history, int window);
-bhop_mark_t * bhop_angles_array(bhop_data_t *history, int window);
-float * bhop_air_gain_roots(vec3_t velocity);
+float * Bhop_SpeedArray(bhop_data_t *history, int window);
+int ** Bhop_KeyArrays(bhop_data_t *history, int window);
+bhop_mark_t * Bhop_AngleArray(bhop_data_t *history, int window);
+float * Bhop_AirGainRoots(vec3_t velocity);
 
-bhop_mark_t bhop_calculate_ground_bar(vec3_t velocity, vec3_t angles, float focal_len);
-bhop_mark_t bhop_calculate_air_bar(vec3_t velocity, vec3_t angles, float focal_len);
+bhop_mark_t Bhop_CalcGroundBar(vec3_t velocity, vec3_t angles, float focal_len);
+bhop_mark_t Bhop_CalcAirBar(vec3_t velocity, vec3_t angles, float focal_len);
+int Bhop_BoundOffset(int x, int bound);
 
-void bhop_draw_current_mark(bhop_data_t *history, int scale);
-void bhop_draw_old_marks(bhop_data_t *history, int window, int scale);
-void bhop_draw_crosshair_squares(bhop_data_t *history, int x, int y);
-void bhop_draw_crosshair_gain(bhop_data_t *history, int x, int y, int scale, int charsize);
-void bhop_draw_crosshair_prestrafe(bhop_data_t *history, int x, int y, int scale, int charsize);
-void bhop_draw_key_continuous(int *frames, int window, int x, int y, int height);
-void bhop_draw_speed_graph(float *frames, int window, int x, int y);
-void bhop_draw_accel_graph(float *frames, int window, int x, int y);
-void bhop_print_summary(void);
+void Bhop_DrawCurrentMark(bhop_data_t *history, int scale);
+void Bhop_DrawOldMarks(bhop_data_t *history, int window, int scale);
+void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y);
+void Bhop_DrawCrosshairGain(bhop_data_t *history, int x, int y, int scale, int charsize);
+void Bhop_DrawCrosshairPrestrafe(bhop_data_t *history, int x, int y, int scale, int charsize);
+void Bhop_DrawKeyContinuous(int *frames, int window, int x, int y, int height);
+void Bhop_DrawKeyGraph(int **frames, int window, int x, int y, int offset);
+void Bhop_DrawSpeedGraph(float *frames, int window, int x, int y);
+void Bhop_DrawAccelGraph(float *frames, int window, int x, int y);
+void Bhop_DrawAngleGraph(bhop_mark_t *frames, int window, int x, int y);
+void Bhop_PrintSummary(void);
 
 void BHOP_Init (void);
 void BHOP_Shutdown (void);

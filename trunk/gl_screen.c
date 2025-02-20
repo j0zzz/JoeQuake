@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_screen.c -- master for refresh, status bar, console, chat, notify, etc
 
 #include "quakedef.h"
-#include "practice.h"
+#include "bhop/practice.h"
 #ifdef _WIN32
 #include "movie.h"
 #endif
@@ -1255,8 +1255,8 @@ void SCR_UpdateScreen (void)
 		SCR_DrawFPS ();
 		SCR_DrawSpeed ();
 		PathTracer_Sample_Each_Frame ();
-        if (!cls.demorecording && !cls.demoplayback)
-            SCR_DrawBHOP ();
+		if (!cls.demorecording && !cls.demoplayback)
+			SCR_DrawBHOP ();
 		Ghost_DrawGhostTime (false);
 		SCR_DrawStats ();
 		SCR_DrawVolume ();

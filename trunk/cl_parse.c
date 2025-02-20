@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "bgmusic.h"
-#include "practice.h"
+#include "bhop/practice.h"
 
 char *svc_strings[] =
 {
