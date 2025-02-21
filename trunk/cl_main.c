@@ -58,6 +58,7 @@ cvar_t	cl_bobbing = {"cl_bobbing", "0"};
 cvar_t	cl_deadbodyfilter = {"cl_deadbodyfilter", "0"};
 cvar_t	cl_gibfilter = {"cl_gibfilter", "0"};
 cvar_t	cl_bbox = {"cl_bbox", "0"};
+cvar_t	cl_bboxcolors = {"cl_bboxcolors", "1"};
 cvar_t	cl_maxfps = {"cl_maxfps", "72", CVAR_SERVER};
 cvar_t	cl_advancedcompletion = {"cl_advancedcompletion", "1"};
 cvar_t	cl_independentphysics = {"cl_independentphysics", "1", CVAR_INIT};
@@ -740,7 +741,9 @@ void GetQuake3ViewWeaponModel(int *vwep_modelindex)
 
 qboolean CL_ShowBBoxes(void)
 {
-	return cl_bbox.value && !cls.demorecording;
+	qboolean demo_bbox = (cl_bbox.value == CL_BBOX_MODE_ON || cl_bbox.value == CL_BBOX_MODE_DEMO);
+	qboolean live_bbox = (cl_bbox.value == CL_BBOX_MODE_ON || cl_bbox.value == CL_BBOX_MODE_LIVE);
+	return ((demo_bbox && cls.demoplayback) || (live_bbox && !cls.demoplayback)) && !cls.demorecording;
 }
 
 
@@ -1490,6 +1493,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_deadbodyfilter);
 	Cvar_Register (&cl_gibfilter);
 	Cvar_Register (&cl_bbox);
+	Cvar_Register (&cl_bboxcolors);
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_advancedcompletion);
 	Cvar_Register (&cl_independentphysics);

@@ -73,10 +73,14 @@ ToggleBBox (void)
 {
 	float next_value;
 
-	if (cl_bbox.value  == 0)
-		next_value = 1.0f;
+	if (cl_bbox.value == CL_BBOX_MODE_ON)
+		next_value = CL_BBOX_MODE_LIVE;
+	else if (cl_bbox.value == CL_BBOX_MODE_DEMO)
+		next_value = CL_BBOX_MODE_OFF;
+	else if (cl_bbox.value == CL_BBOX_MODE_LIVE)
+		next_value = CL_BBOX_MODE_ON;
 	else
-		next_value = 0.0f;
+		next_value = CL_BBOX_MODE_DEMO;
 
 	Cvar_SetValue(&cl_bbox, next_value);
 }
@@ -646,10 +650,10 @@ void DemoUI_Draw(void)
 			Draw_String(layout.bbox_x, layout.bbox_y, "BB:", true);
 		else
 			Draw_Alt_String(layout.bbox_x, layout.bbox_y, "BB:", true);
-		if (cl_bbox.value == 0)
-			Draw_String(layout.bbox_x + layout.char_size * 3, layout.cam_y, "0", true);
-		else
+		if (cl_bbox.value == CL_BBOX_MODE_ON || cl_bbox.value == CL_BBOX_MODE_DEMO)
 			Draw_String(layout.bbox_x + layout.char_size * 3, layout.cam_y, "1", true);
+		else
+			Draw_String(layout.bbox_x + layout.char_size * 3, layout.cam_y, "0", true);
 	}
 
 	// Tooltip

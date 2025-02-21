@@ -14,7 +14,9 @@ The interface has the following elements, from bottom-to-top, left-to-right:
   map.
 - **Speed**: Increase and decrease demo playback speed by clicking the arrow
   controls or by using the mouse wheel in this area.
-- **Freefly mode (FF)**: Toggles between freefly camera and first-person camera mode.
+- **Bounding boxes (BB)**: Toggle client-side bounding boxes.
+- **Camera mode (CAM)**: Cycles between first-person, freefly, and orbit camera
+  modes.
 - **Map selector**: Shows the current map.  On a multi-map (marathon) demo
   clicking the arrow controls or using the mouse wheel in this area will skip
   from map to map. Click between the arrows to toggle the map menu.

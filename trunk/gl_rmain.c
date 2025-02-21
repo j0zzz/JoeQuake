@@ -1928,7 +1928,7 @@ void R_DrawEntBbox(entity_t *ent)
 			else
 				origin = ent->msg_origins[0];
 
-			if (cl_bbox.value < 2)
+			if (cl_bboxcolors.value)
 				VectorCopy(bbox_colors[bbox_info->bbox_cat], color);
 			if (VectorLength(bbox_info->mins) < 1e-2
 					&& VectorLength(bbox_info->maxs) < 1e-2)

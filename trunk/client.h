@@ -130,6 +130,16 @@ typedef enum
 	DEMOCAM_MODE_COUNT,
 } democam_mode_t;
 
+typedef enum
+{
+	CL_BBOX_MODE_OFF,
+	CL_BBOX_MODE_ON,
+	CL_BBOX_MODE_DEMO,
+	CL_BBOX_MODE_LIVE,
+
+	NUM_BBOX_MODE
+} cl_bbox_mode_t;
+
 
 // the client_static_t structure is persistant through an arbitrary number
 // of server connections
@@ -311,6 +321,7 @@ extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_confirmquit;
 extern	cvar_t	cl_bbox;
+extern	cvar_t	cl_bboxcolors;
 
 extern	cvar_t	cl_demoui;
 extern	cvar_t	cl_demouitimeout;
