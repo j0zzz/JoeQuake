@@ -347,10 +347,10 @@ The number of decimal places can be changed with the `_dp` variable.
 
 ##### `cl_bbox`
 
-When set to 1 display bounding boxes for non-map entities. The bounding boxes
-are derived from information available to the client, therefore they work while
-playing a demo as well as when playing a live game. However, the bounding boxes
-have the following limitations:
+Enables bounding boxes for non-map entities. The bounding boxes are derived from
+information available to the client, therefore they work while playing a demo as
+well as when playing a live game. However, the bounding boxes have the following
+limitations:
 
 - If using non-id1 progs, bounding boxes may be missing or incorrect.  This is
   unavoidable since bounding box information is not sent to the client or stored
@@ -359,6 +359,23 @@ have the following limitations:
 - Bounding box origins may be wrong by up to 0.125 game units owing to fixed
   precision in the coordinates sent to the client and stored in the demo.
 - Bounding boxes are not displayed when *recording* a demo.
+
+The cvar takes the following values:
+- `0`: Bounding boxes are never drawn.
+- `1`: Bounding boxes are drawn during demo playback and when playing live, but
+  not when recording.
+- `2`: Bounding boxes are drawn only during demo playback.
+- `3`: Bounding boxes are drawn only when playing live, but not when recording.
+
+##### `cl_bboxcolors`
+
+When set to `1` (the default), `cl_bbox` bounding boxes are colored according to
+entity type:
+- Monsters are red.
+- Pickups are green.
+- Everything else is white.
+
+When set to `0` bounding boxes are all drawn white.
 
 #### Server
 

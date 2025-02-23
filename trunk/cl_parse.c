@@ -195,6 +195,12 @@ void CL_InitModelnames (void)
 	cl_modelnames[mi_i_end4] = "progs/end4.mdl";
 	cl_modelnames[mi_i_backpack] = "progs/backpack.mdl";
 	cl_modelnames[mi_explobox] = "maps/b_explob.bsp";
+	cl_modelnames[mi_k_spike] = "progs/k_spike.mdl";
+	cl_modelnames[mi_s_spike] = "progs/s_spike.mdl";
+	cl_modelnames[mi_v_spike] = "progs/v_spike.mdl";
+	cl_modelnames[mi_w_spike] = "progs/w_spike.mdl";
+	cl_modelnames[mi_laser] = "progs/laser.mdl";
+	cl_modelnames[mi_spike] = "progs/spike.mdl";
 
 	for (i = 0 ; i < NUM_MODELINDEX ; i++)
 	{

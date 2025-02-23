@@ -188,74 +188,100 @@ typedef struct
 	int frame_max;
 } frame_range_t;
 
+typedef enum
+{
+	BBOX_CAT_MISC,
+	BBOX_CAT_MONSTER,
+	BBOX_CAT_PICKUP,
+
+	NUM_BBOX_CAT
+} bbox_cat_t;
+
 typedef struct
 {
 	modelindex_t mi;
 	vec3_t mins, maxs;
+	bbox_cat_t bbox_cat;
 	frame_range_t not_solid_frames[3];  // null terminated
 } id1_bbox_t;
 
 static id1_bbox_t id1_bboxes[] = {
 	// player
-	{mi_player, {-16, -16, -24}, {16, 16, 32}, {{41, 103}}},
-	{mi_eyes, {-16, -16, -24}, {16, 16, 32}},
+	{mi_player, {-16, -16, -24}, {16, 16, 32}, BBOX_CAT_MISC, {{41, 103}}},
+	{mi_eyes, {-16, -16, -24}, {16, 16, 32}, BBOX_CAT_MISC},
 
 	// monsters
-	{mi_boss, {-128, -128, -24}, {128, 128, 256}},
-	{mi_fiend, {-32, -32, -24}, {32, 32, 64}, {{50, 54}}},
-	{mi_dog, {-32, -32, -24}, {32, 32, 40}, {{8, 26}}},
-	{mi_enforcer, {-16, -16, -24}, {16, 16, 40}, {{43, 55}, {57, 66}}},
-	{mi_fish, {-16, -16, -24}, {16, 16, 24}, {{38, 39}}},
-	{mi_hknight, {-16, -16, -24}, {16, 16, 40}, {{44, 54}, {56, 63}}},
-	{mi_knight, {-16, -16, -24}, {16, 16, 40}, {{78, 86}, {88, 97}}},
-	{mi_ogre, {-32, -32, -24}, {32, 32, 64}, {{114, 126}, {128, 136}}},
-	{mi_oldone, {-160, -128, -24}, {160, 128, 256}},
-	{mi_vore, {-32, -32, -24}, {32, 32, 64}, {{16, 23}}},
-	{mi_shambler, {-32, -32, -24}, {32, 32, 64}, {{85, 94}}},
-	{mi_soldier, {-16, -16, -24}, {16, 16, 40}, {{10, 18}, {20, 29}}},
-	{mi_spawn, {-16, -16, -24}, {16, 16, 40}},
-	{mi_scrag, {-16, -16, -24}, {16, 16, 40}, {{48, 54}}},
-	{mi_zombie, {-16, -16, -24}, {16, 16, 40}, {{171, 173}}},
+	{mi_boss, {-128, -128, -24}, {128, 128, 256}, BBOX_CAT_MONSTER},
+	{mi_fiend, {-32, -32, -24}, {32, 32, 64}, BBOX_CAT_MONSTER, {{50, 54}}},
+	{mi_dog, {-32, -32, -24}, {32, 32, 40}, BBOX_CAT_MONSTER, {{8, 26}}},
+	{mi_enforcer, {-16, -16, -24}, {16, 16, 40}, BBOX_CAT_MONSTER, {{43, 55}, {57, 66}}},
+	{mi_fish, {-16, -16, -24}, {16, 16, 24}, BBOX_CAT_MONSTER, {{38, 39}}},
+	{mi_hknight, {-16, -16, -24}, {16, 16, 40}, BBOX_CAT_MONSTER, {{44, 54}, {56, 63}}},
+	{mi_knight, {-16, -16, -24}, {16, 16, 40}, BBOX_CAT_MONSTER, {{78, 86}, {88, 97}}},
+	{mi_ogre, {-32, -32, -24}, {32, 32, 64}, BBOX_CAT_MONSTER, {{114, 126}, {128, 136}}},
+	{mi_oldone, {-160, -128, -24}, {160, 128, 256}, BBOX_CAT_MONSTER},
+	{mi_vore, {-32, -32, -24}, {32, 32, 64}, BBOX_CAT_MONSTER, {{16, 23}}},
+	{mi_shambler, {-32, -32, -24}, {32, 32, 64}, BBOX_CAT_MONSTER, {{85, 94}}},
+	{mi_soldier, {-16, -16, -24}, {16, 16, 40}, BBOX_CAT_MONSTER, {{10, 18}, {20, 29}}},
+	{mi_spawn, {-16, -16, -24}, {16, 16, 40}, BBOX_CAT_MONSTER},
+	{mi_scrag, {-16, -16, -24}, {16, 16, 40}, BBOX_CAT_MONSTER, {{48, 54}}},
+	{mi_zombie, {-16, -16, -24}, {16, 16, 40}, BBOX_CAT_MONSTER, {{171, 173}}},
 
 	// bsp items
-	{mi_i_bh10, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_bh25, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_bh100, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_shell0, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_shell1, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_nail0, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_nail1, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_rock0, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_rock1, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_batt0, {-16, -16, -1}, {48, 48, 57}},
-	{mi_i_batt1, {-16, -16, -1}, {48, 48, 57}},
+	{mi_i_bh10, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_bh25, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_bh100, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_shell0, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_shell1, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_nail0, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_nail1, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_rock0, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_rock1, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_batt0, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
+	{mi_i_batt1, {-16, -16, -1}, {48, 48, 57}, BBOX_CAT_PICKUP},
 
 	// mdl items
-	{mi_i_quad, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_invuln, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_suit, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_invis, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_armor, {-32, -32, -1}, {32, 32, 57}},
-	{mi_i_shot, {-32, -32, -1}, {32, 32, 57}},
-	{mi_i_nail, {-32, -32, -1}, {32, 32, 57}},
-	{mi_i_nail2, {-32, -32, -1}, {32, 32, 57}},
-	{mi_i_rock, {-32, -32, -1}, {32, 32, 57}},
-	{mi_i_rock2, {-32, -32, -1}, {32, 32, 57}},
-	{mi_i_light, {-32, -32, -1}, {32, 32, 57}},
-	{mi_i_wskey, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_mskey, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_wgkey, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_mgkey, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_end1, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_end2, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_end3, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_end4, {-32, -32, -25}, {32, 32, 33}},
-	{mi_i_backpack, {-32, -32, -1}, {32, 32, 57}},
+	{mi_i_quad, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_invuln, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_suit, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_invis, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_armor, {-32, -32, -1}, {32, 32, 57}, BBOX_CAT_PICKUP},
+	{mi_i_shot, {-32, -32, -1}, {32, 32, 57}, BBOX_CAT_PICKUP},
+	{mi_i_nail, {-32, -32, -1}, {32, 32, 57}, BBOX_CAT_PICKUP},
+	{mi_i_nail2, {-32, -32, -1}, {32, 32, 57}, BBOX_CAT_PICKUP},
+	{mi_i_rock, {-32, -32, -1}, {32, 32, 57}, BBOX_CAT_PICKUP},
+	{mi_i_rock2, {-32, -32, -1}, {32, 32, 57}, BBOX_CAT_PICKUP},
+	{mi_i_light, {-32, -32, -1}, {32, 32, 57}, BBOX_CAT_PICKUP},
+	{mi_i_wskey, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_mskey, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_wgkey, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_mgkey, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_end1, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_end2, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_end3, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_end4, {-32, -32, -25}, {32, 32, 33}, BBOX_CAT_PICKUP},
+	{mi_i_backpack, {-32, -32, -1}, {32, 32, 57}, BBOX_CAT_PICKUP},
+
+	// projectiles
+	{mi_rocket, {0, 0, 0}, {0, 0, 0}, BBOX_CAT_MISC},
+	{mi_grenade, {0, 0, 0}, {0, 0, 0}, BBOX_CAT_MISC},
+	{mi_k_spike, {0, 0, 0}, {0, 0, 0}, BBOX_CAT_MISC},
+	{mi_s_spike, {0, 0, 0}, {0, 0, 0}, BBOX_CAT_MISC},
+	{mi_v_spike, {0, 0, 0}, {0, 0, 0}, BBOX_CAT_MISC},
+	{mi_w_spike, {0, 0, 0}, {0, 0, 0}, BBOX_CAT_MISC},
+	{mi_laser, {0, 0, 0}, {0, 0, 0}, BBOX_CAT_MISC},
+	{mi_spike, {0, 0, 0}, {0, 0, 0}, BBOX_CAT_MISC},
 
 	// misc
-	{mi_explobox, {0, 0, 0}, {32, 32, 64}},
+	{mi_explobox, {0, 0, 0}, {32, 32, 64}, BBOX_CAT_MISC},
 
 	{NUM_MODELINDEX}
+};
+
+static vec3_t bbox_colors[NUM_BBOX_CAT] = {
+	[BBOX_CAT_MISC] = {1, 1, 1},
+	[BBOX_CAT_MONSTER] = {1, 0, 0},
+	[BBOX_CAT_PICKUP] = {0, 1, 0},
 };
 
 void R_MarkSurfaces(void);
@@ -1762,7 +1788,69 @@ void R_SetupInterpolateDistance (entity_t *ent, aliashdr_t *paliashdr, int *dist
 	}
 }
 
-static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
+static void R_DrawCross(vec3_t origin, vec3_t color)
+{
+	static const float line_length = 8;
+	static const float shift_amount = 16;
+	vec3_t offset;
+	float dist, scale;
+	float diag_line_length = line_length / sqrt(3);
+
+	// Shift everything towards the camera a little so the cross is visible.
+	VectorSubtract(r_refdef.vieworg, origin, offset);
+	dist = VectorLength(offset);
+	scale = max(dist - shift_amount, line_length) / dist;
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glScalef(scale, scale, scale);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glTranslatef(origin[0], origin[1], origin[2]);
+	glColor3f(color[0], color[1], color[2]);
+	glCullFace(GL_FRONT);
+	glPolygonMode(GL_BACK, GL_LINE);
+	glLineWidth(1.0);
+	glEnable(GL_LINE_SMOOTH);
+	glDisable(GL_TEXTURE_2D);
+
+	glBegin(GL_LINES);
+
+	glVertex3f(-line_length, 0.0f, 0.0f);
+	glVertex3f(line_length, 0.0f, 0.0f);
+
+	glVertex3f(0.0f, -line_length, 0.0f);
+	glVertex3f(0.0f, line_length, 0.0f);
+
+	glVertex3f(0.0f, 0.0f, -line_length);
+	glVertex3f(0.0f, 0.0f, line_length);
+
+	glVertex3f(-diag_line_length, -diag_line_length, -diag_line_length);
+	glVertex3f(diag_line_length, diag_line_length, diag_line_length);
+
+	glVertex3f(-diag_line_length, diag_line_length, -diag_line_length);
+	glVertex3f(diag_line_length, -diag_line_length, diag_line_length);
+
+	glVertex3f(diag_line_length, -diag_line_length, -diag_line_length);
+	glVertex3f(-diag_line_length, diag_line_length, diag_line_length);
+
+	glVertex3f(diag_line_length, diag_line_length, -diag_line_length);
+	glVertex3f(-diag_line_length, -diag_line_length, diag_line_length);
+
+	glEnd();
+
+	glDisable(GL_LINE_SMOOTH);
+	glEnable(GL_TEXTURE_2D);
+	glPolygonMode(GL_BACK, GL_FILL);
+	glCullFace(GL_BACK);
+	glPopMatrix();
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
+
+static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs, vec3_t color)
 {
 	int i, j, k;
 	int d2, d3;
@@ -1772,7 +1860,7 @@ static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
 	VectorAdd(origin, mins, wmins);
 	VectorAdd(origin, maxs, wmaxs);
 
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glColor3f(color[0], color[1], color[2]);
 
 	glCullFace(GL_FRONT);
 	glPolygonMode(GL_BACK, GL_LINE);
@@ -1818,6 +1906,7 @@ static void R_DrawBbox(vec3_t origin, vec3_t mins, vec3_t maxs)
 
 void R_DrawEntBbox(entity_t *ent)
 {
+	vec3_t color = {1, 1, 1};
 	float *origin;
 	frame_range_t *range;
 	id1_bbox_t *bbox_info;
@@ -1838,7 +1927,14 @@ void R_DrawEntBbox(entity_t *ent)
 				origin = ent->origin;
 			else
 				origin = ent->msg_origins[0];
-			R_DrawBbox(origin, bbox_info->mins, bbox_info->maxs);
+
+			if (cl_bboxcolors.value)
+				VectorCopy(bbox_colors[bbox_info->bbox_cat], color);
+			if (VectorLength(bbox_info->mins) < 1e-2
+					&& VectorLength(bbox_info->maxs) < 1e-2)
+				R_DrawCross(origin, color);
+			else
+				R_DrawBbox(origin, bbox_info->mins, bbox_info->maxs, color);
 		}
 	}
 }

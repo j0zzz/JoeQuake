@@ -4385,7 +4385,10 @@ void M_View_Draw (void)
 	glColor3ubv(color_white);
 
 	M_Print_GetPoint(16, 144, &lx, &ly, "   Show bounding boxes", view_cursor == 14);
-	M_DrawCheckbox(220, 144, cl_bbox.value);
+	M_Print(220, 144, cl_bbox.value == CL_BBOX_MODE_ON
+						? "on" : cl_bbox.value == CL_BBOX_MODE_DEMO
+						? "demo only" : cl_bbox.value == CL_BBOX_MODE_LIVE
+						? "live only" : "off");
 
 	M_Print_GetPoint(16, 152, &lx, &ly, "      Fullbright skins", view_cursor == 15);
 	M_Print(220, 152, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
@@ -4550,7 +4553,7 @@ void M_View_Key (int k)
 			break;
 
 		case 14:
-			Cvar_SetValue(&cl_bbox, !cl_bbox.value);
+			Cvar_SetValue(&cl_bbox, ((int)cl_bbox.value + 1) % NUM_BBOX_MODE);
 			break;
 
 		case 15:
