@@ -112,7 +112,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>..\misc\include;..\dxsdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;USE_CODEC_VORBIS;USE_CODEC_MP3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -136,7 +136,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;libmad.lib;libvorbis.lib;libvorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\release_gl\joequake-gl.exe</OutputFile>
       <Version>
       </Version>
@@ -164,7 +164,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>..\misc\include;..\dxsdk\Include;..\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;SDL2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;SDL2;USE_CODEC_VORBIS;USE_CODEC_MP3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -188,7 +188,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;SDL2.lib;libmad.lib;libvorbis.lib;libvorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\release_sdl\joequake-gl-sdl.exe</OutputFile>
       <Version>
       </Version>
@@ -264,7 +264,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\misc\include;..\dxsdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;USE_CODEC_VORBIS;USE_CODEC_MP3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <SmallerTypeCheck>false</SmallerTypeCheck>
@@ -292,7 +292,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;libmad.lib;libvorbis.lib;libvorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <OutputFile>.\debug_gl\joequake-gl-DEV.exe</OutputFile>
       <Version>
@@ -317,13 +317,13 @@
     <ResourceCompile Include="..\joequake.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\trunk\bgmusic.c" />
     <ClCompile Include="..\..\trunk\cd_null.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\trunk\cl_dzip.c" />
-    <ClCompile Include="..\..\trunk\fmod.c" />
     <ClCompile Include="..\..\trunk\demoseekparse.c" />
     <ClCompile Include="..\..\trunk\demoparse.c" />
     <ClCompile Include="..\..\trunk\ghost\demosummary.c" />
@@ -356,7 +356,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\trunk\ioapi.c" />
+    <ClCompile Include="..\..\trunk\snd_codec.c" />
     <ClCompile Include="..\..\trunk\snd_dma.c" />
+    <ClCompile Include="..\..\trunk\snd_mp3.c" />
+    <ClCompile Include="..\..\trunk\snd_mp3tag.c" />
     <ClCompile Include="..\..\trunk\snd_sdl.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
@@ -364,6 +367,7 @@
     </ClCompile>
     <ClCompile Include="..\..\trunk\snd_mem.c" />
     <ClCompile Include="..\..\trunk\snd_mix.c" />
+    <ClCompile Include="..\..\trunk\snd_vorbis.c" />
     <ClCompile Include="..\..\trunk\snd_win.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='SDL Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -600,6 +604,7 @@
     <ClCompile Include="..\..\trunk\democam.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\trunk\bgmusic.h" />
     <ClInclude Include="..\..\trunk\fakegl.h" />
     <ClInclude Include="..\..\trunk\demoparse.h" />
     <ClInclude Include="..\..\trunk\ghost\demosummary.h" />
@@ -611,6 +616,10 @@
     <ClInclude Include="..\..\trunk\gl_warp_sin.h" />
     <ClInclude Include="..\..\trunk\progdefs.h" />
     <ClInclude Include="..\..\trunk\progs.h" />
+    <ClInclude Include="..\..\trunk\snd_codec.h" />
+    <ClInclude Include="..\..\trunk\snd_codeci.h" />
+    <ClInclude Include="..\..\trunk\snd_mp3.h" />
+    <ClInclude Include="..\..\trunk\snd_vorbis.h" />
     <ClInclude Include="..\..\trunk\sound.h" />
     <ClInclude Include="..\..\trunk\server.h" />
     <ClInclude Include="..\..\trunk\draw.h" />

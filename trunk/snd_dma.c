@@ -76,7 +76,8 @@ int 	desired_bits = 16;
 int		sound_started = 0;
 
 cvar_t	bgmvolume = {"bgmvolume", "0.0", CVAR_ARCHIVE};
-cvar_t	s_volume = {"volume", "0.5", CVAR_ARCHIVE};
+static qboolean OnChange_s_volume (cvar_t *var, char *string);
+cvar_t	s_volume = {"volume", "0.5", CVAR_ARCHIVE, OnChange_s_volume};
 cvar_t	s_nosound = {"nosound", "0"};
 cvar_t	s_precache = {"precache", "1"};
 cvar_t	s_loadas8bit = {"loadas8bit", "0"};
@@ -98,6 +99,16 @@ cvar_t	s_khz = {"s_khz", "11", CVAR_INIT};
 
 qboolean fakedma = false;
 int		fakedma_updates = 15;
+
+static qboolean OnChange_s_volume (cvar_t *var, char *string)
+{
+	float	newval = Q_atof(string);
+
+	Cvar_SetValue(&s_volume, newval);
+	SND_InitScaletable();
+
+	return true;
+}
 
 void S_AmbientOff (void)
 {
@@ -1048,7 +1059,6 @@ void S_VolumeDown_f (void)
 	s_volume.value = bound(0, s_volume.value, 1);
 	Cvar_SetValue (&s_volume, s_volume.value);
 	volume_changed = true;
-	SND_InitScaletable();
 }
 
 void S_VolumeUp_f (void)
@@ -1058,7 +1068,6 @@ void S_VolumeUp_f (void)
 	s_volume.value = bound(0, s_volume.value, 1);
 	Cvar_SetValue (&s_volume, s_volume.value);
 	volume_changed = true;
-	SND_InitScaletable();
 }
 
 void S_LocalSound (char *sound)

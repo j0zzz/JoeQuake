@@ -30,7 +30,8 @@
 #define MUSIC_DIRNAME	"music"
 
 qboolean	bgmloop;
-cvar_t		bgm_extmusic = {"bgm_extmusic", "1", CVAR_ARCHIVE};
+static qboolean OnChange_bgm_extmusic (cvar_t *var, char *string);
+cvar_t		bgm_extmusic = {"bgm_extmusic", "1", CVAR_ARCHIVE, OnChange_bgm_extmusic};
 
 static qboolean	no_extmusic= false;
 static float	old_volume = -1.0f;
@@ -66,6 +67,27 @@ static music_handler_t *music_handlers = NULL;
 #define CDRIPTYPE(x)	(((x) & CDRIP_TYPES) != 0)
 
 static snd_stream_t *bgmstream = NULL;
+
+static qboolean OnChange_bgm_extmusic (cvar_t *var, char *string)
+{
+	float	newval = Q_atof(string);
+
+	if (newval == bgm_extmusic.value)
+		return false;
+	
+	Cvar_SetValue(&bgm_extmusic, newval);
+	if (newval)
+	{
+		if ((cls.demoplayback || cls.demorecording) && (cls.forcetrack != -1))
+			BGM_PlayCDtrack((byte)cls.forcetrack, true);
+		else
+			BGM_PlayCDtrack((byte)cl.cdtrack, true);
+	}
+	else
+		BGM_Stop();
+
+	return true;
+}
 
 static void BGM_Play_f (void)
 {
@@ -329,7 +351,7 @@ void BGM_PlayCDtrack (byte track, qboolean looping)
 			goto _next;
 		type = handler->type;
 		ext = handler->ext;
-_next:
+	_next:
 		handler = handler->next;
 	}
 	if (ext == NULL)

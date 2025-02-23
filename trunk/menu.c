@@ -4178,8 +4178,6 @@ void M_Sound_KeyboardSlider(int dir)
 		Cvar_SetValue(&bgmvolume, bgmvolume.value);
 		break;
 	}
-
-	SND_InitScaletable();
 }
 
 void M_Sound_Key(int k)

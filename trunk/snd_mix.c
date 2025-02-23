@@ -588,8 +588,8 @@ void SND_InitScaletable (void)
 			   higher, the tricky signed char type conversion is not
 			   guaranteed. Therefore we explicity calculate the signed
 			   value from the index as required. From Kevin Shanahan.
-See: http://gcc.gnu.org/bugzilla/show_bug.cgi?id=26719
-*/
+			   See: http://gcc.gnu.org/bugzilla/show_bug.cgi?id=26719
+			*/
 			//	snd_scaletable[i][j] = ((signed char)j) * scale;
 			snd_scaletable[i][j] = ((j < 128) ?  j : j - 256) * scale;
 		}
