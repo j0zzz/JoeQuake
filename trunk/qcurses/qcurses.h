@@ -38,6 +38,8 @@ typedef struct qcurses_box_s {
     qcurses_char_t ** grid;
     int cols;
     int rows;
+    int paged;
+    int page_rows;
 } qcurses_box_t;
 
 typedef struct qcurses_list_s {
@@ -46,28 +48,20 @@ typedef struct qcurses_list_s {
     int places;
     int window_start;
     char (*array)[80];
+    char (*sda_name)[50];
 } qcurses_list_t;
 
-enum demos_tabs {
-    TAB_LOCAL_DEMOS = 1,
-    TAB_SDA_NEWS,
-    TAB_SDA_DATABASE
-};
 
-enum browser_columns {
-    COL_MAP = 1,
-    COL_TYPE,
-    COL_RECORD,
-    COL_COMMENT_LOADING,
-    COL_COMMENT_LOADED
-};
-
-void M_Demos_Display(int width, int height);
-void M_Demos_KeyHandle(int key);
+qcurses_char_t * qcurses_parse_txt(char * txt);
+qcurses_char_t * qcurses_parse_news(char * html);
 qcurses_box_t * qcurses_init(int cols, int rows);
+qcurses_box_t * qcurses_init_paged(int cols, int rows);
 void qcurses_free(qcurses_box_t * box);
 void qcurses_insert(qcurses_box_t * dest, int col, int row, qcurses_box_t * src);
 void qcurses_print(qcurses_box_t * dest, int col, int row, char * src, qboolean bold);
 void qcurses_display(qcurses_box_t * src);
+void qcurses_boxprint_wrapped(qcurses_box_t *dest, qcurses_char_t *src, size_t size, int row_offset);
+void qcurses_list_move_cursor(qcurses_list_t *col, int move);
+void qcurses_make_bar(qcurses_box_t * box, int row);
 
 #endif /* _QCURSES_H_ */

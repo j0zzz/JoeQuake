@@ -1424,7 +1424,6 @@ qboolean COM_FindFile (char *filename)
 		else
 		{
 			Q_snprintfz (netpath, sizeof(netpath), "%s/%s", search->filename, filename);
-            Con_Printf("%s", netpath);
 			if (Sys_FileTime(netpath) != -1)
 				return true;
 		}

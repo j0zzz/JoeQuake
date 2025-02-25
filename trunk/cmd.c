@@ -1053,7 +1053,7 @@ static void AddNewEntry (char *fname, int ftype, long fsize, char *path)
 
     filelist[i].name = Q_strdup (fname);
 	filelist[i].type = ftype;
-    if (ftype == 0) {
+    /*if (ftype == 0) {
         FILE *demo_file = NULL;
         demo_summary_t demo_summary;
         char demo_path[MAX_OSPATH];
@@ -1073,7 +1073,7 @@ static void AddNewEntry (char *fname, int ftype, long fsize, char *path)
                 Q_snprintfz(filelist[i].mapname, sizeof(filelist[i].mapname), "%s+", demo_summary.maps[0]);
             Q_snprintfz(filelist[i].playername, sizeof(filelist[i].playername), "%s", demo_summary.client_names[0]);
         }
-    }
+    }*/
 	filelist[i].size = fsize;
 
 	num_files++;
