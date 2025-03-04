@@ -28,6 +28,11 @@
 #ifndef _QCURSES_H_
 #define _QCURSES_H_
 
+#include "../ghost/demosummary.h"
+
+#define blink(ch) (((int)(realtime * 4) & 1) ? ch : ' ')
+#define blinkstr(ch) (((int)(realtime * 4) & 1) ? va("%c", ch) : " ")
+
 typedef struct qcurses_char_s {
     unsigned char symbol;
     long background;
@@ -47,10 +52,19 @@ typedef struct qcurses_list_s {
     int len;
     int places;
     int window_start;
-    char (*array)[80];
-    char (*sda_name)[50];
 } qcurses_list_t;
 
+typedef struct qcurses_recordlist_s {
+    qcurses_list_t list;
+    char (*array)[80];
+    char (*sda_name)[50];
+} qcurses_recordlist_t;
+
+typedef struct qcurses_demlist_s {
+    qcurses_list_t list;
+    direntry_t * entries;
+    demo_summary_t ** summaries;
+} qcurses_demlist_t;
 
 qcurses_char_t * qcurses_parse_txt(char * txt);
 qcurses_char_t * qcurses_parse_news(char * html);
@@ -59,6 +73,7 @@ qcurses_box_t * qcurses_init_paged(int cols, int rows);
 void qcurses_free(qcurses_box_t * box);
 void qcurses_insert(qcurses_box_t * dest, int col, int row, qcurses_box_t * src);
 void qcurses_print(qcurses_box_t * dest, int col, int row, char * src, qboolean bold);
+void qcurses_print_centered(qcurses_box_t * dest, int row, char * src, qboolean bold);
 void qcurses_display(qcurses_box_t * src);
 void qcurses_boxprint_wrapped(qcurses_box_t *dest, qcurses_char_t *src, size_t size, int row_offset);
 void qcurses_list_move_cursor(qcurses_list_t *col, int move);

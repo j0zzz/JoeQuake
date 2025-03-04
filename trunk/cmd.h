@@ -83,15 +83,6 @@ typedef struct direntry_s
 	int	type;	// 0 = file, 1 = dir, 2 = ".."
 	char	*name;
 	int	size;
-    float total_time;
-    int kills;
-    int total_kills;
-    int secrets;
-    int total_secrets;
-    int skill;
-    int num_maps;
-    char mapname[30];
-    char playername[30];
 } direntry_t;
 
 extern	direntry_t	*filelist;

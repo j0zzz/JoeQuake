@@ -1053,27 +1053,6 @@ static void AddNewEntry (char *fname, int ftype, long fsize, char *path)
 
     filelist[i].name = Q_strdup (fname);
 	filelist[i].type = ftype;
-    /*if (ftype == 0) {
-        FILE *demo_file = NULL;
-        demo_summary_t demo_summary;
-        char demo_path[MAX_OSPATH];
-        Q_snprintfz(demo_path, sizeof(demo_path), "../%s/%s", path, fname);
-        demo_file = Ghost_OpenDemoOrDzip(demo_path);
-
-        if (demo_file && DS_GetDemoSummary(demo_file, &demo_summary)) {
-            filelist[i].skill = demo_summary.skill;
-            filelist[i].kills = demo_summary.kills;
-            filelist[i].total_kills  = demo_summary.total_kills;
-            filelist[i].secrets = demo_summary.secrets;
-            filelist[i].total_secrets = demo_summary.total_secrets;
-            filelist[i].total_time = demo_summary.total_time;
-            if (demo_summary.num_maps == 1 || !demo_summary.total_time)
-                Q_snprintfz(filelist[i].mapname, sizeof(filelist[i].mapname), "%s", demo_summary.maps[0]);
-            else
-                Q_snprintfz(filelist[i].mapname, sizeof(filelist[i].mapname), "%s+", demo_summary.maps[0]);
-            Q_snprintfz(filelist[i].playername, sizeof(filelist[i].playername), "%s", demo_summary.client_names[0]);
-        }
-    }*/
 	filelist[i].size = fsize;
 
 	num_files++;

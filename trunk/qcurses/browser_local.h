@@ -25,37 +25,19 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-#ifndef _BROWSER_H_
-#define _BROWSER_H_
+#ifndef _BROWSER_LOCAL_H_
+#define _BROWSER_LOCAL_H_
 
-#include "qcurses.h"
+typedef struct thread_data_s {
+    char path[MAX_OSPATH];
+    demo_summary_t * summary;
+} thread_data_t;
 
-enum demos_tabs {
-    TAB_LOCAL_DEMOS = 1,
-    TAB_SDA_NEWS,
-    TAB_SDA_DATABASE
-};
+int get_summary_thread(void * entry);
 
-enum browser_columns {
-    COL_MAP = 1,
-    COL_TYPE,
-    COL_RECORD,
-    COL_COMMENT_LOADING,
-    COL_COMMENT_LOADED
-};
+void M_Demos_LocalRead(int rows, char * prevdir);
+void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row);
+void M_Demos_KeyHandle_Local_Search (int k, int max_lines);
+void M_Demos_KeyHandle_Local (int k, int max_lines);
 
-enum map_filters {
-    FILTER_DOWNLOADED,
-    FILTER_ALL,
-    FILTER_ID
-};
-
-void Browser_UpdateFurtherColumns (enum browser_columns start_column);
-
-void M_Demos_Display(int width, int height);
-void M_Demos_KeyHandle(int key);
-void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * search_term, qboolean search_input);
-char * browser_read_file(const char * filename);
-char *GetPrintedTimeNoDec(float time, qboolean strip);
-
-#endif /* _BROWSER_H_ */
+#endif /* _BROWSER_LOCAL_H_ */

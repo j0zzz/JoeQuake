@@ -31,36 +31,44 @@
 #include "../quakedef.h"
 #include "qcurses.h"
 #include "browser.h"
+#include "browser_local.h"
+#include "browser_news.h"
 #include "cJSON.h"
+#include "set.h"
 #include <curl/curl.h>
 #include <sys/wait.h>
 
-#define curmap() columns[COL_MAP]->array[columns[COL_MAP]->cursor]
-#define curtype() columns[COL_TYPE]->array[columns[COL_TYPE]->cursor]
-#define currec() columns[COL_RECORD]->sda_name[columns[COL_RECORD]->cursor]
+#define curmap() columns[COL_MAP]->array[columns[COL_MAP]->list.cursor]
+#define curtype() columns[COL_TYPE]->array[columns[COL_TYPE]->list.cursor]
+#define currec() columns[COL_RECORD]->sda_name[columns[COL_RECORD]->list.cursor]
+#define currecitem() columns[COL_RECORD]
 
 qcurses_box_t * main_box = NULL;
 qcurses_box_t * local_box = NULL;
+
 static enum demos_tabs demos_tab = TAB_LOCAL_DEMOS;
 static enum browser_columns browser_col = COL_MAP;
-qcurses_list_t * columns[COL_RECORD + 1];
+static enum map_filters map_filter = FILTER_DOWNLOADED, prev_map_filter = FILTER_ALL;
+
+static char search_term[40] = "\0";
+static qboolean search_input = false;
+
+qcurses_recordlist_t * columns[COL_RECORD + 1];
 qcurses_char_t * comments;
+cJSON * json = NULL;
+
 static qboolean demos_update = true;
-static cJSON * json = NULL;
+static simple_set * maps = NULL;
+static simple_set * id_maps = NULL;
+
+extern qcurses_demlist_t * demlist;
 
 extern direntry_t * filelist;
 extern int num_files;
-extern int list_cursor;
-extern int list_base;
-extern char prevdir[MAX_OSPATH];
+extern char com_basedir[MAX_OSPATH];
+
 extern char *GetPrintedTime(double time);
-
-extern void M_List_Key (int k, int num_elements, int num_lines);
-extern void SearchForDemos (void);
-
-static char * qcurses_skills[4] = { "Easy", "Normal", "Hard", "Nightmare" };
-
-qcurses_char_t * news = NULL;
+extern void SearchForMaps (void);
 
 static CURL *curl_http_handle;
 static CURLM *curl_multi_handle;
@@ -69,8 +77,9 @@ static FILE *curl_fp;
 
 static int comment_page = 0;
 extern int comment_rows;
+extern char ghost_demo_path[MAX_OSPATH];
 
-char *GetPrintedTimeNoDec(float time, qboolean strip){
+char *GetPrintedTimeNoDec(float time, qboolean strip) {
     int			mins;
     double		secs;
     static char timestring[16];
@@ -82,8 +91,7 @@ char *GetPrintedTimeNoDec(float time, qboolean strip){
     return timestring;
 }
 
-static char *toYellow (char *s)
-{
+char *toYellow (char *s) {
     static	char	buf[20];
 
     Q_strncpyz (buf, s, sizeof(buf));
@@ -109,68 +117,62 @@ char * browser_read_file(const char * filename){
     return string;
 }
 
-void M_Demos_KeyHandle_Local (int k, int max_lines) {
-    M_List_Key (k, num_files, max_lines);
-
+void M_Demos_KeyHandle_Browser_Search (int k) {
+    int len = strlen(search_term);
     switch (k) {
-        case K_ENTER:
-        case K_MOUSE1:
-            if (!num_files || filelist[list_base+list_cursor].type == 3)
-                break;
-
-            if (keydown[K_CTRL] && keydown[K_SHIFT]) {
-                Cbuf_AddText ("ghost_remove\n");
-            }
-            else if (filelist[list_cursor+list_base].type) {
-                if (filelist[list_base+list_cursor].type == 2) {
-                    char	*p;
-
-                    if ((p = strrchr(demodir, '/')))
-                    {
-                        Q_strncpyz (prevdir, p + 1, sizeof(prevdir));
-                        *p = 0;
-                    }
-                } else {
-                    strncat (demodir, va("/%s", filelist[list_base+list_cursor].name), sizeof(demodir) - 1);
-                }
-                SearchForDemos ();
-            } else {
-                if (keydown[K_CTRL] && !keydown[K_SHIFT]) {
-                    Cbuf_AddText (va("ghost \"..%s/%s\"\n", demodir, filelist[list_base+list_cursor].name));
-                } else {
-                    key_dest = key_game;
-                    Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demodir, filelist[list_base+list_cursor].name));
-                }
-                Q_strncpyz (prevdir, filelist[list_base+list_cursor].name, sizeof(prevdir));
-            }
+    case K_ESCAPE:
+    case K_ENTER:
+        search_input = false;
+        break;
+    case K_BACKSPACE:
+        if (len)
+            search_term[len - 1] = '\0';
+        break;
+    default:
+        if (k >= '0' && k <= 'z')
+            if (len < 40)
+                search_term[len] = k;
+        break;
     }
 }
 
 void M_Demos_KeyHandle_Browser (int k) {
+    if (search_input) {
+        M_Demos_KeyHandle_Browser_Search(k);
+        return;
+    }
+
     int distance = 1;
     switch (k) {
+    case 'b':
+        if (!keydown[K_CTRL])
+            break;
     case K_PGUP:
-        distance = 10;
+    case K_HOME:
+        distance = keydown[K_HOME] ? 10000 : 10;
     case K_UPARROW:
     case 'k':
         if (browser_col <= COL_RECORD){
-            qcurses_list_move_cursor(columns[browser_col], -distance);
+            qcurses_list_move_cursor((qcurses_list_t*)columns[browser_col], -distance);
             Browser_UpdateFurtherColumns(browser_col);
             S_LocalSound("misc/menu1.wav");
         } else if (browser_col == COL_COMMENT_LOADED) {
             comment_page = max(0, comment_page - distance);
         }
         break;
-
+    case 'd':
+        if (!keydown[K_CTRL])
+            break;
     case K_PGDN:
-        distance = 10;
+    case K_END:
+        distance = keydown[K_END] ? 10000 : 10;
     case K_DOWNARROW:
     case 'j':
-        if (browser_col <= COL_RECORD){
-            qcurses_list_move_cursor(columns[browser_col], distance);
+        if (browser_col <= COL_RECORD) {
+            qcurses_list_move_cursor((qcurses_list_t*)columns[browser_col], distance);
             Browser_UpdateFurtherColumns(browser_col);
             S_LocalSound("misc/menu1.wav");
-        } else if (browser_col == COL_COMMENT_LOADED){
+        } else if (browser_col == COL_COMMENT_LOADED) {
             comment_page += distance;
         }
         break;
@@ -178,15 +180,18 @@ void M_Demos_KeyHandle_Browser (int k) {
     case K_RIGHTARROW:
     case 'l':
         if (browser_col == COL_COMMENT_LOADED){
-            if (keydown[K_CTRL] && !keydown[K_SHIFT]) {
-                Cbuf_AddText (va("ghost \"../.demo_cache/%s/%s.dz\"\n", curtype(), currec()));
+            if (keydown[K_CTRL] && keydown[K_SHIFT]) {
+                Cbuf_AddText ("ghost_remove\n");
+            } else if (keydown[K_CTRL]) {
+                Cbuf_AddText (va("ghost \"%s/../.demo_cache/%s/%s.dz\"\n", com_basedir, curtype(), currec()));
             } else {
-                key_dest = key_game;
-                Cbuf_AddText (va("playdemo \"../.demo_cache/%s/%s.dz\"\n", curtype(), currec()));
+                if (!keydown[K_ALT])
+                    key_dest = key_game;
+                Cbuf_AddText (va("playdemo \"%s/../.demo_cache/%s/%s.dz\"\n", com_basedir, curtype(), currec()));
             }
         }
         browser_col = min(COL_COMMENT_LOADING, browser_col + 1);
-        S_LocalSound("misc/menu1.wav");
+        S_LocalSound("misc/menu2.wav");
         break;
     case K_BACKSPACE:
     case K_LEFTARROW:
@@ -194,15 +199,24 @@ void M_Demos_KeyHandle_Browser (int k) {
         if (browser_col == COL_COMMENT_LOADED)
             browser_col--;
         browser_col = max(COL_MAP, browser_col - 1);
-        S_LocalSound("misc/menu1.wav");
+        S_LocalSound("misc/menu2.wav");
         break;
+    case 'p':
+        if (keydown[K_CTRL])
+            map_filter = (map_filter + 1) % (FILTER_ID + 1);
+        break;
+    case 'f':
+        if (keydown[K_CTRL])
+    case '/':
+            search_input = true;
+
     default:
         break;
     }
+
 }
 
-void M_Demos_KeyHandle (int k)
-{
+void M_Demos_KeyHandle (int k) {
     demos_update = true;
 
     switch (k) {
@@ -213,12 +227,18 @@ void M_Demos_KeyHandle (int k)
         case K_TAB:
             demos_tab = demos_tab % TAB_SDA_DATABASE + 1;
             S_LocalSound("misc/menu1.wav");
+            if (demos_tab == TAB_LOCAL_DEMOS) 
+                M_Demos_LocalRead(main_box->rows - 8, NULL);
+
             break;
     }
 
     switch (demos_tab) {
         case TAB_LOCAL_DEMOS:
-            M_Demos_KeyHandle_Local(k, main_box->rows - 8);
+            M_Demos_KeyHandle_Local(k, main_box->rows - 20);
+            break;
+        case TAB_SDA_NEWS:
+            M_Demos_KeyHandle_News(k);
             break;
         case TAB_SDA_DATABASE:
             M_Demos_KeyHandle_Browser(k);
@@ -226,118 +246,18 @@ void M_Demos_KeyHandle (int k)
         default:
             break;
     }
-
-    //switch (k)
-    //{
-    //case K_ESCAPE:
-    //case K_MOUSE2:
-    //	if (searchbox)
-    //	{
-    //		KillSearchBox ();
-    //	}
-    //	else
-    //	{
-    //		Q_strncpyz (prevdir, filelist[list_base+list_cursor].name, sizeof(prevdir));
-    //		M_Menu_Main_f ();
-    //	}
-    //	break;
-
-    //case K_ENTER:
-    //case K_MOUSE1:
-    //	if (!num_files || filelist[list_base+list_cursor].type == 3)
-    //		break;
-
-    //	if (keydown[K_CTRL] && keydown[K_SHIFT])
-    //	{
-    //		Cbuf_AddText ("ghost_remove\n");
-    //	}
-    //	else if (filelist[list_cursor+list_base].type)
-    //	{
-    //		if (filelist[list_base+list_cursor].type == 2)
-    //		{
-    //			char	*p;
-
-    //			if ((p = strrchr(demodir, '/')))
-    //			{
-    //				Q_strncpyz (prevdir, p + 1, sizeof(prevdir));
-    //				*p = 0;
-    //			}
-    //		}
-    //		else
-    //		{
-    //			strncat (demodir, va("/%s", filelist[list_base+list_cursor].name), sizeof(demodir) - 1);
-    //		}
-    //		SearchForDemos ();
-    //	}
-    //	else
-    //	{
-    //		if (keydown[K_CTRL] && !keydown[K_SHIFT])
-    //		{
-    //			Cbuf_AddText (va("ghost \"..%s/%s\"\n", demodir, filelist[list_base+list_cursor].name));
-    //		}
-    //		else
-    //		{
-    //			key_dest = key_game;
-    //			m_state = m_none;
-    //			Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demodir, filelist[list_base+list_cursor].name));
-    //		}
-    //		Q_strncpyz (prevdir, filelist[list_base+list_cursor].name, sizeof(prevdir));
-    //	}
-
-    //	if (searchbox)
-    //		KillSearchBox ();
-    //	break;
-
-    //case K_BACKSPACE:
-    //	if (strcmp(searchfile, ""))
-    //		searchfile[--num_searchs] = 0;
-    //	break;
-
-    //default:
-    //	if (k < 32 || k > 127)
-    //		break;
-
-    //	searchbox = true;
-    //	searchfile[num_searchs++] = k;
-    //	worx = false;
-    //	for (i=0 ; i<num_files ; i++)
-    //	{
-    //		if (strstr(filelist[i].name, searchfile) == filelist[i].name)
-    //		{
-    //			worx = true;
-    //			S_LocalSound ("misc/menu1.wav");
-    //			list_base = i - 10;
-    //			if (list_base < 0 || num_files < MAXLINES)
-    //			{
-    //				list_base = 0;
-    //				list_cursor = i;
-    //			}
-    //			else if (list_base > (num_files - MAXLINES))
-    //			{
-    //				list_base = num_files - MAXLINES;
-    //				list_cursor = MAXLINES - (num_files - i);
-    //			}
-    //			else
-    //				list_cursor = 10;
-    //			break;
-    //		}
-    //	}
-    //	if (!worx)
-    //		searchfile[--num_searchs] = 0;
-    //	break;
-    //}
 }
 
-qcurses_list_t * Browser_CreateTypeColumn(const cJSON * json, int rows) {
+qcurses_recordlist_t * Browser_CreateTypeColumn(const cJSON * json, int rows) {
     const cJSON *type = NULL;
 
-    qcurses_list_t *column = calloc(1, sizeof(qcurses_list_t));
+    qcurses_recordlist_t *column = calloc(1, sizeof(qcurses_recordlist_t));
 
-    column->cursor = 0;
-    column->len = cJSON_GetArraySize(json);
-    column->places = rows;
-    column->window_start = 0;
-    column->array = calloc(column->len, sizeof(char[80]));
+    column->list.cursor = 0;
+    column->list.len = cJSON_GetArraySize(json);
+    column->list.places = rows;
+    column->list.window_start = 0;
+    column->array = calloc(column->list.len, sizeof(char[80]));
 
     int i = 0;
     cJSON_ArrayForEach(type, json) {
@@ -347,29 +267,30 @@ qcurses_list_t * Browser_CreateTypeColumn(const cJSON * json, int rows) {
     return column;
 }
 
-qcurses_list_t * Browser_CreateRecordColumn(const cJSON * json, int rows) {
+qcurses_recordlist_t * Browser_CreateRecordColumn(const cJSON * json, int rows) {
     const cJSON *record = NULL;
 
-    qcurses_list_t *column = calloc(1, sizeof(qcurses_list_t));
+    qcurses_recordlist_t *column = calloc(1, sizeof(qcurses_recordlist_t));
 
-    column->cursor = 0;
-    column->len = cJSON_GetArraySize(json);
-    column->places = rows;
-    column->window_start = 0;
-    column->array = calloc(column->len, sizeof(char[80]));
-    column->sda_name = calloc(column->len, sizeof(char[50]));
+    column->list.cursor = 0;
+    column->list.len = cJSON_GetArraySize(json);
+    column->list.places = rows;
+    column->list.window_start = 0;
+    column->array = calloc(column->list.len, sizeof(char[80]));
+    column->sda_name = calloc(column->list.len, sizeof(char[50]));
 
     int i = 0;
     cJSON_ArrayForEach(record, json) {
-        Q_snprintfz(column->array[i], sizeof(column->array[i]), "\x10%10s\x11 %5s %s",
+        Q_snprintfz(column->array[i], sizeof(column->array[i]), "\x10%s\x11 %5s %s",
             cJSON_GetObjectItemCaseSensitive(record, "date")->valuestring,
             toYellow(GetPrintedTimeNoDec(cJSON_GetObjectItemCaseSensitive(record, "time")->valueint, false)),
             cJSON_GetObjectItemCaseSensitive(record, "players")->valuestring
         );
-        Q_snprintfz(column->sda_name[i], sizeof(column->sda_name[i]), "%s_%s",
-            columns[COL_MAP]->array[columns[COL_MAP]->cursor],
-            GetPrintedTimeNoDec(cJSON_GetObjectItemCaseSensitive(record, "time")->valueint, true)
-        );
+
+        char * sda_name_buf = Q_strdup(cJSON_GetObjectItemCaseSensitive(record, "filename")->valuestring);
+        sda_name_buf[Q_strcasestr(sda_name_buf, ".") - sda_name_buf] = '\0';
+        Q_snprintfz(column->sda_name[i], sizeof(column->sda_name[i]), "%s", sda_name_buf, true);
+        free(sda_name_buf);
 
         i++;
     }
@@ -384,12 +305,12 @@ void Browser_UpdateFurtherColumns (enum browser_columns start_column) {
         if (columns[COL_TYPE])
             free(columns[COL_TYPE]);
         item = cJSON_GetObjectItemCaseSensitive(json, curmap());
-        columns[COL_TYPE] = Browser_CreateTypeColumn(item, 20 - 1);
+        columns[COL_TYPE] = Browser_CreateTypeColumn(item, 15 - 1);
     case COL_TYPE:
         if (columns[COL_RECORD])
             free(columns[COL_RECORD]);
         item = cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(json, curmap()), curtype());
-        columns[COL_RECORD] = Browser_CreateRecordColumn(item, 20 - 1);
+        columns[COL_RECORD] = Browser_CreateRecordColumn(item, 15 - 1);
     case COL_RECORD:
     default:
         break;
@@ -426,8 +347,8 @@ qcurses_char_t * Browser_TxtFile() {
     default:
         close(pipes[1]);
         char * txt = calloc(4096*8, sizeof(char));
-        int nbytes = read(pipes[0], txt, 4096*8);
-        wait(NULL);
+        read(pipes[0], txt, 4096*8);
+        waitpid(-1, NULL, 0);
         close(pipes[0]);
         return qcurses_parse_txt(txt);
     }
@@ -469,143 +390,78 @@ void Browser_DownloadDzip() {
     Browser_CurlStart(path, href);
 }
 
-void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
-    qcurses_box_t * local_box  = qcurses_init(cols, rows);
-    qcurses_box_t * map_box    = qcurses_init(15, rows);
-    qcurses_box_t * skill_box  = qcurses_init(10, rows);
-    qcurses_box_t * kill_box   = qcurses_init(12, rows);
-    qcurses_box_t * secret_box = qcurses_init(9, rows);
-    qcurses_box_t * time_box   = qcurses_init(15, rows);
-    qcurses_box_t * player_box = qcurses_init(15, rows);
-    qcurses_box_t * size_box   = qcurses_init(8, rows);
-    qcurses_box_t * name_box   = qcurses_init(cols - map_box->cols - skill_box->cols - kill_box->cols - secret_box->cols - time_box->cols - size_box->cols - player_box->cols, rows);
-
-    /* header */
-    qcurses_print(name_box, 0, 0, "NAME", true);
-    qcurses_make_bar(name_box, 1);
-    qcurses_print(map_box, 0, 0, "MAP", true);
-    qcurses_make_bar(map_box, 1);
-    qcurses_print(player_box, 0, 0, "PLAYER", true);
-    qcurses_make_bar(player_box, 1);
-    qcurses_print(skill_box, 0, 0, "SKILL", true);
-    qcurses_make_bar(skill_box, 1);
-    qcurses_print(kill_box, 0, 0, "KILLS", true);
-    qcurses_make_bar(kill_box, 1);
-    qcurses_print(secret_box, 0, 0, "SECRETS", true);
-    qcurses_make_bar(secret_box, 1);
-    qcurses_print(time_box, 0, 0, "TIME", true);
-    qcurses_make_bar(time_box, 1);
-    qcurses_print(size_box, 0, 0, "SIZE", true);
-    qcurses_make_bar(size_box, 1);
-
-    for (int i = 0; i < num_files && i < local_box->rows - 2; i++){
-        direntry_t * d = filelist + i;
-        char str[100];
-        Q_strncpyz (str, d->name, sizeof(str));
-        qcurses_print(name_box, 1, i + 2, str, !d->type);
-
-        switch (d->type) {
-            case 0:
-                qcurses_print(size_box, 0, i + 2, toYellow(va("%7ik", (d->size) >> 10)), false); 
-                break;
-            case 1:
-                qcurses_print(size_box, 0, i + 2, "  folder", false); 
-                break;
-            case 2: 
-                qcurses_print(size_box, 0, i + 2, "      up", false); 
-                break;
-        }
-
-        if (d->type == 0) {
-            if (d->skill >= 0 && d->skill <= 3)
-                qcurses_print(skill_box, 0, i + 2, qcurses_skills[d->skill], false); 
-
-            qcurses_print(map_box, 0, i + 2, d->mapname, false); 
-
-            qcurses_print(player_box, 0, i + 2, d->playername, true); 
-
-            Q_snprintfz(str, sizeof(str), "%4d/", d->kills);
-            qcurses_print(kill_box, 0, i + 2, str, true); 
-
-            Q_snprintfz(str, sizeof(str), "%4d", d->total_kills);
-            qcurses_print(kill_box, 5, i + 2, toYellow(str), true); 
-
-            Q_snprintfz(str, sizeof(str), "%3d/", d->secrets);
-            qcurses_print(secret_box, 0, i + 2, str, false); 
-
-            Q_snprintfz(str, sizeof(str), "%3d", d->total_secrets);
-            qcurses_print(secret_box, 4, i + 2, toYellow(str), false); 
-
-            if (d->total_time)
-                Q_snprintfz(str, sizeof(str), "%15s", GetPrintedTime(d->total_time));
-            else
-                Q_snprintfz(str, sizeof(str), "%15s", "N/A");
-            qcurses_print(time_box, 0, i + 2, str, true); 
-        }
-    }
-
-    qcurses_print(name_box, 0, 2 + list_cursor, "\x0d", false);
-
-    int filled_cols = 0;
-    qcurses_insert(local_box, filled_cols, 0, name_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + name_box->cols, 0, map_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + map_box->cols, 0, player_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + player_box->cols, 0, skill_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + skill_box->cols, 0, kill_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + kill_box->cols, 0, secret_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + secret_box->cols, 0, time_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + time_box->cols, 0, size_box);
-    qcurses_insert(main_box, start_col, start_row, local_box);
-
-    qcurses_free(name_box);
-    qcurses_free(map_box);
-    qcurses_free(skill_box);
-    qcurses_free(player_box);
-    qcurses_free(kill_box);
-    qcurses_free(secret_box);
-    qcurses_free(time_box);
-    qcurses_free(size_box);
-    qcurses_free(local_box);
-}
-
-void M_Demos_DisplayNews (int cols, int rows, int start_col, int start_row) {
-    qcurses_box_t * local_box = qcurses_init(cols, rows);
-
-    if (!news)
-        news = qcurses_parse_news(browser_read_file("news.html"));
-
-    qcurses_boxprint_wrapped(local_box, news, local_box->cols * local_box->rows, 0);
-    qcurses_insert(main_box, start_col, start_row, local_box);
-
-    qcurses_free(local_box);
-}
-
-qcurses_list_t * Browser_CreateMapColumn(const cJSON * json, int rows) {
+qcurses_recordlist_t * Browser_CreateMapColumn(const cJSON * json, int rows, enum map_filters filter) {
     const cJSON *map = NULL;
 
-    qcurses_list_t *column = calloc(1, sizeof(qcurses_list_t));
+    qcurses_recordlist_t *column = calloc(1, sizeof(qcurses_recordlist_t));
 
-    column->cursor = 0;
-    column->len = cJSON_GetArraySize(json);
-    column->places = rows;
-    column->window_start = 0;
-    column->array = calloc(column->len, sizeof(char[80]));
+    column->list.cursor = 0;
+    column->list.len = cJSON_GetArraySize(json);
+    column->list.places = rows;
+    column->list.window_start = 0;
+    column->array = calloc(column->list.len, sizeof(char[80]));
 
     int i = 0;
     cJSON_ArrayForEach(map, json) {
-        Q_strncpy(column->array[i++], map->string, 80);
+        switch (filter) {
+        case FILTER_ID:
+            if (set_contains(id_maps, map->string) == SET_TRUE)
+                goto valid;
+            break;
+        case FILTER_DOWNLOADED:
+            if (set_contains(maps, map->string) == SET_TRUE)
+                goto valid;
+            break;
+        case FILTER_ALL:
+        valid:
+            if (Q_strcasestr(map->string, search_term))
+                Q_strncpy(column->array[i++], map->string, 80);
+        }
     }
 
+    column->list.len = i;
     return column;
 }
 
+void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * search_term, qboolean search_input) {
+    qcurses_make_bar(help_box, 0);
+    qcurses_print_centered(help_box, 2, "Navigation: arrows keys OR hjkl OR enter/backspace", false);
+    qcurses_print_centered(help_box, 3, "Paging: page keys OR Ctrl+b and Ctrl+d", false);
+    if (tab == TAB_SDA_DATABASE) {
+        qcurses_print_centered(
+            help_box,
+            5,
+            va("Filter: \x10%c\x11 DOWNLOADED MAPS | \x10%c\x11 ALL MAPS | \x10%c\x11 ID MAPS | (Ctrl+p)", 
+                map_filter == FILTER_DOWNLOADED ? 0x0b : ' ',
+                map_filter == FILTER_ALL ? 0x0b : ' ',
+                map_filter == FILTER_ID ? 0x0b : ' '
+            ),
+            true
+        );
+    }
+
+    qcurses_print_centered(
+        help_box, 
+        6, 
+        va("Search: \x10%-40s\x11 (/ or Ctrl+f)", va("%s%c", search_term, search_input ? blink(0xb) : ' ')),
+        search_input
+    );
+
+    if ((tab == TAB_SDA_DATABASE && browser_col == COL_COMMENT_LOADED) || tab == TAB_LOCAL_DEMOS){
+        qcurses_print_centered(help_box, 8, "Play demo: Enter | Quickplay: Alt+Enter | Set ghost: Ctrl + Enter", true);
+        if (ghost_demo_path[0] != '\0')
+            qcurses_print_centered(help_box, 9, "Unset ghost: Ctrl + Shift + Enter", true);
+    }
+
+}
 
 void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     qcurses_box_t * local_box = qcurses_init(cols, rows);
-    qcurses_box_t * map_box   = qcurses_init(25, rows);
-    qcurses_box_t * skill_box = qcurses_init(15, 20);
-    qcurses_box_t * time_box  = qcurses_init(cols - map_box->cols - skill_box->cols, 20);
-    qcurses_box_t * comment_box  = qcurses_init_paged(cols - map_box->cols, rows - skill_box->rows);
+    qcurses_box_t * map_box   = qcurses_init(25, rows - 10);
+    qcurses_box_t * skill_box = qcurses_init(6, 15);
+    qcurses_box_t * time_box  = qcurses_init(cols - map_box->cols - skill_box->cols, 15);
+    qcurses_box_t * comment_box  = qcurses_init_paged(cols - map_box->cols, rows - skill_box->rows - 10);
+    qcurses_box_t * help_box  = qcurses_init(cols, rows);
 
     qcurses_make_bar(map_box, 0);
     qcurses_make_bar(skill_box, 0);
@@ -617,40 +473,52 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         char * json_string = browser_read_file("sda_mock.json");
         json = cJSON_Parse(json_string);
         free(json_string);
-        columns[COL_MAP] = Browser_CreateMapColumn(json, rows - 1);
-        Browser_UpdateFurtherColumns(browser_col);
     }
 
-    for (int i = 0; i < min(columns[COL_MAP]->len, columns[COL_MAP]->places); i++)
-        qcurses_print(map_box, 1, 1 + i, columns[COL_MAP]->array[columns[COL_MAP]->window_start + i], columns[COL_MAP]->cursor == columns[COL_MAP]->window_start + i);
+    if (prev_map_filter != map_filter || search_input) {
+        if (columns[COL_MAP]){
+            free(columns[COL_MAP]->array);
+            free(columns[COL_MAP]);
+        }
+        columns[COL_MAP] = Browser_CreateMapColumn(json, rows - 11, map_filter);
+        Browser_UpdateFurtherColumns(COL_MAP);
+        prev_map_filter = map_filter;
+    }
+
+    for (int i = 0; i < min(columns[COL_MAP]->list.len, columns[COL_MAP]->list.places); i++)
+        qcurses_print(map_box, 1, 1 + i, columns[COL_MAP]->array[columns[COL_MAP]->list.window_start + i], columns[COL_MAP]->list.cursor == columns[COL_MAP]->list.window_start + i);
 
     if (browser_col == COL_MAP)
-        qcurses_print(map_box, 0, 1 + columns[COL_MAP]->cursor - columns[COL_MAP]->window_start, "\x0d", false);
+        qcurses_print(map_box, 0, 1 + columns[COL_MAP]->list.cursor - columns[COL_MAP]->list.window_start, blinkstr(0x0d), false);
 
     if (columns[COL_TYPE]){
-        for (int i = 0; i < min(columns[COL_TYPE]->len, columns[COL_TYPE]->places); i++)
-            qcurses_print(skill_box, 1, 1 + i, columns[COL_TYPE]->array[columns[COL_TYPE]->window_start + i], browser_col >= COL_TYPE && columns[COL_TYPE]->cursor == columns[COL_TYPE]->window_start + i);
+        for (int i = 0; i < min(columns[COL_TYPE]->list.len, columns[COL_TYPE]->list.places); i++)
+            qcurses_print(skill_box, 1, 1 + i, columns[COL_TYPE]->array[columns[COL_TYPE]->list.window_start + i], browser_col >= COL_TYPE && columns[COL_TYPE]->list.cursor == columns[COL_TYPE]->list.window_start + i);
 
         if (browser_col == COL_TYPE)
-            qcurses_print(skill_box, 0, 1 + columns[COL_TYPE]->cursor - columns[COL_TYPE]->window_start, "\x0d", false);
+            qcurses_print(skill_box, 0, 1 + columns[COL_TYPE]->list.cursor - columns[COL_TYPE]->list.window_start, blinkstr(0x0d), false);
     }
 
     if (columns[COL_RECORD]){
-        for (int i = 0; i < min(columns[COL_RECORD]->len, columns[COL_RECORD]->places); i++)
-            qcurses_print(time_box, 1, 1 + i, columns[COL_RECORD]->array[columns[COL_RECORD]->window_start + i], browser_col >= COL_RECORD && columns[COL_RECORD]->cursor == columns[COL_RECORD]->window_start + i);
+        for (int i = 0; i < min(columns[COL_RECORD]->list.len, columns[COL_RECORD]->list.places); i++) {
+            qcurses_print(time_box, 1, 1 + i, columns[COL_RECORD]->array[columns[COL_RECORD]->list.window_start + i], browser_col >= COL_RECORD && columns[COL_RECORD]->list.cursor == columns[COL_RECORD]->list.window_start + i);
+
+            if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("%s/../.demo_cache/%s/%s.dz", com_basedir, curtype(), columns[COL_RECORD]->sda_name[columns[COL_RECORD]->list.window_start + i])) == 0)
+                qcurses_print(time_box, 0, 1 + i, "\x84", false);
+        }
 
         if (browser_col == COL_RECORD)
-            qcurses_print(time_box, 0, 1 + columns[COL_RECORD]->cursor - columns[COL_RECORD]->window_start, "\x0d", false);
+            qcurses_print(time_box, 0, 1 + columns[COL_RECORD]->list.cursor - columns[COL_RECORD]->list.window_start, blinkstr(0x0d), false);
     }
 
     if (browser_col == COL_COMMENT_LOADING) {
         if (!Browser_DzipDownloaded()) {
-            qcurses_print(comment_box, comment_box->cols / 2 - 10, comment_box->rows / 2, "Downloading...", false);
+            qcurses_print_centered(comment_box, comment_box->rows / 2, "Downloading...", false);
             if (!curl_running) {
                 Browser_DownloadDzip();
             }
         } else if (curl_running) {
-            qcurses_print(comment_box, comment_box->cols / 2 - 10, comment_box->rows / 2, "Downloading...", false);
+            qcurses_print_centered(comment_box, comment_box->rows / 2, "Downloading...", false);
             CURLMcode mc = curl_multi_perform(curl_multi_handle, &curl_running);
 
             if(mc || !curl_running)
@@ -661,8 +529,8 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 curl_easy_getinfo(curl_http_handle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &total);
                 curl_easy_getinfo(curl_http_handle, CURLINFO_SIZE_DOWNLOAD_T, &downloaded);
 
-                qcurses_print(comment_box, comment_box->cols / 2 - 9, comment_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
-                qcurses_print(comment_box, comment_box->cols / 2 - 8 + (int)(10.0*downloaded/(float)total), comment_box->rows / 2 + 1, "\x83", false);
+                qcurses_print_centered(comment_box, comment_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
+                qcurses_print(comment_box, comment_box->cols / 2 - 5 + (int)(10.0*downloaded/(float)total), comment_box->rows / 2 + 1, "\x83", false);
             }
         } else {
             if (comments)
@@ -684,16 +552,20 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             qcurses_print(comment_box, comment_box->cols - 1, min(comment_page + comment_box->rows * comment_page / (comment_rows - comment_box->rows), comment_box->page_rows - 1), "\x83", false);
         }
     } else if (browser_col == COL_COMMENT_LOADED) {
-        qcurses_print(comment_box, comment_box->cols / 2 - 12, comment_box->rows / 2, "Text file not provided.", false);
+        qcurses_print_centered(comment_box, comment_box->rows / 2, "Text file not provided.", false);
     }
+
+    M_Demos_HelpBox (help_box, demos_tab, search_term, search_input);
 
     int filled_cols = 0;
     qcurses_insert(local_box, filled_cols, 0, map_box);
     qcurses_insert(local_box, filled_cols = filled_cols + map_box->cols, 0, skill_box);
     qcurses_insert(local_box, filled_cols, skill_box->rows, comment_box);
     qcurses_insert(local_box, filled_cols = filled_cols + skill_box->cols, 0, time_box);
+    qcurses_insert(local_box, 0, map_box->rows, help_box);
     qcurses_insert(main_box, start_col, start_row, local_box);
 
+    qcurses_free(help_box);
     qcurses_free(map_box);
     qcurses_free(skill_box);
     qcurses_free(time_box);
@@ -701,16 +573,53 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     qcurses_free(local_box);
 }
 
-void M_Demos_Display (int width, int height)
-{
+simple_set * Browser_CreateMapSet() {
+    SearchForMaps();
+    maps = calloc(1, sizeof(simple_set));
+    set_init(maps);
+    id_maps = calloc(1, sizeof(simple_set));
+    set_init(id_maps);
+
+    for (int i = 0; i < num_files; i++)
+        set_add(maps, Q_strdup(filelist[i].name));
+
+    for (int i = 1; i <= 4; i++){
+        for (int j = 1; j <= 8; j++) 
+            set_add(id_maps, va("e%dm%d", i, j));
+        set_add(id_maps, va("ep%d", i));
+        set_add(maps, va("ep%d", i));
+    }
+    set_add(maps, "id1");
+    set_add(maps, "e1m6long");
+    set_add(maps, "e1m8norm");
+    set_add(maps, "e2m1long");
+    set_add(maps, "e3m2long");
+    set_add(maps, "e3m3zom");
+    set_add(maps, "e4m5long");
+    set_add(id_maps, "end");
+    set_add(id_maps, "id1");
+    set_add(id_maps, "e1m6long");
+    set_add(id_maps, "e1m8norm");
+    set_add(id_maps, "e2m1long");
+    set_add(id_maps, "e3m2long");
+    set_add(id_maps, "e3m3zom");
+    set_add(id_maps, "e4m5long");
+}
+
+void M_Demos_Display (int width, int height) {
     if (!main_box)
         main_box = qcurses_init(width / 8, height / 8);
+
+    if (!maps)
+        maps = Browser_CreateMapSet();
+
+    if (!demlist)
+        M_Demos_LocalRead(main_box->rows - 20, NULL);
 
     if (curl_running)
         demos_update = true;
 
     demos_update = true;
-
     if (!demos_update)
         goto display;
 

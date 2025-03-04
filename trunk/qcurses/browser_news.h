@@ -25,37 +25,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-#ifndef _BROWSER_H_
-#define _BROWSER_H_
+
+#ifndef _BROWSER_NEWS_H_
+#define _BROWSER_NEWS_H_
 
 #include "qcurses.h"
 
-enum demos_tabs {
-    TAB_LOCAL_DEMOS = 1,
-    TAB_SDA_NEWS,
-    TAB_SDA_DATABASE
-};
-
-enum browser_columns {
-    COL_MAP = 1,
-    COL_TYPE,
-    COL_RECORD,
-    COL_COMMENT_LOADING,
-    COL_COMMENT_LOADED
-};
-
-enum map_filters {
-    FILTER_DOWNLOADED,
-    FILTER_ALL,
-    FILTER_ID
-};
-
-void Browser_UpdateFurtherColumns (enum browser_columns start_column);
-
-void M_Demos_Display(int width, int height);
-void M_Demos_KeyHandle(int key);
-void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * search_term, qboolean search_input);
-char * browser_read_file(const char * filename);
-char *GetPrintedTimeNoDec(float time, qboolean strip);
-
-#endif /* _BROWSER_H_ */
+void M_Demos_KeyHandle_News(int k);
+void M_Demos_DisplayNews (int cols, int rows, int start_col, int start_row);
+#endif /* _BROWSER_NEWS_H_ */

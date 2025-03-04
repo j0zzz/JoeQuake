@@ -626,7 +626,6 @@ void M_List_Key (int k, int num_elements, int num_lines)
 	switch (k)
 	{
 	case K_UPARROW:
-    case 'k':
 		S_LocalSound("misc/menu1.wav");
 		if (list_cursor == 0)
 		{
@@ -641,7 +640,6 @@ void M_List_Key (int k, int num_elements, int num_lines)
 			list_base--;
 		break;
 
-    case 'j':
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
 		if (list_cursor + list_base == num_elements - 1)
@@ -8821,7 +8819,14 @@ void M_Draw (void)
 		break;
 
 	case m_demos:
-		M_Demos_Draw ();
+#ifdef GLQUAKE
+		int browserscale = vid.width / 8 >=240 ? 2 : 1;
+		glMatrixMode (GL_PROJECTION);
+		glLoadIdentity ();
+		glOrtho (0, vid.width / browserscale, vid.height / browserscale, 0, -99999, 99999);
+		M_Demos_Display(vid.width / browserscale, vid.height / browserscale);
+#endif
+		//M_Demos_Draw ();
 		break;
 
 	case m_mods:

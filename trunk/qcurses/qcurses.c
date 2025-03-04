@@ -159,6 +159,11 @@ void qcurses_print(qcurses_box_t *dest, int col, int row, char *src, qboolean bo
         dest->grid[row][col + i].symbol = src[i] | (bold ? 128 : 0);
 }
 
+void qcurses_print_centered(qcurses_box_t *dest, int row, char *src, qboolean bold){
+    int col = (dest->cols - strlen(src)) / 2;
+    qcurses_print(dest, col, row, src, bold);
+}
+
 void qcurses_insert(qcurses_box_t *dest, int col, int row, qcurses_box_t *src) {
     int page_offset = max(src->paged, 0);
     for (int i = row; i < row + src->page_rows && i < dest->rows; i++){
