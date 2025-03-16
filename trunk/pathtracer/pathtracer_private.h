@@ -24,8 +24,11 @@ typedef struct {
 	qboolean ongound;
 } pathtracer_movement_t;
 
-extern pathtracer_movement_t pathtracer_movement_samples[100000];
-extern pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[100];
+#define PATHTRACER_BUNNHOP_BUFFER_MAX 100
+#define PATHTRACER_MOVEMENT_BUFFER_MAX 100000
+
+extern pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
+extern pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[PATHTRACER_BUNNHOP_BUFFER_MAX];
 extern float drawbestangle;
 
 #endif // __PATHTRACER_PRIVATE

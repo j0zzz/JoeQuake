@@ -8,8 +8,8 @@ extern cvar_t  show_speed_y;
 static cvar_t scr_printbunnyhop = { "scr_printbunnyhop", "1" };
 static cvar_t scr_recordbunnyhop = { "scr_recordbunnyhop", "1" };
 
-pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[100];
-pathtracer_movement_t pathtracer_movement_samples[100000];
+pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[PATHTRACER_BUNNHOP_BUFFER_MAX];
+pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
 
 float drawbestangle = 0.f;
 extern	cvar_t	scr_printbunnyhop;
@@ -21,8 +21,8 @@ void PathTracer_Draw(void)
 	if (!sv.active && !cls.demoplayback) return;
 	if (cls.demoplayback) return;
 
-	extern pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[100];
-	extern pathtracer_movement_t pathtracer_movement_samples[100000];
+	extern pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[PATHTRACER_BUNNHOP_BUFFER_MAX];
+	extern pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
 	extern float drawbestangle;
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -30,7 +30,7 @@ void PathTracer_Draw(void)
 	glDisable(GL_CULL_FACE);
 
 	glBegin(GL_LINES);
-	for (int i = 1;i < 100000;i++) {
+	for (int i = 1;i < PATHTRACER_MOVEMENT_BUFFER_MAX;i++) {
 		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i - 1];
 		pathtracer_movement_t* pms_cur = &pathtracer_movement_samples[i];
 
@@ -65,7 +65,7 @@ void PathTracer_Draw(void)
 	}
 	glEnd();
 
-	for (int i = 1;i < 100000;i++) {
+	for (int i = 1;i < PATHTRACER_MOVEMENT_BUFFER_MAX;i++) {
 		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i - 1];
 		pathtracer_movement_t* pms_cur = &pathtracer_movement_samples[i];
 
@@ -217,6 +217,7 @@ void PathTracer_Sample(void) {
 			}
 		}
 	}
+	// 100th of a degree
 	for (int i = 1; i < 100; i++) {
 		for (int neg = -1; neg <= 1; neg += 2) {
 			float curangle = bestangle + neg * i / 100.0f;
@@ -280,7 +281,7 @@ void PathTracer_Sample(void) {
 		pms_new->bestspeed = bestspeed;
 		pms_new->ongound = onground0;
 		pathtracer_movement_index++;
-		if (pathtracer_movement_index >= 100000) {
+		if (pathtracer_movement_index >= PATHTRACER_MOVEMENT_BUFFER_MAX) {
 			pathtracer_movement_index = 0;
 		}
 
@@ -332,7 +333,7 @@ void PathTracer_Sample(void) {
 					pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].contact = just_jumped;
 				}
 				pathtracer_bunnyhop_index++;
-				if (pathtracer_bunnyhop_index >= 100)
+				if (pathtracer_bunnyhop_index >= PATHTRACER_BUNNHOP_BUFFER_MAX)
 					pathtracer_bunnyhop_index = 0;
 			}
 		}
@@ -345,7 +346,7 @@ void PathTracer_Sample(void) {
 	// Find closest bunny hop hint
 	currentclosestbunnyhopDistance = 1000000000;
 	currentclosestbunnyhopIndex = -1;
-	for (int i = 0;i < 100;i++) {
+	for (int i = 0;i < PATHTRACER_BUNNHOP_BUFFER_MAX;i++) {
 		pathtracer_bunnyhop_t* pbs = &pathtracer_bunnyhop_samples[i];
 		pbs->selected = false;
 		if (pbs->pos[0] == 0.f && pbs->pos[1] == 0.f && pbs->pos[2] == 0.f) {
