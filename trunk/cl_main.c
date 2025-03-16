@@ -1454,6 +1454,7 @@ void CL_Init (void)
 	CL_InitModelnames ();
 	CL_InitTEnts ();
 	Ghost_Init ();
+	PathTracer_Init();
 	CL_InitDemo ();
 	DemoCam_Init ();
 
@@ -1527,6 +1528,7 @@ CL_Shutdown
 */
 void CL_Shutdown (void)
 {
-    Ghost_Shutdown();
-    CL_ShutdownDemo();
+	PathTracer_Shutdown();
+	Ghost_Shutdown();
+	CL_ShutdownDemo();
 }

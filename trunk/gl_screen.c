@@ -94,8 +94,6 @@ cvar_t		scr_showpause = {"showpause", "1"};
 cvar_t		scr_printspeed = {"scr_printspeed", "8"};
 cvar_t		gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 cvar_t		scr_sshot_format = {"scr_sshot_format", "jpg"};
-cvar_t		scr_printbunnyhop = { "scr_printbunnyhop", "1" };
-cvar_t		scr_recordbunnyhop = { "scr_recordbunnyhop", "1" };
 cvar_t		scr_autoid = { "scr_autoid", "0" };
 cvar_t		scr_widescreen_fov = {"scr_widescreen_fov", "1", CVAR_ARCHIVE};
 cvar_t		cl_gun_fovscale = {"cl_gun_fovscale", "0", CVAR_ARCHIVE}; // Qrack
@@ -516,8 +514,6 @@ void SCR_Init (void)
 	Cvar_Register (&scr_printspeed);
 	Cvar_Register (&gl_triplebuffer);
 	Cvar_Register (&scr_sshot_format);
-	Cvar_Register (&scr_printbunnyhop);
-	Cvar_Register (&scr_recordbunnyhop);
 	Cvar_Register (&scr_autoid);
 	Cvar_Register (&scr_widescreen_fov);
 	Cvar_Register (&cl_gun_fovscale);
