@@ -36,6 +36,8 @@ float	*origin;
 float	*velocity;
 
 qboolean	onground;
+qboolean	prevonground;
+vec3_t		velocitybeforethink;
 
 usercmd_t	cmd;
 
@@ -374,10 +376,13 @@ void SV_ClientThink (void)
 	if (sv_player->v.movetype == MOVETYPE_NONE)
 		return;
 	
+	prevonground = onground;
 	onground = (int)sv_player->v.flags & FL_ONGROUND;
 
 	origin = sv_player->v.origin;
 	velocity = sv_player->v.velocity;
+
+	for (int i = 0;i < 3;i++) velocitybeforethink[i] = velocity[i];
 
 	DropPunchAngle ();
 

@@ -73,6 +73,34 @@ typedef enum
 	mk_forward, mk_back, mk_moveleft, mk_moveright, mk_jump, NUM_MOVEMENT_KEYS
 } movekeytype_t;
 
+typedef enum {
+	just_landed,
+	just_jumped
+} contacttype_t;
+
+typedef struct {
+	float bestangle;
+	float playerangle;
+	float pos[3];
+	char str[100];
+	contacttype_t contact;
+	qboolean selected;
+} bunnyhop;
+
+typedef struct {
+	float pos[3];
+	float velocity[3];
+	float angle;
+	float speed;
+	float bestangle;
+	float bestspeed;
+	qboolean ongound;
+} samplemovement;
+
+extern samplemovement samplemovements[100000];
+extern bunnyhop bunnyhops[100];
+extern float drawbestangle;
+
 void V_Init (void);
 void V_RenderView (void);
 

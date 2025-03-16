@@ -3585,6 +3585,122 @@ void R_DrawTransEntitiesOnList()
 	}
 }
 
+void R_DrawBunnyHops(void)
+{
+	if (sv_player == NULL) return;
+	if (!sv.active && !cls.demoplayback) return;
+	if (cls.demoplayback) return;
+
+	extern bunnyhop bunnyhops[100];
+	extern samplemovement samplemovements[100000];
+	extern float drawbestangle;
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_CULL_FACE);
+
+	glBegin(GL_LINES);
+	for (int i = 1;i < 100000;i++) {
+		samplemovement* smprev = &samplemovements[i - 1];
+		samplemovement* smcur = &samplemovements[i];
+
+		if (smprev->pos[0] == 0.f && smprev->pos[1] == 0.f && smprev->pos[2] == 0.f) {
+			continue;
+		}
+		if (smcur->pos[0] == 0.f && smcur->pos[1] == 0.f && smcur->pos[2] == 0.f) {
+			continue;
+		}
+
+		if (smcur->ongound && smprev->ongound) {
+			glColor3f(.3f, 0.f, 0.f);
+		}
+		else if (smcur->ongound || smprev->ongound) {
+			glColor3f(.1f, .1f, .1f);
+		}
+		else {
+			glColor3f(1.f, 1.f, 1.f);
+		}
+
+		GLfloat startPos[3];
+		startPos[0] = smprev->pos[0];
+		startPos[1] = smprev->pos[1];
+		startPos[2] = smprev->pos[2];// -20.f;
+		glVertex3fv(startPos);
+
+		GLfloat startPos2[3];
+		startPos2[0] = smcur->pos[0];
+		startPos2[1] = smcur->pos[1];
+		startPos2[2] = smcur->pos[2];// -20.f;
+		glVertex3fv(startPos2);
+	}
+	glEnd();
+
+	for (int i = 1;i < 100000;i++) {
+		samplemovement* smprev = &samplemovements[i - 1];
+		samplemovement* smcur = &samplemovements[i];
+
+		if (smprev->pos[0] == 0.f && smprev->pos[1] == 0.f && smprev->pos[2] == 0.f) {
+			continue;
+		}
+		if (smcur->pos[0] == 0.f && smcur->pos[1] == 0.f && smcur->pos[2] == 0.f) {
+			continue;
+		}
+
+		vec3_t playerforward, right, up;
+		vec3_t playerangles = { 0.f,smcur->angle ,0.f };
+
+		AngleVectors(playerangles, playerforward, right, up);
+
+		float playerSpeed = (smcur->speed - smprev->speed) * 2.f;
+		float bestSpeed = 0; // smcur->bestspeed * 10.f;
+
+		float oldspeed = sqrtf(smprev->velocity[0] * smprev->velocity[0] + smprev->velocity[1] * smprev->velocity[1]);
+		float newspeed = sqrtf(smcur->velocity[0] * smcur->velocity[0] + smcur->velocity[1] * smcur->velocity[1]);
+		float dspeed = newspeed - oldspeed;
+
+		// velocity change, green faster, red slower
+		glBegin(GL_LINES);
+		if (dspeed > 0)
+			glColor3f(0.f, 1.f, 0.f);
+		else if (dspeed == 0)
+			glColor3f(1.f, 1.f, 1.f);
+		else
+			glColor3f(1.f, 0.f, 0.f);
+		GLfloat startPos[3];
+		startPos[0] = smcur->pos[0];
+		startPos[1] = smcur->pos[1];
+		startPos[2] = smcur->pos[2];// -20.f;
+		glVertex3fv(startPos);
+
+		GLfloat anglePos[3];
+		anglePos[0] = startPos[0] + (smcur->velocity[0] - smprev->velocity[0]); //playerforward[0] * playerSpeed;
+		anglePos[1] = startPos[1] + (smcur->velocity[1] - smprev->velocity[1]);//playerforward[1] * playerSpeed;
+		anglePos[2] = startPos[2];
+		glVertex3fv(anglePos);
+		glEnd();
+
+		// speed line in blue
+		glBegin(GL_LINES);
+		glColor3f(0.f, 0.f, 1.f);
+		startPos[0] = smprev->pos[0] + up[0] * (oldspeed - 300) / 3.f;
+		startPos[1] = smprev->pos[1] + up[1] * (oldspeed - 300) / 3.f;
+		startPos[2] = 0.f + up[2] * (oldspeed - 300) / 3.f;
+		glVertex3fv(startPos);
+
+		anglePos[0] = smcur->pos[0] + up[0] * (newspeed - 300) / 3.f;
+		anglePos[1] = smcur->pos[1] + up[1] * (newspeed - 300) / 3.f;
+		anglePos[2] = 0.f + up[2] * (newspeed - 300) / 3.f;
+		glVertex3fv(anglePos);
+		glEnd();
+
+	}
+
+	glColor3f(1, 1, 1);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
 /*
 =============
 R_DrawViewModel
@@ -4168,6 +4284,8 @@ void R_RenderScene (void)
 	Fog_DisableGFog(); //johnfitz
 
 	R_DrawViewModel();
+
+	R_DrawBunnyHops();
 }
 
 /*
