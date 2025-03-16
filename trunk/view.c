@@ -1458,8 +1458,6 @@ void SCR_DrawSpeed (void)
 		display_speed = maxspeed;
 		maxspeed = 0;
 	}
-	if (scr_printbunnyhop.value == 1.f)
-		SCR_DrawSpeedHelp();
 }
 
 float	drawstats_limit;

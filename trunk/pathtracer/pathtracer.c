@@ -287,6 +287,9 @@ void R_DrawPathTracer(void)
 }
 
 void SCR_DrawSpeedHelp(void) {
+
+	if (scr_printbunnyhop.value != 1.f) return;
+
 	// draw speed info for each jump
 	if (!sv.active && !cls.demoplayback) return;
 	if (!sv.active) return;
