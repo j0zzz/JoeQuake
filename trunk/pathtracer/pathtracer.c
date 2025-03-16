@@ -74,24 +74,15 @@ void PathTracer_Sample_Each_Frame(void) {
 	if (cls.demoplayback) return;
 	if (sv_player == NULL) return;
 
-	// original code: https://github.com/shalrathy/quakespasm-shalrathy
-	// moved this to the bunny hop ring buffer
 	extern usercmd_t cmd;
+	extern entity_t ghost_entity;
 
 	static qboolean prevonground;
 	static qboolean prevprevonground;
-	static float prevspeed = 0;
 	static float airspeedsum = 0;
 	static float airspeedsummax = 0;
 	static double prevcltime = -1;
-	static int pathtracer_bunnyhop_index = 0;
 	static int pathtracer_movement_index = 0;
-	static int skipframe = 0;
-	static int skipframemod = 10;
-	static float currentclosestbunnyhopDistance = 1000000000;
-	static int currentclosestbunnyhopIndex = -1;
-	extern entity_t ghost_entity;
-
 
 	// demo playback only has cl.onground which is different from onground in normal play
 	qboolean onground0;
@@ -108,15 +99,13 @@ void PathTracer_Sample_Each_Frame(void) {
 		memset(pathtracer_movement_samples, 0, sizeof(pathtracer_movement_samples));
 		pathtracer_movement_index = 0;
 
-		currentclosestbunnyhopIndex = -1;
-		currentclosestbunnyhopDistance = INFINITY;
-		
 		prevcltime = cl.time;
 	}
 	else {
 		prevcltime = cl.time;
 	}
 
+	// original code: https://github.com/shalrathy/quakespasm-shalrathy
 	// Find best wishdir vector (largest speed increase in the ground plane)
 	int angles = 90;
 	float bestspeed = 0.f;
@@ -224,7 +213,6 @@ void PathTracer_Sample_Each_Frame(void) {
 			addspeedpct = 0.0;
 		}
 
-		prevspeed = speed;
 		airspeedsum = 0;
 		airspeedsummax = 0;
 
@@ -245,8 +233,6 @@ void PathTracer_Sample_Each_Frame(void) {
 			// 	pathtracer_bunnyhop_index = 0;
 		}
 	}
-	if (speed < 1) prevspeed = 0;
-
 	prevprevonground = prevonground;
 	prevonground = onground0;
 }
