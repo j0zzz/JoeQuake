@@ -7,7 +7,8 @@ extern cvar_t  show_speed_y;
 static cvar_t scr_printbunnyhop = { "scr_printbunnyhop", "1" };
 static cvar_t scr_recordbunnyhop = { "scr_recordbunnyhop", "1" };
 
-// copy-pasted from sv_user.c
+// code from: https://github.com/shalrathy/quakespasm-shalrathy
+// Double checked the code, it is the same as in JoeQuake
 float Get_Wishdir_Speed_Delta(float angle) {
 	extern cvar_t sv_maxspeed;
 	extern cvar_t sv_friction;
@@ -296,6 +297,8 @@ void SCR_DrawSpeedHelp(void) {
 	if (cls.demoplayback) return;
 	if (sv_player == NULL) return;
 
+	// original code: https://github.com/shalrathy/quakespasm-shalrathy
+	// moved this to the bunny hop ring buffer
 	const char* fmt = "%c%c %3.0f %c %3.0f = %3.0f %c%3.0f %2.0f%% %6s";
 	char str[100];
 	int fmtlen = 1 + sprintf(str, fmt, ' ', ' ', 0.0, '+', 0.0, 0.0, '+', 0.0, 0.0, "");
@@ -529,15 +532,13 @@ void SCR_DrawSpeedHelp(void) {
 	}
 }
 
-
-
 static void PathTracer_Debug_f (void)
 {
     if (cmd_source != src_command) {
         return;
     }
 
-    Con_Printf("pathtracker_debug : I am alive\n");
+    Con_Printf("pathtracker_debug : Just a test\n");
 }
 
 void PathTracer_Init (void)
