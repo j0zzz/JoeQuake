@@ -6,15 +6,6 @@
 #endif
 
 typedef struct {
-	float bestangle;
-	float playerangle;
-	float pos[3];
-	char str[100];
-	contacttype_t contact;
-	qboolean selected;
-} pathtracer_bunnyhop_t;
-
-typedef struct {
 	float pos[3];
 	float velocity[3];
 	float angle;
@@ -28,7 +19,5 @@ typedef struct {
 #define PATHTRACER_MOVEMENT_BUFFER_MAX 100000
 
 extern pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
-extern pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[PATHTRACER_BUNNHOP_BUFFER_MAX];
-extern float drawbestangle;
 
 #endif // __PATHTRACER_PRIVATE

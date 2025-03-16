@@ -73,11 +73,6 @@ typedef enum
 	mk_forward, mk_back, mk_moveleft, mk_moveright, mk_jump, NUM_MOVEMENT_KEYS
 } movekeytype_t;
 
-typedef enum {
-	just_landed,
-	just_jumped
-} contacttype_t;
-
 void V_Init (void);
 void V_RenderView (void);
 
