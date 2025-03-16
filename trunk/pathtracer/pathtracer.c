@@ -2,8 +2,8 @@
 #include "pathtracer_private.h"
 #include "wishdir.h"
 
-extern cvar_t  show_speed_x;
-extern cvar_t  show_speed_y;
+extern cvar_t show_speed_x;
+extern cvar_t show_speed_y;
 
 static cvar_t scr_printbunnyhop = { "scr_printbunnyhop", "1" };
 static cvar_t scr_recordbunnyhop = { "scr_recordbunnyhop", "1" };
@@ -12,8 +12,6 @@ pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[PATHTRACER_BUNNHOP_BUFFER_MAX]
 pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
 
 float drawbestangle = 0.f;
-extern	cvar_t	scr_printbunnyhop;
-extern	cvar_t	scr_recordbunnyhop;
 
 void PathTracer_Draw(void)
 {
