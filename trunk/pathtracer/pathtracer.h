@@ -8,11 +8,11 @@ extern cvar_t scr_recordbunnyhop;
 void PathTracer_Init(void);
 void PathTracer_Shutdown(void);
 
-// called from gl_screen.c SCR_UpdateScreen()
-void SCR_DrawSpeedHelp(void);
+// called each frame from gl_screen.c SCR_UpdateScreen()
+void PathTracer_Sample(void);
 
 // called from gl_rmain.c R_RenderScene()
-void R_DrawPathTracer(void);
+void PathTracer_Draw(void);
 
 #endif // __CL_PATHTRACER_H
 

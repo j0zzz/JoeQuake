@@ -4169,7 +4169,7 @@ void R_RenderScene (void)
 
 	R_DrawViewModel();
 
-	R_DrawPathTracer();
+	PathTracer_Draw();
 }
 
 /*
