@@ -85,7 +85,7 @@ typedef struct {
 	char str[100];
 	contacttype_t contact;
 	qboolean selected;
-} bunnyhop;
+} pathtracer_bunnyhop_t;
 
 typedef struct {
 	float pos[3];
@@ -95,10 +95,10 @@ typedef struct {
 	float bestangle;
 	float bestspeed;
 	qboolean ongound;
-} samplemovement;
+} pathtracer_movement_t;
 
-extern samplemovement samplemovements[100000];
-extern bunnyhop bunnyhops[100];
+extern pathtracer_movement_t pathtracer_movement_samples[100000];
+extern pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[100];
 extern float drawbestangle;
 
 void V_Init (void);

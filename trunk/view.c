@@ -1388,8 +1388,8 @@ float Get_Wishdir_Speed_Delta(float angle) {
 }
 
 
-bunnyhop bunnyhops[100];
-samplemovement samplemovements[100000];
+pathtracer_bunnyhop_t pathtracer_bunnyhop_samples[100];
+pathtracer_movement_t pathtracer_movement_samples[100000];
 
 float drawbestangle = NAN;
 extern	cvar_t	scr_printbunnyhop;
@@ -1422,8 +1422,8 @@ void SCR_DrawSpeedHelp(void) {
 	static float airspeedsum = 0;
 	static float airspeedsummax = 0;
 	static double prevcltime = -1;
-	static int bunnyhopindex = 0;
-	static int samplemovementindex = 0;
+	static int pathtracer_bunnyhop_index = 0;
+	static int pathtracer_movement_index = 0;
 	static int skipframe = 0;
 	static int skipframemod = 10;
 	static float currentclosestbunnyhopDistance = INFINITY;
@@ -1443,11 +1443,11 @@ void SCR_DrawSpeedHelp(void) {
 
 	// restarted
 	if (cl.time < prevcltime) {
-		memset(samplemovements, 0, sizeof(samplemovements));
-		samplemovementindex = 0;
+		memset(pathtracer_movement_samples, 0, sizeof(pathtracer_movement_samples));
+		pathtracer_movement_index = 0;
 
-		memset(bunnyhops, 0, sizeof(bunnyhops));
-		bunnyhopindex = 0;
+		memset(pathtracer_bunnyhop_samples, 0, sizeof(pathtracer_bunnyhop_samples));
+		pathtracer_bunnyhop_index = 0;
 
 		currentclosestbunnyhopIndex = -1;
 		currentclosestbunnyhopDistance = INFINITY;
@@ -1499,11 +1499,11 @@ void SCR_DrawSpeedHelp(void) {
 		float speed = sqrt(cl.velocity[0] * cl.velocity[0] + cl.velocity[1] * cl.velocity[1]);
 
 		boolean track = false;
-		if (samplemovementindex > 0) {
-			samplemovement* smprev = &samplemovements[samplemovementindex - 1];
-			float dx = fabs(smprev->pos[0] - sv_player->v.origin[0]);
-			float dy = fabs(smprev->pos[1] - sv_player->v.origin[1]);
-			float dz = fabs(smprev->pos[2] - sv_player->v.origin[2]);
+		if (pathtracer_movement_index > 0) {
+			pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[pathtracer_movement_index - 1];
+			float dx = fabs(pms_prev->pos[0] - sv_player->v.origin[0]);
+			float dy = fabs(pms_prev->pos[1] - sv_player->v.origin[1]);
+			float dz = fabs(pms_prev->pos[2] - sv_player->v.origin[2]);
 			if (dx > .1f || dy > .1f || dz > .1f) {
 				track = true;
 			}
@@ -1512,35 +1512,35 @@ void SCR_DrawSpeedHelp(void) {
 			track = true;
 		}
 		if (track && scr_recordbunnyhop.value == 1.f) {
-			samplemovement* smnew = &samplemovements[samplemovementindex];
-			smnew->pos[0] = sv_player->v.origin[0];
-			smnew->pos[1] = sv_player->v.origin[1];
-			smnew->pos[2] = sv_player->v.origin[2];
-			smnew->velocity[0] = sv_player->v.velocity[0];
-			smnew->velocity[1] = sv_player->v.velocity[1];
-			smnew->velocity[2] = sv_player->v.velocity[2];
-			smnew->angle = sv_player->v.angles[1];
+			pathtracer_movement_t* pms_new = &pathtracer_movement_samples[pathtracer_movement_index];
+			pms_new->pos[0] = sv_player->v.origin[0];
+			pms_new->pos[1] = sv_player->v.origin[1];
+			pms_new->pos[2] = sv_player->v.origin[2];
+			pms_new->velocity[0] = sv_player->v.velocity[0];
+			pms_new->velocity[1] = sv_player->v.velocity[1];
+			pms_new->velocity[2] = sv_player->v.velocity[2];
+			pms_new->angle = sv_player->v.angles[1];
 
 			if (ghost_entity.model != NULL) {
-				smnew->pos[0] = ghost_entity.origin[0];
-				smnew->pos[1] = ghost_entity.origin[1];
-				smnew->pos[2] = ghost_entity.origin[2];
-				smnew->velocity[0] = ghost_entity.origin[0] - ghost_entity.previousorigin[0];
-				smnew->velocity[1] = ghost_entity.origin[1] - ghost_entity.previousorigin[1];
-				smnew->velocity[2] = ghost_entity.origin[2] - ghost_entity.previousorigin[2];
-				smnew->velocity[0] *= 200.f;
-				smnew->velocity[1] *= 200.f;
-				smnew->velocity[2] *= 200.f;
-				smnew->angle = ghost_entity.angles[1];
+				pms_new->pos[0] = ghost_entity.origin[0];
+				pms_new->pos[1] = ghost_entity.origin[1];
+				pms_new->pos[2] = ghost_entity.origin[2];
+				pms_new->velocity[0] = ghost_entity.origin[0] - ghost_entity.previousorigin[0];
+				pms_new->velocity[1] = ghost_entity.origin[1] - ghost_entity.previousorigin[1];
+				pms_new->velocity[2] = ghost_entity.origin[2] - ghost_entity.previousorigin[2];
+				pms_new->velocity[0] *= 200.f;
+				pms_new->velocity[1] *= 200.f;
+				pms_new->velocity[2] *= 200.f;
+				pms_new->angle = ghost_entity.angles[1];
 			}
 
-			smnew->bestangle = bestangle;
-			smnew->speed = speed;
-			smnew->bestspeed = bestspeed;
-			smnew->ongound = onground0;
-			samplemovementindex++;
-			if (samplemovementindex >= 100000) {
-				samplemovementindex = 0;
+			pms_new->bestangle = bestangle;
+			pms_new->speed = speed;
+			pms_new->bestspeed = bestspeed;
+			pms_new->ongound = onground0;
+			pathtracer_movement_index++;
+			if (pathtracer_movement_index >= 100000) {
+				pathtracer_movement_index = 0;
 			}
 		}
 		if ((onground0 && !prevonground) ||  // landed
@@ -1560,7 +1560,7 @@ void SCR_DrawSpeedHelp(void) {
 				airspeedsum = 0.0;
 				addspeedpct = 0.0;
 			}
-			sprintf(bunnyhops[bunnyhopindex].str, fmt,
+			sprintf(pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].str, fmt,
 				cmd.sidemove < 0 ? 127 : cmd.sidemove > 0 ? 141 : ' ',
 				cmd.forwardmove > 0 ? '^' : cmd.forwardmove < 0 ? 'v' : ' ',
 				airspeedsum,
@@ -1578,20 +1578,20 @@ void SCR_DrawSpeedHelp(void) {
 
 			if (onground0 && !prevonground && scr_recordbunnyhop.value == 1.f) {
 				drawbestangle = bestangle;
-				bunnyhops[bunnyhopindex].playerangle = sv_player->v.angles[1];
-				bunnyhops[bunnyhopindex].bestangle = bestangle;
-				bunnyhops[bunnyhopindex].pos[0] = sv_player->v.origin[0];
-				bunnyhops[bunnyhopindex].pos[1] = sv_player->v.origin[1];
-				bunnyhops[bunnyhopindex].pos[2] = sv_player->v.origin[2];
+				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].playerangle = sv_player->v.angles[1];
+				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].bestangle = bestangle;
+				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[0] = sv_player->v.origin[0];
+				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[1] = sv_player->v.origin[1];
+				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[2] = sv_player->v.origin[2];
 				if (onground0 && !prevonground) {
-					bunnyhops[bunnyhopindex].contact = just_landed;
+					pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].contact = just_landed;
 				}
 				else {
-					bunnyhops[bunnyhopindex].contact = just_jumped;
+					pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].contact = just_jumped;
 				}
-				bunnyhopindex++;
-				if (bunnyhopindex >= 100)
-					bunnyhopindex = 0;
+				pathtracer_bunnyhop_index++;
+				if (pathtracer_bunnyhop_index >= 100)
+					pathtracer_bunnyhop_index = 0;
 			}
 		}
 		if (speed < 1) prevspeed = 0;
@@ -1603,15 +1603,15 @@ void SCR_DrawSpeedHelp(void) {
 	currentclosestbunnyhopDistance = INFINITE;
 	currentclosestbunnyhopIndex = -1;
 	for (int i = 0;i < 100;i++) {
-		bunnyhop* bh = &bunnyhops[i];
-		bh->selected = false;
-		if (bh->pos[0] == 0.f && bh->pos[1] == 0.f && bh->pos[2] == 0.f) {
+		pathtracer_bunnyhop_t* pbs = &pathtracer_bunnyhop_samples[i];
+		pbs->selected = false;
+		if (pbs->pos[0] == 0.f && pbs->pos[1] == 0.f && pbs->pos[2] == 0.f) {
 			break;
 		}
 		GLfloat startPos[3];
-		startPos[0] = bh->pos[0];
-		startPos[1] = bh->pos[1];
-		startPos[2] = bh->pos[2] - 20.f;
+		startPos[0] = pbs->pos[0];
+		startPos[1] = pbs->pos[1];
+		startPos[2] = pbs->pos[2] - 20.f;
 
 		int dx = sv_player->v.origin[0] - startPos[0];
 		int dy = sv_player->v.origin[1] - startPos[1];
@@ -1625,14 +1625,14 @@ void SCR_DrawSpeedHelp(void) {
 
 
 	if (currentclosestbunnyhopIndex >= 0 && currentclosestbunnyhopDistance < 20000.f) {
-		bunnyhops[currentclosestbunnyhopIndex].selected = true;
+		pathtracer_bunnyhop_samples[currentclosestbunnyhopIndex].selected = true;
 
 		int scale = Sbar_GetScaleAmount();
 		int size = Sbar_GetScaledCharacterSize();
 		int x = ((vid.width - (int)(160 * scale)) / 2) + (show_speed_x.value * size);
 		int y = ELEMENT_Y_COORD(show_speed) + 10.f * scale;
 
-		Draw_String(x, y, bunnyhops[currentclosestbunnyhopIndex].str, true);
+		Draw_String(x, y, pathtracer_bunnyhop_samples[currentclosestbunnyhopIndex].str, true);
 	}
 }
 
