@@ -9,6 +9,8 @@ static cvar_t scr_printbunnyhop = { "scr_printbunnyhop", "1" };
 static cvar_t scr_recordbunnyhop = { "scr_recordbunnyhop", "1" };
 
 pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
+int pathtracer_movement_write_head = 0;
+int pathtracer_movement_read_head = 0;
 
 void PathTracer_Draw(void)
 {
@@ -22,21 +24,35 @@ void PathTracer_Draw(void)
 
 	// Trace path
 	glBegin(GL_LINES);
-	for (int i = 1;i < PATHTRACER_MOVEMENT_BUFFER_MAX;i++) {
-		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i - 1];
+	int fadeCounter = 0;
+	for (int buffer_index = 0;buffer_index < PATHTRACER_MOVEMENT_BUFFER_MAX; buffer_index++) {
+		int i = (pathtracer_movement_read_head + buffer_index) % PATHTRACER_MOVEMENT_BUFFER_MAX;
+		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i++];
+		if (i >= PATHTRACER_MOVEMENT_BUFFER_MAX)
+			i = 0;
 		pathtracer_movement_t* pms_cur = &pathtracer_movement_samples[i];
 
-		if (pms_prev->pos[0] == 0.f && pms_prev->pos[1] == 0.f && pms_prev->pos[2] == 0.f) {
+		// Reached write head?
+		if (i == pathtracer_movement_write_head)
 			continue;
-		}
-		if (pms_cur->pos[0] == 0.f && pms_cur->pos[1] == 0.f && pms_cur->pos[2] == 0.f) {
-			continue;
-		}
 
-		if (pms_cur->ongound && pms_prev->ongound) {
+		// No data in yet?
+		if (!(pms_prev->holdsData && pms_cur->holdsData))
+			continue;
+
+		// If we are in the range of 200 samples before the write head
+		qboolean isFadingOut = (pathtracer_movement_write_head == pathtracer_movement_read_head) ? fadeCounter < PATHTRACER_MOVEMENT_BUFFER_MAX - PATHTRACER_MOVEMENT_BUFFER_FADEOUT : fadeCounter < pathtracer_movement_write_head - pathtracer_movement_read_head - PATHTRACER_MOVEMENT_BUFFER_FADEOUT;
+		fadeCounter++;
+
+		// then grey
+		if (isFadingOut) {
+			glColor3f(.1f, .1f, .1f);
+		}
+		else
+		if (pms_cur->onground && pms_prev->onground) {
 			glColor3f(.3f, 0.f, 0.f);
 		}
-		else if (pms_cur->ongound || pms_prev->ongound) {
+		else if (pms_cur->onground || pms_prev->onground) {
 			glColor3f(.1f, .1f, .1f);
 		}
 		else {
@@ -76,7 +92,6 @@ void PathTracer_Sample_Each_Frame(void) {
 	extern entity_t ghost_entity;
 
 	static double prevcltime = -1;
-	static int pathtracer_movement_index = 0;
 
 	// demo playback only has cl.onground which is different from onground in normal play
 	qboolean onground0;
@@ -91,7 +106,7 @@ void PathTracer_Sample_Each_Frame(void) {
 	// Restart tracer
 	if (cl.time < prevcltime) {
 		memset(pathtracer_movement_samples, 0, sizeof(pathtracer_movement_samples));
-		pathtracer_movement_index = 0;
+		pathtracer_movement_write_head = 0;
 
 		prevcltime = cl.time;
 	}
@@ -138,11 +153,21 @@ void PathTracer_Sample_Each_Frame(void) {
 
 	// Determine if we should sample
 	boolean track = false;
-	if (pathtracer_movement_index > 0) {
-		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[pathtracer_movement_index - 1];
-		float dx = fabs(pms_prev->pos[0] - sv_player->v.origin[0]);
-		float dy = fabs(pms_prev->pos[1] - sv_player->v.origin[1]);
-		float dz = fabs(pms_prev->pos[2] - sv_player->v.origin[2]);
+	vec3_t *origin = &sv_player->v.origin;
+	if (ghost_entity.model != NULL)
+		origin = &ghost_entity.origin;
+			
+	pathtracer_movement_t* pms_prev;
+	if (pathtracer_movement_write_head > 0)
+		pms_prev = &pathtracer_movement_samples[pathtracer_movement_write_head - 1];
+	else
+		// just in case we hit that zero
+		pms_prev = &pathtracer_movement_samples[PATHTRACER_BUNNHOP_BUFFER_MAX - 1];
+		
+	if(pms_prev->holdsData) {
+		float dx = fabs(pms_prev->pos[0] - *origin[0]);
+		float dy = fabs(pms_prev->pos[1] - *origin[1]);
+		float dz = fabs(pms_prev->pos[2] - *origin[2]);
 		if (dx > .1f || dy > .1f || dz > .1f) {
 			track = true;
 		}
@@ -153,7 +178,16 @@ void PathTracer_Sample_Each_Frame(void) {
 
 	// Sample movement
 	if (track && scr_recordbunnyhop.value == 1.f) {
-		pathtracer_movement_t* pms_new = &pathtracer_movement_samples[pathtracer_movement_index];
+		pathtracer_movement_t* pms_new = &pathtracer_movement_samples[pathtracer_movement_write_head];
+		// Array element has data, ring buffer wrapped around
+		if (pms_new->holdsData) {
+			pathtracer_movement_read_head = pathtracer_movement_write_head + 1;
+			if (pathtracer_movement_read_head >= PATHTRACER_MOVEMENT_BUFFER_MAX) {
+				pathtracer_movement_read_head = 0;
+			}
+		}
+		pms_new->holdsData = true;
+
 		pms_new->pos[0] = sv_player->v.origin[0];
 		pms_new->pos[1] = sv_player->v.origin[1];
 		pms_new->pos[2] = sv_player->v.origin[2];
@@ -178,10 +212,10 @@ void PathTracer_Sample_Each_Frame(void) {
 		pms_new->bestangle = bestangle;
 		pms_new->speed = speed;
 		pms_new->bestspeed = bestspeed;
-		pms_new->ongound = onground0;
-		pathtracer_movement_index++;
-		if (pathtracer_movement_index >= PATHTRACER_MOVEMENT_BUFFER_MAX) {
-			pathtracer_movement_index = 0;
+		pms_new->onground = onground0;
+		pathtracer_movement_write_head++;
+		if (pathtracer_movement_write_head >= PATHTRACER_MOVEMENT_BUFFER_MAX) {
+			pathtracer_movement_write_head = 0;
 		}
 	}
 }
@@ -192,7 +226,7 @@ static void PathTracer_Debug_f (void)
         return;
     }
 
-    Con_Printf("pathtracker_debug : Just a test\n");
+	Con_Printf("pathtracker_debug : Just a test\n");
 }
 
 void PathTracer_Init (void)

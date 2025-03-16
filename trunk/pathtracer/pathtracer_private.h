@@ -6,17 +6,19 @@
 #endif
 
 typedef struct {
+	qboolean holdsData;
 	float pos[3];
 	float velocity[3];
 	float angle;
 	float speed;
 	float bestangle;
 	float bestspeed;
-	qboolean ongound;
+	qboolean onground;
 } pathtracer_movement_t;
 
 #define PATHTRACER_BUNNHOP_BUFFER_MAX 100
-#define PATHTRACER_MOVEMENT_BUFFER_MAX 100000
+#define PATHTRACER_MOVEMENT_BUFFER_MAX 10000
+#define PATHTRACER_MOVEMENT_BUFFER_FADEOUT 500
 
 extern pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
 
