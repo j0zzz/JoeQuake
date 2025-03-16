@@ -27,6 +27,7 @@ void PathTracer_Draw(void)
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
 
+	// Trace path
 	glBegin(GL_LINES);
 	for (int i = 1;i < PATHTRACER_MOVEMENT_BUFFER_MAX;i++) {
 		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i - 1];
@@ -52,17 +53,18 @@ void PathTracer_Draw(void)
 		GLfloat startPos[3];
 		startPos[0] = pms_prev->pos[0];
 		startPos[1] = pms_prev->pos[1];
-		startPos[2] = pms_prev->pos[2];// -20.f;
+		startPos[2] = pms_prev->pos[2] - 20.f; // on the ground
 		glVertex3fv(startPos);
 
 		GLfloat startPos2[3];
 		startPos2[0] = pms_cur->pos[0];
 		startPos2[1] = pms_cur->pos[1];
-		startPos2[2] = pms_cur->pos[2];// -20.f;
+		startPos2[2] = pms_cur->pos[2] - 20.f; // on the ground
 		glVertex3fv(startPos2);
 	}
 	glEnd();
 
+	// Draw velocity
 	for (int i = 1;i < PATHTRACER_MOVEMENT_BUFFER_MAX;i++) {
 		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i - 1];
 		pathtracer_movement_t* pms_cur = &pathtracer_movement_samples[i];
@@ -97,7 +99,7 @@ void PathTracer_Draw(void)
 		GLfloat startPos[3];
 		startPos[0] = pms_cur->pos[0];
 		startPos[1] = pms_cur->pos[1];
-		startPos[2] = pms_cur->pos[2];// -20.f;
+		startPos[2] = pms_cur->pos[2] - 20.f; // on the ground
 		glVertex3fv(startPos);
 
 		GLfloat anglePos[3];
@@ -123,13 +125,14 @@ void PathTracer_Draw(void)
 
 	}
 
+	// Back to normal rendering
 	glColor3f(1, 1, 1);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-void PathTracer_Sample(void) {
+void PathTracer_Sample_Each_Frame(void) {
 
 	if (scr_printbunnyhop.value != 1.f) return;
 
@@ -164,7 +167,7 @@ void PathTracer_Sample(void) {
 	static int pathtracer_movement_index = 0;
 	static int skipframe = 0;
 	static int skipframemod = 10;
-	static float currentclosestbunnyhopDistance = INFINITY;
+	static float currentclosestbunnyhopDistance = 1000000000;
 	static int currentclosestbunnyhopIndex = -1;
 	extern entity_t ghost_entity;
 
@@ -197,7 +200,7 @@ void PathTracer_Sample(void) {
 		prevcltime = cl.time;
 	}
 
-		// Find best wishdir vector (largest speed increase in the plane, ígnores z)
+	// Find best wishdir vector (largest speed increase in the ground plane)
 	int angles = 90;
 	float bestspeed = 0.f;
 	float bestangle = 0;
@@ -215,6 +218,7 @@ void PathTracer_Sample(void) {
 			}
 		}
 	}
+
 	// 100th of a degree
 	for (int i = 1; i < 100; i++) {
 		for (int neg = -1; neg <= 1; neg += 2) {
@@ -234,9 +238,9 @@ void PathTracer_Sample(void) {
 	if (bestangle < -180) bestangle += 360;
 	if (bestangle > 180) bestangle -= 360;
 
-
 	float speed = sqrt(cl.velocity[0] * cl.velocity[0] + cl.velocity[1] * cl.velocity[1]);
 
+	// Determine if we should sample
 	boolean track = false;
 	if (pathtracer_movement_index > 0) {
 		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[pathtracer_movement_index - 1];
@@ -250,6 +254,7 @@ void PathTracer_Sample(void) {
 	else {
 		track = true;
 	}
+
 	// Sample movement
 	if (track && scr_recordbunnyhop.value == 1.f) {
 		pathtracer_movement_t* pms_new = &pathtracer_movement_samples[pathtracer_movement_index];
@@ -282,64 +287,64 @@ void PathTracer_Sample(void) {
 		if (pathtracer_movement_index >= PATHTRACER_MOVEMENT_BUFFER_MAX) {
 			pathtracer_movement_index = 0;
 		}
-
-		// generate bunny hop hint
-		if ((onground0 && !prevonground) ||  // landed
-			(!onground0 && prevonground && prevprevonground)) { // take-off
-			char strextra[10];
-			float addspeed;
-			float addspeedpct;
-			strextra[0] = 0;
-			if (sv.active) {
-				addspeed = Get_Wishdir_Speed_Delta(sv_player->v.angles[1]);
-				addspeedpct = 100.0 * (airspeedsum + addspeed) / (airspeedsummax + bestspeed);
-				sprintf(strextra, "%4.0f %1s", fmin(999, fmax(-999, bestangle - sv_player->v.angles[1])), (onground0 && !prevonground) ? "l" : "t");
-			}
-			else { // demo
-				addspeed = 0.0;
-				addspeedpct = 0.0;
-				airspeedsum = 0.0;
-				addspeedpct = 0.0;
-			}
-			sprintf(pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].str, fmt,
-				cmd.sidemove < 0 ? 127 : cmd.sidemove > 0 ? 141 : ' ',
-				cmd.forwardmove > 0 ? '^' : cmd.forwardmove < 0 ? 'v' : ' ',
-				airspeedsum,
-				addspeed >= 0 ? '+' : '-',
-				fabs(addspeed),
-				fmin(999.0, speed),
-				speed - prevspeed >= 0 ? '+' : '-',
-				fmin(999.0, fabs(speed - prevspeed)),
-				fmin(99, fmax(0, addspeedpct)),
-				strextra);
-
-			prevspeed = speed;
-			airspeedsum = 0;
-			airspeedsummax = 0;
-
-			if (onground0 && !prevonground && scr_recordbunnyhop.value == 1.f) {
-				drawbestangle = bestangle;
-				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].playerangle = sv_player->v.angles[1];
-				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].bestangle = bestangle;
-				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[0] = sv_player->v.origin[0];
-				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[1] = sv_player->v.origin[1];
-				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[2] = sv_player->v.origin[2];
-				if (onground0 && !prevonground) {
-					pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].contact = just_landed;
-				}
-				else {
-					pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].contact = just_jumped;
-				}
-				pathtracer_bunnyhop_index++;
-				if (pathtracer_bunnyhop_index >= PATHTRACER_BUNNHOP_BUFFER_MAX)
-					pathtracer_bunnyhop_index = 0;
-			}
-		}
-		if (speed < 1) prevspeed = 0;
-
-		prevprevonground = prevonground;
-		prevonground = onground0;
 	}
+
+	// generate bunny hop hint
+	if ((onground0 && !prevonground) ||  // landed
+		(!onground0 && prevonground && prevprevonground)) { // take-off
+		char strextra[10];
+		float addspeed;
+		float addspeedpct;
+		strextra[0] = 0;
+		if (sv.active) {
+			addspeed = Get_Wishdir_Speed_Delta(sv_player->v.angles[1]);
+			addspeedpct = 100.0 * (airspeedsum + addspeed) / (airspeedsummax + bestspeed);
+			sprintf(strextra, "%4.0f %1s", fmin(999, fmax(-999, bestangle - sv_player->v.angles[1])), (onground0 && !prevonground) ? "l" : "t");
+		}
+		else { // demo
+			addspeed = 0.0;
+			addspeedpct = 0.0;
+			airspeedsum = 0.0;
+			addspeedpct = 0.0;
+		}
+		sprintf(pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].str, fmt,
+			cmd.sidemove < 0 ? 127 : cmd.sidemove > 0 ? 141 : ' ',
+			cmd.forwardmove > 0 ? '^' : cmd.forwardmove < 0 ? 'v' : ' ',
+			airspeedsum,
+			addspeed >= 0 ? '+' : '-',
+			fabs(addspeed),
+			fmin(999.0, speed),
+			speed - prevspeed >= 0 ? '+' : '-',
+			fmin(999.0, fabs(speed - prevspeed)),
+			fmin(99, fmax(0, addspeedpct)),
+			strextra);
+
+		prevspeed = speed;
+		airspeedsum = 0;
+		airspeedsummax = 0;
+
+		if (onground0 && !prevonground && scr_recordbunnyhop.value == 1.f) {
+			drawbestangle = bestangle;
+			pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].playerangle = sv_player->v.angles[1];
+			pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].bestangle = bestangle;
+			pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[0] = sv_player->v.origin[0];
+			pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[1] = sv_player->v.origin[1];
+			pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[2] = sv_player->v.origin[2];
+			if (onground0 && !prevonground) {
+				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].contact = just_landed;
+			}
+			else {
+				pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].contact = just_jumped;
+			}
+			pathtracer_bunnyhop_index++;
+			if (pathtracer_bunnyhop_index >= PATHTRACER_BUNNHOP_BUFFER_MAX)
+				pathtracer_bunnyhop_index = 0;
+		}
+	}
+	if (speed < 1) prevspeed = 0;
+
+	prevprevonground = prevonground;
+	prevonground = onground0;
 
 	// Find closest bunny hop hint
 	currentclosestbunnyhopDistance = 1000000000;

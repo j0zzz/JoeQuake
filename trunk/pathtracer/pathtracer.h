@@ -9,7 +9,7 @@ void PathTracer_Init(void);
 void PathTracer_Shutdown(void);
 
 // called each frame from gl_screen.c SCR_UpdateScreen()
-void PathTracer_Sample(void);
+void PathTracer_Sample_Each_Frame(void);
 
 // called from gl_rmain.c R_RenderScene()
 void PathTracer_Draw(void);

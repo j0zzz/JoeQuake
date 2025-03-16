@@ -1249,7 +1249,7 @@ void SCR_UpdateScreen (void)
 		SCR_DrawClock ();
 		SCR_DrawFPS ();
 		SCR_DrawSpeed ();
-		PathTracer_Sample ();
+		PathTracer_Sample_Each_Frame ();
 		Ghost_DrawGhostTime (false);
 		SCR_DrawStats ();
 		SCR_DrawVolume ();
