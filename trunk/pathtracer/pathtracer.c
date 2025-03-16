@@ -67,8 +67,6 @@ void PathTracer_Draw(void)
 void PathTracer_Sample_Each_Frame(void) {
 
 	if (scr_printbunnyhop.value != 1.f) return;
-
-	// draw speed info for each jump
 	if (!sv.active && !cls.demoplayback) return;
 	if (!sv.active) return;
 	if (cls.demoplayback) return;
@@ -77,10 +75,6 @@ void PathTracer_Sample_Each_Frame(void) {
 	extern usercmd_t cmd;
 	extern entity_t ghost_entity;
 
-	static qboolean prevonground;
-	static qboolean prevprevonground;
-	static float airspeedsum = 0;
-	static float airspeedsummax = 0;
 	static double prevcltime = -1;
 	static int pathtracer_movement_index = 0;
 
@@ -136,10 +130,6 @@ void PathTracer_Sample_Each_Frame(void) {
 			}
 		}
 	}
-	if (!onground0) {
-		airspeedsum += Get_Wishdir_Speed_Delta(sv_player->v.angles[1]);
-		airspeedsummax += bestspeed;
-	}
 
 	if (bestangle < -180) bestangle += 360;
 	if (bestangle > 180) bestangle -= 360;
@@ -194,47 +184,6 @@ void PathTracer_Sample_Each_Frame(void) {
 			pathtracer_movement_index = 0;
 		}
 	}
-
-	// generate bunny hop hint
-	if ((onground0 && !prevonground) ||  // landed
-		(!onground0 && prevonground && prevprevonground)) { // take-off
-		char strextra[10];
-		float addspeed;
-		float addspeedpct;
-		strextra[0] = 0;
-		if (sv.active) {
-			addspeed = Get_Wishdir_Speed_Delta(sv_player->v.angles[1]);
-			addspeedpct = 100.0 * (airspeedsum + addspeed) / (airspeedsummax + bestspeed);
-		}
-		else { // demo
-			addspeed = 0.0;
-			addspeedpct = 0.0;
-			airspeedsum = 0.0;
-			addspeedpct = 0.0;
-		}
-
-		airspeedsum = 0;
-		airspeedsummax = 0;
-
-		if (onground0 && !prevonground && scr_recordbunnyhop.value == 1.f) {
-			// pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].playerangle = sv_player->v.angles[1];
-			// pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].bestangle = bestangle;
-			// pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[0] = sv_player->v.origin[0];
-			// pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[1] = sv_player->v.origin[1];
-			// pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].pos[2] = sv_player->v.origin[2];
-			if (onground0 && !prevonground) {
-				// pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].contact = just_landed;
-			}
-			else {
-				// pathtracer_bunnyhop_samples[pathtracer_bunnyhop_index].contact = just_jumped;
-			}
-			// pathtracer_bunnyhop_index++;
-			// if (pathtracer_bunnyhop_index >= PATHTRACER_BUNNHOP_BUFFER_MAX)
-			// 	pathtracer_bunnyhop_index = 0;
-		}
-	}
-	prevprevonground = prevonground;
-	prevonground = onground0;
 }
 
 static void PathTracer_Debug_f (void)
