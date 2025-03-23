@@ -38,7 +38,10 @@ qcurses_demlist_t * demlist = NULL;
 extern qcurses_box_t * main_box;
 extern char ghost_demo_path[MAX_OSPATH];
 
+extern int browserscale;
+
 static qboolean search_input = false;
+
 static char search_term[40] = "\0";
 static char * qcurses_skills[4] = { "Easy", "Normal", "Hard", "Nightmare" };
 
@@ -48,20 +51,31 @@ extern void SearchForDemos (void);
 extern char *GetPrintedTime(double time);
 extern char *toYellow(char *s);
 
+void mouse_move_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
+    int row = self->callback_data.row - 2;
+    if (row < 0 || row >= demlist->list.places || row >= demlist->list.len - demlist->list.window_start)
+        return;
+
+    demlist->list.cursor = demlist->list.window_start + row;
+
+    if (ms->button_up == 1) M_Demos_KeyHandle_Local(K_MOUSE1, main_box->rows - 20);
+    if (ms->button_up == 2) M_Demos_KeyHandle_Local(K_MOUSE2, main_box->rows - 20);
+}
+
 void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     if (!filelist_lock)
         filelist_lock = SDL_CreateSemaphore(1);
 
     qcurses_box_t * local_box  = qcurses_init(cols, rows);
-    qcurses_box_t * help_box   = qcurses_init(cols, 12);
-    qcurses_box_t * map_box    = qcurses_init(15, rows - help_box->rows);
-    qcurses_box_t * skill_box  = qcurses_init(10, rows - help_box->rows);
-    qcurses_box_t * kill_box   = qcurses_init(12, rows - help_box->rows);
-    qcurses_box_t * secret_box = qcurses_init(9 , rows - help_box->rows);
-    qcurses_box_t * time_box   = qcurses_init(15, rows - help_box->rows);
-    qcurses_box_t * player_box = qcurses_init(15, rows - help_box->rows);
-    qcurses_box_t * size_box   = qcurses_init(8 , rows - help_box->rows);
-    qcurses_box_t * name_box   = qcurses_init(cols - map_box->cols - skill_box->cols - kill_box->cols - secret_box->cols - time_box->cols - size_box->cols - player_box->cols, rows - help_box->rows);
+    qcurses_box_t * help_box   = qcurses_init(cols, 10);
+    qcurses_box_t * map_box    = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
+    qcurses_box_t * skill_box  = qcurses_init_callback(10, rows - help_box->rows, mouse_move_cursor);
+    qcurses_box_t * kill_box   = qcurses_init_callback(12, rows - help_box->rows, mouse_move_cursor);
+    qcurses_box_t * secret_box = qcurses_init_callback(9 , rows - help_box->rows, mouse_move_cursor);
+    qcurses_box_t * time_box   = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
+    qcurses_box_t * player_box = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
+    qcurses_box_t * size_box   = qcurses_init_callback(8 , rows - help_box->rows, mouse_move_cursor);
+    qcurses_box_t * name_box   = qcurses_init_callback(cols - map_box->cols - skill_box->cols - kill_box->cols - secret_box->cols - time_box->cols - size_box->cols - player_box->cols, rows - help_box->rows, mouse_move_cursor);
 
     /* header */
     qcurses_print(name_box, 0, 0, "NAME", true);
@@ -215,6 +229,7 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     }
     qcurses_list_move_cursor((qcurses_list_t *)demlist, 0);
 }
+
 void M_Demos_KeyHandle_Local_Search (int k, int max_lines) {
     int len = strlen(search_term);
     switch (k) {
@@ -251,9 +266,9 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
             break;
     case K_PGUP:
     case K_HOME:
+    case K_MWHEELUP:
         distance = keydown[K_HOME] ? 10000 : 10;
     case K_UPARROW:
-    case K_MWHEELUP:
     case 'k':
         qcurses_list_move_cursor((qcurses_list_t*)demlist, -distance);
         S_LocalSound("misc/menu1.wav");
@@ -263,9 +278,9 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
             break;
     case K_PGDN:
     case K_END:
+    case K_MWHEELDOWN:
         distance = keydown[K_END] ? 10000 : 10;
     case K_DOWNARROW:
-    case K_MWHEELDOWN:
     case 'j':
         qcurses_list_move_cursor((qcurses_list_t*)demlist, distance);
         S_LocalSound("misc/menu1.wav");

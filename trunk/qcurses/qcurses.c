@@ -85,6 +85,10 @@ qcurses_char_t * qcurses_parse_news(char * html){
 }
 
 qcurses_box_t * qcurses_init(int cols, int rows) {
+    return qcurses_init_callback(cols, rows, NULL);
+}
+
+qcurses_box_t * qcurses_init_callback(int cols, int rows, void (*callback)(qcurses_char_t * self, const mouse_state_t * ms)) {
     qcurses_box_t * box = malloc(sizeof(qcurses_box_t));
 
     box->cols = cols;
@@ -94,8 +98,12 @@ qcurses_box_t * qcurses_init(int cols, int rows) {
     box->grid = calloc(rows, sizeof(qcurses_char_t *));
     for (int i = 0; i < rows; i++){
         box->grid[i] = calloc(cols, sizeof(qcurses_char_t));
-        for (int j = 0; j < cols; j++)
+        for (int j = 0; j < cols; j++) {
             box->grid[i][j].symbol = ' ';
+            box->grid[i][j].callback = callback;
+            box->grid[i][j].callback_data.row = i;
+            box->grid[i][j].callback_data.col = j;
+        }
     }
 
     return box;
@@ -139,24 +147,33 @@ void qcurses_display(qcurses_box_t *src){
     }
 }
 
-void qcurses_boxprint_wrapped(qcurses_box_t *dest, qcurses_char_t *src, size_t size, int row_offset){
+int qcurses_boxprint_wrapped(qcurses_box_t *dest, qcurses_char_t *src, size_t size, int row_offset){
     int row = row_offset, col = 0;
     for(int i = 0; i < size && (src + i)->symbol; i++){
-        if ((src + i)->symbol == '\n' || col >= dest->cols){
+        if ((src + i)->symbol == '\n' || col >= dest->cols - 1){
             col = 0;
             row++;
         }
         if ((src + i)->symbol != '\n' && (src + i)->symbol != '\r' && row < dest->page_rows)
             memcpy(dest->grid[row] + col++, src + i, sizeof(qcurses_char_t));
     }
+
+    return row;
 }
 
 void qcurses_print(qcurses_box_t *dest, int col, int row, char *src, qboolean bold){
+    qcurses_print_callback(dest, col, row, src, bold, NULL);
+}
+
+void qcurses_print_callback(qcurses_box_t * dest, int col, int row, char * src, qboolean bold, void (*callback)(qcurses_char_t * self, const mouse_state_t * ms)) {
     if (row >= dest->page_rows)
         return;
 
-    for(int i = 0; i < strlen(src) && i + col < dest->cols; i++)
+    for(int i = 0; i < strlen(src) && i + col < dest->cols; i++) {
         dest->grid[row][col + i].symbol = src[i] | (bold ? 128 : 0);
+        if (callback || !dest->grid[row][col + i].callback)
+            dest->grid[row][col + i].callback = callback;
+    }
 }
 
 void qcurses_print_centered(qcurses_box_t *dest, int row, char *src, qboolean bold){

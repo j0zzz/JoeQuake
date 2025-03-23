@@ -35,6 +35,7 @@ typedef struct thread_data_s {
 
 int get_summary_thread(void * entry);
 
+qboolean M_Demos_MouseLocal(const mouse_state_t *ms);
 void M_Demos_LocalRead(int rows, char * prevdir);
 void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row);
 void M_Demos_KeyHandle_Local_Search (int k, int max_lines);

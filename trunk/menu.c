@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "qcurses/browser.h"
 
+extern int browserscale;
 qboolean vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
@@ -6680,17 +6681,6 @@ void M_Demos_Key (int k)
 	}
 }
 
-qboolean M_Demos_Mouse_Event(const mouse_state_t *ms)
-{
-	int entries = min(num_files, MAXLINES);
-	M_Mouse_Select(&list_window, ms, entries, &list_cursor);
-
-	if (ms->button_up == 1) M_Demos_Key(K_MOUSE1);
-	if (ms->button_up == 2) M_Demos_Key(K_MOUSE2);
-
-	return true;
-}
-
 //=============================================================================
 /* MODS MENU */
 
@@ -8820,13 +8810,12 @@ void M_Draw (void)
 
 	case m_demos:
 #ifdef GLQUAKE
-		int browserscale = vid.width / 8 >=240 ? 2 : 1;
+		browserscale = vid.width / 8 >=240 ? 2 : 1;
 		glMatrixMode (GL_PROJECTION);
 		glLoadIdentity ();
 		glOrtho (0, vid.width / browserscale, vid.height / browserscale, 0, -99999, 99999);
 		M_Demos_Display(vid.width / browserscale, vid.height / browserscale);
 #endif
-		//M_Demos_Draw ();
 		break;
 
 	case m_mods:

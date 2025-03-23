@@ -30,6 +30,9 @@
 
 #include "qcurses.h"
 
+#define mouse_col(x) (int)((x / browserscale) / 8)
+#define mouse_row(y) (int)((y / browserscale) / 8)
+
 enum demos_tabs {
     TAB_LOCAL_DEMOS = 1,
     TAB_SDA_NEWS,
@@ -52,10 +55,14 @@ enum map_filters {
 
 void Browser_UpdateFurtherColumns (enum browser_columns start_column);
 
+void Browser_CurlStart(char *path, char *href);
+void Browser_CurlClean();
+
+qboolean M_Demos_Mouse_Event(const mouse_state_t *ms);
 void M_Demos_Display(int width, int height);
 void M_Demos_KeyHandle(int key);
-void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * search_term, qboolean search_input);
-char * browser_read_file(const char * filename);
+void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char *search_term, qboolean search_input);
+char *browser_read_file(const char *filename);
 char *GetPrintedTimeNoDec(float time, qboolean strip);
 
 #endif /* _BROWSER_H_ */

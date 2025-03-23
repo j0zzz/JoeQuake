@@ -33,10 +33,17 @@
 #define blink(ch) (((int)(realtime * 4) & 1) ? ch : ' ')
 #define blinkstr(ch) (((int)(realtime * 4) & 1) ? va("%c", ch) : " ")
 
+typedef struct qcurses_callback_data_s {
+    int row;
+    int col;
+} qcurses_callback_data_t;
+
 typedef struct qcurses_char_s {
     unsigned char symbol;
     long background;
     char decoration;
+    qcurses_callback_data_t callback_data;
+    void (*callback)(struct qcurses_char_s * self, const mouse_state_t * ms);
 } qcurses_char_t;
 
 typedef struct qcurses_box_s {
@@ -69,13 +76,15 @@ typedef struct qcurses_demlist_s {
 qcurses_char_t * qcurses_parse_txt(char * txt);
 qcurses_char_t * qcurses_parse_news(char * html);
 qcurses_box_t * qcurses_init(int cols, int rows);
+qcurses_box_t * qcurses_init_callback(int cols, int rows, void (*callback)(qcurses_char_t * self, const mouse_state_t * ms));
 qcurses_box_t * qcurses_init_paged(int cols, int rows);
 void qcurses_free(qcurses_box_t * box);
 void qcurses_insert(qcurses_box_t * dest, int col, int row, qcurses_box_t * src);
 void qcurses_print(qcurses_box_t * dest, int col, int row, char * src, qboolean bold);
+void qcurses_print_callback(qcurses_box_t * dest, int col, int row, char * src, qboolean bold, void (*callback)(qcurses_char_t * self, const mouse_state_t * ms));
 void qcurses_print_centered(qcurses_box_t * dest, int row, char * src, qboolean bold);
 void qcurses_display(qcurses_box_t * src);
-void qcurses_boxprint_wrapped(qcurses_box_t *dest, qcurses_char_t *src, size_t size, int row_offset);
+int qcurses_boxprint_wrapped(qcurses_box_t *dest, qcurses_char_t *src, size_t size, int row_offset);
 void qcurses_list_move_cursor(qcurses_list_t *col, int move);
 void qcurses_make_bar(qcurses_box_t * box, int row);
 

@@ -36,6 +36,7 @@
 #include "cJSON.h"
 #include "set.h"
 #include <curl/curl.h>
+#include "browser_curl.h"
 #include <sys/wait.h>
 
 #define curmap() columns[COL_MAP]->array[columns[COL_MAP]->list.cursor]
@@ -45,6 +46,8 @@
 
 qcurses_box_t * main_box = NULL;
 qcurses_box_t * local_box = NULL;
+
+int browserscale;
 
 static enum demos_tabs demos_tab = TAB_LOCAL_DEMOS;
 static enum browser_columns browser_col = COL_MAP;
@@ -70,10 +73,8 @@ extern char com_basedir[MAX_OSPATH];
 extern char *GetPrintedTime(double time);
 extern void SearchForMaps (void);
 
-static CURL *curl_http_handle;
-static CURLM *curl_multi_handle;
-static int curl_running = 0;
-static FILE *curl_fp;
+static browser_curl_t * curl = NULL;
+static browser_curl_t * history_curl = NULL;
 
 static int comment_page = 0;
 extern int comment_rows;
@@ -118,7 +119,12 @@ char * browser_read_file(const char * filename){
 }
 
 void M_Demos_KeyHandle_Browser_Search (int k) {
+
+    if (!json)
+        return;
+
     int len = strlen(search_term);
+
     switch (k) {
     case K_ESCAPE:
     case K_ENTER:
@@ -141,6 +147,9 @@ void M_Demos_KeyHandle_Browser (int k) {
         M_Demos_KeyHandle_Browser_Search(k);
         return;
     }
+
+    if (!json)
+        return;
 
     int distance = 1;
     switch (k) {
@@ -305,12 +314,12 @@ void Browser_UpdateFurtherColumns (enum browser_columns start_column) {
         if (columns[COL_TYPE])
             free(columns[COL_TYPE]);
         item = cJSON_GetObjectItemCaseSensitive(json, curmap());
-        columns[COL_TYPE] = Browser_CreateTypeColumn(item, 15 - 1);
+        columns[COL_TYPE] = Browser_CreateTypeColumn(item, 15 - 2);
     case COL_TYPE:
         if (columns[COL_RECORD])
             free(columns[COL_RECORD]);
         item = cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(json, curmap()), curtype());
-        columns[COL_RECORD] = Browser_CreateRecordColumn(item, 15 - 1);
+        columns[COL_RECORD] = Browser_CreateRecordColumn(item, 15 - 2);
     case COL_RECORD:
     default:
         break;
@@ -354,24 +363,6 @@ qcurses_char_t * Browser_TxtFile() {
     }
 }
 
-void Browser_CurlStart(char *path, char *href) {
-    curl_fp = fopen(path, "wb");
-    curl_http_handle = curl_easy_init();
-    curl_easy_setopt(curl_http_handle, CURLOPT_URL, href);
-    curl_easy_setopt(curl_http_handle, CURLOPT_WRITEDATA, curl_fp);
-    curl_multi_handle = curl_multi_init();
-    curl_multi_add_handle(curl_multi_handle, curl_http_handle);
-}
-
-void Browser_CurlClean() {
-    curl_multi_remove_handle(curl_multi_handle, curl_http_handle);
-    curl_multi_cleanup(curl_multi_handle);
-    curl_easy_cleanup(curl_http_handle);
-    fclose(curl_fp);
-    curl_fp = NULL;
-    demos_update = true;
-}
-
 void Browser_DownloadDzip() {
     char path[50];
     char href[100];
@@ -383,11 +374,12 @@ void Browser_DownloadDzip() {
 
     Q_snprintfz(href, sizeof(href), "https://speeddemosarchive.com/quake/demos/%s/%s.dz", curtype(), currec());
 
-    if (curl_running) 
-        Browser_CurlClean();
+    if (curl && curl->running) {
+        browser_curl_clean(curl);
+        curl = NULL;
+    }
 
-    curl_running = 1;
-    Browser_CurlStart(path, href);
+    curl = browser_curl_start(path, href);
 }
 
 qcurses_recordlist_t * Browser_CreateMapColumn(const cJSON * json, int rows, enum map_filters filter) {
@@ -440,12 +432,21 @@ void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * searc
         );
     }
 
-    qcurses_print_centered(
-        help_box, 
-        6, 
-        va("Search: \x10%-40s\x11 (/ or Ctrl+f)", va("%s%c", search_term, search_input ? blink(0xb) : ' ')),
-        search_input
-    );
+    if (tab != TAB_SDA_NEWS) {
+        qcurses_print_centered(
+            help_box,
+            6,
+            va("Search: \x10%-40s\x11 (/ or Ctrl+f)", va("%s%c", search_term, search_input ? blink(0xb) : ' ')),
+            search_input
+        );
+    } else {
+        qcurses_print_centered(
+            help_box,
+            6, 
+            "Refresh: F5 or Ctrl + r",
+            false
+        );
+    }
 
     if ((tab == TAB_SDA_DATABASE && browser_col == COL_COMMENT_LOADED) || tab == TAB_LOCAL_DEMOS){
         qcurses_print_centered(help_box, 8, "Play demo: Enter | Quickplay: Alt+Enter | Set ghost: Ctrl + Enter", true);
@@ -455,24 +456,118 @@ void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * searc
 
 }
 
+void mouse_map_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
+    int row = self->callback_data.row - 2;
+
+    if (!json)
+        return;
+
+    qcurses_recordlist_t * ls = columns[COL_MAP];
+
+    if (ms->button_up == 1 || browser_col == COL_MAP) {
+        if (row < 0 || row >= ls->list.places || row >= ls->list.len - ls->list.window_start)
+            return;
+
+        ls->list.cursor = ls->list.window_start + row;
+    }
+
+    if (ms->button_up == 1) {
+        browser_col = COL_MAP;
+        qcurses_list_move_cursor((qcurses_list_t*)columns[browser_col], 0);
+        Browser_UpdateFurtherColumns(browser_col);
+        M_Demos_KeyHandle_Browser(K_ENTER);
+    }
+}
+
+void mouse_type_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
+    int row = self->callback_data.row - 2;
+
+    if (!json)
+        return;
+
+    qcurses_recordlist_t * ls = columns[COL_TYPE];
+
+    if (ms->button_up == 1 || browser_col <= COL_TYPE) {
+        if (row < 0 || row >= ls->list.places || row >= ls->list.len - ls->list.window_start)
+            return;
+
+        ls->list.cursor = ls->list.window_start + row;
+    }
+
+    if (ms->button_up == 1) {
+        browser_col = COL_TYPE;
+        qcurses_list_move_cursor((qcurses_list_t*)columns[browser_col], 0);
+        Browser_UpdateFurtherColumns(browser_col);
+        M_Demos_KeyHandle_Browser(K_ENTER);
+    }
+}
+
+void mouse_record_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
+    int row = self->callback_data.row - 2;
+    qboolean play = false;
+
+    if (!json)
+        return;
+
+    qcurses_recordlist_t * ls = columns[COL_RECORD];
+
+    if (ms->button_up == 1 || browser_col <= COL_RECORD) {
+        if (row < 0 || row >= ls->list.places || row >= ls->list.len - ls->list.window_start)
+            return;
+
+        if (ls->list.cursor == ls->list.window_start + row)
+            play = true;
+        ls->list.cursor = ls->list.window_start + row;
+    }
+
+    if (ms->button_up == 1) {
+        if (browser_col == COL_COMMENT_LOADED && play) {
+            M_Demos_KeyHandle_Browser(K_ENTER);
+        } else {
+            browser_col = COL_RECORD;
+            qcurses_list_move_cursor((qcurses_list_t*)columns[browser_col], 0);
+            Browser_UpdateFurtherColumns(browser_col);
+            M_Demos_KeyHandle_Browser(K_ENTER);
+        }
+    }
+}
+
 void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     qcurses_box_t * local_box = qcurses_init(cols, rows);
-    qcurses_box_t * map_box   = qcurses_init(25, rows - 10);
-    qcurses_box_t * skill_box = qcurses_init(6, 15);
-    qcurses_box_t * time_box  = qcurses_init(cols - map_box->cols - skill_box->cols, 15);
+    qcurses_box_t * map_box   = qcurses_init_callback(25, rows - 10, mouse_map_cursor);
+    qcurses_box_t * skill_box = qcurses_init_callback(6, 15, mouse_type_cursor);
+    qcurses_box_t * time_box  = qcurses_init_callback(cols - map_box->cols - skill_box->cols, 15, mouse_record_cursor);
     qcurses_box_t * comment_box  = qcurses_init_paged(cols - map_box->cols, rows - skill_box->rows - 10);
     qcurses_box_t * help_box  = qcurses_init(cols, rows);
 
-    qcurses_make_bar(map_box, 0);
-    qcurses_make_bar(skill_box, 0);
-    qcurses_make_bar(time_box, 0);
+    qcurses_print(map_box, 0, 0, "MAP", true);
+    qcurses_make_bar(map_box, 1);
+    qcurses_print(skill_box, 0, 0, "SKILL", true);
+    qcurses_make_bar(skill_box, 1);
+    qcurses_print_centered(time_box, 0, "RECORD HISTORY", true);
+    qcurses_make_bar(time_box, 1);
     qcurses_make_bar(comment_box, 0);
 
     if (!json) {
-        COM_CreatePath(".demo_cache/");
-        char * json_string = browser_read_file("sda_mock.json");
-        json = cJSON_Parse(json_string);
-        free(json_string);
+        if (!history_curl || !history_curl->running) {
+            COM_CreatePath(".demo_cache/");
+            qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
+            history_curl = browser_curl_start("sda_database.json", "https://speeddemosarchive.com/quake/mkt.pl?dump");
+        } else if (history_curl->running == CURL_DOWNLOADING) {
+            float progress = browser_curl_step(history_curl);
+            progress = progress < 0 ? 0.0 : progress;
+            qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
+            qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
+            qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
+        } else if (history_curl->running == CURL_FINISHED) {
+            browser_curl_clean(history_curl);
+            history_curl = NULL;
+            char * json_string = browser_read_file("sda_database.json");
+            json = cJSON_Parse(json_string);
+            free(json_string);
+        }
+
+        goto display;
     }
 
     if (prev_map_filter != map_filter || search_input) {
@@ -480,61 +575,55 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             free(columns[COL_MAP]->array);
             free(columns[COL_MAP]);
         }
-        columns[COL_MAP] = Browser_CreateMapColumn(json, rows - 11, map_filter);
+        columns[COL_MAP] = Browser_CreateMapColumn(json, rows - 12, map_filter);
         Browser_UpdateFurtherColumns(COL_MAP);
         prev_map_filter = map_filter;
     }
 
     for (int i = 0; i < min(columns[COL_MAP]->list.len, columns[COL_MAP]->list.places); i++)
-        qcurses_print(map_box, 1, 1 + i, columns[COL_MAP]->array[columns[COL_MAP]->list.window_start + i], columns[COL_MAP]->list.cursor == columns[COL_MAP]->list.window_start + i);
+        qcurses_print(map_box, 1, 2 + i, columns[COL_MAP]->array[columns[COL_MAP]->list.window_start + i], columns[COL_MAP]->list.cursor == columns[COL_MAP]->list.window_start + i);
 
     if (browser_col == COL_MAP)
-        qcurses_print(map_box, 0, 1 + columns[COL_MAP]->list.cursor - columns[COL_MAP]->list.window_start, blinkstr(0x0d), false);
+        qcurses_print(map_box, 0, 2 + columns[COL_MAP]->list.cursor - columns[COL_MAP]->list.window_start, blinkstr(0x0d), false);
 
     if (columns[COL_TYPE]){
         for (int i = 0; i < min(columns[COL_TYPE]->list.len, columns[COL_TYPE]->list.places); i++)
-            qcurses_print(skill_box, 1, 1 + i, columns[COL_TYPE]->array[columns[COL_TYPE]->list.window_start + i], browser_col >= COL_TYPE && columns[COL_TYPE]->list.cursor == columns[COL_TYPE]->list.window_start + i);
+            qcurses_print(skill_box, 1, 2 + i, columns[COL_TYPE]->array[columns[COL_TYPE]->list.window_start + i], browser_col >= COL_TYPE && columns[COL_TYPE]->list.cursor == columns[COL_TYPE]->list.window_start + i);
 
         if (browser_col == COL_TYPE)
-            qcurses_print(skill_box, 0, 1 + columns[COL_TYPE]->list.cursor - columns[COL_TYPE]->list.window_start, blinkstr(0x0d), false);
+            qcurses_print(skill_box, 0, 2 + columns[COL_TYPE]->list.cursor - columns[COL_TYPE]->list.window_start, blinkstr(0x0d), false);
     }
 
     if (columns[COL_RECORD]){
         for (int i = 0; i < min(columns[COL_RECORD]->list.len, columns[COL_RECORD]->list.places); i++) {
-            qcurses_print(time_box, 1, 1 + i, columns[COL_RECORD]->array[columns[COL_RECORD]->list.window_start + i], browser_col >= COL_RECORD && columns[COL_RECORD]->list.cursor == columns[COL_RECORD]->list.window_start + i);
+            qcurses_print(time_box, 1, 2 + i, columns[COL_RECORD]->array[columns[COL_RECORD]->list.window_start + i], browser_col >= COL_RECORD && columns[COL_RECORD]->list.cursor == columns[COL_RECORD]->list.window_start + i);
 
             if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("%s/../.demo_cache/%s/%s.dz", com_basedir, curtype(), columns[COL_RECORD]->sda_name[columns[COL_RECORD]->list.window_start + i])) == 0)
-                qcurses_print(time_box, 0, 1 + i, "\x84", false);
+                qcurses_print(time_box, 0, 2 + i, "\x84", false);
         }
 
         if (browser_col == COL_RECORD)
-            qcurses_print(time_box, 0, 1 + columns[COL_RECORD]->list.cursor - columns[COL_RECORD]->list.window_start, blinkstr(0x0d), false);
+            qcurses_print(time_box, 0, 2 + columns[COL_RECORD]->list.cursor - columns[COL_RECORD]->list.window_start, blinkstr(0x0d), false);
     }
 
     if (browser_col == COL_COMMENT_LOADING) {
         if (!Browser_DzipDownloaded()) {
             qcurses_print_centered(comment_box, comment_box->rows / 2, "Downloading...", false);
-            if (!curl_running) {
+            if (!curl || !curl->running) {
                 Browser_DownloadDzip();
             }
-        } else if (curl_running) {
+        } else if (curl && curl->running == CURL_DOWNLOADING) {
             qcurses_print_centered(comment_box, comment_box->rows / 2, "Downloading...", false);
-            CURLMcode mc = curl_multi_perform(curl_multi_handle, &curl_running);
+            float progress = browser_curl_step(curl);
 
-            if(mc || !curl_running)
-                Browser_CurlClean();
-
-            if (curl_running) {
-                curl_off_t total, downloaded;
-                curl_easy_getinfo(curl_http_handle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &total);
-                curl_easy_getinfo(curl_http_handle, CURLINFO_SIZE_DOWNLOAD_T, &downloaded);
-
-                qcurses_print_centered(comment_box, comment_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
-                qcurses_print(comment_box, comment_box->cols / 2 - 5 + (int)(10.0*downloaded/(float)total), comment_box->rows / 2 + 1, "\x83", false);
-            }
+            qcurses_print_centered(comment_box, comment_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
+            qcurses_print(comment_box, comment_box->cols / 2 - 5 + (int)(10.0 * progress), comment_box->rows / 2 + 1, "\x83", false);
         } else {
             if (comments)
                 free(comments);
+            if (curl)
+                browser_curl_clean(curl);
+            curl = NULL;
             comments = Browser_TxtFile();
             browser_col = COL_COMMENT_LOADED;
             comment_page = 0;
@@ -542,14 +631,14 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     }
 
     if (browser_col == COL_COMMENT_LOADED && comments) {
+        comment_rows = qcurses_boxprint_wrapped(comment_box, comments, comment_box->cols * comment_box->rows, 1);
         comment_page = min(comment_page, comment_rows - comment_box->rows);
         comment_page = max(comment_page, 0);
         comment_box->paged = comment_page;
-        qcurses_boxprint_wrapped(comment_box, comments, comment_box->cols * comment_box->rows, 1);
         if (comment_rows - comment_box->rows > 0) {
             for (int i = 0; i < comment_box->rows; i++)
                 qcurses_print(comment_box, comment_box->cols - 1, i + comment_page, "\x06", false);
-            qcurses_print(comment_box, comment_box->cols - 1, min(comment_page + comment_box->rows * comment_page / (comment_rows - comment_box->rows), comment_box->page_rows - 1), "\x83", false);
+            qcurses_print(comment_box, comment_box->cols - 1, min(comment_page + (comment_box->rows - 1)* comment_page / (comment_rows - comment_box->rows), comment_box->page_rows - 1), "\x83", false);
         }
     } else if (browser_col == COL_COMMENT_LOADED) {
         qcurses_print_centered(comment_box, comment_box->rows / 2, "Text file not provided.", false);
@@ -563,6 +652,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     qcurses_insert(local_box, filled_cols, skill_box->rows, comment_box);
     qcurses_insert(local_box, filled_cols = filled_cols + skill_box->cols, 0, time_box);
     qcurses_insert(local_box, 0, map_box->rows, help_box);
+display:
     qcurses_insert(main_box, start_col, start_row, local_box);
 
     qcurses_free(help_box);
@@ -606,6 +696,20 @@ simple_set * Browser_CreateMapSet() {
     set_add(id_maps, "e4m5long");
 }
 
+qboolean M_Demos_Mouse_Event(const mouse_state_t *ms) {
+    int col = mouse_col(ms->x);
+    int row = mouse_row(ms->y);
+
+    if (main_box->grid[row][col].callback)
+        main_box->grid[row][col].callback(main_box->grid[row] + col, ms);
+
+    return true;
+}
+
+void mouse_tab_news  (qcurses_char_t * self, const mouse_state_t *ms) { if (ms->button_up == 1) demos_tab = TAB_SDA_NEWS; }
+void mouse_tab_local (qcurses_char_t * self, const mouse_state_t *ms) { if (ms->button_up == 1) demos_tab = TAB_LOCAL_DEMOS; }
+void mouse_tab_remote(qcurses_char_t * self, const mouse_state_t *ms) { if (ms->button_up == 1) demos_tab = TAB_SDA_DATABASE; }
+
 void M_Demos_Display (int width, int height) {
     if (!main_box)
         main_box = qcurses_init(width / 8, height / 8);
@@ -616,7 +720,7 @@ void M_Demos_Display (int width, int height) {
     if (!demlist)
         M_Demos_LocalRead(main_box->rows - 20, NULL);
 
-    if (curl_running)
+    if (curl && curl->running)
         demos_update = true;
 
     demos_update = true;
@@ -635,9 +739,9 @@ void M_Demos_Display (int width, int height) {
             break;
     }
 
-    qcurses_print(main_box, main_box->cols / 4 - 5, 2, "LOCAL DEMOS", demos_tab == TAB_LOCAL_DEMOS);
-    qcurses_print(main_box, 2 * main_box->cols / 4 - 4, 2, "SDA NEWS", demos_tab == TAB_SDA_NEWS);
-    qcurses_print(main_box, 3 * main_box->cols / 4 - 4, 2, "SDA DEMOS", demos_tab == TAB_SDA_DATABASE);
+    qcurses_print_callback(main_box, main_box->cols / 4 - 5, 2, "LOCAL DEMOS", demos_tab == TAB_LOCAL_DEMOS, mouse_tab_local);
+    qcurses_print_callback(main_box, 2 * main_box->cols / 4 - 4, 2, "SDA NEWS", demos_tab == TAB_SDA_NEWS, mouse_tab_news);
+    qcurses_print_callback(main_box, 3 * main_box->cols / 4 - 4, 2, "SDA DEMOS", demos_tab == TAB_SDA_DATABASE, mouse_tab_remote);
 
     qcurses_print(main_box, 3, 4, "\x1d", false);
     for (int i = 4; i < main_box->cols - 4; i++)
