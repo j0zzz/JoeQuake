@@ -310,6 +310,23 @@ Ghost_StuffText_cb (const char *string, void *ctx)
         return DP_CBR_STOP;
     }
 
+    // movement keys are here, hidden behind MK
+    if (strncmp(string, "net_messagetimeout", 17) == 0) {
+        extern movekeytype_t ghost_movekeys_states[NUM_MOVEMENT_KEYS];
+        char* mkstart = strstr(string, "mk");
+        if(mkstart)
+            Con_Printf("pathtracker_debug: %d %d\n", strlen(mkstart), NUM_MOVEMENT_KEYS + 3);
+
+        // look for movement keys information
+        if ((mkstart) && strlen(mkstart) == (NUM_MOVEMENT_KEYS + 3))
+        {
+            for (int i = 0; i < NUM_MOVEMENT_KEYS; i++) {
+                ghost_movekeys_states[i] = mkstart[i + 2] - '0';
+                memcpy(pctx->rec.ghost_movekeys_states, ghost_movekeys_states, sizeof(ghost_movekeys_states));
+            }
+        }
+    }
+
     return DP_CBR_CONTINUE;
 }
 

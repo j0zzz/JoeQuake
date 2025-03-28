@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../quakedef.h"
 #endif
 
-
 #define GHOST_MAX_LEVELS     128
 #define GHOST_MAP_NAME_SIZE  64
 
@@ -44,6 +43,7 @@ typedef struct {
     float angle[3];
     unsigned int frame;
     unsigned int model;
+    movekeytype_t ghost_movekeys_states[NUM_MOVEMENT_KEYS];
 } ghostrec_t;
 
 

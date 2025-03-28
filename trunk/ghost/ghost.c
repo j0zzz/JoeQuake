@@ -65,7 +65,7 @@ static ghost_marathon_info_t ghost_marathon_info;
 
 ghost_color_info_t ghost_color_info[GHOST_MAX_CLIENTS];
 extern char *GetPrintedTime(double time);   // Maybe put the definition somewhere central?
-
+movekeytype_t ghost_movekeys_states[NUM_MOVEMENT_KEYS];
 
 // This could be done more intelligently, no doubt.
 static float Ghost_FindClosest (vec3_t origin, qboolean *match)
@@ -438,6 +438,7 @@ static qboolean Ghost_Update (void)
 
         // Set alpha based on distance to player.
         ghost_show = Ghost_SetAlpha();
+        memcpy(ghost_movekeys_states, rec_after->ghost_movekeys_states, sizeof(ghost_movekeys_states));
     }
 
     return ghost_show;

@@ -65,13 +65,127 @@ void PathTracer_Draw(void)
 		startPos[2] = pms_prev->pos[2] - 20.f; // on the ground
 		glVertex3fv(startPos);
 
-		GLfloat startPos2[3];
-		startPos2[0] = pms_cur->pos[0];
-		startPos2[1] = pms_cur->pos[1];
-		startPos2[2] = pms_cur->pos[2] - 20.f; // on the ground
-		glVertex3fv(startPos2);
+		GLfloat endPos[3];
+		endPos[0] = pms_cur->pos[0];
+		endPos[1] = pms_cur->pos[1];
+		endPos[2] = pms_cur->pos[2] - 20.f; // on the ground
+		glVertex3fv(endPos);
 	}
 	glEnd();
+
+	for (int buffer_index = 0;buffer_index < PATHTRACER_MOVEMENT_BUFFER_MAX; buffer_index++) {
+		int i = (pathtracer_movement_read_head + buffer_index) % PATHTRACER_MOVEMENT_BUFFER_MAX;
+		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i++];
+		if (i >= PATHTRACER_MOVEMENT_BUFFER_MAX)
+			i = 0;
+		pathtracer_movement_t* pms_cur = &pathtracer_movement_samples[i];
+
+		// Reached write head?
+		if (i == pathtracer_movement_write_head)
+			continue;
+
+		// No data in yet?
+		if (!(pms_prev->holdsData && pms_cur->holdsData))
+			continue;
+
+		GLfloat startPos[3];
+		startPos[0] = pms_cur->pos[0];
+		startPos[1] = pms_cur->pos[1];
+		startPos[2] = pms_cur->pos[2] - 20.f; // on the ground
+
+		vec3_t	v_forward, v_right, v_up;
+		VectorCopy(pms_cur->velocity, v_forward);
+		float length = VectorNormalize(v_forward);
+		if (length == 0.f)
+			continue;
+
+		VectorVectors(v_forward, v_right, v_up);
+		VectorScale(v_forward, 10.f, v_forward);
+		VectorScale(v_right, 10.f, v_right);
+		VectorScale(v_up, 10.f, v_up);
+
+		if (pms_cur->movekeys[mk_forward] & 1)
+		{
+			glBegin(GL_LINES);
+			glVertex3fv(startPos);
+
+			GLfloat endPos[3];
+			glColor3f(1.f, 1.f, 1.f);
+			endPos[0] = startPos[0] - v_up[0];
+			endPos[1] = startPos[1] - v_up[1];
+			endPos[2] = startPos[2] - v_up[2];
+			glVertex3fv(endPos);
+
+			glVertex3fv(startPos);
+
+			glEnd();
+		}
+		if (pms_cur->movekeys[mk_back] & 1)
+		{
+			glBegin(GL_LINES);
+			glVertex3fv(startPos);
+
+			GLfloat endPos[3];
+			glColor3f(1.f, 1.f, 1.f);
+			endPos[0] = startPos[0] + v_up[0];
+			endPos[1] = startPos[1] + v_up[1];
+			endPos[2] = startPos[2] + v_up[2];
+			glVertex3fv(endPos);
+
+			glVertex3fv(startPos);
+
+			glEnd();
+		}
+		if (pms_cur->movekeys[mk_moveleft] & 1)
+		{
+			glBegin(GL_LINES);
+			glVertex3fv(startPos);
+
+			GLfloat endPos[3];
+			glColor3f(1.f, 0.f, 0.f);
+			endPos[0] = startPos[0] + v_right[0];
+			endPos[1] = startPos[1] + v_right[1];
+			endPos[2] = startPos[2] + v_right[2];
+			glVertex3fv(endPos);
+
+			glVertex3fv(startPos);
+
+			glEnd();
+		}
+		if (pms_cur->movekeys[mk_moveright] & 1)
+		{
+			glBegin(GL_LINES);
+			glVertex3fv(startPos);
+
+			GLfloat endPos[3];
+			glColor3f(0.f, 1.f, 0.f);
+			endPos[0] = startPos[0] - v_right[0];
+			endPos[1] = startPos[1] - v_right[1];
+			endPos[2] = startPos[2] - v_right[2];
+			glVertex3fv(endPos);
+
+			glVertex3fv(startPos);
+
+			glEnd();
+		}
+		if (pms_cur->movekeys[mk_jump] & 1)
+		{
+			glBegin(GL_LINES);
+			glVertex3fv(startPos);
+
+			GLfloat endPos[3];
+			glColor3f(0.f, 0.f, 1.f);
+			endPos[0] = startPos[0] - v_right[0] - v_up[0];
+			endPos[1] = startPos[1] - v_right[1] - v_up[1];
+			endPos[2] = startPos[2] - v_right[2] - v_up[2];
+			glVertex3fv(endPos);
+
+			glVertex3fv(startPos);
+
+			glEnd();
+		}
+	}
+
 
 	// Back to normal rendering
 	glColor3f(1, 1, 1);
@@ -113,41 +227,6 @@ void PathTracer_Sample_Each_Frame(void) {
 	else {
 		prevcltime = cl.time;
 	}
-
-	// original code: https://github.com/shalrathy/quakespasm-shalrathy
-	// Find best wishdir vector (largest speed increase in the ground plane)
-	int angles = 90;
-	float bestspeed = 0.f;
-	float bestangle = 0;
-	bestangle = sv_player->v.angles[1];
-	bestspeed = Get_Wishdir_Speed_Delta(bestangle);
-	float playerspeed = Get_Wishdir_Speed_Delta(bestangle);
-	for (int i = 1; i < angles; i++) {
-		for (int neg = -1; neg <= 1; neg += 2) {
-			float curangle = 0.0f;
-			curangle = sv_player->v.angles[1] + i * neg;
-			float curspeed = Get_Wishdir_Speed_Delta(curangle);
-			if (curspeed > bestspeed) {
-				bestspeed = curspeed;
-				bestangle = curangle;
-			}
-		}
-	}
-
-	// 100th of a degree
-	for (int i = 1; i < 100; i++) {
-		for (int neg = -1; neg <= 1; neg += 2) {
-			float curangle = bestangle + neg * i / 100.0f;
-			float curspeed = Get_Wishdir_Speed_Delta(curangle);
-			if (curspeed > (bestspeed)) {
-				bestspeed = curspeed;
-				bestangle = curangle;
-			}
-		}
-	}
-
-	if (bestangle < -180) bestangle += 360;
-	if (bestangle > 180) bestangle -= 360;
 
 	float speed = sqrt(cl.velocity[0] * cl.velocity[0] + cl.velocity[1] * cl.velocity[1]);
 
@@ -197,6 +276,8 @@ void PathTracer_Sample_Each_Frame(void) {
 		pms_new->angle = sv_player->v.angles[1];
 
 		if (ghost_entity.model != NULL) {
+			extern int ghost_movekeys_states[NUM_MOVEMENT_KEYS];
+			memcpy(pms_new->movekeys, ghost_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
 			pms_new->pos[0] = ghost_entity.origin[0];
 			pms_new->pos[1] = ghost_entity.origin[1];
 			pms_new->pos[2] = ghost_entity.origin[2];
@@ -209,9 +290,7 @@ void PathTracer_Sample_Each_Frame(void) {
 			pms_new->angle = ghost_entity.angles[1];
 		}
 
-		pms_new->bestangle = bestangle;
 		pms_new->speed = speed;
-		pms_new->bestspeed = bestspeed;
 		pms_new->onground = onground0;
 		pathtracer_movement_write_head++;
 		if (pathtracer_movement_write_head >= PATHTRACER_MOVEMENT_BUFFER_MAX) {
