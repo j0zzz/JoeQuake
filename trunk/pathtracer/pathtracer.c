@@ -88,102 +88,169 @@ void PathTracer_Draw(void)
 		if (!(pms_prev->holdsData && pms_cur->holdsData))
 			continue;
 
-		GLfloat startPos[3];
-		startPos[0] = pms_cur->pos[0];
-		startPos[1] = pms_cur->pos[1];
-		startPos[2] = pms_cur->pos[2] - 20.f; // on the ground
+		GLfloat pos_on_path[3];
+		pos_on_path[0] = pms_cur->pos[0];
+		pos_on_path[1] = pms_cur->pos[1];
+		pos_on_path[2] = pms_cur->pos[2] - 20.f; // on the ground
 
+		// Movement key triangle
+		vec3_t	t_forward, t_right, t_up;
+
+		// Velocity as normal vector movement key triangle
 		vec3_t	v_forward, v_right, v_up;
 		VectorCopy(pms_cur->velocity, v_forward);
+
 		float length = VectorNormalize(v_forward);
-		if (length == 0.f)
-			continue;
+		if (length > 0.f) {
 
-		VectorVectors(v_forward, v_right, v_up);
-		VectorScale(v_forward, 10.f, v_forward);
-		VectorScale(v_right, 10.f, v_right);
-		VectorScale(v_up, 10.f, v_up);
+			// Prepare vectors to offset movement triangle from path
+			VectorVectors(v_forward, v_right, v_up);
+			
+			// Triangle height/2
+			VectorScale(v_forward, 2.f, t_forward);
+			VectorScale(v_right, 2.f, t_right);
+			VectorScale(v_up, 2.f, t_up);
+			
+			// Offset from path position
+			VectorScale(v_forward, 5.f, v_forward);
+			VectorScale(v_right, 5.f, v_right);
+			VectorScale(v_up, 5.f, v_up);
 
-		if (pms_cur->movekeys[mk_forward] & 1)
-		{
-			glBegin(GL_LINES);
-			glVertex3fv(startPos);
+			if (pms_cur->movekeys[mk_forward] & 1)
+			{
+				vec3_t pos_offset_path;
+				vec3_t pos_triangle_up, pos_triangle_left, pos_triangle_right;
 
-			GLfloat endPos[3];
-			glColor3f(1.f, 1.f, 1.f);
-			endPos[0] = startPos[0] - v_up[0];
-			endPos[1] = startPos[1] - v_up[1];
-			endPos[2] = startPos[2] - v_up[2];
-			glVertex3fv(endPos);
+				// Move up
+				VectorSubtract(pos_on_path, v_up, pos_offset_path);
 
-			glVertex3fv(startPos);
+				// Calculate edges of the movement triangle
+				VectorSubtract(pos_offset_path, t_up, pos_triangle_up);
+				VectorSubtract(pos_offset_path, t_right, pos_triangle_right);
+				VectorAdd(pos_triangle_right, t_up, pos_triangle_right);
+				VectorAdd(pos_offset_path, t_right, pos_triangle_left);
+				VectorAdd(pos_triangle_left, t_up, pos_triangle_left);
 
-			glEnd();
+				// Draw
+				glBegin(GL_LINES);
+				glLineWidth(2.0f);
+				glColor3f(1.f, 1.f, 1.f);
+				glVertex3fv(pos_triangle_up);
+				glVertex3fv(pos_triangle_right);
+				glVertex3fv(pos_triangle_right);
+				glVertex3fv(pos_triangle_left);
+				glVertex3fv(pos_triangle_left);
+				glVertex3fv(pos_triangle_up);
+				glEnd();
+			}
+			if (pms_cur->movekeys[mk_back] & 1)
+			{
+				vec3_t pos_offset_path;
+				vec3_t pos_triangle_down, pos_triangle_left, pos_triangle_right;
+
+				// Move down
+				VectorAdd(pos_on_path, v_up, pos_offset_path);
+
+				// Calculate edges of the movement triangle
+				VectorAdd(pos_offset_path, t_up, pos_triangle_down);
+				VectorSubtract(pos_offset_path, t_right, pos_triangle_right);
+				VectorSubtract(pos_triangle_right, t_up, pos_triangle_right);
+				VectorAdd(pos_offset_path, t_right, pos_triangle_left);
+				VectorSubtract(pos_triangle_left, t_up, pos_triangle_left);
+
+				// Draw
+				glBegin(GL_LINES);
+				glLineWidth(2.0f);
+				glColor3f(1.f, 1.f, 1.f);
+				glVertex3fv(pos_triangle_down);
+				glVertex3fv(pos_triangle_right);
+				glVertex3fv(pos_triangle_right);
+				glVertex3fv(pos_triangle_left);
+				glVertex3fv(pos_triangle_left);
+				glVertex3fv(pos_triangle_down);
+				glEnd();
+			}
+			if (pms_cur->movekeys[mk_moveleft] & 1)
+			{
+				vec3_t pos_offset_path;
+				vec3_t pos_triangle_up, pos_triangle_left, pos_triangle_down;
+
+				// Move left
+				VectorAdd(pos_on_path, v_right, pos_offset_path);
+
+				// Calculate edges of the movement triangle
+				VectorSubtract(pos_offset_path, t_right, pos_triangle_up);
+				VectorSubtract(pos_triangle_up, t_up, pos_triangle_up);
+				VectorSubtract(pos_offset_path, t_right, pos_triangle_down);
+				VectorAdd(pos_triangle_down, t_up, pos_triangle_down);
+				VectorAdd(pos_offset_path, t_right, pos_triangle_left);
+
+				// Draw
+				glBegin(GL_LINES);
+				glLineWidth(2.0f);
+				glColor3f(1.f, 1.f, 1.f);
+				glVertex3fv(pos_triangle_up);
+				glVertex3fv(pos_triangle_down);
+				glVertex3fv(pos_triangle_down);
+				glVertex3fv(pos_triangle_left);
+				glVertex3fv(pos_triangle_left);
+				glVertex3fv(pos_triangle_up);
+				glEnd();
+			}
+			if (pms_cur->movekeys[mk_moveright] & 1)
+			{
+				vec3_t pos_offset_path;
+				vec3_t pos_triangle_up, pos_triangle_right, pos_triangle_down;
+
+				// Move right
+				VectorSubtract(pos_on_path, v_right, pos_offset_path);
+
+				// Calculate edges of the movement triangle
+				VectorAdd(pos_offset_path, t_right, pos_triangle_up);
+				VectorSubtract(pos_triangle_up, t_up, pos_triangle_up);
+				VectorAdd(pos_offset_path, t_right, pos_triangle_down);
+				VectorAdd(pos_triangle_down, t_up, pos_triangle_down);
+				VectorSubtract(pos_offset_path, t_right, pos_triangle_right);
+
+				// Draw
+				glBegin(GL_LINES);
+				glLineWidth(2.0f);
+				glColor3f(1.f, 1.f, 1.f);
+				glVertex3fv(pos_triangle_up);
+				glVertex3fv(pos_triangle_down);
+				glVertex3fv(pos_triangle_down);
+				glVertex3fv(pos_triangle_right);
+				glVertex3fv(pos_triangle_right);
+				glVertex3fv(pos_triangle_up);
+				glEnd();
+			}
+			if (pms_cur->movekeys[mk_jump] & 1)
+			{
+				vec3_t pos_offset_path;
+				vec3_t pos_jump_down_left, pos_jump_center, pos_jump_up;
+
+				// Move up and right
+				VectorSubtract(pos_on_path, v_up, pos_offset_path);
+				VectorSubtract(pos_offset_path, v_right, pos_offset_path);
+
+				// Calculate edges of the movement triangle
+				VectorAdd(pos_offset_path, t_right, pos_jump_down_left);
+				VectorAdd(pos_jump_down_left, t_up, pos_jump_down_left);
+				VectorSubtract(pos_offset_path, t_up, pos_jump_up);
+				VectorCopy(pos_offset_path, pos_jump_center);
+
+				// Draw
+				glBegin(GL_LINES);
+				glLineWidth(2.0f);
+				glColor3f(.1f, .1f, 1.f);
+				glVertex3fv(pos_jump_down_left);
+				glVertex3fv(pos_jump_center);
+				glVertex3fv(pos_jump_center);
+				glVertex3fv(pos_jump_up);
+				glEnd();
+			}
 		}
-		if (pms_cur->movekeys[mk_back] & 1)
-		{
-			glBegin(GL_LINES);
-			glVertex3fv(startPos);
 
-			GLfloat endPos[3];
-			glColor3f(1.f, 1.f, 1.f);
-			endPos[0] = startPos[0] + v_up[0];
-			endPos[1] = startPos[1] + v_up[1];
-			endPos[2] = startPos[2] + v_up[2];
-			glVertex3fv(endPos);
-
-			glVertex3fv(startPos);
-
-			glEnd();
-		}
-		if (pms_cur->movekeys[mk_moveleft] & 1)
-		{
-			glBegin(GL_LINES);
-			glVertex3fv(startPos);
-
-			GLfloat endPos[3];
-			glColor3f(1.f, 0.f, 0.f);
-			endPos[0] = startPos[0] + v_right[0];
-			endPos[1] = startPos[1] + v_right[1];
-			endPos[2] = startPos[2] + v_right[2];
-			glVertex3fv(endPos);
-
-			glVertex3fv(startPos);
-
-			glEnd();
-		}
-		if (pms_cur->movekeys[mk_moveright] & 1)
-		{
-			glBegin(GL_LINES);
-			glVertex3fv(startPos);
-
-			GLfloat endPos[3];
-			glColor3f(0.f, 1.f, 0.f);
-			endPos[0] = startPos[0] - v_right[0];
-			endPos[1] = startPos[1] - v_right[1];
-			endPos[2] = startPos[2] - v_right[2];
-			glVertex3fv(endPos);
-
-			glVertex3fv(startPos);
-
-			glEnd();
-		}
-		if (pms_cur->movekeys[mk_jump] & 1)
-		{
-			glBegin(GL_LINES);
-			glVertex3fv(startPos);
-
-			GLfloat endPos[3];
-			glColor3f(0.f, 0.f, 1.f);
-			endPos[0] = startPos[0] - v_right[0] - v_up[0];
-			endPos[1] = startPos[1] - v_right[1] - v_up[1];
-			endPos[2] = startPos[2] - v_right[2] - v_up[2];
-			glVertex3fv(endPos);
-
-			glVertex3fv(startPos);
-
-			glEnd();
-		}
 	}
 
 
