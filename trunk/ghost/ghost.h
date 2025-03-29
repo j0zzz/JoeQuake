@@ -41,5 +41,4 @@ extern entity_t		ghost_entity;
 extern ghost_color_info_t ghost_color_info[GHOST_MAX_CLIENTS];
 extern movekeytype_t ghost_movekeys_states[NUM_MOVEMENT_KEYS];
 
-
 #endif /* __CL_GHOST_H */

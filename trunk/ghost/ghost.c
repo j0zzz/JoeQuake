@@ -36,7 +36,7 @@ static dzip_context_t ghost_dz_ctx;
 static ghost_info_t *ghost_info = NULL;
 char                ghost_demo_path[MAX_OSPATH] = "";
 static char         ghost_map_name[MAX_QPATH];
-static ghost_level_t *ghost_current_level = NULL;
+ghost_level_t       *ghost_current_level = NULL;
 entity_t            ghost_entity;
 static float        ghost_shift = 0.0f;
 static int          ghost_model_indices[GHOST_MODEL_COUNT];

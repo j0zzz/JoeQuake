@@ -12,7 +12,7 @@ typedef struct {
 	float angle;
 	float speed;
 	qboolean onground;
-	int movekeys[NUM_MOVEMENT_KEYS];
+	movekeytype_t movekeys[NUM_MOVEMENT_KEYS];
 } pathtracer_movement_t;
 
 #define PATHTRACER_BUNNHOP_BUFFER_MAX 100
