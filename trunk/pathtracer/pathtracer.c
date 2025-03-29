@@ -12,6 +12,14 @@ pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX
 int pathtracer_movement_write_head = 0;
 int pathtracer_movement_read_head = 0;
 
+void VectorVectorsAlwaysUp(vec3_t forward, vec3_t right, vec3_t up)
+{
+	VectorSet(right, -forward[1], forward[0], 0);
+	VectorNormalizeFast(right);
+	CrossProduct(right, forward, up);
+}
+
+
 void PathTracer_Draw(void)
 {
 	if (sv_player == NULL) return;
@@ -73,6 +81,7 @@ void PathTracer_Draw(void)
 	}
 	glEnd();
 
+	// Draw movement keys
 	for (int buffer_index = 0;buffer_index < PATHTRACER_MOVEMENT_BUFFER_MAX; buffer_index++) {
 		int i = (pathtracer_movement_read_head + buffer_index) % PATHTRACER_MOVEMENT_BUFFER_MAX;
 		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i++];
@@ -96,15 +105,23 @@ void PathTracer_Draw(void)
 		// Movement key triangle
 		vec3_t	t_forward, t_right, t_up;
 
-		// Velocity as normal vector movement key triangle
+		// Delta between previous point as normal vector movement key triangle
 		vec3_t	v_forward, v_right, v_up;
-		VectorCopy(pms_cur->velocity, v_forward);
+		VectorSubtract(pms_cur->pos, pms_prev->pos, v_forward);
 
 		float length = VectorNormalize(v_forward);
-		if (length > 0.f) {
+		if (length > 0.f && 
+			(
+				pms_cur->movekeys[mk_forward] & 1 ||
+				pms_cur->movekeys[mk_back] & 1 ||
+				pms_cur->movekeys[mk_moveleft] & 1 ||
+				pms_cur->movekeys[mk_moveright] & 1 ||
+				pms_cur->movekeys[mk_jump] & 1
+
+			)) { // should always be true, given that we only record movement
 
 			// Prepare vectors to offset movement triangle from path
-			VectorVectors(v_forward, v_right, v_up);
+			VectorVectorsAlwaysUp(v_forward, v_right, v_up);
 			
 			// Triangle height/2
 			VectorScale(v_forward, 2.f, t_forward);
@@ -188,7 +205,7 @@ void PathTracer_Draw(void)
 				// Draw
 				glBegin(GL_LINES);
 				glLineWidth(2.0f);
-				glColor3f(1.f, 1.f, 1.f);
+				glColor3f(1.f, .1f, .1f);
 				glVertex3fv(pos_triangle_up);
 				glVertex3fv(pos_triangle_down);
 				glVertex3fv(pos_triangle_down);
@@ -215,7 +232,7 @@ void PathTracer_Draw(void)
 				// Draw
 				glBegin(GL_LINES);
 				glLineWidth(2.0f);
-				glColor3f(1.f, 1.f, 1.f);
+				glColor3f(.1f, 1.f, .1f);
 				glVertex3fv(pos_triangle_up);
 				glVertex3fv(pos_triangle_down);
 				glVertex3fv(pos_triangle_down);
@@ -252,7 +269,6 @@ void PathTracer_Draw(void)
 		}
 
 	}
-
 
 	// Back to normal rendering
 	glColor3f(1, 1, 1);
@@ -334,14 +350,6 @@ void PathTracer_Sample_Each_Frame(void) {
 		}
 		pms_new->holdsData = true;
 
-		pms_new->pos[0] = sv_player->v.origin[0];
-		pms_new->pos[1] = sv_player->v.origin[1];
-		pms_new->pos[2] = sv_player->v.origin[2];
-		pms_new->velocity[0] = sv_player->v.velocity[0];
-		pms_new->velocity[1] = sv_player->v.velocity[1];
-		pms_new->velocity[2] = sv_player->v.velocity[2];
-		pms_new->angle = sv_player->v.angles[1];
-
 		if (ghost_entity.model != NULL) {
 			extern int ghost_movekeys_states[NUM_MOVEMENT_KEYS];
 			memcpy(pms_new->movekeys, ghost_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
@@ -355,6 +363,17 @@ void PathTracer_Sample_Each_Frame(void) {
 			pms_new->velocity[1] *= 200.f;
 			pms_new->velocity[2] *= 200.f;
 			pms_new->angle = ghost_entity.angles[1];
+		}
+		else {
+			extern int show_movekeys_states[NUM_MOVEMENT_KEYS];
+			memcpy(pms_new->movekeys, show_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
+			pms_new->pos[0] = sv_player->v.origin[0];
+			pms_new->pos[1] = sv_player->v.origin[1];
+			pms_new->pos[2] = sv_player->v.origin[2];
+			pms_new->velocity[0] = sv_player->v.velocity[0];
+			pms_new->velocity[1] = sv_player->v.velocity[1];
+			pms_new->velocity[2] = sv_player->v.velocity[2];
+			pms_new->angle = sv_player->v.angles[1];
 		}
 
 		pms_new->speed = speed;
