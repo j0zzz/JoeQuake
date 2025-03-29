@@ -12,13 +12,13 @@ pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX
 int pathtracer_movement_write_head = 0;
 int pathtracer_movement_read_head = 0;
 
+// replace VectorVectors, but now with up always pointing up
 void VectorVectorsAlwaysUp(vec3_t forward, vec3_t right, vec3_t up)
 {
 	VectorSet(right, -forward[1], forward[0], 0);
 	VectorNormalizeFast(right);
 	CrossProduct(right, forward, up);
 }
-
 
 void PathTracer_Draw(void)
 {
