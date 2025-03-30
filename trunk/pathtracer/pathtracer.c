@@ -201,7 +201,7 @@ void PathTracer_Draw(void)
 
 	extern ghost_level_t* ghost_current_level;
 	ghost_level_t* level = ghost_current_level;
-	const vec3_t to_ground = { 0.f, 0.f, 0.f }; // use cl.viewheight
+	const vec3_t to_ground = { 0.f, 0.f, -cl.viewheight }; // use cl.viewheight
 	if (level != NULL &&
 		level->num_records > 1) { // we have a ghost!
 
@@ -213,8 +213,8 @@ void PathTracer_Draw(void)
 
 			glColor3f(1.f, 1.f, 1.f);
 			vec3_t startPos, endPos;
-			VectorSubtract(prev_record.origin, to_ground, startPos);
-			VectorSubtract(cur_record.origin, to_ground, endPos);
+			VectorAdd(prev_record.origin, to_ground, startPos);
+			VectorAdd(cur_record.origin, to_ground, endPos);
 
 			glVertex3fv(startPos);
 			glVertex3fv(endPos);
@@ -243,7 +243,7 @@ void PathTracer_Draw(void)
 			vec3_t	v_forward;
 			GLfloat pos_on_path[3];
 			movekeytype_t* movekeys_states = cur_record.ghost_movekeys_states;
-			VectorSubtract(cur_record.origin, to_ground, pos_on_path);
+			VectorAdd(cur_record.origin, to_ground, pos_on_path);
 			VectorSubtract(cur_record.origin, prev_record.origin, v_forward);
 
 			PathTracer_Draw_MoveKeys(pos_on_path, v_forward, movekeys_states);
@@ -278,8 +278,8 @@ void PathTracer_Draw(void)
 		}
 
 		vec3_t startPos, endPos;
-		VectorSubtract(pms_prev->pos, to_ground, startPos);
-		VectorSubtract(pms_cur->pos, to_ground, endPos);
+		VectorAdd(pms_prev->pos, to_ground, startPos);
+		VectorAdd(pms_cur->pos, to_ground, endPos);
 
 		glVertex3fv(startPos);
 		glVertex3fv(endPos);
@@ -291,8 +291,8 @@ void PathTracer_Draw(void)
 		VectorScale(a_forward, 20.f, a_forward);
 		VectorCopy(pms_cur->pos, startPos);
 		VectorAdd(pms_cur->pos, a_forward, endPos);
-		VectorSubtract(startPos, to_ground, startPos);
-		VectorSubtract(endPos, to_ground, endPos);
+		VectorAdd(startPos, to_ground, startPos);
+		VectorAdd(endPos, to_ground, endPos);
 		glColor3f(.2f, .2f, .2f);
 		glVertex3fv(startPos);
 		glVertex3fv(endPos);
@@ -319,7 +319,7 @@ void PathTracer_Draw(void)
 		vec3_t pos_on_path;
 		vec3_t v_forward;
 
-		VectorSubtract(pms_cur->pos, to_ground, pos_on_path);
+		VectorAdd(pms_cur->pos, to_ground, pos_on_path);
 		VectorSubtract(pms_cur->pos, pms_prev->pos, v_forward);
 		movekeytype_t* movekeys_states = pms_cur->movekeys;
 		PathTracer_Draw_MoveKeys(pos_on_path, v_forward, movekeys_states);
