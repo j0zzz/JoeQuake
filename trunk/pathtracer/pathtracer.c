@@ -323,13 +323,12 @@ void PathTracer_Draw(void)
 void PathTracer_Sample_Each_Frame(void) {
 
 	if (scr_printbunnyhop.value != 1.f) return;
+
+	// Not playing locally and not in demo playback, e.g. multiplayer then return
 	if (!sv.active && !cls.demoplayback) return;
-	//if (!sv.active) return;
-	//if (cls.demoplayback) return;
-	if (sv_player == NULL) {
-		return;
-	}
+
 	if (ghost_entity.model != NULL) {
+		// Ghost mode is handled separately
 		return;
 	}
 
@@ -365,10 +364,6 @@ void PathTracer_Sample_Each_Frame(void) {
 
 	// Determine if we should sample
 	boolean track = false;
-	vec3_t *origin = &sv_player->v.origin;
-	if (ghost_entity.model != NULL)
-		origin = &ghost_entity.origin;
-			
 	pathtracer_movement_t* pms_prev;
 	if (pathtracer_movement_write_head > 0)
 		pms_prev = &pathtracer_movement_samples[pathtracer_movement_write_head - 1];
@@ -376,12 +371,24 @@ void PathTracer_Sample_Each_Frame(void) {
 		// just in case we hit that zero
 		pms_prev = &pathtracer_movement_samples[PATHTRACER_BUNNHOP_BUFFER_MAX - 1];
 		
+	vec3_t cur_origin;
+	if (sv.active && sv_player != NULL) {
+		VectorCopy(sv_player->v.origin, cur_origin);
+	}
+	else {
+		VectorCopy(cl_entities[cl.viewentity].origin, cur_origin);
+	}
+	
 	if(pms_prev->holdsData) {
-		float dx = fabs(pms_prev->pos[0] - *origin[0]);
-		float dy = fabs(pms_prev->pos[1] - *origin[1]);
-		float dz = fabs(pms_prev->pos[2] - *origin[2]);
+		float dx = fabs(pms_prev->pos[0] - cur_origin[0]);
+		float dy = fabs(pms_prev->pos[1] - cur_origin[1]);
+		float dz = fabs(pms_prev->pos[2] - cur_origin[2]);
 		if (dx > .1f || dy > .1f || dz > .1f) {
+			// That's practically every frame
 			track = true;
+		}
+		else {
+			track = false;
 		}
 	}
 	else {
@@ -400,21 +407,7 @@ void PathTracer_Sample_Each_Frame(void) {
 		}
 		pms_new->holdsData = true;
 
-		if (ghost_entity.model != NULL) {
-			extern int ghost_movekeys_states[NUM_MOVEMENT_KEYS];
-			memcpy(pms_new->movekeys, ghost_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
-			pms_new->pos[0] = ghost_entity.origin[0];
-			pms_new->pos[1] = ghost_entity.origin[1];
-			pms_new->pos[2] = ghost_entity.origin[2];
-			pms_new->velocity[0] = ghost_entity.origin[0] - ghost_entity.previousorigin[0];
-			pms_new->velocity[1] = ghost_entity.origin[1] - ghost_entity.previousorigin[1];
-			pms_new->velocity[2] = ghost_entity.origin[2] - ghost_entity.previousorigin[2];
-			pms_new->velocity[0] *= 200.f;
-			pms_new->velocity[1] *= 200.f;
-			pms_new->velocity[2] *= 200.f;
-			pms_new->angle = ghost_entity.angles[1];
-		}
-		else if(sv.active && sv_player != NULL ) {
+		if(sv.active && sv_player != NULL ) {
 			extern int show_movekeys_states[NUM_MOVEMENT_KEYS];
 			memcpy(pms_new->movekeys, show_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
 			pms_new->pos[0] = sv_player->v.origin[0];
