@@ -194,7 +194,6 @@ void PathTracer_Draw(void)
 {
 	if (sv_player == NULL) return;
 	if (!sv.active && !cls.demoplayback) return;
-	//if (cls.demoplayback) return;
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDisable(GL_TEXTURE_2D);
@@ -202,7 +201,7 @@ void PathTracer_Draw(void)
 
 	extern ghost_level_t* ghost_current_level;
 	ghost_level_t* level = ghost_current_level;
-	const vec3_t to_ground = { 0.f, 0.f, 20.f };
+	const vec3_t to_ground = { 0.f, 0.f, 0.f }; // use cl.viewheight
 	if (level != NULL &&
 		level->num_records > 1) { // we have a ghost!
 
@@ -213,12 +212,26 @@ void PathTracer_Draw(void)
 			ghostrec_t prev_record = level->records[i - 1];
 
 			glColor3f(1.f, 1.f, 1.f);
-			vec3_t from, to;
-			VectorSubtract(prev_record.origin, to_ground, from);
-			VectorSubtract(cur_record.origin, to_ground, to);
+			vec3_t startPos, endPos;
+			VectorSubtract(prev_record.origin, to_ground, startPos);
+			VectorSubtract(cur_record.origin, to_ground, endPos);
 
-			glVertex3fv(from);
-			glVertex3fv(to);
+			glVertex3fv(startPos);
+			glVertex3fv(endPos);
+
+			// Angle vector
+			vec3_t a_forward, a_right, a_up;
+			vec3_t view_angles = { -cur_record.angle[0],cur_record.angle[1],cur_record.angle[2] };
+			AngleVectors(view_angles, a_forward, a_right, a_up);
+			VectorScale(a_forward, 20.f, a_forward);
+			VectorCopy(cur_record.origin, startPos);
+			VectorAdd(cur_record.origin, a_forward, endPos);
+			VectorSubtract(startPos, to_ground, startPos);
+			VectorSubtract(endPos, to_ground, endPos);
+			glColor3f(.2f, .2f, .2f);
+			glVertex3fv(startPos);
+			glVertex3fv(endPos);
+
 		}
 		glEnd();
 
@@ -237,9 +250,8 @@ void PathTracer_Draw(void)
 		}
 	}
 
-	// Trace path
+	// Trace player or demo path
 	glBegin(GL_LINES);
-	int fadeCounter = 0;
 	for (int buffer_index = 0;buffer_index < PATHTRACER_MOVEMENT_BUFFER_MAX; buffer_index++) {
 		int i = (pathtracer_movement_read_head + buffer_index) % PATHTRACER_MOVEMENT_BUFFER_MAX;
 		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i++];
@@ -255,15 +267,6 @@ void PathTracer_Draw(void)
 		if (!(pms_prev->holdsData && pms_cur->holdsData))
 			continue;
 
-		// If we are in the range of 200 samples before the write head
-		qboolean isFadingOut = (pathtracer_movement_write_head == pathtracer_movement_read_head) ? fadeCounter < PATHTRACER_MOVEMENT_BUFFER_MAX - PATHTRACER_MOVEMENT_BUFFER_FADEOUT : fadeCounter < pathtracer_movement_write_head - pathtracer_movement_read_head - PATHTRACER_MOVEMENT_BUFFER_FADEOUT;
-		fadeCounter++;
-
-		// then grey
-		if (isFadingOut) {
-			glColor3f(.1f, .1f, .1f);
-		}
-		else
 		if (pms_cur->onground && pms_prev->onground) {
 			glColor3f(.3f, 0.f, 0.f);
 		}
@@ -274,17 +277,26 @@ void PathTracer_Draw(void)
 			glColor3f(1.f, 1.f, 1.f);
 		}
 
-		GLfloat startPos[3];
-		startPos[0] = pms_prev->pos[0];
-		startPos[1] = pms_prev->pos[1];
-		startPos[2] = pms_prev->pos[2] - 20.f; // on the ground
-		glVertex3fv(startPos);
+		vec3_t startPos, endPos;
+		VectorSubtract(pms_prev->pos, to_ground, startPos);
+		VectorSubtract(pms_cur->pos, to_ground, endPos);
 
-		GLfloat endPos[3];
-		endPos[0] = pms_cur->pos[0];
-		endPos[1] = pms_cur->pos[1];
-		endPos[2] = pms_cur->pos[2] - 20.f; // on the ground
+		glVertex3fv(startPos);
 		glVertex3fv(endPos);
+
+		// Angle vector
+		vec3_t a_forward, a_right, a_up;
+		vec3_t view_angles = { -pms_cur->angles[0],pms_cur->angles[1],pms_cur->angles[2] };
+		AngleVectors(view_angles, a_forward, a_right, a_up);
+		VectorScale(a_forward, 20.f, a_forward);
+		VectorCopy(pms_cur->pos, startPos);
+		VectorAdd(pms_cur->pos, a_forward, endPos);
+		VectorSubtract(startPos, to_ground, startPos);
+		VectorSubtract(endPos, to_ground, endPos);
+		glColor3f(.2f, .2f, .2f);
+		glVertex3fv(startPos);
+		glVertex3fv(endPos);
+
 	}
 	glEnd();
 
@@ -327,27 +339,8 @@ void PathTracer_Sample_Each_Frame(void) {
 	// Not playing locally and not in demo playback, e.g. multiplayer then return
 	if (!sv.active && !cls.demoplayback) return;
 
-	if (ghost_entity.model != NULL) {
-		// Ghost mode is handled separately
-		return;
-	}
-
 	boolean enable_recording = scr_recordbunnyhop.value == 1.f;
-
-	extern usercmd_t cmd;
-	extern entity_t ghost_entity;
-
 	static double prevcltime = -1;
-
-	// demo playback only has cl.onground which is different from onground in normal play
-	qboolean onground0;
-	if (sv.active) {
-		extern qboolean onground;
-		onground0 = onground;
-	}
-	else {
-		onground0 = cl.onground;
-	}
 
 	// Restart tracer
 	if (cl.time < prevcltime) {
@@ -360,7 +353,7 @@ void PathTracer_Sample_Each_Frame(void) {
 		prevcltime = cl.time;
 	}
 
-	float speed = sqrt(cl.velocity[0] * cl.velocity[0] + cl.velocity[1] * cl.velocity[1]);
+	float speed = VectorLength(cl.velocity);
 
 	// Determine if we should sample
 	boolean track = false;
@@ -371,19 +364,11 @@ void PathTracer_Sample_Each_Frame(void) {
 		// just in case we hit that zero
 		pms_prev = &pathtracer_movement_samples[PATHTRACER_BUNNHOP_BUFFER_MAX - 1];
 		
-	vec3_t cur_origin;
-	if (sv.active && sv_player != NULL) {
-		VectorCopy(sv_player->v.origin, cur_origin);
-	}
-	else {
-		VectorCopy(cl_entities[cl.viewentity].origin, cur_origin);
-	}
-	
 	if(pms_prev->holdsData) {
-		float dx = fabs(pms_prev->pos[0] - cur_origin[0]);
-		float dy = fabs(pms_prev->pos[1] - cur_origin[1]);
-		float dz = fabs(pms_prev->pos[2] - cur_origin[2]);
-		if (dx > .1f || dy > .1f || dz > .1f) {
+		vec3_t traveled_vector;
+		VectorSubtract(pms_prev->pos, cl_entities[cl.viewentity].origin, traveled_vector);
+		float traveled_distance = VectorLength(traveled_vector);
+		if (traveled_distance > .1f) {
 			// That's practically every frame
 			track = true;
 		}
@@ -407,28 +392,15 @@ void PathTracer_Sample_Each_Frame(void) {
 		}
 		pms_new->holdsData = true;
 
-		if(sv.active && sv_player != NULL ) {
-			extern int show_movekeys_states[NUM_MOVEMENT_KEYS];
-			memcpy(pms_new->movekeys, show_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
-			pms_new->pos[0] = sv_player->v.origin[0];
-			pms_new->pos[1] = sv_player->v.origin[1];
-			pms_new->pos[2] = sv_player->v.origin[2];
-			pms_new->velocity[0] = sv_player->v.velocity[0];
-			pms_new->velocity[1] = sv_player->v.velocity[1];
-			pms_new->velocity[2] = sv_player->v.velocity[2];
-			pms_new->angle = sv_player->v.angles[1];
-		}
-		else {
-			extern int show_movekeys_states[NUM_MOVEMENT_KEYS];
-			memcpy(pms_new->movekeys, show_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
+		extern int show_movekeys_states[NUM_MOVEMENT_KEYS];
+		memcpy(pms_new->movekeys, show_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
 			
-			VectorCopy(cl_entities[cl.viewentity].origin, pms_new->pos);
-			VectorSubtract(cl_entities[cl.viewentity].origin, cl_entities[cl.viewentity].previousorigin, pms_new->velocity);
-			pms_new->angle = cl_entities[cl.viewentity].angles[1];
-		}
+		VectorCopy(cl_entities[cl.viewentity].origin, pms_new->pos);
+		VectorSubtract(cl_entities[cl.viewentity].origin, cl_entities[cl.viewentity].previousorigin, pms_new->velocity);
+		VectorCopy(cl_entities[cl.viewentity].angles, pms_new->angles);
 
 		pms_new->speed = speed;
-		pms_new->onground = onground0;
+		pms_new->onground = cl.onground;
 		pathtracer_movement_write_head++;
 		if (pathtracer_movement_write_head >= PATHTRACER_MOVEMENT_BUFFER_MAX) {
 			pathtracer_movement_write_head = 0;

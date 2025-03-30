@@ -7,9 +7,9 @@
 
 typedef struct {
 	qboolean holdsData;
-	float pos[3];
-	float velocity[3];
-	float angle;
+	vec3_t pos;
+	vec3_t velocity;
+	vec3_t angles;
 	float speed;
 	qboolean onground;
 	movekeytype_t movekeys[NUM_MOVEMENT_KEYS];
