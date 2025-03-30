@@ -8,6 +8,9 @@ extern cvar_t scr_recordbunnyhop;
 void PathTracer_Init(void);
 void PathTracer_Shutdown(void);
 
+// Called after Ghost_Load
+void PathTracer_Load(void);
+
 // called each frame from gl_screen.c SCR_UpdateScreen()
 void PathTracer_Sample_Each_Frame(void);
 

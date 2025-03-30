@@ -606,6 +606,7 @@ void CL_ParseServerInfo (void)
 	R_PreMapLoad (tempname);
 
 	Ghost_Load();
+	PathTracer_Load();
 
 // now we try to load everything else until a cache allocation fails
 	for (i = 1 ; i < nummodels ; i++)

@@ -3,15 +3,17 @@
 #include "wishdir.h"
 #include "../ghost/ghost_private.h"
 
-extern cvar_t show_speed_x;
-extern cvar_t show_speed_y;
+extern ghost_info_t* demo_info;
 
 static cvar_t scr_printbunnyhop = { "scr_printbunnyhop", "1" };
 static cvar_t scr_recordbunnyhop = { "scr_recordbunnyhop", "1" };
+static ghost_level_t* demo_current_level = NULL;
 
 pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
 int pathtracer_movement_write_head = 0;
 int pathtracer_movement_read_head = 0;
+
+static double prev_cltime = -1;
 
 // replace VectorVectors, but now with up always pointing up
 void VectorVectorsAlwaysUp(vec3_t forward, vec3_t right, vec3_t up)
@@ -21,7 +23,6 @@ void VectorVectorsAlwaysUp(vec3_t forward, vec3_t right, vec3_t up)
 	CrossProduct(right, forward, up);
 }
 
-;
 void PathTracer_Draw_MoveKeys(GLfloat pos_on_path[3], vec3_t v_forward, movekeytype_t* movekeys_states)
 {
 	// Movement key triangle
@@ -201,33 +202,46 @@ void PathTracer_Draw(void)
 
 	extern ghost_level_t* ghost_current_level;
 	ghost_level_t* level = ghost_current_level;
-	const vec3_t to_ground = { 0.f, 0.f, -cl.viewheight }; // use cl.viewheight
-	if (level != NULL &&
-		level->num_records > 1) { // we have a ghost!
+	if (demo_current_level != NULL) {
+		level = demo_current_level;
+	}
 
-		// Trace ghost path
+	const vec3_t to_ground = { 0.f, 0.f, -cl.viewheight };
+	if (level != NULL &&
+		level->num_records > 1) { // we have client data
+
+		// Trace path
 		glBegin(GL_LINES);
 		for (int i = 1; i < level->num_records; i++) {
 			ghostrec_t cur_record = level->records[i];
 			ghostrec_t prev_record = level->records[i - 1];
 
-			glColor3f(1.f, 1.f, 1.f);
-			vec3_t startPos, endPos;
+			if (i%2) {
+				glColor3f(1.f, 1.f, 1.f);
+			}
+			else {
+				glColor3f(0.f, 0.f, 0.f);
+			}
+			vec3_t startPos, endPos, delta;
 			VectorAdd(prev_record.origin, to_ground, startPos);
 			VectorAdd(cur_record.origin, to_ground, endPos);
+			VectorSubtract(startPos, endPos, delta);
+			if (VectorLength(delta) > 50.f) {
+				continue;
+			}
 
 			glVertex3fv(startPos);
 			glVertex3fv(endPos);
 
 			// Angle vector
 			vec3_t a_forward, a_right, a_up;
-			vec3_t view_angles = { -cur_record.angle[0],cur_record.angle[1],cur_record.angle[2] };
+			vec3_t view_angles = { -cur_record.angle[0],cur_record.angle[1],cur_record.angle[2] }; // I don't know why, but had to flip the first angle
 			AngleVectors(view_angles, a_forward, a_right, a_up);
 			VectorScale(a_forward, 20.f, a_forward);
 			VectorCopy(cur_record.origin, startPos);
 			VectorAdd(cur_record.origin, a_forward, endPos);
-			VectorSubtract(startPos, to_ground, startPos);
-			VectorSubtract(endPos, to_ground, endPos);
+			VectorAdd(startPos, to_ground, startPos);
+			VectorAdd(endPos, to_ground, endPos);
 			glColor3f(.2f, .2f, .2f);
 			glVertex3fv(startPos);
 			glVertex3fv(endPos);
@@ -250,7 +264,7 @@ void PathTracer_Draw(void)
 		}
 	}
 
-	// Trace player or demo path
+	// Trace player path
 	glBegin(GL_LINES);
 	for (int buffer_index = 0;buffer_index < PATHTRACER_MOVEMENT_BUFFER_MAX; buffer_index++) {
 		int i = (pathtracer_movement_read_head + buffer_index) % PATHTRACER_MOVEMENT_BUFFER_MAX;
@@ -267,19 +281,20 @@ void PathTracer_Draw(void)
 		if (!(pms_prev->holdsData && pms_cur->holdsData))
 			continue;
 
-		if (pms_cur->onground && pms_prev->onground) {
-			glColor3f(.3f, 0.f, 0.f);
-		}
-		else if (pms_cur->onground || pms_prev->onground) {
-			glColor3f(.1f, .1f, .1f);
-		}
-		else {
+		if (i % 2) {
 			glColor3f(1.f, 1.f, 1.f);
 		}
+		else {
+			glColor3f(0.f, 0.f, 0.f);
+		}
 
-		vec3_t startPos, endPos;
+		vec3_t startPos, endPos, delta;
 		VectorAdd(pms_prev->pos, to_ground, startPos);
 		VectorAdd(pms_cur->pos, to_ground, endPos);
+		VectorSubtract(startPos, endPos, delta);
+		if (VectorLength(delta) > 50.f) {
+			continue;
+		}
 
 		glVertex3fv(startPos);
 		glVertex3fv(endPos);
@@ -339,18 +354,18 @@ void PathTracer_Sample_Each_Frame(void) {
 	// Not playing locally and not in demo playback, e.g. multiplayer then return
 	if (!sv.active && !cls.demoplayback) return;
 
+	// Demo handleded separately in draw method
+	if (cls.demoplayback) {
+		return;
+	}
+
 	boolean enable_recording = scr_recordbunnyhop.value == 1.f;
-	static double prevcltime = -1;
 
 	// Restart tracer
-	if (cl.time < prevcltime) {
+	if (cl.time < prev_cltime) {
 		memset(pathtracer_movement_samples, 0, sizeof(pathtracer_movement_samples));
 		pathtracer_movement_write_head = 0;
-
-		prevcltime = cl.time;
-	}
-	else {
-		prevcltime = cl.time;
+		prev_cltime = cl.time;
 	}
 
 	float speed = VectorLength(cl.velocity);
@@ -378,6 +393,13 @@ void PathTracer_Sample_Each_Frame(void) {
 	}
 	else {
 		track = true;
+	}
+	if (cl.time > prev_cltime + 1.f / cl_maxfps.value) {
+		track = true;
+		prev_cltime = cl.time;
+	}
+	else {
+		track = false;
 	}
 
 	// Sample movement
@@ -415,6 +437,32 @@ static void PathTracer_Debug_f (void)
     }
 
 	Con_Printf("pathtracker_debug : Just a test\n");
+}
+
+// called after Ghost_Load
+void PathTracer_Load(void) 
+{
+	if (demo_info == NULL) {
+		return;
+	}
+	char* map_name = CL_MapName();
+	if (map_name == NULL || map_name[0] == '\0') {
+		return;
+	}
+
+	ghost_level_t* level;
+	int i;
+	for (i = 0; i < demo_info->num_levels; i++) {
+		level = &demo_info->levels[i];
+		if (strcmp(map_name, level->map_name) == 0) {
+			break;
+		}
+	}
+	if (i >= demo_info->num_levels) {
+		Con_Printf("Map %s not found in demo\n", map_name);
+	}
+
+	demo_current_level = level;
 }
 
 void PathTracer_Init (void)

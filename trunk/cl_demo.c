@@ -29,9 +29,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include "errno.h"
 #endif
+#include "ghost/ghost_private.h"
 
 framepos_t	*dem_framepos = NULL;
 qboolean	start_of_demo = false;
+
+ghost_info_t* demo_info = NULL;
+extern qboolean Ghost_ReadDemo(FILE* demo_file, ghost_info_t** ghost_info);
 
 dseek_info_t demo_seek_info;
 qboolean demo_seek_info_available;
@@ -712,10 +716,21 @@ void CL_PlayDemo_f (void)
 
 	COM_DefaultExtension (name, ".dem");
 
-	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
+	FILE* ghost_demofile; // Using Ghost code to load path
+	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3)) {
 		cls.demofile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
-	else
+		ghost_demofile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
+	}
+	else{
 		COM_FOpenFile (name, &cls.demofile);
+		COM_FOpenFile (name, &ghost_demofile);
+	}
+
+	if (demo_info != NULL) {
+		Ghost_Free (&demo_info);
+	}
+
+	Ghost_ReadDemo (ghost_demofile, &demo_info);
 
 	if (!cls.demofile)
 	{
