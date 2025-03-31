@@ -957,6 +957,45 @@ into smaller files is a good idea to avoid this corruption.
 Default is `1900` megabytes.  
 Setting to `0` disables splitting.
 
+#### Path Tracer
+
+##### `pathtracer_record_player`
+
+If set to `1`: Record path that you, the player, takes. Includes movement keys.
+
+Default: `0`
+
+##### `pathtracer_show_player`
+
+If set to `1`: Draws path that was previously recorded, draws movement keys.
+
+Default: `0`
+
+##### `pathtracer_show_demo`
+
+If set to `1`: Draws path of demo or ghost. If demo/ghost contains movement keys then they will be drawn.
+
+Default: `0`
+
+##### `pathtracer_fadeout_ghost`
+
+If set to `1`: Draw path (and if available movment keys) only directly around the current position of the ghost. Other parts of the path are greyed out.
+
+Default: `0`
+
+##### `pathtracer_fadeout_demo`
+
+If set to `1`: Draw path (and if available movment keys) only directly around the current position of the demo. Other parts of the path are greyed out.
+
+Default: `1`
+
+##### `pathtracer_fadeout_seconds`
+
+Number of seconds to show path and movement key (if available) information around the current ghost or demo position.
+
+Default: `3`
+
+
 ### Commands
 
 #### All
@@ -1227,3 +1266,4 @@ The speed of the zoom animation is controlled by the `zoom_speed` cvar.
 ##### `-zoom`
 
 Same as togglezoom, but with 2 different commands (aliases) for zooming in and out separately.
+

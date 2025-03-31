@@ -95,3 +95,12 @@ IMPORTANT: make sure the dzip binary (dzip.exe, comes with the JoeQuake zip) is 
 {% include subfeatures/better-look.md %}
 
 {% include subfeatures/md3-models.md %}
+
+### Path Tracer
+
+Sometimes it might be helpful to see the path the player took. That can help to analyse the situation. There are several options:
+
+- Record your movement: If `pathtracer_record_player` is set to `1` then the path and movement keys are recorded. You can switch this on and off as you like. You can bind this to some keys or mouse buttons
+- Show your movement: `pathtracer_show_player` to `1` draws the previously recorded information into the current scene.
+- Show the path of a ghost or demo: `pathtracer_show_demo` on `1` will draw the path of the demo/ghost. It can draw the movement keys if the demo contains that information
+- Fadeout: `pathtracer_fadeout_ghost` and `pathtracer_fadeout_demo` if set to `1` will fadeout the path around the current position. This helps to keep an overview if the path gets a bit convoluted. Per default the fadeout is disabled for ghosts, enabled for demos. The time the path will be drawn is defined by `pathtracer_fadeout_seconds` in seconds (defaults to `3`).
