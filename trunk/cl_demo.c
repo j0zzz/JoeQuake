@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "ghost/demosummary.h"
 #include <time.h>	// easyrecord stats
-#include <io.h>
 
 #ifdef _WIN32
 #include "movie.h"
@@ -628,8 +627,8 @@ static void CheckDZipCompletion (void)
             StopDZPlayback ();
             return;
         case DZIP_EXTRACT_SUCCESS:
-			Con_Printf("\x02" "\n...done extracting demo\n\n");
-			break;
+            Con_Printf("\x02" "\n...done extracting demo\n\n");
+            break;
         default:
             Sys_Error("Invalid dzip status %d", dzip_status);
             return;
@@ -657,7 +656,7 @@ static void StopDZPlayback (void)
 
 static void PlayDZDemo (void)
 {
-	char *name;
+	const char *name;
 	dzip_status_t dzip_status;
 
 	name = Cmd_Argv(1);
@@ -746,12 +745,10 @@ void CL_PlayDemo_f (void)
 	COM_DefaultExtension (name, ".dem");
 
 	Q_strncpyz (demo_filename, name, sizeof(demo_filename));
-	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3)) {
-		cls.demofile = fopen(va("%s/%s", com_basedir, name + 3), "rb");
-	}
-	else {
-		COM_FOpenFile(name, &cls.demofile);
-	}
+	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
+		cls.demofile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
+	else
+		COM_FOpenFile (name, &cls.demofile);
 
 	if (!cls.demofile)
 	{

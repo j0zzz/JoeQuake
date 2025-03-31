@@ -1528,7 +1528,7 @@ CL_Shutdown
 */
 void CL_Shutdown (void)
 {
-	PathTracer_Shutdown();
-	Ghost_Shutdown();
-	CL_ShutdownDemo();
+    PathTracer_Shutdown();
+    Ghost_Shutdown();
+    CL_ShutdownDemo();
 }
