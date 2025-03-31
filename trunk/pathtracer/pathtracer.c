@@ -450,16 +450,6 @@ void PathTracer_Sample_Each_Frame(void) {
 	}
 }
 
-static void PathTracer_cmd_help(void)
-{
-	Con_Printf("usage: tracepath <action>\n\
-Action can be:\n\
-  player    change player settings\n\
-  demo      change demo settings\n\
-  ghost     change ghost settings\n\
-\n");
-}
-
 // called after Ghost_Load
 void PathTracer_Load(void) 
 {
