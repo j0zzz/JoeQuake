@@ -1,7 +1,6 @@
 #include "../quakedef.h"
 #include "pathtracer_private.h"
 #include "wishdir.h"
-#include "../ghost/ghost_private.h"
 
 extern ghost_info_t* demo_info;
 
