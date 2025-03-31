@@ -3,9 +3,9 @@
 
 extern ghost_info_t* demo_info;
 
-static cvar_t pathtracer_show_player = { "pathtracer_show_player", "1" };
-static cvar_t pathtracer_show_demo = { "pathtracer_show_demo", "1" };
-static cvar_t pathtracer_record_player = { "pathtracer_record_player", "1" };
+static cvar_t pathtracer_show_player = { "pathtracer_show_player", "0" };
+static cvar_t pathtracer_show_demo = { "pathtracer_show_demo", "0" };
+static cvar_t pathtracer_record_player = { "pathtracer_record_player", "0" };
 static cvar_t pathtracer_fadeout_ghost = { "pathtracer_fadeout_ghost", "0" };
 static cvar_t pathtracer_fadeout_demo = { "pathtracer_fadeout_demo", "1" };
 static cvar_t pathtracer_fadeout_seconds = { "pathtracer_fadeout_seconds", "3" };
