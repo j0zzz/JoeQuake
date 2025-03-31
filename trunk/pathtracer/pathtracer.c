@@ -450,13 +450,14 @@ void PathTracer_Sample_Each_Frame(void) {
 	}
 }
 
-static void PathTracer_Debug_f (void)
+static void PathTracer_cmd_help(void)
 {
-    if (cmd_source != src_command) {
-        return;
-    }
-
-	Con_Printf("pathtracer_debug : Just a test\n");
+	Con_Printf("usage: tracepath <action>\n\
+Action can be:\n\
+  player    change player settings\n\
+  demo      change demo settings\n\
+  ghost     change ghost settings\n\
+\n");
 }
 
 // called after Ghost_Load
@@ -491,8 +492,6 @@ void PathTracer_Load(void)
 
 void PathTracer_Init (void)
 {
-    Cmd_AddCommand ("pathtracer_debug", PathTracer_Debug_f);
-
     Cvar_Register (&pathtracer_show_player);
 	Cvar_Register (&pathtracer_record_player);
 	Cvar_Register (&pathtracer_fadeout_seconds);
