@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "ghost/demosummary.h"
 #include <time.h>	// easyrecord stats
+#include <io.h>
 
 #ifdef _WIN32
 #include "movie.h"
@@ -42,6 +43,8 @@ static qboolean seek_backwards, seek_was_backwards;
 static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
 qboolean	dz_unpacking = false;
+char demo_filename[256];
+
 static	void CheckDZipCompletion ();
 static	void StopDZPlayback ();
 
@@ -105,6 +108,11 @@ void CL_StopPlayback (void)
 {
 	if (!cls.demoplayback)
 		return;
+
+	if (demo_info != NULL) {
+		Ghost_Free(&demo_info);
+		demo_info = NULL;
+	}
 
 	fclose (cls.demofile);
 	cls.demoplayback = false;
@@ -543,6 +551,28 @@ void StartPlayingOpenedDemo (void)
 	long	demo_offset;
 	qboolean	neg = false;
 
+	FILE* ghost_demofile; // Using Ghost code to load path
+	Con_Printf("\x02" "\n...extracting ghost from file %s\n", demo_filename);
+	if (!strncmp(demo_filename, "../", 3) || !strncmp(demo_filename, "..\\", 3)) {
+		ghost_demofile = fopen(va("%s/%s", com_basedir, demo_filename + 3), "rb");
+	}
+	else {
+		ghost_demofile = fopen(demo_filename, "rb");
+	}
+
+	if (!cls.demofile) // good idea to do this here?
+	{
+		Con_Printf("ERROR: couldn't open for ghost %s\n", demo_filename);
+		cls.demonum = -1;		// stop demo loop
+		return;
+	}
+
+	if (demo_info != NULL) {
+		Ghost_Free(&demo_info);
+	}
+
+	Ghost_ReadDemo(ghost_demofile, &demo_info);
+
 	cls.demoplayback = true;
 	cls.state = ca_connected;
 	cls.forcetrack = 0;
@@ -598,7 +628,8 @@ static void CheckDZipCompletion (void)
             StopDZPlayback ();
             return;
         case DZIP_EXTRACT_SUCCESS:
-            break;
+			Con_Printf("\x02" "\n...done extracting demo\n\n");
+			break;
         default:
             Sys_Error("Invalid dzip status %d", dzip_status);
             return;
@@ -626,7 +657,7 @@ static void StopDZPlayback (void)
 
 static void PlayDZDemo (void)
 {
-	const char *name;
+	char *name;
 	dzip_status_t dzip_status;
 
 	name = Cmd_Argv(1);
@@ -714,21 +745,13 @@ void CL_PlayDemo_f (void)
 
 	COM_DefaultExtension (name, ".dem");
 
-	FILE* ghost_demofile; // Using Ghost code to load path
+	Q_strncpyz (demo_filename, name, sizeof(demo_filename));
 	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3)) {
-		cls.demofile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
-		ghost_demofile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
+		cls.demofile = fopen(va("%s/%s", com_basedir, name + 3), "rb");
 	}
-	else{
-		COM_FOpenFile (name, &cls.demofile);
-		COM_FOpenFile (name, &ghost_demofile);
+	else {
+		COM_FOpenFile(name, &cls.demofile);
 	}
-
-	if (demo_info != NULL) {
-		Ghost_Free (&demo_info);
-	}
-
-	Ghost_ReadDemo (ghost_demofile, &demo_info);
 
 	if (!cls.demofile)
 	{

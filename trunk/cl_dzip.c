@@ -185,6 +185,10 @@ DZip_StartExtract (dzip_context_t *ctx, const char *name, FILE **demo_file_p)
 	}
 	Q_strlcat(ctx->dem_path, ".dem", sizeof(ctx->dem_path));
 
+	extern char demo_filename[256];
+	Q_strncpyz(demo_filename, ctx->dem_path, sizeof(demo_filename));
+	Con_Printf("\x02" "\n...extracted file %s\n", demo_filename);
+
 	if ((demo_file = fopen(ctx->dem_path, "rb")))
 	{
 		Con_Printf ("Opened demo file %s\n", ctx->dem_path);

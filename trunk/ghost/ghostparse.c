@@ -314,8 +314,6 @@ Ghost_StuffText_cb (const char *string, void *ctx)
     if (strncmp(string, "net_messagetimeout", 17) == 0) {
         extern movekeytype_t ghost_movekeys_states[NUM_MOVEMENT_KEYS];
         char* mkstart = strstr(string, "mk");
-        if(mkstart)
-            Con_Printf("pathtracker_debug: %d %d\n", strlen(mkstart), NUM_MOVEMENT_KEYS + 3);
 
         // look for movement keys information
         if ((mkstart) && strlen(mkstart) == (NUM_MOVEMENT_KEYS + 3))

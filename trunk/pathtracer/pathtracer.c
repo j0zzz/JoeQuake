@@ -4,8 +4,12 @@
 
 extern ghost_info_t* demo_info;
 
-static cvar_t scr_printbunnyhop = { "scr_printbunnyhop", "1" };
-static cvar_t scr_recordbunnyhop = { "scr_recordbunnyhop", "1" };
+static cvar_t pathtracer_show_player = { "pathtracer_show_player", "1" };
+static cvar_t pathtracer_show_demo = { "pathtracer_show_demo", "1" };
+static cvar_t pathtracer_record_player = { "pathtracer_record_player", "1" };
+static cvar_t pathtracer_fadeout_ghost = { "pathtracer_fadeout_ghost", "0" };
+static cvar_t pathtracer_fadeout_demo = { "pathtracer_fadeout_demo", "1" };
+static cvar_t pathtracer_fadeout_seconds = { "pathtracer_fadeout_seconds", "3" };
 static ghost_level_t* demo_current_level = NULL;
 
 pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
@@ -200,13 +204,21 @@ void PathTracer_Draw(void)
 	glDisable(GL_CULL_FACE);
 
 	extern ghost_level_t* ghost_current_level;
+	boolean draw_ghost = true;
+	boolean draw_demo = false;
+
 	ghost_level_t* level = ghost_current_level;
-	if (demo_current_level != NULL) {
+	if (demo_info != NULL && demo_current_level != NULL) {
 		level = demo_current_level;
+		draw_ghost = false;
+		draw_demo = true;
 	}
 
+	boolean pathtracer_fadeout_enable = (draw_ghost && pathtracer_fadeout_ghost.value == 1.f) || (draw_demo && pathtracer_fadeout_demo.value == 1.f);
+
 	const vec3_t to_ground = { 0.f, 0.f, -cl.viewheight };
-	if (level != NULL &&
+	if (pathtracer_show_demo.value > 0.f &&
+		level != NULL &&
 		level->num_records > 1) { // we have client data
 
 		// Trace path
@@ -215,11 +227,16 @@ void PathTracer_Draw(void)
 			ghostrec_t cur_record = level->records[i];
 			ghostrec_t prev_record = level->records[i - 1];
 
-			if (i%2) {
-				glColor3f(1.f, 1.f, 1.f);
+			if (pathtracer_fadeout_enable == false || (cur_record.time > cl.time - pathtracer_fadeout_seconds.value && cur_record.time < cl.time + pathtracer_fadeout_seconds.value)) {
+				if (i % 2) {
+					glColor3f(1.f, 1.f, 1.f);
+				}
+				else {
+					glColor3f(0.f, 0.f, 0.f);
+				}
 			}
 			else {
-				glColor3f(0.f, 0.f, 0.f);
+				glColor3f(.2f, .2f, .2f);
 			}
 			vec3_t startPos, endPos, delta;
 			VectorAdd(prev_record.origin, to_ground, startPos);
@@ -232,13 +249,83 @@ void PathTracer_Draw(void)
 			glVertex3fv(startPos);
 			glVertex3fv(endPos);
 
+			if (pathtracer_fadeout_enable == false || (cur_record.time > cl.time - pathtracer_fadeout_seconds.value && cur_record.time < cl.time + pathtracer_fadeout_seconds.value)) {
+				// Angle vector
+				vec3_t a_forward, a_right, a_up;
+				vec3_t view_angles = { -cur_record.angle[0],cur_record.angle[1],cur_record.angle[2] }; // I don't know why, but had to flip the first angle
+				AngleVectors(view_angles, a_forward, a_right, a_up);
+				VectorScale(a_forward, 20.f, a_forward);
+				VectorCopy(cur_record.origin, startPos);
+				VectorAdd(cur_record.origin, a_forward, endPos);
+				VectorAdd(startPos, to_ground, startPos);
+				VectorAdd(endPos, to_ground, endPos);
+				glColor3f(.2f, .2f, .2f);
+				glVertex3fv(startPos);
+				glVertex3fv(endPos);
+			}
+		}
+		glEnd();
+
+		// Draw movement keys
+		for (int i = 1; i < level->num_records; i++) {
+			ghostrec_t cur_record = level->records[i];
+			ghostrec_t prev_record = level->records[i - 1];
+
+			if (pathtracer_fadeout_enable == false || (cur_record.time > cl.time - pathtracer_fadeout_seconds.value && cur_record.time < cl.time + pathtracer_fadeout_seconds.value)) {
+				vec3_t	v_forward;
+				GLfloat pos_on_path[3];
+				movekeytype_t* movekeys_states = cur_record.ghost_movekeys_states;
+				VectorAdd(cur_record.origin, to_ground, pos_on_path);
+				VectorSubtract(cur_record.origin, prev_record.origin, v_forward);
+
+				PathTracer_Draw_MoveKeys(pos_on_path, v_forward, movekeys_states);
+			}
+		}
+	}
+
+	if(pathtracer_show_player.value > 0.f) {
+		// Trace player path
+		glBegin(GL_LINES);
+		for (int buffer_index = 0;buffer_index < PATHTRACER_MOVEMENT_BUFFER_MAX; buffer_index++) {
+			int i = (pathtracer_movement_read_head + buffer_index) % PATHTRACER_MOVEMENT_BUFFER_MAX;
+			pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i++];
+			if (i >= PATHTRACER_MOVEMENT_BUFFER_MAX)
+				i = 0;
+			pathtracer_movement_t* pms_cur = &pathtracer_movement_samples[i];
+
+			// Reached write head?
+			if (i == pathtracer_movement_write_head)
+				continue;
+
+			// No data in yet?
+			if (!(pms_prev->holdsData && pms_cur->holdsData))
+				continue;
+
+			if (i % 2) {
+				glColor3f(1.f, 1.f, 1.f);
+			}
+			else {
+				glColor3f(0.f, 0.f, 0.f);
+			}
+
+			vec3_t startPos, endPos, delta;
+			VectorAdd(pms_prev->pos, to_ground, startPos);
+			VectorAdd(pms_cur->pos, to_ground, endPos);
+			VectorSubtract(startPos, endPos, delta);
+			if (VectorLength(delta) > 50.f) {
+				continue;
+			}
+
+			glVertex3fv(startPos);
+			glVertex3fv(endPos);
+
 			// Angle vector
 			vec3_t a_forward, a_right, a_up;
-			vec3_t view_angles = { -cur_record.angle[0],cur_record.angle[1],cur_record.angle[2] }; // I don't know why, but had to flip the first angle
+			vec3_t view_angles = { -pms_cur->angles[0],pms_cur->angles[1],pms_cur->angles[2] };
 			AngleVectors(view_angles, a_forward, a_right, a_up);
 			VectorScale(a_forward, 20.f, a_forward);
-			VectorCopy(cur_record.origin, startPos);
-			VectorAdd(cur_record.origin, a_forward, endPos);
+			VectorCopy(pms_cur->pos, startPos);
+			VectorAdd(pms_cur->pos, a_forward, endPos);
 			VectorAdd(startPos, to_ground, startPos);
 			VectorAdd(endPos, to_ground, endPos);
 			glColor3f(.2f, .2f, .2f);
@@ -249,96 +336,30 @@ void PathTracer_Draw(void)
 		glEnd();
 
 		// Draw movement keys
-		for (int i = 1; i < level->num_records; i++) {
-			ghostrec_t cur_record = level->records[i];
-			ghostrec_t prev_record = level->records[i - 1];
+		for (int buffer_index = 0;buffer_index < PATHTRACER_MOVEMENT_BUFFER_MAX; buffer_index++) {
+			int i = (pathtracer_movement_read_head + buffer_index) % PATHTRACER_MOVEMENT_BUFFER_MAX;
+			pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i++];
+			if (i >= PATHTRACER_MOVEMENT_BUFFER_MAX)
+				i = 0;
+			pathtracer_movement_t* pms_cur = &pathtracer_movement_samples[i];
 
-			vec3_t	v_forward;
-			GLfloat pos_on_path[3];
-			movekeytype_t* movekeys_states = cur_record.ghost_movekeys_states;
-			VectorAdd(cur_record.origin, to_ground, pos_on_path);
-			VectorSubtract(cur_record.origin, prev_record.origin, v_forward);
+			// Reached write head?
+			if (i == pathtracer_movement_write_head)
+				continue;
 
+			// No data in yet?
+			if (!(pms_prev->holdsData && pms_cur->holdsData))
+				continue;
+
+			vec3_t pos_on_path;
+			vec3_t v_forward;
+
+			VectorAdd(pms_cur->pos, to_ground, pos_on_path);
+			VectorSubtract(pms_cur->pos, pms_prev->pos, v_forward);
+			movekeytype_t* movekeys_states = pms_cur->movekeys;
 			PathTracer_Draw_MoveKeys(pos_on_path, v_forward, movekeys_states);
 		}
 	}
-
-	// Trace player path
-	glBegin(GL_LINES);
-	for (int buffer_index = 0;buffer_index < PATHTRACER_MOVEMENT_BUFFER_MAX; buffer_index++) {
-		int i = (pathtracer_movement_read_head + buffer_index) % PATHTRACER_MOVEMENT_BUFFER_MAX;
-		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i++];
-		if (i >= PATHTRACER_MOVEMENT_BUFFER_MAX)
-			i = 0;
-		pathtracer_movement_t* pms_cur = &pathtracer_movement_samples[i];
-
-		// Reached write head?
-		if (i == pathtracer_movement_write_head)
-			continue;
-
-		// No data in yet?
-		if (!(pms_prev->holdsData && pms_cur->holdsData))
-			continue;
-
-		if (i % 2) {
-			glColor3f(1.f, 1.f, 1.f);
-		}
-		else {
-			glColor3f(0.f, 0.f, 0.f);
-		}
-
-		vec3_t startPos, endPos, delta;
-		VectorAdd(pms_prev->pos, to_ground, startPos);
-		VectorAdd(pms_cur->pos, to_ground, endPos);
-		VectorSubtract(startPos, endPos, delta);
-		if (VectorLength(delta) > 50.f) {
-			continue;
-		}
-
-		glVertex3fv(startPos);
-		glVertex3fv(endPos);
-
-		// Angle vector
-		vec3_t a_forward, a_right, a_up;
-		vec3_t view_angles = { -pms_cur->angles[0],pms_cur->angles[1],pms_cur->angles[2] };
-		AngleVectors(view_angles, a_forward, a_right, a_up);
-		VectorScale(a_forward, 20.f, a_forward);
-		VectorCopy(pms_cur->pos, startPos);
-		VectorAdd(pms_cur->pos, a_forward, endPos);
-		VectorAdd(startPos, to_ground, startPos);
-		VectorAdd(endPos, to_ground, endPos);
-		glColor3f(.2f, .2f, .2f);
-		glVertex3fv(startPos);
-		glVertex3fv(endPos);
-
-	}
-	glEnd();
-
-	// Draw movement keys
-	for (int buffer_index = 0;buffer_index < PATHTRACER_MOVEMENT_BUFFER_MAX; buffer_index++) {
-		int i = (pathtracer_movement_read_head + buffer_index) % PATHTRACER_MOVEMENT_BUFFER_MAX;
-		pathtracer_movement_t* pms_prev = &pathtracer_movement_samples[i++];
-		if (i >= PATHTRACER_MOVEMENT_BUFFER_MAX)
-			i = 0;
-		pathtracer_movement_t* pms_cur = &pathtracer_movement_samples[i];
-
-		// Reached write head?
-		if (i == pathtracer_movement_write_head)
-			continue;
-
-		// No data in yet?
-		if (!(pms_prev->holdsData && pms_cur->holdsData))
-			continue;
-
-		vec3_t pos_on_path;
-		vec3_t v_forward;
-
-		VectorAdd(pms_cur->pos, to_ground, pos_on_path);
-		VectorSubtract(pms_cur->pos, pms_prev->pos, v_forward);
-		movekeytype_t* movekeys_states = pms_cur->movekeys;
-		PathTracer_Draw_MoveKeys(pos_on_path, v_forward, movekeys_states);
-	}
-
 	// Back to normal rendering
 	glColor3f(1, 1, 1);
 	glEnable(GL_TEXTURE_2D);
@@ -348,7 +369,7 @@ void PathTracer_Draw(void)
 
 void PathTracer_Sample_Each_Frame(void) {
 
-	if (scr_printbunnyhop.value != 1.f) return;
+	if (pathtracer_show_player.value != 1.f) return;
 
 	// Not playing locally and not in demo playback, e.g. multiplayer then return
 	if (!sv.active && !cls.demoplayback) return;
@@ -358,7 +379,7 @@ void PathTracer_Sample_Each_Frame(void) {
 		return;
 	}
 
-	boolean enable_recording = scr_recordbunnyhop.value == 1.f;
+	boolean enable_recording = pathtracer_record_player.value == 1.f;
 
 	// Restart tracer
 	if (cl.time < prev_cltime) {
@@ -435,7 +456,7 @@ static void PathTracer_Debug_f (void)
         return;
     }
 
-	Con_Printf("pathtracker_debug : Just a test\n");
+	Con_Printf("pathtracer_debug : Just a test\n");
 }
 
 // called after Ghost_Load
@@ -449,6 +470,8 @@ void PathTracer_Load(void)
 		return;
 	}
 
+	demo_current_level = NULL;
+
 	ghost_level_t* level;
 	int i;
 	for (i = 0; i < demo_info->num_levels; i++) {
@@ -458,18 +481,24 @@ void PathTracer_Load(void)
 		}
 	}
 	if (i >= demo_info->num_levels) {
-		Con_Printf("Map %s not found in demo\n", map_name);
+		demo_current_level = NULL;
+		Con_Printf("Map %s not found in demo, searched for index %d\n", map_name, i);
 	}
-
-	demo_current_level = level;
+	else {
+		demo_current_level = level;
+	}
 }
 
 void PathTracer_Init (void)
 {
     Cmd_AddCommand ("pathtracer_debug", PathTracer_Debug_f);
 
-    Cvar_Register (&scr_printbunnyhop);
-    Cvar_Register (&scr_recordbunnyhop);
+    Cvar_Register (&pathtracer_show_player);
+	Cvar_Register (&pathtracer_record_player);
+	Cvar_Register (&pathtracer_fadeout_seconds);
+	Cvar_Register (&pathtracer_show_demo);
+	Cvar_Register (&pathtracer_fadeout_ghost);
+	Cvar_Register (&pathtracer_fadeout_demo);
 }
 
 
