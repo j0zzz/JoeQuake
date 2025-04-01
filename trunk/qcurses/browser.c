@@ -26,6 +26,10 @@
  *
  */
 
+#ifdef _WIN32
+#include <io.h>
+#include <windows.h>
+#endif
 #include <string.h>
 #include <unistd.h>
 #include "../quakedef.h"
@@ -331,7 +335,11 @@ qboolean Browser_DzipDownloaded() {
 
     Q_snprintfz(path, sizeof(path), ".demo_cache/%s/%s.dz", curtype(), currec());
 
+#ifdef _WIN32
+    return _access(path, 0) == 0;
+#else
     return access(path, F_OK) == 0;
+#endif
 }
 
 qcurses_char_t * Browser_TxtFile() {
@@ -339,10 +347,50 @@ qcurses_char_t * Browser_TxtFile() {
 
     Q_snprintfz(path, sizeof(path), ".demo_cache/%s/%s.dz", curtype(), currec());
 
+#ifdef _WIN32
+    char	cmdline[1024];
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    HANDLE child_stdout_read = NULL;
+    HANDLE child_stdout_write = NULL;
+    SECURITY_ATTRIBUTES sa_attr;
+    DWORD dwRead;
+#else
     pid_t pid;
     int pipes[2];
     pipe(pipes);
+#endif
 
+#ifdef _WIN32
+    sa_attr.nLength = sizeof(SECURITY_ATTRIBUTES); 
+    sa_attr.bInheritHandle = TRUE; 
+    sa_attr.lpSecurityDescriptor = NULL;
+
+    CreatePipe(&child_stdout_read, &child_stdout_write, &sa_attr, 0);
+    SetHandleInformation(child_stdout_read, HANDLE_FLAG_INHERIT, 0)
+
+    memset (&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    si.hStdError = child_stdout_write;
+    si.hStdOutput = child_stdout_write;
+    si.wShowWindow = SW_HIDE;
+    si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+
+    Q_snprintfz(cmdline, sizeof(cmdline), "%s/dzip.exe -s \"%s\" \"%s.txt\"", com_basedir, path, currec());
+    if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, extract_dir, &si, &pi)) {
+        return va("Couldn't execute %s/dzip.exe\n", com_basedir);
+    } else {
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+
+        CloseHandle(child_stdout_write);
+    }
+
+    char * txt = calloc(4096*8, sizeof(char));
+    ReadFile( child_stdout_read, txt, 4096*8, &dwRead, NULL);
+    CloseHandle(child_stdout_read);
+    return qcurses_parse_txt(txt);
+#else
     switch (pid = fork()) {
     case -1:
         return qcurses_parse_txt("ERROR: creating dzip process to read txt!\n");
@@ -361,6 +409,7 @@ qcurses_char_t * Browser_TxtFile() {
         close(pipes[0]);
         return qcurses_parse_txt(txt);
     }
+#endif
 }
 
 void Browser_DownloadDzip() {
