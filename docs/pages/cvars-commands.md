@@ -995,6 +995,12 @@ Number of seconds to show path and movement key (if available) information aroun
 
 Default: `3`
 
+##### `pathtracer_line_smooth`
+
+If set to `1`: Enables line smoothing which makes the lines bolder and better visible.
+
+Default: `0`
+
 
 ### Commands
 

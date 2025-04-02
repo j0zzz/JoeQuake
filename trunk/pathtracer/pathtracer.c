@@ -9,6 +9,7 @@ static cvar_t pathtracer_record_player = { "pathtracer_record_player", "0" };
 static cvar_t pathtracer_fadeout_ghost = { "pathtracer_fadeout_ghost", "0" };
 static cvar_t pathtracer_fadeout_demo = { "pathtracer_fadeout_demo", "1" };
 static cvar_t pathtracer_fadeout_seconds = { "pathtracer_fadeout_seconds", "3" };
+static cvar_t pathtracer_line_smooth = { "pathtracer_line_smooth", "0" };
 static ghost_level_t* demo_current_level = NULL;
 
 pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
@@ -74,7 +75,6 @@ void PathTracer_Draw_MoveKeys(GLfloat pos_on_path[3], vec3_t v_forward, movekeyt
 
 			// Draw
 			glBegin(GL_LINES);
-			glLineWidth(2.0f);
 			glColor3f(1.f, 1.f, 1.f);
 			glVertex3fv(pos_triangle_up);
 			glVertex3fv(pos_triangle_right);
@@ -101,7 +101,6 @@ void PathTracer_Draw_MoveKeys(GLfloat pos_on_path[3], vec3_t v_forward, movekeyt
 
 			// Draw
 			glBegin(GL_LINES);
-			glLineWidth(2.0f);
 			glColor3f(1.f, 1.f, 1.f);
 			glVertex3fv(pos_triangle_down);
 			glVertex3fv(pos_triangle_right);
@@ -128,7 +127,6 @@ void PathTracer_Draw_MoveKeys(GLfloat pos_on_path[3], vec3_t v_forward, movekeyt
 
 			// Draw
 			glBegin(GL_LINES);
-			glLineWidth(2.0f);
 			glColor3f(1.f, .1f, .1f);
 			glVertex3fv(pos_triangle_up);
 			glVertex3fv(pos_triangle_down);
@@ -155,7 +153,6 @@ void PathTracer_Draw_MoveKeys(GLfloat pos_on_path[3], vec3_t v_forward, movekeyt
 
 			// Draw
 			glBegin(GL_LINES);
-			glLineWidth(2.0f);
 			glColor3f(.1f, 1.f, .1f);
 			glVertex3fv(pos_triangle_up);
 			glVertex3fv(pos_triangle_down);
@@ -182,7 +179,6 @@ void PathTracer_Draw_MoveKeys(GLfloat pos_on_path[3], vec3_t v_forward, movekeyt
 
 			// Draw
 			glBegin(GL_LINES);
-			glLineWidth(2.0f);
 			glColor3f(.1f, .1f, 1.f);
 			glVertex3fv(pos_jump_down_left);
 			glVertex3fv(pos_jump_center);
@@ -201,6 +197,9 @@ void PathTracer_Draw(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
+	boolean gl_line_smooth_was_enabled = glIsEnabled(GL_LINE_SMOOTH);
+	if (pathtracer_line_smooth.value == 1.f)
+		glEnable(GL_LINE_SMOOTH);
 
 	extern ghost_level_t* ghost_current_level;
 	boolean draw_ghost = true;
@@ -360,6 +359,8 @@ void PathTracer_Draw(void)
 		}
 	}
 	// Back to normal rendering
+	if(pathtracer_line_smooth.value == 1.f && !gl_line_smooth_was_enabled) // line smoothing was enabled, so do not disable it.
+		glDisable(GL_LINE_SMOOTH);
 	glColor3f(1, 1, 1);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_CULL_FACE);
@@ -487,6 +488,7 @@ void PathTracer_Init (void)
 	Cvar_Register (&pathtracer_show_demo);
 	Cvar_Register (&pathtracer_fadeout_ghost);
 	Cvar_Register (&pathtracer_fadeout_demo);
+	Cvar_Register (&pathtracer_line_smooth);
 }
 
 
