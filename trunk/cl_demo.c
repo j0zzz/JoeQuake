@@ -559,7 +559,7 @@ void StartPlayingOpenedDemo (void)
 		ghost_demofile = fopen(demo_filename, "rb");
 	}
 
-	if (!cls.demofile) // good idea to do this here?
+	if (!ghost_demofile) // good idea to do this here?
 	{
 		Con_Printf("ERROR: couldn't open for ghost %s\n", demo_filename);
 		cls.demonum = -1;		// stop demo loop
