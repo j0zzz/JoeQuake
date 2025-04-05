@@ -244,7 +244,6 @@ static void PathTracer_Draw_Level (ghost_level_t* level, boolean fadeout_enable,
 
 void PathTracer_Draw(void)
 {
-	if (sv_player == NULL) return;
 	if (!sv.active && !cls.demoplayback) return;
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -284,7 +283,7 @@ void PathTracer_Sample_Each_Frame(void) {
 	// Not playing locally and not in demo playback, e.g. multiplayer then return
 	if (!sv.active && !cls.demoplayback) return;
 
-	// Demo handleded separately in draw method
+	// Demo handleded separately in draw method, no recording for that
 	if (cls.demoplayback) {
 		return;
 	}
