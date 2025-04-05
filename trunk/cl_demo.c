@@ -42,7 +42,6 @@ static qboolean seek_backwards, seek_was_backwards;
 static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
 qboolean	dz_unpacking = false;
-char demo_filename[256];
 
 static	void CheckDZipCompletion ();
 static	void StopDZPlayback ();
@@ -550,32 +549,19 @@ void StartPlayingOpenedDemo (void)
 	long	demo_offset;
 	qboolean	neg = false;
 
-	FILE* ghost_demofile; // Using Ghost code to load path
-	if (!strncmp(demo_filename, "../", 3) || !strncmp(demo_filename, "..\\", 3)) {
-		ghost_demofile = fopen(va("%s/%s", com_basedir, demo_filename + 3), "rb");
-	}
-	else {
-		COM_FOpenFile(demo_filename, &ghost_demofile);
-	}
-
 	if (demo_info != NULL) {
 		Ghost_Free(&demo_info);
 	}
 
-	if (ghost_demofile)
-	{
-		Ghost_ReadDemo(ghost_demofile, &demo_info);
-	}
-	else {
-		Con_Printf("\x02" "could not load ghost fromfile %s\n", demo_filename);
-	}
+	demo_offset = ftell(cls.demofile);
+	Ghost_ReadDemo(cls.demofile, &demo_info, false);
+	fseek(cls.demofile, demo_offset, SEEK_SET);
 
 	cls.demoplayback = true;
 	cls.state = ca_connected;
 	cls.forcetrack = 0;
 	seek_time = -1.0;
 
-	demo_offset = ftell(cls.demofile);
 	demo_seek_info_available = DSeek_Parse (cls.demofile, &demo_seek_info);
 	if (!demo_seek_info_available)
 		Con_Printf("WARNING: Could not extract seek information from demo, UI disabled\n");
@@ -742,7 +728,6 @@ void CL_PlayDemo_f (void)
 
 	COM_DefaultExtension (name, ".dem");
 
-	Q_strncpyz (demo_filename, name, sizeof(demo_filename));
 	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
 		cls.demofile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
 	else

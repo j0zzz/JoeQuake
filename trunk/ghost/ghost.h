@@ -75,7 +75,7 @@ void Ghost_Init(void);
 void Ghost_Finish(char* map_name, double finish_time);
 qboolean Ghost_AutoId(char* name, vec3_t origin);
 void Ghost_Shutdown(void);
-qboolean Ghost_ReadDemo(FILE* demo_file, ghost_info_t** ghost_info);
+qboolean Ghost_ReadDemo(FILE* demo_file, ghost_info_t** ghost_info, boolean shall_close_file);
 void Ghost_Free(ghost_info_t** ghost_info);
 
 #endif /* __CL_GHOST_H */

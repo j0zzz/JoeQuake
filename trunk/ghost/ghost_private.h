@@ -27,7 +27,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern const char *ghost_model_paths[GHOST_MODEL_COUNT];
 
-qboolean Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info);
-
-
 #endif /* __GHOST_PRIVATE */
