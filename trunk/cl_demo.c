@@ -551,26 +551,24 @@ void StartPlayingOpenedDemo (void)
 	qboolean	neg = false;
 
 	FILE* ghost_demofile; // Using Ghost code to load path
-	Con_Printf("\x02" "\n...extracting ghost from file %s\n", demo_filename);
 	if (!strncmp(demo_filename, "../", 3) || !strncmp(demo_filename, "..\\", 3)) {
 		ghost_demofile = fopen(va("%s/%s", com_basedir, demo_filename + 3), "rb");
 	}
 	else {
-		ghost_demofile = fopen(demo_filename, "rb");
-	}
-
-	if (!ghost_demofile) // good idea to do this here?
-	{
-		Con_Printf("ERROR: couldn't open for ghost %s\n", demo_filename);
-		cls.demonum = -1;		// stop demo loop
-		return;
+		COM_FOpenFile(demo_filename, &ghost_demofile);
 	}
 
 	if (demo_info != NULL) {
 		Ghost_Free(&demo_info);
 	}
 
-	Ghost_ReadDemo(ghost_demofile, &demo_info);
+	if (ghost_demofile)
+	{
+		Ghost_ReadDemo(ghost_demofile, &demo_info);
+	}
+	else {
+		Con_Printf("\x02" "could not load ghost fromfile %s\n", demo_filename);
+	}
 
 	cls.demoplayback = true;
 	cls.state = ca_connected;
