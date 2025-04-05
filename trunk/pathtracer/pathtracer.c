@@ -10,6 +10,7 @@ static cvar_t pathtracer_fadeout_ghost = { "pathtracer_fadeout_ghost", "0" };
 static cvar_t pathtracer_fadeout_demo = { "pathtracer_fadeout_demo", "1" };
 static cvar_t pathtracer_fadeout_seconds = { "pathtracer_fadeout_seconds", "3" };
 static cvar_t pathtracer_line_smooth = { "pathtracer_line_smooth", "0" };
+static cvar_t pathtracer_skip_line_threshold = { "pathtracer_skip_line_threshold", "80" };
 static ghost_level_t* demo_current_level = NULL;
 
 pathtracer_movement_t pathtracer_movement_samples[PATHTRACER_MOVEMENT_BUFFER_MAX];
@@ -240,7 +241,7 @@ void PathTracer_Draw(void)
 			VectorAdd(prev_record.origin, to_ground, startPos);
 			VectorAdd(cur_record.origin, to_ground, endPos);
 			VectorSubtract(startPos, endPos, delta);
-			if (VectorLength(delta) > 50.f) {
+			if (VectorLength(delta) > pathtracer_skip_line_threshold.value) {
 				continue;
 			}
 
@@ -310,7 +311,7 @@ void PathTracer_Draw(void)
 			VectorAdd(pms_prev->pos, to_ground, startPos);
 			VectorAdd(pms_cur->pos, to_ground, endPos);
 			VectorSubtract(startPos, endPos, delta);
-			if (VectorLength(delta) > 50.f) {
+			if (VectorLength(delta) > pathtracer_skip_line_threshold.value) {
 				continue;
 			}
 
@@ -489,6 +490,7 @@ void PathTracer_Init (void)
 	Cvar_Register (&pathtracer_fadeout_ghost);
 	Cvar_Register (&pathtracer_fadeout_demo);
 	Cvar_Register (&pathtracer_line_smooth);
+	Cvar_Register (&pathtracer_skip_line_threshold);
 }
 
 
