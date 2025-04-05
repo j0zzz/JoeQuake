@@ -42,7 +42,6 @@ static qboolean seek_backwards, seek_was_backwards;
 static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
 qboolean	dz_unpacking = false;
-
 static	void CheckDZipCompletion ();
 static	void StopDZPlayback ();
 
@@ -611,7 +610,6 @@ static void CheckDZipCompletion (void)
             StopDZPlayback ();
             return;
         case DZIP_EXTRACT_SUCCESS:
-            Con_Printf("\x02" "\n...done extracting demo\n\n");
             break;
         default:
             Sys_Error("Invalid dzip status %d", dzip_status);
