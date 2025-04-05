@@ -438,7 +438,7 @@ static qboolean Ghost_Update (void)
 
         // Set alpha based on distance to player.
         ghost_show = Ghost_SetAlpha();
-        memcpy(ghost_movekeys_states, rec_after->ghost_movekeys_states, sizeof(ghost_movekeys_states));
+        memcpy(ghost_movekeys_states, rec_after->movekeys_states, sizeof(ghost_movekeys_states));
     }
 
     return ghost_show;

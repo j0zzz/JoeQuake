@@ -320,7 +320,7 @@ Ghost_StuffText_cb (const char *string, void *ctx)
         {
             for (int i = 0; i < NUM_MOVEMENT_KEYS; i++) {
                 ghost_movekeys_states[i] = mkstart[i + 2] - '0';
-                memcpy(pctx->rec.ghost_movekeys_states, ghost_movekeys_states, sizeof(ghost_movekeys_states));
+                memcpy(pctx->rec.movekeys_states, ghost_movekeys_states, sizeof(ghost_movekeys_states));
             }
         }
     }

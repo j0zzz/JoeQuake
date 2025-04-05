@@ -43,7 +43,7 @@ typedef struct {
     float angle[3];
     unsigned int frame;
     unsigned int model;
-    movekeytype_t ghost_movekeys_states[NUM_MOVEMENT_KEYS];
+    movekeytype_t movekeys_states[NUM_MOVEMENT_KEYS];
 } ghostrec_t;
 
 typedef struct {

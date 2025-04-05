@@ -233,7 +233,7 @@ static void PathTracer_Draw_Level (ghost_level_t* level, boolean fadeout_enable,
 		if (fadeout_enable == false || (cur_record.time > cl.time - fadeout_seconds && cur_record.time < cl.time + fadeout_seconds)) {
 			vec3_t	v_forward;
 			GLfloat pos_on_path[3];
-			movekeytype_t* movekeys_states = cur_record.ghost_movekeys_states;
+			movekeytype_t* movekeys_states = cur_record.movekeys_states;
 			VectorAdd(cur_record.origin, to_ground, pos_on_path);
 			VectorSubtract(cur_record.origin, prev_record.origin, v_forward);
 
@@ -304,7 +304,7 @@ void PathTracer_Sample_Each_Frame(void) {
 		ghostrec_t cur_record;
 		
 		extern int show_movekeys_states[NUM_MOVEMENT_KEYS];
-		memcpy(cur_record.ghost_movekeys_states, show_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
+		memcpy(cur_record.movekeys_states, show_movekeys_states, sizeof(int[NUM_MOVEMENT_KEYS]));
 
 		cur_record.time = cl.time;
 		cur_record.frame = 0;
