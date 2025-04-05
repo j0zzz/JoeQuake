@@ -1416,48 +1416,39 @@ void SCR_DrawMovementKeys ()
 	color_t c = RGBA_TO_COLOR(255, 255, 255, 255);
 	extern vrect_t scr_vrect;
 	extern int show_movekeys_states[NUM_MOVEMENT_KEYS];
-	extern int ghost_movekeys_states[NUM_MOVEMENT_KEYS];
-	int local_movekeys_states[NUM_MOVEMENT_KEYS];
 
 	if (!show_movekeys.value)
 		return;
-
-	if (ghost_entity.model != NULL) {
-		memcpy(local_movekeys_states, ghost_movekeys_states, sizeof(ghost_movekeys_states));
-	}
-	else {
-		memcpy(local_movekeys_states, show_movekeys_states, sizeof(show_movekeys_states));
-	}
 
 	// get center of screen
 	x = scr_vrect.x + scr_vrect.width / 2;
 	y = scr_vrect.y + scr_vrect.height / 2;
 
-	if (local_movekeys_states[mk_forward] & 1)
+	if (show_movekeys_states[mk_forward] & 1)
 	{
 		Draw_AlphaLineRGB(x - half_size, y - half_size, x, y - half_size - size, 2, c);
 		Draw_AlphaLineRGB(x, y - half_size - size, x + half_size, y - half_size, 2, c);
 		Draw_AlphaLineRGB(x + half_size, y - half_size, x - half_size, y - half_size, 2, c);
 	}
-	if (local_movekeys_states[mk_back] & 1)
+	if (show_movekeys_states[mk_back] & 1)
 	{
 		Draw_AlphaLineRGB(x - half_size, y + half_size, x, y + half_size + size, 2, c);
 		Draw_AlphaLineRGB(x, y + half_size + size, x + half_size, y + half_size, 2, c);
 		Draw_AlphaLineRGB(x + half_size, y + half_size, x - half_size, y + half_size, 2, c);
 	}
-	if (local_movekeys_states[mk_moveleft] & 1)
+	if (show_movekeys_states[mk_moveleft] & 1)
 	{
 		Draw_AlphaLineRGB(x - half_size, y + half_size, x - half_size - size, y, 2, c);
 		Draw_AlphaLineRGB(x - half_size - size, y, x - half_size, y - half_size, 2, c);
 		Draw_AlphaLineRGB(x - half_size, y - half_size, x - half_size, y + half_size, 2, c);
 	}
-	if (local_movekeys_states[mk_moveright] & 1)
+	if (show_movekeys_states[mk_moveright] & 1)
 	{
 		Draw_AlphaLineRGB(x + half_size, y - half_size, x + half_size + size, y, 2, c);
 		Draw_AlphaLineRGB(x + half_size + size, y, x + half_size, y + half_size, 2, c);
 		Draw_AlphaLineRGB(x + half_size, y + half_size, x + half_size, y - half_size, 2, c);
 	}
-	if (local_movekeys_states[mk_jump] & 1)
+	if (show_movekeys_states[mk_jump] & 1)
 		Draw_Character(x - half_size + size, y - half_size - size, 'j', true);
 }
 
