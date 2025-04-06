@@ -1930,6 +1930,9 @@ void R_DrawAliasModel (entity_t *ent)
 	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 	islumaskin = paliashdr->islumaskin[skinnum][anim];
 
+	if (clmodel->modhint == MOD_PLAYER && cl.items & IT_INVISIBILITY)
+		ent->transparency = gl_ringalpha.value;
+
 	if (Mod_IsMonsterModel(ent->modelindex) && r_outline_monsters_cheatsafe && cl_num_wallhacked_entities < MAX_WALLHACKED_ENTITIES && !draw_wallhacked_outlines)
 	{
 		cl_wallhacked_entities[cl_num_wallhacked_entities++] = ent;

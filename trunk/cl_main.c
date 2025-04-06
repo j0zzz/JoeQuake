@@ -1228,6 +1228,8 @@ void CL_RelinkEntities (void)
 			entity_t *vwepent = &view_weapons[num_vweps];
 
 			CL_CopyEntity(vwepent, ent, vwep_modelindex);
+			if (cl.items & IT_INVISIBILITY)
+				vwepent->transparency = gl_ringalpha.value;
 			num_vweps++;
 
 			if (cl_numvisedicts < MAX_VISEDICTS)
