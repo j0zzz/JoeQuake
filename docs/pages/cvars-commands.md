@@ -1284,4 +1284,3 @@ The speed of the zoom animation is controlled by the `zoom_speed` cvar.
 ##### `-zoom`
 
 Same as togglezoom, but with 2 different commands (aliases) for zooming in and out separately.
-
