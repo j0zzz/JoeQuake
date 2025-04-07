@@ -547,13 +547,16 @@ void StartPlayingOpenedDemo (void)
 	int		c;
 	long	demo_offset;
 	qboolean	neg = false;
+	char next_demo_path[MAX_OSPATH];
 
 	if (demo_info != NULL) {
-		Ghost_Free(&demo_info);
+		Ghost_Free (&demo_info);
 	}
 
-	demo_offset = ftell(cls.demofile);
-	Ghost_ReadDemo(cls.demofile, &demo_info, false);
+	demo_offset = ftell (cls.demofile);
+	demo_info = Q_calloc (1, sizeof(*demo_info));
+	Ghost_ReadDemoNoChain (cls.demofile, demo_info, next_demo_path);
+
 	fseek(cls.demofile, demo_offset, SEEK_SET);
 
 	cls.demoplayback = true;

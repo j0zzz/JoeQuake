@@ -941,7 +941,7 @@ static void Ghost_Command_f (void)
             ghost_demo_path[0] = '\0';
             ghost_current_level = NULL;
         }
-        ok = Ghost_ReadDemo(demo_file, &ghost_info, true);
+        ok = Ghost_ReadDemo(demo_file, &ghost_info);
         // file is now closed.
     }
 

@@ -342,9 +342,9 @@ Ghost_UpdateColors_cb(byte client_num, byte colors, void* ctx)
 }
 
 
-static qboolean
+qboolean 
 Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
-                       char *next_demo_path, boolean shall_close_file)
+                       char *next_demo_path)
 {
     qboolean ok = true;
     dp_err_t dprc;
@@ -395,11 +395,6 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
         }
     }
 
-    // Free everything
-    if (shall_close_file && pctx.demo_file) {
-        fclose(pctx.demo_file);
-    }
-
     return ok;
 }
 
@@ -412,7 +407,7 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
 
 
 qboolean
-Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info_p, boolean shall_close_file)
+Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info_p)
 {
     qboolean ok = true;
     char next_demo_path[MAX_OSPATH];
@@ -427,7 +422,13 @@ Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info_p, boolean shall_clos
     while (ok && demo_file != NULL
            && ghost_info->num_levels < GHOST_MAX_LEVELS
            && num_demos_searched < MAX_CHAINED_DEMOS) {
-        ok = Ghost_ReadDemoNoChain (demo_file, ghost_info, next_demo_path, shall_close_file);
+        ok = Ghost_ReadDemoNoChain (demo_file, ghost_info, next_demo_path);
+        // Free everything
+        if (demo_file) {
+            fclose(demo_file);
+            demo_file = NULL;
+        }
+
         if (ok) {
             if (next_demo_path[0] != '\0') {
                 if (COM_FOpenFile (next_demo_path, &demo_file) == -1) {
@@ -456,7 +457,7 @@ Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info_p, boolean shall_clos
         Ghost_Free(&ghost_info);
     }
 
-    if (shall_close_file && demo_file != NULL) {
+    if (demo_file != NULL) {
         fclose(demo_file);
     }
 
