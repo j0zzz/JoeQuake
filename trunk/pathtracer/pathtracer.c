@@ -278,7 +278,7 @@ void PathTracer_Draw(void)
 
 void PathTracer_Sample_Each_Frame(void) {
 
-	if (pathtracer_show_player.value != 1.f) return;
+	if (pathtracer_record_player.value != 1.f) return;
 
 	// Not playing locally and not in demo playback, e.g. multiplayer then return
 	if (!sv.active && !cls.demoplayback) return;
@@ -299,8 +299,7 @@ void PathTracer_Sample_Each_Frame(void) {
 	}
 
 	// Sample movement
-	boolean enable_recording = pathtracer_record_player.value == 1.f;
-	if (track && enable_recording) {
+	if (track) {
 		ghostrec_t cur_record;
 		
 		extern int show_movekeys_states[NUM_MOVEMENT_KEYS];
