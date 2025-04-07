@@ -983,6 +983,24 @@ If set to `1`: Draws path of the ghost. If the ghost contains movement keys then
 
 Default: `0`
 
+##### `pathtracer_movekeys_player`
+
+If set to `1`: Draw the movement keys on the path.
+
+Default: `1`
+
+##### `pathtracer_movekeys_demo`
+
+If set to `1`: Draw the movement keys on the path
+
+Default: `1`
+
+##### `pathtracer_movekeys_ghost`
+
+If set to `1`: Draw the movement keys on the path
+
+Default: `1`
+
 ##### `pathtracer_fadeout_ghost`
 
 If set to `1`: Draw path (and if available movment keys) only directly around the current position of the ghost. Other parts of the path are greyed out.
