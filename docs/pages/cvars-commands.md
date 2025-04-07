@@ -973,7 +973,13 @@ Default: `0`
 
 ##### `pathtracer_show_demo`
 
-If set to `1`: Draws path of demo or ghost. If demo/ghost contains movement keys then they will be drawn.
+If set to `1`: Draws path of the demo. If the demo contains movement keys then they will be drawn.
+
+Default: `0`
+
+##### `pathtracer_show_ghost`
+
+If set to `1`: Draws path of the ghost. If the ghost contains movement keys then they will be drawn.
 
 Default: `0`
 

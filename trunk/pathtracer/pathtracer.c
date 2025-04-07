@@ -3,6 +3,7 @@
 
 static cvar_t pathtracer_show_player = { "pathtracer_show_player", "0" };
 static cvar_t pathtracer_show_demo = { "pathtracer_show_demo", "0" };
+static cvar_t pathtracer_show_ghost = { "pathtracer_show_ghost", "0" };
 static cvar_t pathtracer_record_player = { "pathtracer_record_player", "0" };
 static cvar_t pathtracer_fadeout_ghost = { "pathtracer_fadeout_ghost", "0" };
 static cvar_t pathtracer_fadeout_demo = { "pathtracer_fadeout_demo", "1" };
@@ -254,16 +255,16 @@ void PathTracer_Draw(void)
 		glEnable(GL_LINE_SMOOTH);
 
 	extern ghost_level_t* ghost_current_level;
-	if (ghost_current_level != NULL) {
+	if (pathtracer_show_ghost.value == 1.f && ghost_current_level != NULL) {
 		PathTracer_Draw_Level(ghost_current_level, (pathtracer_fadeout_ghost.value == 1.f), pathtracer_fadeout_seconds.value, pathtracer_line_skip_threshold.value);
 	}
 	
 	extern ghost_info_t* demo_info;
-	if (demo_info != NULL && demo_current_level != NULL) {
+	if (pathtracer_show_demo.value == 1.f && demo_info != NULL && demo_current_level != NULL) {
 		PathTracer_Draw_Level(demo_current_level, (pathtracer_fadeout_demo.value == 1.f), pathtracer_fadeout_seconds.value, pathtracer_line_skip_threshold.value);
 	}
 
-	if (player_record_current_level != NULL) {
+	if (pathtracer_show_player.value == 1.f && player_record_current_level != NULL) {
 		PathTracer_Draw_Level(player_record_current_level, false, pathtracer_fadeout_seconds.value, pathtracer_line_skip_threshold.value);
 	}
 
@@ -356,10 +357,11 @@ void PathTracer_Load(void)
 
 void PathTracer_Init (void)
 {
-    Cvar_Register (&pathtracer_show_player);
 	Cvar_Register (&pathtracer_record_player);
-	Cvar_Register (&pathtracer_fadeout_seconds);
+	Cvar_Register (&pathtracer_show_player);
+	Cvar_Register (&pathtracer_show_ghost);
 	Cvar_Register (&pathtracer_show_demo);
+	Cvar_Register (&pathtracer_fadeout_seconds);
 	Cvar_Register (&pathtracer_fadeout_ghost);
 	Cvar_Register (&pathtracer_fadeout_demo);
 	Cvar_Register (&pathtracer_line_smooth);
