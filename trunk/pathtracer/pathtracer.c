@@ -8,7 +8,7 @@ static cvar_t pathtracer_fadeout_ghost = { "pathtracer_fadeout_ghost", "0" };
 static cvar_t pathtracer_fadeout_demo = { "pathtracer_fadeout_demo", "1" };
 static cvar_t pathtracer_fadeout_seconds = { "pathtracer_fadeout_seconds", "3" };
 static cvar_t pathtracer_line_smooth = { "pathtracer_line_smooth", "0" };
-static cvar_t pathtracer_skip_line_threshold = { "pathtracer_skip_line_threshold", "80" };
+static cvar_t pathtracer_line_skip_threshold = { "pathtracer_line_skip_threshold", "160" };
 static ghost_level_t* demo_current_level = NULL;
 
 static double prev_cltime = -1;
@@ -255,16 +255,16 @@ void PathTracer_Draw(void)
 
 	extern ghost_level_t* ghost_current_level;
 	if (ghost_current_level != NULL) {
-		PathTracer_Draw_Level(ghost_current_level, (pathtracer_fadeout_ghost.value == 1.f), pathtracer_fadeout_seconds.value, pathtracer_skip_line_threshold.value);
+		PathTracer_Draw_Level(ghost_current_level, (pathtracer_fadeout_ghost.value == 1.f), pathtracer_fadeout_seconds.value, pathtracer_line_skip_threshold.value);
 	}
 	
 	extern ghost_info_t* demo_info;
 	if (demo_info != NULL && demo_current_level != NULL) {
-		PathTracer_Draw_Level(demo_current_level, (pathtracer_fadeout_demo.value == 1.f), pathtracer_fadeout_seconds.value, pathtracer_skip_line_threshold.value);
+		PathTracer_Draw_Level(demo_current_level, (pathtracer_fadeout_demo.value == 1.f), pathtracer_fadeout_seconds.value, pathtracer_line_skip_threshold.value);
 	}
 
 	if (player_record_current_level != NULL) {
-		PathTracer_Draw_Level(player_record_current_level, false, pathtracer_fadeout_seconds.value, pathtracer_skip_line_threshold.value);
+		PathTracer_Draw_Level(player_record_current_level, false, pathtracer_fadeout_seconds.value, pathtracer_line_skip_threshold.value);
 	}
 
 	// Back to normal rendering
@@ -364,7 +364,7 @@ void PathTracer_Init (void)
 	Cvar_Register (&pathtracer_fadeout_ghost);
 	Cvar_Register (&pathtracer_fadeout_demo);
 	Cvar_Register (&pathtracer_line_smooth);
-	Cvar_Register (&pathtracer_skip_line_threshold);
+	Cvar_Register (&pathtracer_line_skip_threshold);
 
 	// Initiate player record
 	player_record_info.levels[0].map_name[0] = '\0';

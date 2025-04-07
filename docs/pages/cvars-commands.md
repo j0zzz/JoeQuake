@@ -1001,11 +1001,11 @@ If set to `1`: Enables line smoothing which makes the lines bolder and better vi
 
 Default: `0`
 
-##### `pathtracer_skip_line_threshold`
+##### `pathtracer_line_skip_threshold`
 
 The line will not be drawn if the length between the frames is larger than this threshold. This help to not draw lines through the whole map when teleporting. This is a very technical topic, should not be relevant for most people.
 
-Default: `80`
+Default: `160`
 
 
 ### Commands
