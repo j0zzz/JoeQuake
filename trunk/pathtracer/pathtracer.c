@@ -1,5 +1,4 @@
 #include "../quakedef.h"
-#include "pathtracer_private.h"
 
 static cvar_t pathtracer_record_player = { "pathtracer_record_player", "0" };
 static cvar_t pathtracer_show_player = { "pathtracer_show_player", "0" };
@@ -28,7 +27,6 @@ void VectorVectorsAlwaysUp(vec3_t forward, vec3_t right, vec3_t up)
 	CrossProduct(right, forward, up);
 }
 
-#define MAX_CHAINED_DEMOS   64
 #define RECORD_REALLOC_LOG2     9   // 512 records per chunk, approx 7 seconds
 
 static void PathTracer_Append(ghost_level_t* level, ghostrec_t* rec)
@@ -177,7 +175,7 @@ void PathTracer_Draw_MoveKeys(GLfloat pos_on_path[3], vec3_t v_forward, movekeyt
 	}
 }
 
-static void PathTracer_Draw_Level (ghost_level_t* level, boolean fadeout_enable, float fadeout_seconds, float skip_line_threshold, boolean show_movekeys)
+static void PathTracer_Draw_Level (ghost_level_t* level, qboolean fadeout_enable, float fadeout_seconds, float skip_line_threshold, qboolean show_movekeys)
 {
 	if (level->num_records <= 1)
 		return;
@@ -255,7 +253,7 @@ void PathTracer_Draw(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
-	boolean gl_line_smooth_was_enabled = glIsEnabled(GL_LINE_SMOOTH);
+	qboolean gl_line_smooth_was_enabled = glIsEnabled(GL_LINE_SMOOTH);
 	if (pathtracer_line_smooth.value == 1.f)
 		glEnable(GL_LINE_SMOOTH);
 
@@ -295,7 +293,7 @@ void PathTracer_Sample_Each_Frame(void) {
 	}
 
 	// Determine if we should sample
-	boolean track = false;
+	qboolean track = false;
 	if (cl.time > prev_cltime + 1.f / cl_maxfps.value) {
 		track = true;
 		prev_cltime = cl.time;
