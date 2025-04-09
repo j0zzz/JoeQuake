@@ -36,7 +36,7 @@ static dzip_context_t ghost_dz_ctx;
 static ghost_info_t *ghost_info = NULL;
 char                ghost_demo_path[MAX_OSPATH] = "";
 static char         ghost_map_name[MAX_QPATH];
-static ghost_level_t *ghost_current_level = NULL;
+ghost_level_t       *ghost_current_level = NULL;
 entity_t            ghost_entity;
 static float        ghost_shift = 0.0f;
 static int          ghost_model_indices[GHOST_MODEL_COUNT];
@@ -65,7 +65,7 @@ static ghost_marathon_info_t ghost_marathon_info;
 
 ghost_color_info_t ghost_color_info[GHOST_MAX_CLIENTS];
 extern char *GetPrintedTime(double time);   // Maybe put the definition somewhere central?
-
+movekeytype_t ghost_movekeys_states[NUM_MOVEMENT_KEYS];
 
 // This could be done more intelligently, no doubt.
 static float Ghost_FindClosest (vec3_t origin, qboolean *match)
@@ -438,6 +438,7 @@ static qboolean Ghost_Update (void)
 
         // Set alpha based on distance to player.
         ghost_show = Ghost_SetAlpha();
+        memcpy(ghost_movekeys_states, rec_after->movekeys_states, sizeof(ghost_movekeys_states));
     }
 
     return ghost_show;

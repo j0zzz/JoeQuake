@@ -957,6 +957,81 @@ into smaller files is a good idea to avoid this corruption.
 Default is `1900` megabytes.  
 Setting to `0` disables splitting.
 
+#### Path Tracer
+
+##### `pathtracer_record_player`
+
+If set to `1`: Record path that you, the player, takes. Includes movement keys.
+
+Default: `0`
+
+##### `pathtracer_show_player`
+
+If set to `1`: Draws path that was previously recorded, draws movement keys.
+
+Default: `0`
+
+##### `pathtracer_show_demo`
+
+If set to `1`: Draws path of the demo. If the demo contains movement keys then they will be drawn.
+
+Default: `0`
+
+##### `pathtracer_show_ghost`
+
+If set to `1`: Draws path of the ghost. If the ghost contains movement keys then they will be drawn.
+
+Default: `0`
+
+##### `pathtracer_movekeys_player`
+
+If set to `1`: Draw the movement keys on the path.
+
+Default: `1`
+
+##### `pathtracer_movekeys_demo`
+
+If set to `1`: Draw the movement keys on the path
+
+Default: `1`
+
+##### `pathtracer_movekeys_ghost`
+
+If set to `1`: Draw the movement keys on the path
+
+Default: `1`
+
+##### `pathtracer_fadeout_ghost`
+
+If set to `1`: Draw path (and if available movment keys) only directly around the current position of the ghost. Other parts of the path are greyed out.
+
+Default: `0`
+
+##### `pathtracer_fadeout_demo`
+
+If set to `1`: Draw path (and if available movment keys) only directly around the current position of the demo. Other parts of the path are greyed out.
+
+Default: `1`
+
+##### `pathtracer_fadeout_seconds`
+
+Number of seconds to show path and movement key (if available) information around the current ghost or demo position.
+
+Default: `3`
+
+##### `pathtracer_line_smooth`
+
+If set to `1`: Enables line smoothing which makes the lines bolder and better visible.
+
+Default: `0`
+
+##### `pathtracer_line_skip_threshold`
+
+The line will not be drawn if the length between the frames is larger than this threshold. This help to not draw lines through the whole map when teleporting. This is a very technical topic, should not be relevant for most people.
+
+Default: `160`
+
+
 ### Commands
 
 #### All

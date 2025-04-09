@@ -4168,6 +4168,8 @@ void R_RenderScene (void)
 	Fog_DisableGFog(); //johnfitz
 
 	R_DrawViewModel();
+
+	PathTracer_Draw();
 }
 
 /*

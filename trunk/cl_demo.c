@@ -33,6 +33,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 framepos_t	*dem_framepos = NULL;
 qboolean	start_of_demo = false;
 
+ghost_info_t* demo_info = NULL;
+
 dseek_info_t demo_seek_info;
 qboolean demo_seek_info_available;
 static double seek_time;
@@ -103,6 +105,11 @@ void CL_StopPlayback (void)
 {
 	if (!cls.demoplayback)
 		return;
+
+	if (demo_info != NULL) {
+		Ghost_Free(&demo_info);
+		demo_info = NULL;
+	}
 
 	fclose (cls.demofile);
 	cls.demoplayback = false;
@@ -540,13 +547,23 @@ void StartPlayingOpenedDemo (void)
 	int		c;
 	long	demo_offset;
 	qboolean	neg = false;
+	char next_demo_path[MAX_OSPATH];
+
+	if (demo_info != NULL) {
+		Ghost_Free (&demo_info);
+	}
+
+	demo_offset = ftell (cls.demofile);
+	demo_info = Q_calloc (1, sizeof(*demo_info));
+	Ghost_ReadDemoNoChain (cls.demofile, demo_info, next_demo_path);
+
+	fseek(cls.demofile, demo_offset, SEEK_SET);
 
 	cls.demoplayback = true;
 	cls.state = ca_connected;
 	cls.forcetrack = 0;
 	seek_time = -1.0;
 
-	demo_offset = ftell(cls.demofile);
 	demo_seek_info_available = DSeek_Parse (cls.demofile, &demo_seek_info);
 	if (!demo_seek_info_available)
 		Con_Printf("WARNING: Could not extract seek information from demo, UI disabled\n");
