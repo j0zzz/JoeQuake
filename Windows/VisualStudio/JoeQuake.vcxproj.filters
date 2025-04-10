@@ -113,6 +113,12 @@
     <Filter Include="Header Files\Ghost_h">
       <UniqueIdentifier>{93535a27-753e-43e4-983d-0bc3e222b987}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\PathTracer">
+      <UniqueIdentifier>{4672d0cc-286d-45b5-ad76-38fa09220d1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\PathTracer_h">
+      <UniqueIdentifier>{1f65504b-d25b-4450-859c-fc6ce54bc199}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\joequake.rc">
@@ -465,6 +471,9 @@
     <ClCompile Include="..\..\trunk\snd_vorbis.c">
       <Filter>Source Files\Sound</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\trunk\pathtracer\pathtracer.c">
+      <Filter>Source Files\PathTracer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\trunk\adivtab.h">
@@ -670,6 +679,9 @@
     </ClInclude>
     <ClInclude Include="..\..\trunk\snd_vorbis.h">
       <Filter>Header Files\Sound_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\pathtracer\pathtracer.h">
+      <Filter>Header Files\PathTracer_h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -356,6 +356,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Direct3D Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\trunk\ioapi.c" />
+    <ClCompile Include="..\..\trunk\pathtracer\pathtracer.c" />
     <ClCompile Include="..\..\trunk\snd_codec.c" />
     <ClCompile Include="..\..\trunk\snd_dma.c" />
     <ClCompile Include="..\..\trunk\snd_mp3.c" />
@@ -614,6 +615,7 @@
     <ClInclude Include="..\..\trunk\glquake.h" />
     <ClInclude Include="..\..\trunk\cdaudio.h" />
     <ClInclude Include="..\..\trunk\gl_warp_sin.h" />
+    <ClInclude Include="..\..\trunk\pathtracer\pathtracer.h" />
     <ClInclude Include="..\..\trunk\progdefs.h" />
     <ClInclude Include="..\..\trunk\progs.h" />
     <ClInclude Include="..\..\trunk\snd_codec.h" />
