@@ -44,6 +44,17 @@ static void PathTracer_Append(ghost_level_t* level, ghostrec_t* rec)
 	level->num_records++;
 }
 
+void Pathtracer_Draw_MoveKeys_Triangle(float r, float g, float b, vec3_t edge1, vec3_t edge2, vec3_t edge3)
+{
+	glColor3f(r, g, b);
+	glVertex3fv(edge1);
+	glVertex3fv(edge2);
+	glVertex3fv(edge2);
+	glVertex3fv(edge3);
+	glVertex3fv(edge3);
+	glVertex3fv(edge1);
+}
+
 void PathTracer_Draw_MoveKeys(GLfloat pos_on_path[3], vec3_t v_forward, movekeytype_t* movekeys_states)
 {
 	// Movement key triangle
@@ -92,85 +103,76 @@ void PathTracer_Draw_MoveKeys(GLfloat pos_on_path[3], vec3_t v_forward, movekeyt
 			VectorCopy(pos_offset_path, pos_jump_center);
 
 			// Draw
-			glBegin(GL_LINES);
 			glColor3f(.1f, .1f, 1.f);
 			glVertex3fv(pos_jump_down_left);
 			glVertex3fv(pos_jump_center);
 			glVertex3fv(pos_jump_center);
 			glVertex3fv(pos_jump_up);
-			glEnd();
 		}
-		else { // Draw triangles
-			vec3_t pos_triangle_first, pos_triangle_third, pos_triangle_second;
-			glBegin(GL_LINES);
-			if (movekeys_states[mk_forward] & 1)
-			{
-				vec3_t pos_offset_path;
+		vec3_t pos_triangle_first, pos_triangle_third, pos_triangle_second;
+		if (movekeys_states[mk_forward] & 1)
+		{
+			vec3_t pos_offset_path;
 
-				// Move up
-				VectorSubtract(pos_on_path, v_up, pos_offset_path);
+			// Move up
+			VectorSubtract(pos_on_path, v_up, pos_offset_path);
 
-				// Calculate edges of the movement triangle
-				VectorSubtract(pos_offset_path, t_up, pos_triangle_first);
-				VectorSubtract(pos_offset_path, t_right, pos_triangle_second);
-				VectorAdd(pos_triangle_second, t_up, pos_triangle_second);
-				VectorAdd(pos_offset_path, t_right, pos_triangle_third);
-				VectorAdd(pos_triangle_third, t_up, pos_triangle_third);
+			// Calculate edges of the movement triangle
+			VectorSubtract(pos_offset_path, t_up, pos_triangle_first);
+			VectorSubtract(pos_offset_path, t_right, pos_triangle_second);
+			VectorAdd(pos_triangle_second, t_up, pos_triangle_second);
+			VectorAdd(pos_offset_path, t_right, pos_triangle_third);
+			VectorAdd(pos_triangle_third, t_up, pos_triangle_third);
 
-				glColor3f(1.f, 1.f, 1.f);
-			}else if (movekeys_states[mk_back] & 1)
-			{
-				vec3_t pos_offset_path;
+			Pathtracer_Draw_MoveKeys_Triangle(1.f, 1.f, 1.f, pos_triangle_first, pos_triangle_second, pos_triangle_third);
+		}
+		if (movekeys_states[mk_back] & 1)
+		{
+			vec3_t pos_offset_path;
 
-				// Move down
-				VectorAdd(pos_on_path, v_up, pos_offset_path);
+			// Move down
+			VectorAdd(pos_on_path, v_up, pos_offset_path);
 
-				// Calculate edges of the movement triangle
-				VectorAdd(pos_offset_path, t_up, pos_triangle_first);
-				VectorSubtract(pos_offset_path, t_right, pos_triangle_second);
-				VectorSubtract(pos_triangle_second, t_up, pos_triangle_second);
-				VectorAdd(pos_offset_path, t_right, pos_triangle_third);
-				VectorSubtract(pos_triangle_third, t_up, pos_triangle_third);
+			// Calculate edges of the movement triangle
+			VectorAdd(pos_offset_path, t_up, pos_triangle_first);
+			VectorSubtract(pos_offset_path, t_right, pos_triangle_second);
+			VectorSubtract(pos_triangle_second, t_up, pos_triangle_second);
+			VectorAdd(pos_offset_path, t_right, pos_triangle_third);
+			VectorSubtract(pos_triangle_third, t_up, pos_triangle_third);
 
-				glColor3f(1.f, 1.f, 1.f);
-			}else if (movekeys_states[mk_moveleft] & 1)
-			{
-				vec3_t pos_offset_path;
+			Pathtracer_Draw_MoveKeys_Triangle(1.f, 1.f, 1.f, pos_triangle_first, pos_triangle_second, pos_triangle_third);
+		}
+		if (movekeys_states[mk_moveleft] & 1)
+		{
+			vec3_t pos_offset_path;
 
-				// Move left
-				VectorAdd(pos_on_path, v_right, pos_offset_path);
+			// Move left
+			VectorAdd(pos_on_path, v_right, pos_offset_path);
 
-				// Calculate edges of the movement triangle
-				VectorSubtract(pos_offset_path, t_right, pos_triangle_first);
-				VectorSubtract(pos_triangle_first, t_up, pos_triangle_first);
-				VectorSubtract(pos_offset_path, t_right, pos_triangle_second);
-				VectorAdd(pos_triangle_second, t_up, pos_triangle_second);
-				VectorAdd(pos_offset_path, t_right, pos_triangle_third);
+			// Calculate edges of the movement triangle
+			VectorSubtract(pos_offset_path, t_right, pos_triangle_first);
+			VectorSubtract(pos_triangle_first, t_up, pos_triangle_first);
+			VectorSubtract(pos_offset_path, t_right, pos_triangle_second);
+			VectorAdd(pos_triangle_second, t_up, pos_triangle_second);
+			VectorAdd(pos_offset_path, t_right, pos_triangle_third);
 
-				glColor3f(1.f, .1f, .1f);
-			}else if (movekeys_states[mk_moveright] & 1)
-			{
-				vec3_t pos_offset_path;
+			Pathtracer_Draw_MoveKeys_Triangle(1.f, .1f, .1f, pos_triangle_first, pos_triangle_second, pos_triangle_third);
+		}
+		if (movekeys_states[mk_moveright] & 1)
+		{
+			vec3_t pos_offset_path;
 
-				// Move right
-				VectorSubtract(pos_on_path, v_right, pos_offset_path);
+			// Move right
+			VectorSubtract(pos_on_path, v_right, pos_offset_path);
 
-				// Calculate edges of the movement triangle
-				VectorAdd(pos_offset_path, t_right, pos_triangle_first);
-				VectorSubtract(pos_triangle_first, t_up, pos_triangle_first);
-				VectorAdd(pos_offset_path, t_right, pos_triangle_second);
-				VectorAdd(pos_triangle_second, t_up, pos_triangle_second);
-				VectorSubtract(pos_offset_path, t_right, pos_triangle_third);
+			// Calculate edges of the movement triangle
+			VectorAdd(pos_offset_path, t_right, pos_triangle_first);
+			VectorSubtract(pos_triangle_first, t_up, pos_triangle_first);
+			VectorAdd(pos_offset_path, t_right, pos_triangle_second);
+			VectorAdd(pos_triangle_second, t_up, pos_triangle_second);
+			VectorSubtract(pos_offset_path, t_right, pos_triangle_third);
 
-				glColor3f(.1f, 1.f, .1f);
-			}
-			glVertex3fv(pos_triangle_first);
-			glVertex3fv(pos_triangle_second);
-			glVertex3fv(pos_triangle_second);
-			glVertex3fv(pos_triangle_third);
-			glVertex3fv(pos_triangle_third);
-			glVertex3fv(pos_triangle_first);
-			glEnd();
+			Pathtracer_Draw_MoveKeys_Triangle(.1f, 1.f, .1f, pos_triangle_first, pos_triangle_second, pos_triangle_third);
 		}
 	}
 }
@@ -223,17 +225,7 @@ static void PathTracer_Draw_Level (ghost_level_t* level, qboolean fadeout_enable
 			glColor3f(.2f, .2f, .2f);
 			glVertex3fv(startPos);
 			glVertex3fv(endPos);
-		}
-	}
-	glEnd();
-
-	// Draw movement keys
-	if (show_movekeys) {
-		for (int i = 1; i < level->num_records; i++) {
-			ghostrec_t cur_record = level->records[i];
-			ghostrec_t prev_record = level->records[i - 1];
-
-			if (fadeout_enable == false || (cur_record.time > cl.time - fadeout_seconds && cur_record.time < cl.time + fadeout_seconds)) {
+			if (show_movekeys) {
 				vec3_t	v_forward;
 				GLfloat pos_on_path[3];
 				movekeytype_t* movekeys_states = cur_record.movekeys_states;
@@ -244,6 +236,7 @@ static void PathTracer_Draw_Level (ghost_level_t* level, qboolean fadeout_enable
 			}
 		}
 	}
+	glEnd();
 }
 
 void PathTracer_Draw(void)
