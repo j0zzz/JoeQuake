@@ -310,6 +310,21 @@ Ghost_StuffText_cb (const char *string, void *ctx)
         return DP_CBR_STOP;
     }
 
+    // movement keys are here, hidden behind MK
+    if (strncmp(string, "net_messagetimeout", 17) == 0) {
+        extern movekeytype_t ghost_movekeys_states[NUM_MOVEMENT_KEYS];
+        char* mkstart = strstr(string, "mk");
+
+        // look for movement keys information
+        if ((mkstart) && strlen(mkstart) == (NUM_MOVEMENT_KEYS + 3))
+        {
+            for (int i = 0; i < NUM_MOVEMENT_KEYS; i++) {
+                ghost_movekeys_states[i] = mkstart[i + 2] - '0';
+                memcpy(pctx->rec.movekeys_states, ghost_movekeys_states, sizeof(ghost_movekeys_states));
+            }
+        }
+    }
+
     return DP_CBR_CONTINUE;
 }
 
@@ -327,7 +342,7 @@ Ghost_UpdateColors_cb(byte client_num, byte colors, void* ctx)
 }
 
 
-static qboolean
+qboolean 
 Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
                        char *next_demo_path)
 {
@@ -380,11 +395,6 @@ Ghost_ReadDemoNoChain (FILE *demo_file, ghost_info_t *ghost_info,
         }
     }
 
-    // Free everything
-    if (pctx.demo_file) {
-        fclose(pctx.demo_file);
-    }
-
     return ok;
 }
 
@@ -413,6 +423,12 @@ Ghost_ReadDemo (FILE *demo_file, ghost_info_t **ghost_info_p)
            && ghost_info->num_levels < GHOST_MAX_LEVELS
            && num_demos_searched < MAX_CHAINED_DEMOS) {
         ok = Ghost_ReadDemoNoChain (demo_file, ghost_info, next_demo_path);
+        // Free everything
+        if (demo_file) {
+            fclose(demo_file);
+            demo_file = NULL;
+        }
+
         if (ok) {
             if (next_demo_path[0] != '\0') {
                 if (COM_FOpenFile (next_demo_path, &demo_file) == -1) {
