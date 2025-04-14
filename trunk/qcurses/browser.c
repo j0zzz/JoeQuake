@@ -29,9 +29,10 @@
 #ifdef _WIN32
 #include <io.h>
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 #include <string.h>
-#include <unistd.h>
 #include "../quakedef.h"
 #include "qcurses.h"
 #include "browser.h"
@@ -362,12 +363,12 @@ qcurses_char_t * Browser_TxtFile() {
 #endif
 
 #ifdef _WIN32
-    sa_attr.nLength = sizeof(SECURITY_ATTRIBUTES); 
-    sa_attr.bInheritHandle = TRUE; 
+    sa_attr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa_attr.bInheritHandle = TRUE;
     sa_attr.lpSecurityDescriptor = NULL;
 
     CreatePipe(&child_stdout_read, &child_stdout_write, &sa_attr, 0);
-    SetHandleInformation(child_stdout_read, HANDLE_FLAG_INHERIT, 0)
+    SetHandleInformation(child_stdout_read, HANDLE_FLAG_INHERIT, 0);
 
     memset (&si, 0, sizeof(si));
     si.cb = sizeof(si);
@@ -377,7 +378,7 @@ qcurses_char_t * Browser_TxtFile() {
     si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
 
     Q_snprintfz(cmdline, sizeof(cmdline), "%s/dzip.exe -s \"%s\" \"%s.txt\"", com_basedir, path, currec());
-    if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, extract_dir, &si, &pi)) {
+    if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, com_basedir, &si, &pi)) {
         return va("Couldn't execute %s/dzip.exe\n", com_basedir);
     } else {
         CloseHandle(pi.hProcess);

@@ -27,6 +27,7 @@
  */
 
 #include "../ghost/demosummary.h"
+#include "../ghost/ghost.h"
 #include "browser.h"
 #include "qcurses.h"
 #include "browser_local.h"
@@ -48,6 +49,7 @@ static char * qcurses_skills[4] = { "Easy", "Normal", "Hard", "Nightmare" };
 SDL_sem *filelist_lock = NULL;
 
 extern void SearchForDemos (void);
+extern FILE *Ghost_OpenDemoOrDzip(const char * demo_path);
 extern char *GetPrintedTime(double time);
 extern char *toYellow(char *s);
 

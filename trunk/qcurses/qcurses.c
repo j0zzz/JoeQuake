@@ -27,7 +27,9 @@
  */
 
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include "../quakedef.h"
 #include "qcurses.h"
 

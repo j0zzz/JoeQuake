@@ -134,7 +134,7 @@ static int Ghost_FindRecord (float time)
 }
 
 
-static FILE *
+FILE *
 Ghost_OpenDemoOrDzip (const char *demo_path)
 {
     FILE *demo_file = NULL;
