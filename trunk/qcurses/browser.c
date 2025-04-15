@@ -600,7 +600,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
 
     if (!json) {
         if (!history_curl || !history_curl->running) {
-            COM_CreatePath(".demo_cache/");
+            COM_CreatePath(Q_strdup(".demo_cache/"));
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
             history_curl = browser_curl_start("sda_database.json", "https://speeddemosarchive.com/quake/mkt.pl?dump");
         } else if (history_curl->running == CURL_DOWNLOADING) {
@@ -713,7 +713,7 @@ display:
     qcurses_free(local_box);
 }
 
-simple_set * Browser_CreateMapSet() {
+void Browser_CreateMapSet() {
     SearchForMaps();
     maps = calloc(1, sizeof(simple_set));
     set_init(maps);
@@ -761,11 +761,14 @@ void mouse_tab_local (qcurses_char_t * self, const mouse_state_t *ms) { if (ms->
 void mouse_tab_remote(qcurses_char_t * self, const mouse_state_t *ms) { if (ms->button_up == 1) demos_tab = TAB_SDA_DATABASE; }
 
 void M_Demos_Display (int width, int height) {
-    if (!main_box)
+    if (!main_box) {
         main_box = qcurses_init(width / 8, height / 8);
+        if (curl_global_init(CURL_GLOBAL_DEFAULT)) 
+            Con_Printf("curl global init failure!\n");
+    }
 
     if (!maps)
-        maps = Browser_CreateMapSet();
+        Browser_CreateMapSet();
 
     if (!demlist)
         M_Demos_LocalRead(main_box->rows - 20, NULL);

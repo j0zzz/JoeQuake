@@ -38,10 +38,6 @@ static int news_page = 0;
 
 static browser_curl_t * curl = NULL;
 
-void Browser_DownloadNews() {
-    curl = browser_curl_start("news.html", "https://speeddemosarchive.com/quake/news.html");
-}
-
 void M_Demos_KeyHandle_News(int k) {
     int distance = 1;
     switch (k) {
@@ -95,7 +91,9 @@ void M_Demos_DisplayNews (int cols, int rows, int start_col, int start_row) {
     if (!news) {
         if (!curl || !curl->running) {
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
-            Browser_DownloadNews();
+            curl = browser_curl_start("news.html", "https://speeddemosarchive.com/quake/news.html");
+            if (!curl)
+                news = qcurses_parse_txt("Couldn't properly start download of news.html.");
         } else if (curl->running == CURL_DOWNLOADING) {
             float progress = browser_curl_step(curl);
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
