@@ -31,6 +31,7 @@
 #include <windows.h>
 #else
 #include <unistd.h>
+#include <sys/wait.h>
 #endif
 #include <string.h>
 #include "../quakedef.h"
@@ -42,7 +43,6 @@
 #include "set.h"
 #include <curl/curl.h>
 #include "browser_curl.h"
-#include <sys/wait.h>
 
 #define curmap() columns[COL_MAP]->array[columns[COL_MAP]->list.cursor]
 #define curtype() columns[COL_TYPE]->array[columns[COL_TYPE]->list.cursor]
@@ -182,11 +182,11 @@ void M_Demos_KeyHandle_Browser (int k) {
             if (keydown[K_CTRL] && keydown[K_SHIFT]) {
                 Cbuf_AddText ("ghost_remove\n");
             } else if (keydown[K_CTRL]) {
-                Cbuf_AddText (va("ghost \"%s/../.demo_cache/%s/%s.dz\"\n", com_basedir, curtype(), currec()));
+                Cbuf_AddText (va("ghost \"../.demo_cache/%s/%s.dz\"\n", curtype(), currec()));
             } else {
                 if (!keydown[K_ALT])
                     key_dest = key_game;
-                Cbuf_AddText (va("playdemo \"%s/../.demo_cache/%s/%s.dz\"\n", com_basedir, curtype(), currec()));
+                Cbuf_AddText (va("playdemo \"../.demo_cache/%s/%s.dz\"\n", curtype(), currec()));
             }
         }
         browser_col = min(COL_COMMENT_LOADING, browser_col + 1);
@@ -362,9 +362,8 @@ qcurses_char_t * Browser_TxtFile() {
     si.wShowWindow = SW_HIDE;
     si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
 
-    Q_snprintfz(cmdline, sizeof(cmdline), "./dzip.exe -s \"%s\" \"%s.txt\"", com_basedir, path, currec());
-    Con_Printf("%s\n", cmdline);
-    if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, com_basedir, &si, &pi)) {
+    Q_snprintfz(cmdline, sizeof(cmdline), "./dzip.exe -s \"%s\" \"%s.txt\"", path, currec());
+    if (!CreateProcess(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, com_basedir, &si, &pi)) {
         return va("Couldn't execute %s/dzip.exe\n", com_basedir);
     } else {
         CloseHandle(pi.hProcess);
@@ -632,7 +631,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         for (int i = 0; i < min(columns[COL_RECORD]->list.len, columns[COL_RECORD]->list.places); i++) {
             qcurses_print(time_box, 1, 2 + i, columns[COL_RECORD]->array[columns[COL_RECORD]->list.window_start + i], browser_col >= COL_RECORD && columns[COL_RECORD]->list.cursor == columns[COL_RECORD]->list.window_start + i);
 
-            if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("%s/../.demo_cache/%s/%s.dz", com_basedir, curtype(), columns[COL_RECORD]->sda_name[columns[COL_RECORD]->list.window_start + i])) == 0)
+            if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("../.demo_cache/%s/%s.dz", curtype(), columns[COL_RECORD]->sda_name[columns[COL_RECORD]->list.window_start + i])) == 0)
                 qcurses_print(time_box, 0, 2 + i, "\x84", false);
         }
 
