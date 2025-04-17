@@ -2,17 +2,35 @@
 #include <curl/curl.h>
 #include "browser_curl.h"
 
+#ifdef _WIN32
+static size_t win_cb(char *data, size_t size, size_t nmemb, void *clientp) {
+    FILE *fh = (FILE *)clientp;
+
+    return fwrite(data, size, nmemb, fh);
+}
+#endif
+
+static size_t mem_cb(char *data, size_t size, size_t nmemb, void *clientp) {
+    size_t realsize = size * nmemb;
+    struct memory *mem = (struct memory *)clientp;
+
+    char *ptr = realloc(mem->buf, mem->size + realsize + 1);
+    if(!ptr)
+        return 0; /* out of memory */
+
+    mem->buf = ptr;
+    memcpy(&(mem->buf[mem->size]), data, realsize);
+    mem->size += realsize;
+    mem->buf[mem->size] = 0;
+
+    return realsize;
+}
+
 browser_curl_t *browser_curl_start(char *path, char *href) {
     browser_curl_t *curl = calloc(1, sizeof(browser_curl_t));
+    int err;
     if (!curl) {
         Con_Printf("curl allocation error!\n");
-        return NULL;
-    }
-
-    curl->running = CURL_DOWNLOADING;
-    ;
-    if ( !(curl->fp = fopen(path, "wb")) ) {
-        Con_Printf("curl file opening error!\n");
         return NULL;
     }
 
@@ -21,11 +39,21 @@ browser_curl_t *browser_curl_start(char *path, char *href) {
         return NULL;
     }
 
-    int err;
-    if ((err = curl_easy_setopt(curl->http_handle, CURLOPT_URL, href)))
-        Con_Printf("curl_easy_setopt %d error!\n", err);
-    if ((err = curl_easy_setopt(curl->http_handle, CURLOPT_WRITEDATA, curl->fp)))
-        Con_Printf("curl_easy_setopt %d error!\n", err);
+    curl_easy_setopt(curl->http_handle, CURLOPT_URL, href);
+    curl->running = CURL_DOWNLOADING;
+    if (path) {
+        if ( !(curl->fp = fopen(path, "wb")) ) {
+            Con_Printf("curl file opening error!\n");
+            return NULL;
+        }
+#ifdef _WIN32 /* needed to make sure code is portable */
+        curl_easy_setopt(curl->http_handle, CURLOPT_WRITEFUNCTION, win_cb); 
+#endif
+        curl_easy_setopt(curl->http_handle, CURLOPT_WRITEDATA, curl->fp);
+    } else {
+        curl_easy_setopt(curl->http_handle, CURLOPT_WRITEFUNCTION, mem_cb);
+        curl_easy_setopt(curl->http_handle, CURLOPT_WRITEDATA, (void *)(&(curl->mem)));
+    }
 
     if ( !(curl->multi_handle = curl_multi_init()) ) {
         Con_Printf("curl_multi_init error!\n");
@@ -46,8 +74,12 @@ void browser_curl_clean(browser_curl_t *curl) {
         Con_Printf("curl_multi_cleanup error %d!\n", err);
 
     curl_easy_cleanup(curl->http_handle);
-    fclose(curl->fp);
-    curl->fp = NULL;
+    if (curl->mem.buf == NULL) {
+        fclose(curl->fp);
+        curl->fp = NULL;
+    } else {
+        free(curl->mem.buf);
+    }
     free(curl);
     curl = NULL;
 }

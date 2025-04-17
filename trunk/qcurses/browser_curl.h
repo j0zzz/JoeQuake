@@ -8,11 +8,17 @@ enum download_state {
     CURL_FINISHED = 2
 };
 
+struct memory {
+    char *buf;
+    size_t size;
+};
+ 
 typedef struct browser_curl_s {
     enum download_state running;
     CURL *http_handle;
     CURLM *multi_handle;
     FILE *fp;
+    struct memory mem;
 } browser_curl_t;
 
 browser_curl_t *browser_curl_start(char *path, char *href);

@@ -81,8 +81,6 @@ qcurses_char_t * qcurses_parse_news(char * html){
     }
     qstr[j].symbol = 0;
 
-    free(html);
-
     return qstr;
 }
 

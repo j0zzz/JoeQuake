@@ -108,21 +108,6 @@ char *toYellow (char *s) {
     return buf;
 }
 
-char * browser_read_file(const char * filename){
-    FILE *f = fopen(filename, "rb");
-    fseek(f, 0, SEEK_END);
-    long fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    char *string = malloc(fsize + 1);
-    fread(string, fsize, 1, f);
-    fclose(f);
-
-    string[fsize] = 0;
-
-    return string;
-}
-
 void M_Demos_KeyHandle_Browser_Search (int k) {
 
     if (!json)
@@ -377,7 +362,8 @@ qcurses_char_t * Browser_TxtFile() {
     si.wShowWindow = SW_HIDE;
     si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
 
-    Q_snprintfz(cmdline, sizeof(cmdline), "%s/dzip.exe -s \"%s\" \"%s.txt\"", com_basedir, path, currec());
+    Q_snprintfz(cmdline, sizeof(cmdline), "./dzip.exe -s \"%s\" \"%s.txt\"", com_basedir, path, currec());
+    Con_Printf("%s\n", cmdline);
     if (!CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, com_basedir, &si, &pi)) {
         return va("Couldn't execute %s/dzip.exe\n", com_basedir);
     } else {
@@ -388,7 +374,7 @@ qcurses_char_t * Browser_TxtFile() {
     }
 
     char * txt = calloc(4096*8, sizeof(char));
-    ReadFile( child_stdout_read, txt, 4096*8, &dwRead, NULL);
+    ReadFile(child_stdout_read, txt, 4096*8, &dwRead, NULL);
     CloseHandle(child_stdout_read);
     return qcurses_parse_txt(txt);
 #else
@@ -602,7 +588,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         if (!history_curl || !history_curl->running) {
             COM_CreatePath(Q_strdup(".demo_cache/"));
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
-            history_curl = browser_curl_start("sda_database.json", "https://speeddemosarchive.com/quake/mkt.pl?dump");
+            history_curl = browser_curl_start(NULL, "https://speeddemosarchive.com/quake/mkt.pl?dump");
         } else if (history_curl->running == CURL_DOWNLOADING) {
             float progress = browser_curl_step(history_curl);
             progress = progress < 0 ? 0.0 : progress;
@@ -610,11 +596,9 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
             qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
         } else if (history_curl->running == CURL_FINISHED) {
+            json = cJSON_Parse(history_curl->mem.buf);
             browser_curl_clean(history_curl);
             history_curl = NULL;
-            char * json_string = browser_read_file("sda_database.json");
-            json = cJSON_Parse(json_string);
-            free(json_string);
         }
 
         goto display;
@@ -750,8 +734,9 @@ qboolean M_Demos_Mouse_Event(const mouse_state_t *ms) {
     int col = mouse_col(ms->x);
     int row = mouse_row(ms->y);
 
-    if (main_box->grid[row][col].callback)
-        main_box->grid[row][col].callback(main_box->grid[row] + col, ms);
+    if (0 <= col && col < main_box->cols && 0 <= row && row < main_box->rows)
+        if (main_box->grid[row][col].callback)
+            main_box->grid[row][col].callback(main_box->grid[row] + col, ms);
 
     return true;
 }
@@ -763,7 +748,7 @@ void mouse_tab_remote(qcurses_char_t * self, const mouse_state_t *ms) { if (ms->
 void M_Demos_Display (int width, int height) {
     if (!main_box) {
         main_box = qcurses_init(width / 8, height / 8);
-        if (curl_global_init(CURL_GLOBAL_DEFAULT)) 
+        if (curl_global_init(CURL_GLOBAL_DEFAULT))
             Con_Printf("curl global init failure!\n");
     }
 

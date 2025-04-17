@@ -91,7 +91,7 @@ void M_Demos_DisplayNews (int cols, int rows, int start_col, int start_row) {
     if (!news) {
         if (!curl || !curl->running) {
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
-            curl = browser_curl_start("news.html", "https://speeddemosarchive.com/quake/news.html");
+            curl = browser_curl_start(NULL, "https://speeddemosarchive.com/quake/news.html");
             if (!curl)
                 news = qcurses_parse_txt("Couldn't properly start download of news.html.");
         } else if (curl->running == CURL_DOWNLOADING) {
@@ -100,9 +100,9 @@ void M_Demos_DisplayNews (int cols, int rows, int start_col, int start_row) {
             qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
             qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
         } else if (curl->running == CURL_FINISHED) {
+            news = qcurses_parse_news(curl->mem.buf);
             browser_curl_clean(curl);
             curl = NULL;
-            news = qcurses_parse_news(browser_read_file("news.html"));
         }
     }
 
