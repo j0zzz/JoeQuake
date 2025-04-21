@@ -38,6 +38,8 @@ ghost_info_t* demo_info = NULL;
 dseek_info_t demo_seek_info;
 qboolean demo_seek_info_available;
 static double seek_time;
+static long last_read_offset = 0;
+static qboolean seek_frame;
 static qboolean seek_backwards, seek_was_backwards;
 static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
@@ -186,6 +188,7 @@ static void
 EndSeek (void)
 {
 	seek_time = -1.0;
+	seek_frame = false;
 
 	if (seek_was_backwards)
 	{
@@ -223,10 +226,18 @@ int CL_GetMessage (void)
 	{
 		if (seek_time >= 0 && seek_backwards && cl.mtime[0] < seek_time)
 		{
-			// If we are seeking backwards and just passed the target time, go
-			// forwards for another frame.  This means the frame we settle on is
-			// always the one immediately after (or equal to) the target time.
-			seek_backwards = false;
+			if (seek_frame)
+			{
+				seek_time = cl.mtime[0];
+				seek_frame = false;
+			}
+			else
+			{
+				// If we are seeking backwards and just passed the target time, go
+				// forwards for another frame.	This means the frame we settle on is
+				// always the one immediately after (or equal to) the target time.
+				seek_backwards = false;
+			}
 		}
 
 		backwards = CL_DemoRewind();
@@ -268,7 +279,7 @@ int CL_GetMessage (void)
 			if (!backwards)
 			{
 				// joe: fill in the stack of frames' positions
-				PushFrameposEntry (ftell(cls.demofile));
+				PushFrameposEntry (last_read_offset);
 			}
 			else
 			{
@@ -284,6 +295,7 @@ int CL_GetMessage (void)
 		}
 
 		// get the next message
+		last_read_offset = ftell(cls.demofile);
 		fread (&net_message.cursize, 4, 1, cls.demofile);
 		VectorCopy (cl.mviewangles[0], cl.mviewangles[1]);
 		for (i = 0 ; i < 3 ; i++)
@@ -873,7 +885,14 @@ void CL_DemoSeek_f (void)
 	}
 
 	time_str = Cmd_Argv(1);
-	if (time_str[0] == '+' || time_str[0] == '-')
+	if (strcasecmp(time_str, "+f") == 0)
+		seek_time = cl.mtime[0] + 1e-3;
+	else if (strcasecmp(time_str, "-f") == 0)
+	{
+		seek_time = cl.mtime[0];
+		seek_frame = true;
+	}
+	else if (time_str[0] == '+' || time_str[0] == '-')
 		seek_time = cl.mtime[0] + atof(time_str);
 	else
 		seek_time = atof(time_str);
@@ -881,7 +900,7 @@ void CL_DemoSeek_f (void)
 	if (seek_time < 0.)
 		seek_time = 0.;
 
-	seek_was_backwards = seek_backwards = (seek_time < cl.mtime[0]);
+	seek_was_backwards = seek_backwards = (seek_time <= cl.mtime[0]);
 }
 
 /*
