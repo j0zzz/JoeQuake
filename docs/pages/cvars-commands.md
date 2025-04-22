@@ -1175,6 +1175,8 @@ Available usage modes (example values):
 - `demoseek 12` will seek to the time 0:12
 - `demoseek +3` will seek forward 3 seconds from the actual position
 - `demoseek -5` will seek back 5 seconds from the actual position
+- `demoseek +f` will seek forward one frame.
+- `demoseek -f` will seek back one frame.
 
 ##### `toggleparticles`
 

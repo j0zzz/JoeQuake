@@ -39,8 +39,7 @@ dseek_info_t demo_seek_info;
 qboolean demo_seek_info_available;
 static double seek_time;
 static long last_read_offset = 0;
-static qboolean seek_frame;
-static qboolean seek_backwards, seek_was_backwards;
+static qboolean seek_backwards, seek_was_backwards, seek_frame;
 static dzip_context_t dzCtx;
 static qboolean	dz_playback = false;
 qboolean	dz_unpacking = false;
@@ -228,6 +227,9 @@ int CL_GetMessage (void)
 		{
 			if (seek_frame)
 			{
+				// If we are skipping back a frame, we must find the last
+				// message from two frames previous, then we seek forward to the
+				// first message from one frame previous.
 				seek_time = cl.mtime[0];
 				seek_frame = false;
 			}
