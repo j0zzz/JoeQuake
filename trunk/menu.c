@@ -8920,7 +8920,7 @@ void M_Keydown (int key)
 	case m_videomodes:		M_VideoModes_Key (key); return;
 	case m_nehdemos:		M_NehDemos_Key (key); return;
 	case m_maps:			M_Maps_Key (key); return;
-	case m_demos:			M_Demos_Key (key); return;
+	case m_demos:			M_Demos_KeyHandle (key); return;
 	case m_mods:			M_Mods_Key(key); return;
 	case m_help:			M_Help_Key (key); return;
 	case m_quit:			M_Quit_Key (key); return;

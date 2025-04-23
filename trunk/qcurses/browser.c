@@ -391,7 +391,7 @@ qcurses_char_t * Browser_TxtFile() {
 
     Q_snprintfz(cmdline, sizeof(cmdline), "./dzip.exe -s \"%s\" \"%s.txt\"", path, currec());
     if (!CreateProcess(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, com_basedir, &si, &pi)) {
-        return va("Couldn't execute %s/dzip.exe\n", com_basedir);
+        return qcurses_parse_txt(va("Couldn't execute %s/dzip.exe\n", com_basedir));
     } else {
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
