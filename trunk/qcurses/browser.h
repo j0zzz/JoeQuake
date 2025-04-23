@@ -5,8 +5,6 @@
  *
  * Functions for auto-wrapping text are included.
  *
- * Also supported are background boxes, to mark certain selections.
- *
  * Copyright (C) 2025 K. Urbański <karol.jakub.urbanski@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify

@@ -1,11 +1,5 @@
 /*
- * Module to simplify drawing an interactive menu a la curses and 
- * ncurses. The module detects the amount of space available in the menu,
- * creates a grid of characters, and supports writing to this grid.
- *
- * Functions for auto-wrapping text are included.
- *
- * Also supported are background boxes, to mark certain selections.
+ * Module to draw the SDA news.
  *
  * Copyright (C) 2025 K. Urbański <karol.jakub.urbanski@gmail.com>
  *
@@ -38,6 +32,9 @@ static int news_page = 0;
 
 static browser_curl_t * curl = NULL;
 
+/*
+ * keyboard input handler for the news tab
+ */
 void M_Demos_KeyHandle_News(int k) {
     int distance = 1;
     switch (k) {
@@ -85,21 +82,24 @@ void M_Demos_KeyHandle_News(int k) {
     }
 }
 
+/*
+ * display the news tab
+ */
 void M_Demos_DisplayNews (int cols, int rows, int start_col, int start_row) {
     qcurses_box_t * local_box = qcurses_init_paged(cols, rows - 10);
     qcurses_box_t * help_box  = qcurses_init(cols, rows - local_box->rows);
     if (!news) {
-        if (!curl || !curl->running) {
+        if (!curl || !curl->running) { /* start downloading the news */
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
             curl = browser_curl_start(NULL, "https://speeddemosarchive.com/quake/news.html");
             if (!curl)
                 news = qcurses_parse_txt("Couldn't properly start download of news.html.");
-        } else if (curl->running == CURL_DOWNLOADING) {
+        } else if (curl->running == CURL_DOWNLOADING) { /* perform download of the news */
             float progress = browser_curl_step(curl);
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
             qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
             qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
-        } else if (curl->running == CURL_FINISHED) {
+        } else if (curl->running == CURL_FINISHED) { /* download finished, time to parse */
             news = qcurses_parse_news(curl->mem.buf);
             browser_curl_clean(curl);
             curl = NULL;
@@ -108,6 +108,7 @@ void M_Demos_DisplayNews (int cols, int rows, int start_col, int start_row) {
 
     M_Demos_HelpBox (help_box, TAB_SDA_NEWS, "", false);
 
+    /* print the news */
     if (news) {
         int total_rows = qcurses_boxprint_wrapped(local_box, news, local_box->cols * local_box->rows, 0);
         local_box->paged = news_page = max(min(news_page, total_rows - local_box->rows), 0);

@@ -1,11 +1,5 @@
 /*
- * Module to simplify drawing an interactive menu a la curses and 
- * ncurses. The module detects the amount of space available in the menu,
- * creates a grid of characters, and supports writing to this grid.
- *
- * Functions for auto-wrapping text are included.
- *
- * Also supported are background boxes, to mark certain selections.
+ * Module to draw a more detailed list of local demos.
  *
  * Copyright (C) 2025 K. Urbański <karol.jakub.urbanski@gmail.com>
  *
@@ -53,6 +47,9 @@ extern FILE *Ghost_OpenDemoOrDzip(const char * demo_path);
 extern char *GetPrintedTime(double time);
 extern char *toYellow(char *s);
 
+/* 
+ * mouse callback for the local demo list
+ */
 void mouse_move_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     int row = self->callback_data.row - 2;
     if (row < 0 || row >= demlist->list.places || row >= demlist->list.len - demlist->list.window_start)
@@ -64,6 +61,11 @@ void mouse_move_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     if (ms->button_up == 2) M_Demos_KeyHandle_Local(K_MOUSE2, main_box->rows - 20);
 }
 
+/*
+ * Display the local demo list, by compositing boxes together.
+ * 
+ * Needs thread support from SDL.
+ */
 void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     if (!filelist_lock)
         filelist_lock = SDL_CreateSemaphore(1);
@@ -97,6 +99,7 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     qcurses_print(size_box, 0, 0, "SIZE", true);
     qcurses_make_bar(size_box, 1);
 
+    /* parse each individual potential file */
     for (int i = 0; i < min(demlist->list.len, demlist->list.places); i++) {
         direntry_t * d = demlist->entries + demlist->list.window_start + i;
         demo_summary_t * s = *(demlist->summaries + demlist->list.window_start + i);
@@ -116,8 +119,8 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
                         qcurses_print(skill_box, 0, i + 2, qcurses_skills[s->skill], false); 
                     qcurses_print(map_box, 0, i + 2, s->maps[0], false); 
                     qcurses_print(player_box, 0, i + 2, s->client_names[0], true); 
-                    qcurses_print(kill_box, 0, i + 2, va("%4d/%s", s->kills, toYellow(va("%4d", s->total_kills))), true); 
-                    qcurses_print(secret_box, 0, i + 2, va("%3d/%s", s->secrets, toYellow(va("%3d", s->total_secrets))), true); 
+                    qcurses_print(kill_box, 0, i + 2, va("%4d/%s", s->kills, toYellow(va("%4d", s->total_kills))), true);
+                    qcurses_print(secret_box, 0, i + 2, va("%3d/%s", s->secrets, toYellow(va("%3d", s->total_secrets))), true);
                     qcurses_print(time_box, 0, i + 2, s->total_time ? GetPrintedTime(s->total_time) : "N/A", true); 
                 }
                 SDL_SemPost(filelist_lock);
@@ -161,6 +164,9 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     qcurses_free(local_box);
 }
 
+/*
+ * get summary, in a separate thread.
+ */
 int get_summary_thread(void * entry) {
     demo_summary_t *summary = calloc(1, sizeof(demo_summary_t));
 
@@ -178,6 +184,9 @@ int get_summary_thread(void * entry) {
     return ok;
 }
 
+/*
+ * read the demo list from filesystem and parse it
+ */
 void M_Demos_LocalRead(int rows, char * prevdir) {
     SearchForDemos ();
 
@@ -232,8 +241,12 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     qcurses_list_move_cursor((qcurses_list_t *)demlist, 0);
 }
 
+/*
+ * keyboard input handler for search of local demos
+ */
 void M_Demos_KeyHandle_Local_Search (int k, int max_lines) {
     int len = strlen(search_term);
+
     switch (k) {
     case K_ESCAPE:
     case K_ENTER:
@@ -251,9 +264,13 @@ void M_Demos_KeyHandle_Local_Search (int k, int max_lines) {
         }
         break;
     }
+
     M_Demos_LocalRead(max_lines, NULL);
 }
 
+/*
+ * keyboard input handler for local demos
+ */
 void M_Demos_KeyHandle_Local (int k, int max_lines) {
     if (search_input) {
         M_Demos_KeyHandle_Local_Search(k, max_lines);

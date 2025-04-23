@@ -1,11 +1,18 @@
 /*
- * Module to simplify drawing an interactive menu a la curses and 
- * ncurses. The module detects the amount of space available in the menu,
- * creates a grid of characters, and supports writing to this grid.
+ * qcurses: module for handling a complex, composited menu.
  *
- * Functions for auto-wrapping text are included.
+ * Works in a manner similar to curses/ncurses, where geometric ASCII
+ * displays that are easy to make like lists are composited together
+ * into a window.
  *
- * Also supported are background boxes, to mark certain selections.
+ * The module subdivides the screen into a grid of characters. Each of
+ * these characters is stored in a box. Each of the characters can have
+ * mouse handlers attached.
+ *
+ * The boxes are then composited together into bigger boxes by a straight
+ * copy. This means we can define behavior locally, per window "pane",
+ * but display in one fell swoop and handle everything we need regarding
+ * display and input at once.
  *
  * Copyright (C) 2025 K. Urbański <karol.jakub.urbanski@gmail.com>
  *
@@ -35,6 +42,9 @@
 
 int comment_rows = 0;
 
+/*
+ * parse the text data into a grid
+ */
 qcurses_char_t * qcurses_parse_txt(char * txt){
     qcurses_char_t * qstr = calloc(strlen(txt) + 1, sizeof(qcurses_char_t));
     int i = 0, j = 0, rows = 0;
@@ -50,6 +60,10 @@ qcurses_char_t * qcurses_parse_txt(char * txt){
     return qstr;
 }
 
+/*
+ * parse the news html into a nice, readable form
+ * TODO: add a way to display a menu with demos
+ */
 qcurses_char_t * qcurses_parse_news(char * html){
     qboolean tag = false;
     int color = 0;
@@ -84,10 +98,17 @@ qcurses_char_t * qcurses_parse_news(char * html){
     return qstr;
 }
 
+/*
+ * initialize a box with no callback
+ */
 qcurses_box_t * qcurses_init(int cols, int rows) {
     return qcurses_init_callback(cols, rows, NULL);
 }
 
+/*
+ * initialize a box with callback attached. callbacks can be switched
+ * out directly when needed.
+ */
 qcurses_box_t * qcurses_init_callback(int cols, int rows, void (*callback)(qcurses_char_t * self, const mouse_state_t * ms)) {
     qcurses_box_t * box = malloc(sizeof(qcurses_box_t));
 
@@ -109,6 +130,9 @@ qcurses_box_t * qcurses_init_callback(int cols, int rows, void (*callback)(qcurs
     return box;
 }
 
+/*
+ * initialize a paged box, with no callback.
+ */
 qcurses_box_t * qcurses_init_paged(int cols, int rows) {
     qcurses_box_t * box = malloc(sizeof(qcurses_box_t));
 
@@ -127,6 +151,9 @@ qcurses_box_t * qcurses_init_paged(int cols, int rows) {
     return box;
 }
 
+/*
+ * free a box
+ */
 void qcurses_free(qcurses_box_t *box){
     if (!box)
         return;
@@ -138,6 +165,9 @@ void qcurses_free(qcurses_box_t *box){
     box = NULL;
 }
 
+/*
+ * display a box
+ */
 void qcurses_display(qcurses_box_t *src){
     int i, j;
     for (i = 0; i < src->rows; i++) {
@@ -147,6 +177,9 @@ void qcurses_display(qcurses_box_t *src){
     }
 }
 
+/*
+ * print a standard string into a box, wrapping when necessary.
+ */
 int qcurses_boxprint_wrapped(qcurses_box_t *dest, qcurses_char_t *src, size_t size, int row_offset){
     int row = row_offset, col = 0;
     for(int i = 0; i < size && (src + i)->symbol; i++){
@@ -161,10 +194,16 @@ int qcurses_boxprint_wrapped(qcurses_box_t *dest, qcurses_char_t *src, size_t si
     return row;
 }
 
+/*
+ * print characters to a box, with no callback 
+ */
 void qcurses_print(qcurses_box_t *dest, int col, int row, char *src, qboolean bold){
     qcurses_print_callback(dest, col, row, src, bold, NULL);
 }
 
+/*
+ * print characters to a box, with mouse callback 
+ */
 void qcurses_print_callback(qcurses_box_t * dest, int col, int row, char * src, qboolean bold, void (*callback)(qcurses_char_t * self, const mouse_state_t * ms)) {
     if (row >= dest->page_rows)
         return;
@@ -176,11 +215,17 @@ void qcurses_print_callback(qcurses_box_t * dest, int col, int row, char * src, 
     }
 }
 
+/*
+ * print characters, centered in a box.
+ */
 void qcurses_print_centered(qcurses_box_t *dest, int row, char *src, qboolean bold){
     int col = (dest->cols - strlen(src)) / 2;
     qcurses_print(dest, col, row, src, bold);
 }
 
+/*
+ * composition of boxes by copying one into another
+ */
 void qcurses_insert(qcurses_box_t *dest, int col, int row, qcurses_box_t *src) {
     int page_offset = max(src->paged, 0);
     for (int i = row; i < row + src->page_rows && i < dest->rows; i++){
@@ -188,6 +233,9 @@ void qcurses_insert(qcurses_box_t *dest, int col, int row, qcurses_box_t *src) {
     }
 }
 
+/*
+ * helper function to move cursor in a list
+ */
 void qcurses_list_move_cursor(qcurses_list_t *col, int move) {
     col->cursor = max(min(col->cursor + move, col->len - 1), 0);
     if (col->cursor >= col->window_start + col->places)
@@ -196,6 +244,9 @@ void qcurses_list_move_cursor(qcurses_list_t *col, int move) {
         col->window_start = col->cursor;
 }
 
+/*
+ * helper function to draw a horizontal bar
+ */
 void qcurses_make_bar(qcurses_box_t * box, int row){
     for (int i = 0; i < box->cols; i++)
         qcurses_print(box, i, row, "\x1e", true);

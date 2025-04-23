@@ -1,11 +1,5 @@
 /*
- * Module to simplify drawing an interactive menu a la curses and 
- * ncurses. The module detects the amount of space available in the menu,
- * creates a grid of characters, and supports writing to this grid.
- *
- * Functions for auto-wrapping text are included.
- *
- * Also supported are background boxes, to mark certain selections.
+ * Module to draw a more detailed list of local demos.
  *
  * Copyright (C) 2025 K. Urbański <karol.jakub.urbanski@gmail.com>
  *

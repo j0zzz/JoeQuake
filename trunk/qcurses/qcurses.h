@@ -1,11 +1,18 @@
 /*
- * Module to simplify drawing an interactive menu a la curses and 
- * ncurses. The module detects the amount of space available in the menu,
- * creates a grid of characters, and supports writing to this grid.
+ * qcurses: module for handling a complex, composited menu.
  *
- * Functions for auto-wrapping text are included.
+ * Works in a manner similar to curses/ncurses, where geometric ASCII
+ * displays that are easy to make like lists are composited together
+ * into a window.
  *
- * Also supported are background boxes, to mark certain selections.
+ * The module subdivides the screen into a grid of characters. Each of
+ * these characters is stored in a box. Each of the characters can have
+ * mouse handlers attached.
+ *
+ * The boxes are then composited together into bigger boxes by a straight
+ * copy. This means we can define behavior locally, per window "pane",
+ * but display in one fell swoop and handle everything we need regarding
+ * display and input at once.
  *
  * Copyright (C) 2025 K. Urbański <karol.jakub.urbanski@gmail.com>
  *
@@ -33,11 +40,13 @@
 #define blink(ch) (((int)(realtime * 4) & 1) ? ch : ' ')
 #define blinkstr(ch) (((int)(realtime * 4) & 1) ? va("%c", ch) : " ")
 
+/* data for callbacks */
 typedef struct qcurses_callback_data_s {
     int row;
     int col;
 } qcurses_callback_data_t;
 
+/* single char, with callback support */
 typedef struct qcurses_char_s {
     unsigned char symbol;
     long background;
@@ -46,6 +55,7 @@ typedef struct qcurses_char_s {
     void (*callback)(struct qcurses_char_s * self, const mouse_state_t * ms);
 } qcurses_char_t;
 
+/* a grid of characters */
 typedef struct qcurses_box_s {
     qcurses_char_t ** grid;
     int cols;
@@ -54,6 +64,7 @@ typedef struct qcurses_box_s {
     int page_rows;
 } qcurses_box_t;
 
+/* a list helper structure */
 typedef struct qcurses_list_s {
     int cursor;
     int len;
@@ -61,12 +72,14 @@ typedef struct qcurses_list_s {
     int window_start;
 } qcurses_list_t;
 
+/* extending previous list, a record list */
 typedef struct qcurses_recordlist_s {
     qcurses_list_t list;
     char (*array)[80];
     char (*sda_name)[50];
 } qcurses_recordlist_t;
 
+/* extending list, a demo list */
 typedef struct qcurses_demlist_s {
     qcurses_list_t list;
     direntry_t * entries;

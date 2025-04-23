@@ -5,7 +5,6 @@
  *
  * Functions for auto-wrapping text are included.
  *
- * Also supported are background boxes, to mark certain selections.
  *
  * Copyright (C) 2025 K. Urbański <karol.jakub.urbanski@gmail.com>
  *
@@ -85,6 +84,9 @@ static int comment_page = 0;
 extern int comment_rows;
 extern char ghost_demo_path[MAX_OSPATH];
 
+/*
+ * get time with no decimals, important for filenames
+ */
 char *GetPrintedTimeNoDec(float time, qboolean strip) {
     int			mins;
     double		secs;
@@ -108,6 +110,9 @@ char *toYellow (char *s) {
     return buf;
 }
 
+/*
+ * handle keyboard input for the search terms
+ */
 void M_Demos_KeyHandle_Browser_Search (int k) {
 
     if (!json)
@@ -132,6 +137,9 @@ void M_Demos_KeyHandle_Browser_Search (int k) {
     }
 }
 
+/*
+ * handle keyboard input for the browser and various columns
+ */
 void M_Demos_KeyHandle_Browser (int k) {
     if (search_input) {
         M_Demos_KeyHandle_Browser_Search(k);
@@ -215,6 +223,9 @@ void M_Demos_KeyHandle_Browser (int k) {
 
 }
 
+/*
+ * handle keyboard input for each individual tab
+ */
 void M_Demos_KeyHandle (int k) {
     demos_update = true;
 
@@ -247,6 +258,9 @@ void M_Demos_KeyHandle (int k) {
     }
 }
 
+/* 
+ * create the type column for display in the SDA browser
+ */
 qcurses_recordlist_t * Browser_CreateTypeColumn(const cJSON * json, int rows) {
     const cJSON *type = NULL;
 
@@ -266,6 +280,9 @@ qcurses_recordlist_t * Browser_CreateTypeColumn(const cJSON * json, int rows) {
     return column;
 }
 
+/* 
+ * create the record column for display in the SDA browser
+ */
 qcurses_recordlist_t * Browser_CreateRecordColumn(const cJSON * json, int rows) {
     const cJSON *record = NULL;
 
@@ -297,6 +314,10 @@ qcurses_recordlist_t * Browser_CreateRecordColumn(const cJSON * json, int rows) 
     return column;
 }
 
+/*
+ * fire off a cascading update, starting with the updated column and 
+ * going down the tree
+ */
 void Browser_UpdateFurtherColumns (enum browser_columns start_column) {
     const cJSON *item = NULL;
     switch (start_column) {
@@ -316,6 +337,9 @@ void Browser_UpdateFurtherColumns (enum browser_columns start_column) {
     }
 }
 
+/*
+ * portable function to check if the requested dzip is downloaded
+ */
 qboolean Browser_DzipDownloaded() {
     char path[50];
 
@@ -328,6 +352,9 @@ qboolean Browser_DzipDownloaded() {
 #endif
 }
 
+/*
+ * read txt file. Required dzip or dzip-linux in the root of the quake dir.
+ */
 qcurses_char_t * Browser_TxtFile() {
     char path[50];
 
@@ -398,6 +425,9 @@ qcurses_char_t * Browser_TxtFile() {
 #endif
 }
 
+/*
+ * start download of the requested dz file
+ */
 void Browser_DownloadDzip() {
     char path[50];
     char href[100];
@@ -417,6 +447,9 @@ void Browser_DownloadDzip() {
     curl = browser_curl_start(path, href);
 }
 
+/*
+ * create the map column for display, applying filtering
+ */
 qcurses_recordlist_t * Browser_CreateMapColumn(const cJSON * json, int rows, enum map_filters filter) {
     const cJSON *map = NULL;
 
@@ -450,6 +483,9 @@ qcurses_recordlist_t * Browser_CreateMapColumn(const cJSON * json, int rows, enu
     return column;
 }
 
+/*
+ * create box that displays help for each tab
+ */
 void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * search_term, qboolean search_input) {
     qcurses_make_bar(help_box, 0);
     qcurses_print_centered(help_box, 2, "Navigation: arrows keys OR hjkl OR enter/backspace", false);
@@ -491,6 +527,9 @@ void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * searc
 
 }
 
+/*
+ * mouse callback that handles the map list
+ */
 void mouse_map_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     int row = self->callback_data.row - 2;
 
@@ -514,6 +553,9 @@ void mouse_map_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     }
 }
 
+/*
+ * mouse callback that handles the type list
+ */
 void mouse_type_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     int row = self->callback_data.row - 2;
 
@@ -537,6 +579,9 @@ void mouse_type_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     }
 }
 
+/*
+ * mouse callback that handles the record list
+ */
 void mouse_record_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     int row = self->callback_data.row - 2;
     qboolean play = false;
@@ -567,6 +612,9 @@ void mouse_record_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     }
 }
 
+/*
+ * display the browser, by compositing together various boxes
+ */
 void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     qcurses_box_t * local_box = qcurses_init(cols, rows);
     qcurses_box_t * map_box   = qcurses_init_callback(25, rows - 10, mouse_map_cursor);
@@ -584,17 +632,17 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     qcurses_make_bar(comment_box, 0);
 
     if (!json) {
-        if (!history_curl || !history_curl->running) {
+        if (!history_curl || !history_curl->running) { /* start curl */
             COM_CreatePath(Q_strdup(".demo_cache/"));
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
             history_curl = browser_curl_start(NULL, "https://speeddemosarchive.com/quake/mkt.pl?dump");
-        } else if (history_curl->running == CURL_DOWNLOADING) {
+        } else if (history_curl->running == CURL_DOWNLOADING) { /* progress curl download */
             float progress = browser_curl_step(history_curl);
             progress = progress < 0 ? 0.0 : progress;
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
             qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
             qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
-        } else if (history_curl->running == CURL_FINISHED) {
+        } else if (history_curl->running == CURL_FINISHED) { /* download finished, parse */
             json = cJSON_Parse(history_curl->mem.buf);
             browser_curl_clean(history_curl);
             history_curl = NULL;
@@ -603,7 +651,8 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         goto display;
     }
 
-    if (prev_map_filter != map_filter || search_input) {
+    /* handle map column display */
+    if (prev_map_filter != map_filter || search_input) { /* apply filtering */
         if (columns[COL_MAP]){
             free(columns[COL_MAP]->array);
             free(columns[COL_MAP]);
@@ -614,44 +663,83 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     }
 
     for (int i = 0; i < min(columns[COL_MAP]->list.len, columns[COL_MAP]->list.places); i++)
-        qcurses_print(map_box, 1, 2 + i, columns[COL_MAP]->array[columns[COL_MAP]->list.window_start + i], columns[COL_MAP]->list.cursor == columns[COL_MAP]->list.window_start + i);
+        qcurses_print(
+            map_box, 
+            1,
+            2 + i,
+            columns[COL_MAP]->array[columns[COL_MAP]->list.window_start + i], 
+            columns[COL_MAP]->list.cursor == columns[COL_MAP]->list.window_start + i /* currently active */
+        );
 
-    if (browser_col == COL_MAP)
-        qcurses_print(map_box, 0, 2 + columns[COL_MAP]->list.cursor - columns[COL_MAP]->list.window_start, blinkstr(0x0d), false);
+    if (browser_col == COL_MAP) /* cursor display for map */
+        qcurses_print(
+            map_box,
+            0, 
+            2 + columns[COL_MAP]->list.cursor - columns[COL_MAP]->list.window_start, 
+            blinkstr(0x0d), 
+            false
+        );
 
+    /* handle type column display */
     if (columns[COL_TYPE]){
         for (int i = 0; i < min(columns[COL_TYPE]->list.len, columns[COL_TYPE]->list.places); i++)
-            qcurses_print(skill_box, 1, 2 + i, columns[COL_TYPE]->array[columns[COL_TYPE]->list.window_start + i], browser_col >= COL_TYPE && columns[COL_TYPE]->list.cursor == columns[COL_TYPE]->list.window_start + i);
+            qcurses_print(
+                skill_box,
+                1,
+                2 + i,
+                columns[COL_TYPE]->array[columns[COL_TYPE]->list.window_start + i],
+                browser_col >= COL_TYPE && columns[COL_TYPE]->list.cursor == columns[COL_TYPE]->list.window_start + i
+            );
 
-        if (browser_col == COL_TYPE)
-            qcurses_print(skill_box, 0, 2 + columns[COL_TYPE]->list.cursor - columns[COL_TYPE]->list.window_start, blinkstr(0x0d), false);
+        if (browser_col == COL_TYPE) /* cursor display */
+            qcurses_print(
+                skill_box,
+                0,
+                2 + columns[COL_TYPE]->list.cursor - columns[COL_TYPE]->list.window_start,
+                blinkstr(0x0d),
+                false
+            );
     }
 
+    /* handle record column display */
     if (columns[COL_RECORD]){
         for (int i = 0; i < min(columns[COL_RECORD]->list.len, columns[COL_RECORD]->list.places); i++) {
-            qcurses_print(time_box, 1, 2 + i, columns[COL_RECORD]->array[columns[COL_RECORD]->list.window_start + i], browser_col >= COL_RECORD && columns[COL_RECORD]->list.cursor == columns[COL_RECORD]->list.window_start + i);
+            qcurses_print(
+                time_box,
+                1,
+                2 + i,
+                columns[COL_RECORD]->array[columns[COL_RECORD]->list.window_start + i],
+                browser_col >= COL_RECORD && columns[COL_RECORD]->list.cursor == columns[COL_RECORD]->list.window_start + i
+            );
 
+            /* display marker for ghost */
             if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("../.demo_cache/%s/%s.dz", curtype(), columns[COL_RECORD]->sda_name[columns[COL_RECORD]->list.window_start + i])) == 0)
                 qcurses_print(time_box, 0, 2 + i, "\x84", false);
         }
 
         if (browser_col == COL_RECORD)
-            qcurses_print(time_box, 0, 2 + columns[COL_RECORD]->list.cursor - columns[COL_RECORD]->list.window_start, blinkstr(0x0d), false);
+            qcurses_print(
+                time_box,
+                0,
+                2 + columns[COL_RECORD]->list.cursor - columns[COL_RECORD]->list.window_start,
+                blinkstr(0x0d),
+                false
+            );
     }
 
     if (browser_col == COL_COMMENT_LOADING) {
-        if (!Browser_DzipDownloaded()) {
+        if (!Browser_DzipDownloaded()) { /* start download of demo */
             qcurses_print_centered(comment_box, comment_box->rows / 2, "Downloading...", false);
             if (!curl || !curl->running) {
                 Browser_DownloadDzip();
             }
-        } else if (curl && curl->running == CURL_DOWNLOADING) {
+        } else if (curl && curl->running == CURL_DOWNLOADING) { /* progress demo download */
             qcurses_print_centered(comment_box, comment_box->rows / 2, "Downloading...", false);
             float progress = browser_curl_step(curl);
 
             qcurses_print_centered(comment_box, comment_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
             qcurses_print(comment_box, comment_box->cols / 2 - 5 + (int)(10.0 * progress), comment_box->rows / 2 + 1, "\x83", false);
-        } else {
+        } else { /* demo downloaded, parse txt */
             if (comments)
                 free(comments);
             if (curl)
@@ -663,6 +751,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         }
     }
 
+    /* display comments */
     if (browser_col == COL_COMMENT_LOADED && comments) {
         comment_rows = qcurses_boxprint_wrapped(comment_box, comments, comment_box->cols * comment_box->rows, 1);
         comment_page = min(comment_page, comment_rows - comment_box->rows);
@@ -696,6 +785,9 @@ display:
     qcurses_free(local_box);
 }
 
+/*
+ * create map set of id1 maps for filtering
+ */
 void Browser_CreateMapSet() {
     SearchForMaps();
     maps = calloc(1, sizeof(simple_set));
@@ -729,6 +821,15 @@ void Browser_CreateMapSet() {
     set_add(id_maps, "e4m5long");
 }
 
+/*
+ * Handle mouse events.
+ *
+ * Mouse events are handled by identifying the character from the display
+ * qcurses grid, and then applying the callback found attached to this character.
+ *
+ * Since the boxes are composited by copying them wholesale, we can set behavior
+ * locally and yet have it handled in the final composition.
+ */
 qboolean M_Demos_Mouse_Event(const mouse_state_t *ms) {
     int col = mouse_col(ms->x);
     int row = mouse_row(ms->y);
@@ -740,10 +841,14 @@ qboolean M_Demos_Mouse_Event(const mouse_state_t *ms) {
     return true;
 }
 
+/* mouse tab names callbacks */
 void mouse_tab_news  (qcurses_char_t * self, const mouse_state_t *ms) { if (ms->button_up == 1) demos_tab = TAB_SDA_NEWS; }
 void mouse_tab_local (qcurses_char_t * self, const mouse_state_t *ms) { if (ms->button_up == 1) demos_tab = TAB_LOCAL_DEMOS; }
 void mouse_tab_remote(qcurses_char_t * self, const mouse_state_t *ms) { if (ms->button_up == 1) demos_tab = TAB_SDA_DATABASE; }
 
+/*
+ * display the main menu, handing off to submenus depending on tab.
+ */
 void M_Demos_Display (int width, int height) {
     if (!main_box) {
         main_box = qcurses_init(width / 8, height / 8);
