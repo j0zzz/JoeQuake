@@ -76,6 +76,7 @@ extern char com_basedir[MAX_OSPATH];
 
 extern char *GetPrintedTime(double time);
 extern void SearchForMaps (void);
+extern char *toYellow (char *s);
 
 static browser_curl_t * curl = NULL;
 static browser_curl_t * history_curl = NULL;
@@ -97,17 +98,6 @@ char *GetPrintedTimeNoDec(float time, qboolean strip) {
     Q_snprintfz(timestring, sizeof(timestring), strip ? "%i%02d" : "%2i:%02d", mins, (int)secs);
 
     return timestring;
-}
-
-char *toYellow (char *s) {
-    static	char	buf[20];
-
-    Q_strncpyz (buf, s, sizeof(buf));
-    for (s = buf ; *s ; s++)
-        if (*s >= '0' && *s <= '9')
-            *s = *s - '0' + 18;
-
-    return buf;
 }
 
 /*
@@ -760,7 +750,17 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         if (comment_rows - comment_box->rows > 0) {
             for (int i = 0; i < comment_box->rows; i++)
                 qcurses_print(comment_box, comment_box->cols - 1, i + comment_page, "\x06", false);
-            qcurses_print(comment_box, comment_box->cols - 1, min(comment_page + (comment_box->rows - 1)* comment_page / (comment_rows - comment_box->rows), comment_box->page_rows - 1), "\x83", false);
+
+            qcurses_print(
+                comment_box,
+                comment_box->cols - 1,
+                min(
+                    comment_page + (comment_box->rows - 1) * comment_page / (comment_rows - comment_box->rows),
+                    comment_box->page_rows - 1
+                ), 
+                "\x83", 
+                false
+            );
         }
     } else if (browser_col == COL_COMMENT_LOADED) {
         qcurses_print_centered(comment_box, comment_box->rows / 2, "Text file not provided.", false);
