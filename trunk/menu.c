@@ -512,7 +512,7 @@ void SaveCursorPos (void)
 	}
 }
 
-static char *toYellow (char *s)
+char *toYellow (char *s)
 {
 	static	char	buf[20];
 
