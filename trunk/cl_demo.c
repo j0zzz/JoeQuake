@@ -887,9 +887,9 @@ void CL_DemoSeek_f (void)
 	}
 
 	time_str = Cmd_Argv(1);
-	if (strcasecmp(time_str, "+f") == 0)
+	if (Q_strcasecmp(time_str, "+f") == 0)
 		seek_time = cl.mtime[0] + 1e-3;
-	else if (strcasecmp(time_str, "-f") == 0)
+	else if (Q_strcasecmp(time_str, "-f") == 0)
 	{
 		seek_time = cl.mtime[0];
 		seek_frame = true;
