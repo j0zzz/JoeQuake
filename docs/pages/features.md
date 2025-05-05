@@ -105,3 +105,5 @@ Sometimes it might be helpful to see the path the player took. That can help to 
 - Show the path of a ghost or demo: `pathtracer_show_demo`, `pathtracer_show_ghost` on `1` will draw the path of the demo/ghost. It can draw the movement keys if the demo/ghost contains that information
 - Fadeout: `pathtracer_fadeout_ghost` and `pathtracer_fadeout_demo` if set to `1` will fadeout the path around the current position. This helps to keep an overview if the path gets a bit convoluted. Per default the fadeout is disabled for ghosts, enabled for demos. The time the path will be drawn is defined by `pathtracer_fadeout_seconds` in seconds (defaults to `3`).
 - Bolder lines: `pathtracer_line_smooth` to `1` produces bolder lines, making them better visible on videos and screenshots.
+
+{% include subfeatures/bhop-practice.md %}

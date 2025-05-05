@@ -46,7 +46,7 @@ You may freely redistribute or modify JoeQuake as you wish.
 * Jozsef Szalontai - lead programmer
 * Sphere - server/client bugfixes, several QoL improvements
 * Matthew Earl - entire ghost recording feature, SDL port
-* Karol Urbanski - direct Vorbis/MP3 codec support
+* Karol Urbański - vorbis/mp3 cross-platform support, bunnyhop practice display 
 
 ### Authors whose code was re-used in JoeQuake
 
