@@ -155,8 +155,8 @@ void SV_UserFriction (void)
 	vel[0] = vel[0] * newspeed;
 	vel[1] = vel[1] * newspeed;
 	vel[2] = vel[2] * newspeed;
-    
-    VectorCopy(vel, post_friction_velocity); /* dex: for bhop data calculations */
+
+	VectorCopy(vel, post_friction_velocity); /* dex: for bhop data calculations */
 }
 
 /*
@@ -384,7 +384,7 @@ void SV_ClientThink (void)
 	origin = sv_player->v.origin;
 	velocity = sv_player->v.velocity;
 
-    VectorCopy(velocity, pre_sv_velocity); /* dex: copying for read in bhop stats */
+	VectorCopy(velocity, pre_sv_velocity); /* dex: copying for read in bhop stats */
 
 	DropPunchAngle ();
 

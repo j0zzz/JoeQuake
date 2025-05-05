@@ -51,7 +51,7 @@ typedef struct bhop_data_s
     bhop_keystate_t movement;
     bhop_mark_t bar;
 
-	qboolean on_ground;	
+    qboolean on_ground;	
     vec3_t velocity;
 
     float speed;
@@ -60,7 +60,7 @@ typedef struct bhop_data_s
     float angle_change;
     float viewangle;
 
-	struct bhop_data_s *next;
+    struct bhop_data_s *next;
 } bhop_data_t;
 
 typedef struct bhop_summary_s
