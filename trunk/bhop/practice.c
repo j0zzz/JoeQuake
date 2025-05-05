@@ -60,7 +60,8 @@ extern refdef_t r_refdef;
 extern viddef_t vid;
 extern int glx, glwidth;
 
-int Bhop_InverseScale(int x){
+int Bhop_InverseScale(int x)
+{
     float scale = Sbar_GetScaleAmount();
     return x / scale;
 }
@@ -68,7 +69,8 @@ int Bhop_InverseScale(int x){
 /*
  * cull history after <num> newest datapoints 
  */
-void Bhop_CullHistory(bhop_data_t * history, int num) {
+void Bhop_CullHistory(bhop_data_t * history, int num)
+{
     bhop_data_t * prev = NULL;
 
     while (num-- && history) {
@@ -89,7 +91,8 @@ void Bhop_CullHistory(bhop_data_t * history, int num) {
 /*
  * get entire history len
  */
-int Bhop_Len(bhop_data_t * history) {
+int Bhop_Len(bhop_data_t * history)
+{
     int len = 0;
 
     while(history){
@@ -103,14 +106,16 @@ int Bhop_Len(bhop_data_t * history) {
 /*
  * speed vector modulus
  */
-float Bhop_Speed(bhop_data_t * data) {
+float Bhop_Speed(bhop_data_t * data)
+{
     return sqrt(data->velocity[0]*data->velocity[0] + data->velocity[1]*data->velocity[1]);
 }
 
 /*
  * average bhop speed calculation
  */
-float Bhop_SpeedAvg(bhop_data_t * history, int window){
+float Bhop_SpeedAvg(bhop_data_t * history, int window)
+{
     float avg = 0.0;
     int i = 0;
 
@@ -125,7 +130,8 @@ float Bhop_SpeedAvg(bhop_data_t * history, int window){
 /*
  * retrieve summary for entire window of history
  */
-bhop_summary_t Bhop_GetSummary(bhop_data_t * history, int window, qboolean get_keys){
+bhop_summary_t Bhop_GetSummary(bhop_data_t * history, int window, qboolean get_keys)
+{
     int i = 0, i_ground = 0;
     float strafesum;
     bhop_summary_t summary = {
@@ -137,13 +143,13 @@ bhop_summary_t Bhop_GetSummary(bhop_data_t * history, int window, qboolean get_k
         .angles = NULL
     };
 
-    if(get_keys){
+    if (get_keys) {
         summary.keys = Bhop_KeyArrays(history, window);
         summary.speeds = Bhop_SpeedArray(history, window);
         summary.angles = Bhop_AngleArray(history, window);
     }
 
-    while (i < window && history){
+    while (i < window && history) {
         /* fwd */
         if (history->on_ground) {
             i_ground++;
@@ -176,7 +182,8 @@ bhop_summary_t Bhop_GetSummary(bhop_data_t * history, int window, qboolean get_k
 /*
  * array of speeds in each frame in window
  */
-float * Bhop_SpeedArray(bhop_data_t * history, int window) {
+float * Bhop_SpeedArray(bhop_data_t * history, int window)
+{
     float * frames = calloc(window, sizeof(float));
 
     /* filled in backwards, so that it displays newest on the right */
@@ -191,11 +198,12 @@ float * Bhop_SpeedArray(bhop_data_t * history, int window) {
 /*
  * array of angle histories
  */
-bhop_mark_t * Bhop_AngleArray(bhop_data_t * history, int window) {
+bhop_mark_t * Bhop_AngleArray(bhop_data_t * history, int window)
+{
     bhop_mark_t * frames = calloc(window, sizeof(bhop_mark_t));
 
     /* filled in backwards, so that it displays newest on the right */
-    while (history && window--){
+    while (history && window--) {
         frames[window] = history->bar;
         history = history->next;
     }
@@ -206,7 +214,8 @@ bhop_mark_t * Bhop_AngleArray(bhop_data_t * history, int window) {
 /*
  * get color for fwd tap displays
  */
-int Bhop_GetFwdColor(bhop_data_t * history){
+int Bhop_GetFwdColor(bhop_data_t * history)
+{
     if (!history)
         return 0;
 
@@ -219,7 +228,8 @@ int Bhop_GetFwdColor(bhop_data_t * history){
 /*
  * get color for +left strafesync displays
  */
-int Bhop_GetLStrafeColor(bhop_data_t * history){
+int Bhop_GetLStrafeColor(bhop_data_t * history)
+{
     int color = 0;
     if (!history)
         return color;
@@ -236,7 +246,8 @@ int Bhop_GetLStrafeColor(bhop_data_t * history){
 /*
  * get color for +right strafesync displays
  */
-int Bhop_GetRStrafeColor(bhop_data_t * history){
+int Bhop_GetRStrafeColor(bhop_data_t * history)
+{
     int color = 0;
     if (!history)
         return color;
@@ -253,12 +264,13 @@ int Bhop_GetRStrafeColor(bhop_data_t * history){
 /*
  * get arrays of colors for fwd/strafesync display
  */
-int ** Bhop_KeyArrays(bhop_data_t * history, int window) {
+int ** Bhop_KeyArrays(bhop_data_t * history, int window)
+{
     if (window <= 0)
         return NULL;
 
     int ** frames = malloc(3 * sizeof(int *)); /* fwd, left, right */
-    for(int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
         frames[i] = calloc(window, sizeof(int));
 
     while (history && window--) {
@@ -279,7 +291,8 @@ int ** Bhop_KeyArrays(bhop_data_t * history, int window) {
  * gets the angles between which wishvel will retain speed relative
  * to velocity. hitting between these is a guaranteed speed increase 
  */
-float * Bhop_AirGainRoots(vec3_t velocity) {
+float * Bhop_AirGainRoots(vec3_t velocity)
+{
     float * angles = calloc(2, sizeof(float));
     float speed = sqrt(velocity[0]*velocity[0] + velocity[1]*velocity[1]);
     float arccos;
@@ -296,7 +309,8 @@ float * Bhop_AirGainRoots(vec3_t velocity) {
 /*
  * gets the delta-v dependent on angle
  */
-float Bhop_GroundDeltaV(float vel_len, float angle) {
+float Bhop_GroundDeltaV(float vel_len, float angle)
+{
     float w_len, delta_v;
 
     w_len = max(320 - vel_len * cos(angle), 0.0);
@@ -316,7 +330,8 @@ float Bhop_GroundDeltaV(float vel_len, float angle) {
  * the equation for this is not so simple because of multiple clippings. We will just find
  * the maximal values closest to the forward viewpoint and draw it.
  */
-bhop_mark_t Bhop_CalcGroundBar(vec3_t velocity, vec3_t angles, float focal_len) {
+bhop_mark_t Bhop_CalcGroundBar(vec3_t velocity, vec3_t angles, float focal_len)
+{
     vec3_t wishvel;
     vec3_t fwd_vec, right_vec, up_vec;
     bhop_mark_t bar = {.x_start = -10, .x_end = -10, .x_mid = -10};
@@ -361,7 +376,8 @@ bhop_mark_t Bhop_CalcGroundBar(vec3_t velocity, vec3_t angles, float focal_len) 
 /* 
  * create display bar in air
  */
-bhop_mark_t Bhop_CalcAirBar(vec3_t velocity, vec3_t angles, float focal_len) {
+bhop_mark_t Bhop_CalcAirBar(vec3_t velocity, vec3_t angles, float focal_len)
+{
     float * bhop_roots;
     vec3_t wishvel, fwd_vec, right_vec, up_vec;
     float angle_diff, midpoint;
@@ -396,7 +412,8 @@ bhop_mark_t Bhop_CalcAirBar(vec3_t velocity, vec3_t angles, float focal_len) {
 /*
  * draw the markings for optimal angles
  */
-void Bhop_DrawCurrentMark(bhop_data_t *history, int scale) {
+void Bhop_DrawCurrentMark(bhop_data_t *history, int scale)
+{
     float y = scr_vrect.y + scr_vrect.height / 2.0 + 12 * scale;
 
     if(!history)
@@ -413,7 +430,8 @@ void Bhop_DrawCurrentMark(bhop_data_t *history, int scale) {
 /*
  * draw the markings for previous frames
  */
-void Bhop_DrawOldMarks(bhop_data_t *history, int window, int scale) {
+void Bhop_DrawOldMarks(bhop_data_t *history, int window, int scale)
+{
     int y = scr_vrect.y + scr_vrect.height / 2.0 + (12 + BHOP_SMALL + 2) * scale;
     int x = scr_vrect.x + scr_vrect.width / 2.0;
     int i = 0;
@@ -422,7 +440,7 @@ void Bhop_DrawOldMarks(bhop_data_t *history, int window, int scale) {
 
     Draw_AlphaFillRGB(x - 1 * scale, y, 2, window, BHOP_GREEN_RGB, 0.3);
 
-    while (history && i++ < window){
+    while (history && i++ < window) {
         Draw_AlphaFillRGB(history->bar.x_mid - 1 * scale, y, 2, 1, BHOP_RED_RGB, 0.8 * (float)(window - i) / window);
         y += scale;
         history = history->next;
@@ -433,7 +451,8 @@ void Bhop_DrawOldMarks(bhop_data_t *history, int window, int scale) {
 /*
  * gather the history data necessary for stats
  */
-void Bhop_GatherData(void) {
+void Bhop_GatherData(void)
+{
     if (sv_player->v.health <= 0 || cl.intermission)
         return;
 
@@ -477,7 +496,7 @@ void Bhop_GatherData(void) {
     }
 
     /* flip angles if moving to the left */
-    if(cmd.sidemove < 0){
+    if (cmd.sidemove < 0) {
         bar.x_start = vid.width - bar.x_start;
         bar.x_mid = vid.width - bar.x_mid;
         bar.x_end = vid.width - bar.x_end;
@@ -495,7 +514,8 @@ void Bhop_GatherData(void) {
 /*
  * print a summary to console
  */
-void Bhop_PrintSummary(void) {
+void Bhop_PrintSummary(void)
+{
     bhop_summary_t summary = Bhop_GetSummary(bhop_history, Bhop_Len(bhop_history), false);
     Con_Printf(
         "overall bhop summary:\n+forward ground accuracy: %3.1f%%\n+forward overall accuracy: %3.1f%%\nstrafe accuracy: %3.1f\n%%",
@@ -506,10 +526,11 @@ void Bhop_PrintSummary(void) {
 /*
  * speed up drawing of the key arrays by detecting continuous chunks
  */
-void Bhop_DrawKeyContinuous(int *frames, int window, int x, int y, int height){
+void Bhop_DrawKeyContinuous(int *frames, int window, int x, int y, int height)
+{
     int last = frames[0], last_index = 0;
 
-    for (int i = 0; i <= window; i++){
+    for (int i = 0; i <= window; i++) {
         if (i == window || frames[i] != last){
             Draw_BoxScaledOrigin(x + last_index, y, i - last_index, height, last, 1.0);
             if (i != window)
@@ -521,7 +542,8 @@ void Bhop_DrawKeyContinuous(int *frames, int window, int x, int y, int height){
 /*
  * draw graph showing keypresses for strafes and forward taps
  */
-void Bhop_DrawKeyGraph(int **frames, int window, int x, int y, int offset) {
+void Bhop_DrawKeyGraph(int **frames, int window, int x, int y, int offset)
+{
     Draw_BoxScaledOrigin(x, y    , window,  10, BHOP_BLACK_RGB, 1.0);
     Draw_BoxScaledOrigin(x, y    , window,  1 , BHOP_WHITE_RGB, 1.0);
     Draw_BoxScaledOrigin(x, y + (1 + BHOP_SMALL), window,  1 , BHOP_WHITE_RGB, 1.0);
@@ -536,7 +558,8 @@ void Bhop_DrawKeyGraph(int **frames, int window, int x, int y, int offset) {
  * draw graph showing speed; bit of a performance hog due to use of the
  * drawing functions per frame.
  */
-void Bhop_DrawSpeedGraph(float *frames, int window, int x, int y) {
+void Bhop_DrawSpeedGraph(float *frames, int window, int x, int y)
+{
     /* works like the speed bar */
     int colors[4] = {BHOP_GREEN_RGB, BHOP_RED_RGB, BHOP_ORANGE_RGB, BHOP_BLUE_RGB};
 
@@ -544,12 +567,12 @@ void Bhop_DrawSpeedGraph(float *frames, int window, int x, int y) {
     Draw_BoxScaledOrigin(x, y     , window, 1             , BHOP_WHITE_RGB, 1.0);
     Draw_BoxScaledOrigin(x, y + 1 , window, BHOP_BIG, BHOP_BLACK_RGB, 1.0);
     Draw_BoxScaledOrigin(x, y + 1 + BHOP_BIG, window, 1, BHOP_WHITE_RGB, 1.0);
-    for (int i = window - 1; i >= 0; i--){
+    for (int i = window - 1; i >= 0; i--) {
         int color = 0;
         float speed = frames[i];
 
         /* draw the bars */
-        while (speed > 0.0){
+        while (speed > 0.0) {
             if (speed > 320.0)
                 Draw_BoxScaledOrigin(x + i, y + 1 + BHOP_BIG, 1, -BHOP_BIG, colors[color], 1.0);
             else
@@ -572,7 +595,8 @@ void Bhop_DrawSpeedGraph(float *frames, int window, int x, int y) {
 /*
  * draw acceleration on a logarithmic scale
  */
-void Bhop_DrawAccelGraph(float *frames, int window, int x, int y) {
+void Bhop_DrawAccelGraph(float *frames, int window, int x, int y)
+{
     float prev_speed = -1.0;
 
     /* backdrop and borders */
@@ -580,7 +604,7 @@ void Bhop_DrawAccelGraph(float *frames, int window, int x, int y) {
     Draw_BoxScaledOrigin(x, y + 1 , window, BHOP_MEDIUM, BHOP_BLACK_RGB, 1.0);
     Draw_BoxScaledOrigin(x, y + 1 + BHOP_MEDIUM, window, 1 , BHOP_WHITE_RGB, 1.0);
 
-    for (int i = window - 1; i >= 0; i--){
+    for (int i = window - 1; i >= 0; i--) {
         float speed = frames[i];
         float speed_delta = (prev_speed != -1.0) ? speed - prev_speed : 0.0;
 
@@ -605,12 +629,14 @@ void Bhop_DrawAccelGraph(float *frames, int window, int x, int y) {
     Draw_BoxScaledOrigin(x, y + 1 + BHOP_MEDIUM / 2, window, 1, BHOP_WHITE_RGB, 1.0);
 }
 
-int Bhop_BoundOffset(int x, int bound) {
+int Bhop_BoundOffset(int x, int bound)
+{
     x = x - vid.width / 2;
     return max(min(x, bound), -bound);
 }
 
-void Bhop_DrawAngleGraph(bhop_mark_t *frames, int window, int x, int y) {
+void Bhop_DrawAngleGraph(bhop_mark_t *frames, int window, int x, int y)
+{
     float scale = Sbar_GetScaleAmount();
 
     /* backdrop and borders */
@@ -619,7 +645,7 @@ void Bhop_DrawAngleGraph(bhop_mark_t *frames, int window, int x, int y) {
     Draw_BoxScaledOrigin(x, y + 1 + BHOP_MEDIUM / 2, window, 1, BHOP_WHITE_RGB, 1.0);
     Draw_BoxScaledOrigin(x, y + 1 + BHOP_MEDIUM, window, 1, BHOP_WHITE_RGB, 1.0);
 
-    for (int i = window - 1; i >= 0; i--){
+    for (int i = window - 1; i >= 0; i--) {
         int offset_start = Bhop_BoundOffset(frames[i].x_start, scale * 9);
         int offset_mid = Bhop_BoundOffset(frames[i].x_mid, scale * 9);
         int offset_end = Bhop_BoundOffset(frames[i].x_end, scale * 9);
@@ -633,7 +659,8 @@ void Bhop_DrawAngleGraph(bhop_mark_t *frames, int window, int x, int y) {
 /*
  * draw squares representing frames around the last grounding, forward taps.
  */
-void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y) {
+void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y)
+{
     bhop_data_t * history_it = history;
     int count = -1; 
     int i = 0, j = 0;
@@ -659,7 +686,7 @@ void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y) {
 
     while (history && i < count + show_bhop_frames.value) {
         if (i > count - show_bhop_frames.value){
-            if (i - count == 0){ /* central box */
+            if (i - count == 0) { /* central box */
                 Draw_BoxScaledOrigin(x - 1, y + j - 1, 1, 2 + BHOP_SMALL, BHOP_ORANGE_RGB, alpha);
                 Draw_BoxScaledOrigin(x + BHOP_SMALL, y + j - 1, 1, 2 + BHOP_SMALL, BHOP_ORANGE_RGB, alpha);
                 Draw_BoxScaledOrigin(x    , y + j - 1, BHOP_SMALL, 1, BHOP_ORANGE_RGB, alpha);
@@ -684,7 +711,8 @@ void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y) {
 /*
  * draw info around crosshair
  */
-void Bhop_DrawCrosshairGain(bhop_data_t *history, int x, int y, int scale, int charsize) {
+void Bhop_DrawCrosshairGain(bhop_data_t *history, int x, int y, int scale, int charsize)
+{
     char str[20];
     int i = 0;
 
@@ -713,7 +741,8 @@ void Bhop_DrawCrosshairGain(bhop_data_t *history, int x, int y, int scale, int c
 /*
  * draw info about prestrafe
  */
-void Bhop_DrawCrosshairPrestrafe(bhop_data_t *history, int x, int y, int scale, int charsize) {
+void Bhop_DrawCrosshairPrestrafe(bhop_data_t *history, int x, int y, int scale, int charsize)
+{
     char str[20];
     int i = 0, j = 0, lastground = 0;
     float speed = 0.0;
@@ -752,7 +781,8 @@ void Bhop_DrawCrosshairPrestrafe(bhop_data_t *history, int x, int y, int scale, 
 /*
  * BHOP_Init() initialises cvars and global vars
  */
-void BHOP_Init (void) {
+void BHOP_Init (void)
+{
     bhop_history = NULL;
     bhop_summary = NULL;
     Cvar_Register (&show_bhop_stats);
@@ -766,7 +796,8 @@ void BHOP_Init (void) {
 /*
  * BHOP_Start() runs every map restart
  */
-void BHOP_Start (void) {
+void BHOP_Start (void)
+{
     bhop_history = NULL;
     bhop_summary = NULL;
     lastangle = 0;
@@ -776,10 +807,11 @@ void BHOP_Start (void) {
 /*
  * BHOP_Stop() runs when gameplay finishes
  */
-void BHOP_Stop (void) {
+void BHOP_Stop (void)
+{
     Bhop_CullHistory(bhop_history, 0);
     bhop_history = NULL;
-    if (bhop_summary){
+    if (bhop_summary) {
         if (show_bhop_stats.value > 0)
             Bhop_PrintSummary();
         if (bhop_summary->speeds)
@@ -798,7 +830,8 @@ void BHOP_Stop (void) {
 /*
  * BHOP_Shutdown() runs on shutdown (duh)
  */
-void BHOP_Shutdown (void) {
+void BHOP_Shutdown (void)
+{
     BHOP_Stop();
 }
 
@@ -826,16 +859,16 @@ void SCR_DrawBHOP (void)
     window = min(144, window);
     window = max(1, window);
 
-    if(physframe)
+    if (physframe)
         Bhop_GatherData();
 
-    if((int)show_bhop_stats.value & BHOP_AVG_SPEED) {
+    if ((int)show_bhop_stats.value & BHOP_AVG_SPEED) {
         Q_snprintfz (str, sizeof(str), "avg_speed %3.1f", Bhop_SpeedAvg(bhop_history, window));
         Draw_String (x, y, str, true);
         y += charsize;
     }
 
-    if((int)show_bhop_stats.value & BHOP_KEYPRESSES) {
+    if ((int)show_bhop_stats.value & BHOP_KEYPRESSES) {
         bhop_summary_t summary = Bhop_GetSummary(bhop_history, window, false);
         Q_snprintfz (
                 str, sizeof(str), "f%% %03.f/%03.f s%% %03.f", 
@@ -847,7 +880,7 @@ void SCR_DrawBHOP (void)
         y += charsize;
     }
 
-    if((int)show_bhop_stats.value & BHOP_FORWARD_HISTORY_GRAPH) {
+    if ((int)show_bhop_stats.value & BHOP_FORWARD_HISTORY_GRAPH) {
         int ** frames_keys = Bhop_KeyArrays(bhop_history, window);
 
         Bhop_DrawKeyGraph(frames_keys, window, x / scale, y / scale, 0);
@@ -859,7 +892,7 @@ void SCR_DrawBHOP (void)
         y += (3 + BHOP_GAP + BHOP_SMALL * 3) * scale;
     }
 
-    if((int)show_bhop_stats.value & BHOP_SPEED_HISTORY_GRAPH) {
+    if ((int)show_bhop_stats.value & BHOP_SPEED_HISTORY_GRAPH) {
         if (!frames)
             frames = Bhop_SpeedArray(bhop_history, window);
 
@@ -868,7 +901,7 @@ void SCR_DrawBHOP (void)
         y += (2 + BHOP_BIG + BHOP_GAP) * scale;
     }
 
-    if((int)show_bhop_stats.value & BHOP_DSPEED_HISTORY_GRAPH) {
+    if ((int)show_bhop_stats.value & BHOP_DSPEED_HISTORY_GRAPH) {
         if (!frames)
             frames = Bhop_SpeedArray(bhop_history, window);
 
@@ -882,12 +915,12 @@ void SCR_DrawBHOP (void)
         frames = NULL;
     }
 
-    if((int)show_bhop_stats.value & BHOP_ANGLE_MARK) {
+    if ((int)show_bhop_stats.value & BHOP_ANGLE_MARK) {
         Bhop_DrawCurrentMark(bhop_history, scale);
         Bhop_DrawOldMarks(bhop_history, window, scale);
     }
 
-    if((int)show_bhop_stats.value & BHOP_CROSSHAIR_INFO) {
+    if ((int)show_bhop_stats.value & BHOP_CROSSHAIR_INFO) {
         x = Bhop_InverseScale(scr_vrect.x + scr_vrect.width / 2.0);
         y = Bhop_InverseScale(scr_vrect.y + scr_vrect.height / 2.0);
 
@@ -922,26 +955,26 @@ void SCR_DrawBHOPIntermission(void)
         2 * charsize;
 
 
-    if(!bhop_summary){
+    if (!bhop_summary){
         offset = -144;
         histlen = Bhop_Len(bhop_history);
         bhop_summary = malloc(sizeof(bhop_summary_t));
         *bhop_summary = Bhop_GetSummary(bhop_history, histlen, true);
     }
 
-    if((int)show_bhop_stats.value & BHOP_AVG_SPEED) {
+    if ((int)show_bhop_stats.value & BHOP_AVG_SPEED) {
         Q_snprintfz (str, sizeof(str), "avg speed: %3.1f", Bhop_SpeedAvg(bhop_history, histlen));
         Draw_String (x - (strlen(str) + 1) * charsize / 2.0, y, str, true);
         y += charsize;
     }
 
-    if((int)show_bhop_stats.value & BHOP_KEYPRESSES) {
+    if ((int)show_bhop_stats.value & BHOP_KEYPRESSES) {
         Q_snprintfz (
-                str, sizeof(str), "fwd gr: %.1f%% | fwd air: %.1f%% | strafe: %.1f%%", 
-                bhop_summary->fwd_on_ground_percent,
-                bhop_summary->fwd_percent,
-                bhop_summary->strafe_percent
-                );
+            str, sizeof(str), "fwd gr: %.1f%% | fwd air: %.1f%% | strafe: %.1f%%", 
+            bhop_summary->fwd_on_ground_percent,
+            bhop_summary->fwd_percent,
+            bhop_summary->strafe_percent
+        );
         Draw_String (x - (strlen(str) + 1) * charsize / 2.0, y, str, true);
         y += charsize;
     }
@@ -952,24 +985,24 @@ void SCR_DrawBHOPIntermission(void)
     offset_temp = offset > histlen - 320 ? histlen - 320 : offset;
     offset_temp = offset_temp < 0 ? 0 : offset_temp;
 
-    if((int)show_bhop_stats.value & BHOP_FORWARD_HISTORY_GRAPH) {
+    if ((int)show_bhop_stats.value & BHOP_FORWARD_HISTORY_GRAPH) {
         Bhop_DrawKeyGraph(bhop_summary->keys, min(320, histlen), x - 160, y, offset_temp);
 
         y += 3 + BHOP_GAP + BHOP_SMALL * 3;
     }
 
-    if((int)show_bhop_stats.value & BHOP_SPEED_HISTORY_GRAPH) {
+    if ((int)show_bhop_stats.value & BHOP_SPEED_HISTORY_GRAPH) {
         Bhop_DrawSpeedGraph(bhop_summary->speeds + offset_temp, min(320, histlen), x - 160, y);
 
         y += (2 + BHOP_BIG + BHOP_GAP);
     }
 
-    if((int)show_bhop_stats.value & BHOP_DSPEED_HISTORY_GRAPH) {
+    if ((int)show_bhop_stats.value & BHOP_DSPEED_HISTORY_GRAPH) {
         Bhop_DrawAccelGraph(bhop_summary->speeds + offset_temp, min(320, histlen), x - 160, y);
         y += (2 + BHOP_GAP + BHOP_MEDIUM);
     }
 
-    if((int)show_bhop_stats.value & BHOP_ANGLE_MARK) {
+    if ((int)show_bhop_stats.value & BHOP_ANGLE_MARK) {
         Bhop_DrawAngleGraph(bhop_summary->angles + offset_temp, min(320, histlen), x - 160, y);
     }
 
