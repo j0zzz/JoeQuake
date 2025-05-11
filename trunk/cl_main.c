@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "bgmusic.h"
+#include "bhop/practice.h"
 
 // we need to declare some mouse variables here, because the menu system
 // references them even when on a unix system.
@@ -242,6 +243,7 @@ void CL_Disconnect (void)
 		was_loopback = (cls.netcon && !cls.netcon->disconnected && cls.netcon->driver == 0);
 		NET_Close (cls.netcon);
 
+        BHOP_Stop();
 		cls.state = ca_disconnected;
 		if (sv.active)
 		{

@@ -902,6 +902,37 @@ Displays movement key indicators around the crosshair. `0` by deafult.
 
 Shows clock in the lower left corner. Position can be changed with the `_x` and `_y` coordinates. There are 4 predefined clock formats. `0` by default.
 
+##### `show_bhop_stats`
+##### `show_bhop_stats_x`
+##### `show_bhop_stats_y`
+##### `show_bhop_frames`
+##### `show_bhop_window`
+##### `show_bhop_histlen`
+
+Controls the displayed bunnyhopping practice tools. The desired value of `show_bhop_stats` is composed by adding up various flags:
+* `1` - display average speed over window.
+* `2` - display forward and strafe accuracy, as percentage.
+* `4` - display speed during recent frames.
+* `8` - display acceleration during recent frames; the display is logarithmic (so small gains in speed are visible).
+* `16` - display precision of forward keypresses and strafe accuracy, as a bar. Top bar displays forward accuracy, while the bottom bar displays the left direction on top and right on bottom. When strafes are synced, colors mix to yellow.
+* `32` - display under the crosshair the bar signifying where you needed to look to gain speed in air, as well as a history over recent frames. The closer aligned the center bar and the red line are, the more accurate your turning was.
+* `64` - display above crosshair some number stats on each jump (gained speed in air, loss due to friction, time spent on ground and velocity of prestrafe), as well as multiple boxes more clearly marking forward tap accuracy. It shows the ground frame above the crosshair, and frames preceding and after the last ground touch; the amount of frames shown in both direction is controlled with the variable `show_bhop_frames`.
+
+`_x` and `_y` control the position of the graphs.
+
+The amount of frames shown for the graph displays is controlled by `show_bhop_window`.
+
+Stats are also shown in intermission; the display shows everything that is in recorded history. The amount of frames stored is controlled by `show_bhop_histlen`.
+
+The defaults are as follows:
+* `show_bhop_stats` is `0`, signifying no display. To set everything on, use `127`. The displays are all turned off during demo recording, regardless of setting.
+* `show_bhop_stats_x,y` are `1` and `4` respectively.
+* `show_bhop_window` is `144`, corresponding to two seconds. This is the max effective value of this variable.
+* `show_bhop_histlen` is `0`, corresponding to storing everything until the intermission.
+* `show_bhop_frames` is `7`.
+
+To display some of the graphs, a lot of rectangles are drawn. So you might lose some FPS due to that.
+
 #### Mouse
 
 ##### `m_rate`

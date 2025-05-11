@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_screen.c -- master for refresh, status bar, console, chat, notify, etc
 
 #include "quakedef.h"
+#include "bhop/practice.h"
 #ifdef _WIN32
 #include "movie.h"
 #endif
@@ -518,6 +519,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_widescreen_fov);
 	Cvar_Register (&cl_gun_fovscale);
 	Cvar_Register (&scr_usekfont); // 2021 re-release
+    BHOP_Init();
 
 	Cvar_Register(&scr_cursor_scale);
 #ifdef GLQUAKE
@@ -1218,6 +1220,9 @@ void SCR_UpdateScreen (void)
 		if (con_notify_intermission.value)
 			SCR_DrawConsole();
 
+		if (!cls.demorecording && !cls.demoplayback)
+			SCR_DrawBHOPIntermission();
+
 		Ghost_DrawGhostTime (true);
 	}
 	else if (cl.intermission == 2 && key_dest == key_game)
@@ -1250,6 +1255,8 @@ void SCR_UpdateScreen (void)
 		SCR_DrawFPS ();
 		SCR_DrawSpeed ();
 		PathTracer_Sample_Each_Frame ();
+		if (!cls.demorecording && !cls.demoplayback)
+			SCR_DrawBHOP ();
 		Ghost_DrawGhostTime (false);
 		SCR_DrawStats ();
 		SCR_DrawVolume ();
