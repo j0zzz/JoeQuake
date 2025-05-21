@@ -119,6 +119,12 @@
     <Filter Include="Header Files\PathTracer_h">
       <UniqueIdentifier>{1f65504b-d25b-4450-859c-fc6ce54bc199}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Bhop">
+      <UniqueIdentifier>{1c0305b9-1352-4317-911d-e6030f72bd2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Bhop_h">
+      <UniqueIdentifier>{bfb8de77-baba-44c1-ad88-299a7e0f5170}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\joequake.rc">
@@ -474,6 +480,9 @@
     <ClCompile Include="..\..\trunk\pathtracer\pathtracer.c">
       <Filter>Source Files\PathTracer</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\trunk\bhop\practice.c">
+      <Filter>Source Files\Bhop</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\trunk\adivtab.h">
@@ -682,6 +691,9 @@
     </ClInclude>
     <ClInclude Include="..\..\trunk\pathtracer\pathtracer.h">
       <Filter>Header Files\PathTracer_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\bhop\practice.h">
+      <Filter>Header Files\Bhop_h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

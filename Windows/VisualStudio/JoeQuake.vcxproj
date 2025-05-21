@@ -318,6 +318,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\trunk\bgmusic.c" />
+    <ClCompile Include="..\..\trunk\bhop\practice.c" />
     <ClCompile Include="..\..\trunk\cd_null.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GL Release|Win32'">true</ExcludedFromBuild>
@@ -606,6 +607,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\trunk\bgmusic.h" />
+    <ClInclude Include="..\..\trunk\bhop\practice.h" />
     <ClInclude Include="..\..\trunk\fakegl.h" />
     <ClInclude Include="..\..\trunk\demoparse.h" />
     <ClInclude Include="..\..\trunk\ghost\demosummary.h" />
