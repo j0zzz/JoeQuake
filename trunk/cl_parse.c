@@ -1575,14 +1575,14 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_finale:
-			HandleFinish(2);
-			vid.recalc_refdef = true;	// go to full screen
+			//HandleFinish(2);
+			//vid.recalc_refdef = true;	// go to full screen
 			//johnfitz -- log centerprints to console
 			str = MSG_ReadString();
 			SCR_CenterPrint(str);
 			Con_LogCenterPrint(str);
 			//johnfitz
-			V_RestoreAngles ();
+			//V_RestoreAngles ();
 			break;
 
 		case svc_cutscene:

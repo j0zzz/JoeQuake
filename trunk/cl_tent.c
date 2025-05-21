@@ -513,7 +513,7 @@ void CL_UpdateBeams (void)
 				ent->model = b->model;
 				ent->angles[0] = ang[0];
 				ent->angles[1] = ang[1];
-				ent->angles[2] = rand() % 360;
+				ent->angles[2] = rand() % 360;//ang[2];
 			}
 
 			VectorAdd (org, dist, org);
