@@ -69,3 +69,8 @@ mpic_t *Draw_CachePic (char *path);
 void Draw_Crosshair (qboolean draw_menu);
 void Draw_TextBox(int x, int y, int width, int lines, qboolean scale);
 void Draw_AdjustConback(void);
+
+#ifdef GLQUAKE
+void Draw_AlphaFillRGB(int x, int y, int w, int h, int c, float alpha);
+void Draw_BoxScaledOrigin(int x, int y, int w, int h, int c, float alpha);
+#endif
