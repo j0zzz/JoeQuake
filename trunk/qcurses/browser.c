@@ -480,6 +480,7 @@ void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * searc
     qcurses_make_bar(help_box, 0);
     qcurses_print_centered(help_box, 2, "Navigation: arrows keys OR hjkl OR enter/backspace", false);
     qcurses_print_centered(help_box, 3, "Paging: page keys OR Ctrl+b and Ctrl+d", false);
+    qcurses_print_centered(help_box, 4, "TAB to switch tabs", false);
     if (tab == TAB_SDA_DATABASE) {
         qcurses_print_centered(
             help_box,
@@ -628,10 +629,15 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             history_curl = browser_curl_start(NULL, "https://speeddemosarchive.com/quake/mkt.pl?dump");
         } else if (history_curl->running == CURL_DOWNLOADING) { /* progress curl download */
             float progress = browser_curl_step(history_curl);
-            progress = progress < 0 ? 0.0 : progress;
-            qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
-            qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
-            qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
+            if (progress == -1.0) { /* error during step */
+                qcurses_print_centered(local_box, local_box->rows / 2, "Error during download!", false);
+                history_curl = NULL;
+            } else {
+                progress = progress < 0 ? 0.0 : progress;
+                qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
+                qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
+                qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
+            }
         } else if (history_curl->running == CURL_FINISHED) { /* download finished, parse */
             json = cJSON_Parse(history_curl->mem.buf);
             browser_curl_clean(history_curl);
@@ -727,8 +733,13 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             qcurses_print_centered(comment_box, comment_box->rows / 2, "Downloading...", false);
             float progress = browser_curl_step(curl);
 
-            qcurses_print_centered(comment_box, comment_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
-            qcurses_print(comment_box, comment_box->cols / 2 - 5 + (int)(10.0 * progress), comment_box->rows / 2 + 1, "\x83", false);
+            if (progress == -1.0) { /* error during step */
+                qcurses_print_centered(comment_box, comment_box->rows / 2, "Error during download!", false);
+                curl = NULL;
+            } else {
+                qcurses_print_centered(comment_box, comment_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
+                qcurses_print(comment_box, comment_box->cols / 2 - 5 + (int)(10.0 * progress), comment_box->rows / 2 + 1, "\x83", false);
+            }
         } else { /* demo downloaded, parse txt */
             if (comments)
                 free(comments);

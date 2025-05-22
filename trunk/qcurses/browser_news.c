@@ -30,7 +30,7 @@ extern qcurses_box_t * main_box;
 
 static int news_page = 0;
 
-static browser_curl_t * curl = NULL;
+static browser_curl_t * news_curl = NULL;
 
 /*
  * keyboard input handler for the news tab
@@ -89,20 +89,26 @@ void M_Demos_DisplayNews (int cols, int rows, int start_col, int start_row) {
     qcurses_box_t * local_box = qcurses_init_paged(cols, rows - 10);
     qcurses_box_t * help_box  = qcurses_init(cols, rows - local_box->rows);
     if (!news) {
-        if (!curl || !curl->running) { /* start downloading the news */
+        if (!news_curl || !news_curl->running) { /* start downloading the news */
             qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
-            curl = browser_curl_start(NULL, "https://speeddemosarchive.com/quake/news.html");
-            if (!curl)
+            news_curl = browser_curl_start(NULL, "https://speeddemosarchive.com/quake/news.html");
+            if (!news_curl)
                 news = qcurses_parse_txt("Couldn't properly start download of news.html.");
-        } else if (curl->running == CURL_DOWNLOADING) { /* perform download of the news */
-            float progress = browser_curl_step(curl);
-            qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
-            qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
-            qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
-        } else if (curl->running == CURL_FINISHED) { /* download finished, time to parse */
-            news = qcurses_parse_news(curl->mem.buf);
-            browser_curl_clean(curl);
-            curl = NULL;
+        } else if (news_curl->running == CURL_DOWNLOADING) { /* perform download of the news */
+            float progress = browser_curl_step(news_curl);
+            if (progress == -1.0) {
+                qcurses_print_centered(local_box, local_box->rows / 2, "Error during download!", false);
+                news_curl = NULL;
+            } else {
+                qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
+                qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
+                qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
+            }
+        } else if (news_curl->running == CURL_FINISHED) { /* download finished, time to parse */
+            if (news_curl->mem.buf)
+                news = qcurses_parse_news(news_curl->mem.buf);
+            browser_curl_clean(news_curl);
+            news_curl = NULL;
         }
     }
 

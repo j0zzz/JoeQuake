@@ -45,7 +45,7 @@ static size_t mem_cb(char *data, size_t size, size_t nmemb, void *clientp) {
 
     char *ptr = realloc(mem->buf, mem->size + realsize + 1);
     if(!ptr)
-        return 0; /* out of memory */
+        return CURL_WRITEFUNC_ERROR; /* out of memory */
 
     mem->buf = ptr;
     memcpy(&(mem->buf[mem->size]), data, realsize);
@@ -109,12 +109,11 @@ void browser_curl_clean(browser_curl_t *curl) {
         Con_Printf("curl_multi_cleanup error %d!\n", err);
 
     curl_easy_cleanup(curl->http_handle);
-    if (curl->mem.buf == NULL) {
-        fclose(curl->fp);
-        curl->fp = NULL;
-    } else {
+    if (curl->mem.buf) 
         free(curl->mem.buf);
-    }
+    if (curl->fp)
+        fclose(curl->fp);
+    curl->fp = NULL;
     free(curl);
     curl = NULL;
 }
@@ -126,7 +125,7 @@ float browser_curl_step(browser_curl_t *curl) {
     int run = 0;
     CURLMcode mc = curl_multi_perform(curl->multi_handle, &run);
 
-    if(mc){
+    if (mc) {
         browser_curl_clean(curl);
         return -1.0;
     } else if (!run) {
