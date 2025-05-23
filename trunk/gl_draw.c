@@ -1583,7 +1583,7 @@ void Draw_BeginDisc (void)
 	scale = Sbar_GetScaleAmount();
 
 	glDrawBuffer  (GL_FRONT);
-	//Draw_Pic (vid.width - (int)(24 * scale), 0, draw_disc, true);
+	Draw_Pic (vid.width - (int)(24 * scale), 0, draw_disc, true);
 	glDrawBuffer  (GL_BACK);
 }
 
