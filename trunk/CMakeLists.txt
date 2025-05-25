@@ -156,11 +156,25 @@ add_executable(joequake-gl
     pathtracer/pathtracer.c
     bhop/practice.c
     bhop/practice.h
+    qcurses/browser.c
+    qcurses/browser_curl.c
+    qcurses/browser_local.c
+    qcurses/browser_news.c
+    qcurses/cJSON.c
+    qcurses/qcurses.c
+    qcurses/set.c
+    qcurses/browser.h
+    qcurses/browser_curl.h
+    qcurses/browser_local.h
+    qcurses/browser_news.h
+    qcurses/cJSON.h
+    qcurses/qcurses.h
+    qcurses/set.h
 )
 
 target_compile_definitions(joequake-gl
     PRIVATE GLQUAKE SDL2 USE_CODEC_VORBIS USE_CODEC_MP3
 )
 target_link_libraries(joequake-gl
-    PRIVATE joequake_minizip png jpeg GL m dl vorbisfile vorbis ogg mad ${SDL2_LIBRARIES}
+    PRIVATE joequake_minizip png jpeg GL m dl vorbisfile vorbis ogg mad curl ${SDL2_LIBRARIES}
 )

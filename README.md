@@ -8,11 +8,11 @@ JoeQuake on Linux.  To build first install dependencies:
 ```bash
 # For Ubuntu users
 sudo apt-get update
-sudo apt-get install cmake build-essential libz-dev libsdl2-dev libjpeg-dev libgl1-mesa-dev libpng-dev
+sudo apt-get install cmake build-essential libz-dev libsdl2-dev libjpeg-dev libgl1-mesa-dev libpng-dev libcurl4-openssl-dev
 ```
 ```bash
 # For Arch users
-sudo pacman -Syu base-devel cmake zlib sdl2 libjpeg-turbo mesa libpng
+sudo pacman -Syu base-devel cmake zlib sdl2 libjpeg-turbo mesa libpng curl
 ```
 
 ...and then run the following from the repository root:
