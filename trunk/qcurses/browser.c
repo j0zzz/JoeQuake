@@ -134,6 +134,9 @@ void M_Demos_KeyHandle_Browser_Search (int k) {
  * handle keyboard input for the browser and various columns
  */
 void M_Demos_KeyHandle_Browser (int k) {
+    if (curl && curl->running)
+        return;
+
     if (search_input) {
         M_Demos_KeyHandle_Browser_Search(k);
         return;
@@ -847,6 +850,9 @@ void Browser_CreateMapSet() {
 qboolean M_Demos_Mouse_Event(const mouse_state_t *ms) {
     int col = mouse_col(ms->x);
     int row = mouse_row(ms->y);
+
+    if (curl && curl->running)
+        return true;
 
     if (0 <= col && col < main_box->cols && 0 <= row && row < main_box->rows)
         if (main_box->grid[row][col].callback)
