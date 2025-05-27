@@ -52,6 +52,8 @@ qcurses_box_t * main_box = NULL;
 qcurses_box_t * local_box = NULL;
 
 int browserscale;
+int oldwidth;
+int oldheight;
 
 static enum demos_tabs demos_tab = TAB_LOCAL_DEMOS;
 static enum browser_columns browser_col = COL_MAP;
@@ -862,9 +864,18 @@ void mouse_tab_remote(qcurses_char_t * self, const mouse_state_t *ms) { if (ms->
  */
 void M_Demos_Display (int width, int height) {
     if (!main_box) {
+        oldwidth = width;
+        oldheight = height;
         main_box = qcurses_init(width / 8, height / 8);
         if (curl_global_init(CURL_GLOBAL_DEFAULT))
             Con_Printf("curl global init failure!\n");
+    }
+
+    if (oldwidth != width || oldheight != height) {
+        qcurses_free(main_box);
+        oldwidth = width;
+        oldheight = height;
+        main_box = qcurses_init(width / 8, height / 8);
     }
 
     if (!maps)
