@@ -405,7 +405,7 @@ qcurses_char_t * Browser_TxtFile() {
         dup2 (pipes[1], STDOUT_FILENO);
         close(pipes[0]);
         close(pipes[1]);
-        execlp("./dzip-linux", "dzip-linux", "-s", path, va("%s.txt", currec()));
+        execlp("./dzip-linux", "dzip-linux", "-s", path, va("%s.txt", currec()), NULL);
         return qcurses_parse_txt("Not supposed to get here.\n");
     default:
         close(pipes[1]);
