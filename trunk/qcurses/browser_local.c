@@ -103,8 +103,13 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     for (int i = 0; i < min(demlist->list.len, demlist->list.places); i++) {
         direntry_t * d = demlist->entries + demlist->list.window_start + i;
         demo_summary_t * s = *(demlist->summaries + demlist->list.window_start + i);
-        if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("..%s/%s", demodir, demlist->entries[demlist->list.window_start + i].name)) == 0)
-            qcurses_print(name_box, 0, i + 2, "\x84", false);
+        if (Q_strcasestr(ghost_demo_path, ".dem")) {
+            if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("..%s/%s.dem", demodir, demlist->entries[demlist->list.window_start + i].name)) == 0)
+                qcurses_print(name_box, 0, i + 2, "\x0b", false);
+        } else {
+            if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("..%s/%s", demodir, demlist->entries[demlist->list.window_start + i].name)) == 0)
+                qcurses_print(name_box, 0, i + 2, "\x0b", false);
+        }
         qcurses_print(name_box, 1, i + 2, d->name, !d->type);
 
         switch (d->type) {

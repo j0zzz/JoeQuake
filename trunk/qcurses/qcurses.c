@@ -79,7 +79,7 @@ qcurses_char_t * qcurses_parse_news(char * html){
             } else if (!Q_strncasecmp(src + i, "<a href=\"/quake/mkt.pl?level", 28)) {
                 color = 128;
             } else if (!Q_strncasecmp(src + i, "<li>", 4)) {
-                qstr[j++].symbol = 6 + 128;
+                qstr[j++].symbol = 11 + 128;
                 qstr[j++].symbol = ' ';
             } else if (!Q_strncasecmp(src + i, "</p>", 4)) {
                 color = 0;

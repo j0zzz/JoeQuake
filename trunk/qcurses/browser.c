@@ -713,7 +713,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
 
             /* display marker for ghost */
             if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("../.demo_cache/%s/%s.dz", curtype(), columns[COL_RECORD]->sda_name[columns[COL_RECORD]->list.window_start + i])) == 0)
-                qcurses_print(time_box, 0, 2 + i, "\x84", false);
+                qcurses_print(time_box, 0, 2 + i, "\x0b", false);
         }
 
         if (browser_col == COL_RECORD)
