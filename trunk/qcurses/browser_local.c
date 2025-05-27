@@ -171,6 +171,9 @@ int get_summary_thread(void * entry) {
     demo_summary_t *summary = calloc(1, sizeof(demo_summary_t));
 
     FILE *demo_file = Ghost_OpenDemoOrDzip(((thread_data_t *) entry)->path);;
+    if (!demo_file)
+        return 1;
+
     int ok = DS_GetDemoSummary(demo_file, summary);
     if (ok) {
         SDL_SemWait(filelist_lock);
