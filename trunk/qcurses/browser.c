@@ -553,7 +553,7 @@ void mouse_map_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
 void mouse_type_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     int row = self->callback_data.row - 2;
 
-    if (!json)
+    if (!json || browser_col < COL_TYPE)
         return;
 
     qcurses_recordlist_t * ls = columns[COL_TYPE];
@@ -580,7 +580,7 @@ void mouse_record_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     int row = self->callback_data.row - 2;
     qboolean play = false;
 
-    if (!json)
+    if (!json || browser_col < COL_RECORD)
         return;
 
     qcurses_recordlist_t * ls = columns[COL_RECORD];
