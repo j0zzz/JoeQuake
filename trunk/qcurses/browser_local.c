@@ -228,7 +228,7 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
                 thread_data_t * data = calloc(1, sizeof(thread_data_t));
 
                 data->summary = *(demlist->summaries + j);
-                Q_snprintfz(data->path, sizeof(data->path), "..%s/%s", demodir, demlist->entries[j].name);
+                Q_snprintfz(data->path, sizeof(data->path), "..%s/%s.dem", demodir, demlist->entries[j].name);
                 SDL_CreateThread(get_summary_thread, "make summary", (void *) data);
             }
             j++;
@@ -331,11 +331,17 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
             M_Demos_LocalRead(max_lines, prevdir);
         } else {
             if (keydown[K_CTRL] && !keydown[K_SHIFT]) {
-                Cbuf_AddText (va("ghost \"..%s/%s\"\n", demodir, demlist->entries[demlist->list.cursor].name));
+                if (Q_strcasestr(demlist->entries[demlist->list.cursor].name, ".dz"))
+                    Cbuf_AddText (va("ghost \"..%s/%s\"\n", demodir, demlist->entries[demlist->list.cursor].name));
+                else
+                    Cbuf_AddText (va("ghost \"..%s/%s.dem\"\n", demodir, demlist->entries[demlist->list.cursor].name));
             } else {
                 if (!keydown[K_ALT])
                     key_dest = key_game;
-                Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demodir, demlist->entries[demlist->list.cursor].name));
+                if (Q_strcasestr(demlist->entries[demlist->list.cursor].name, ".dz"))
+                    Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demodir, demlist->entries[demlist->list.cursor].name));
+                else
+                    Cbuf_AddText (va("playdemo \"..%s/%s.dem\"\n", demodir, demlist->entries[demlist->list.cursor].name));
             }
         }
     }
