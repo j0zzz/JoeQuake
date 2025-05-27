@@ -52,6 +52,7 @@ qcurses_box_t * main_box = NULL;
 qcurses_box_t * local_box = NULL;
 
 int browserscale;
+qboolean refresh_demlist;
 int oldwidth;
 int oldheight;
 
@@ -230,7 +231,7 @@ void M_Demos_KeyHandle (int k) {
             demos_tab = demos_tab % TAB_SDA_DATABASE + 1;
             S_LocalSound("misc/menu1.wav");
             if (demos_tab == TAB_LOCAL_DEMOS) 
-                M_Demos_LocalRead(main_box->rows - 8, NULL);
+                M_Demos_LocalRead(main_box->rows - 20, NULL);
 
             break;
     }
@@ -881,8 +882,10 @@ void M_Demos_Display (int width, int height) {
     if (!maps)
         Browser_CreateMapSet();
 
-    if (!demlist)
+    if (!demlist || refresh_demlist) {
+        refresh_demlist = false;
         M_Demos_LocalRead(main_box->rows - 20, NULL);
+    }
 
     if (curl && curl->running)
         demos_update = true;

@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcurses/browser.h"
 
 extern int browserscale;
+extern qboolean refresh_demlist;
 qboolean vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
@@ -6532,6 +6533,7 @@ void M_Menu_Demos_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_demos;
+	refresh_demlist = true;
 	m_entersound = true;
 
 	SearchForDemos ();
