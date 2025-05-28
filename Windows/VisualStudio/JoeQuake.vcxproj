@@ -163,7 +163,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>..\misc\include;..\dxsdk\Include;..\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\misc\include;..\dxsdk\Include;..\SDL2\include;..\curl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;SDL2;USE_CODEC_VORBIS;USE_CODEC_MP3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -188,7 +188,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;SDL2.lib;libmad.lib;libvorbis.lib;libvorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;SDL2.lib;libmad.lib;libvorbis.lib;libvorbisfile.lib;libcurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\release_sdl\joequake-gl-sdl.exe</OutputFile>
       <Version>
       </Version>
@@ -358,6 +358,13 @@
     </ClCompile>
     <ClCompile Include="..\..\trunk\ioapi.c" />
     <ClCompile Include="..\..\trunk\pathtracer\pathtracer.c" />
+    <ClCompile Include="..\..\trunk\qcurses\browser.c" />
+    <ClCompile Include="..\..\trunk\qcurses\browser_curl.c" />
+    <ClCompile Include="..\..\trunk\qcurses\browser_local.c" />
+    <ClCompile Include="..\..\trunk\qcurses\browser_news.c" />
+    <ClCompile Include="..\..\trunk\qcurses\cJSON.c" />
+    <ClCompile Include="..\..\trunk\qcurses\qcurses.c" />
+    <ClCompile Include="..\..\trunk\qcurses\set.c" />
     <ClCompile Include="..\..\trunk\snd_codec.c" />
     <ClCompile Include="..\..\trunk\snd_dma.c" />
     <ClCompile Include="..\..\trunk\snd_mp3.c" />
@@ -620,6 +627,13 @@
     <ClInclude Include="..\..\trunk\pathtracer\pathtracer.h" />
     <ClInclude Include="..\..\trunk\progdefs.h" />
     <ClInclude Include="..\..\trunk\progs.h" />
+    <ClInclude Include="..\..\trunk\qcurses\browser.h" />
+    <ClInclude Include="..\..\trunk\qcurses\browser_curl.h" />
+    <ClInclude Include="..\..\trunk\qcurses\browser_local.h" />
+    <ClInclude Include="..\..\trunk\qcurses\browser_news.h" />
+    <ClInclude Include="..\..\trunk\qcurses\cJSON.h" />
+    <ClInclude Include="..\..\trunk\qcurses\qcurses.h" />
+    <ClInclude Include="..\..\trunk\qcurses\set.h" />
     <ClInclude Include="..\..\trunk\snd_codec.h" />
     <ClInclude Include="..\..\trunk\snd_codeci.h" />
     <ClInclude Include="..\..\trunk\snd_mp3.h" />
