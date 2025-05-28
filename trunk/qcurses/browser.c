@@ -368,6 +368,12 @@ qcurses_char_t * Browser_TxtFile() {
 
     Q_snprintfz(path, sizeof(path), ".demo_cache/%s/%s.dz", curtype(), currec());
 
+    Con_Printf("%s\n", path);
+    for (int i = 0; i < strlen(path); i++){
+        if (!isalnum(path[i]) && path[i] != '_' && path[i] != '.' && path[i] != '/' && path[i] != '\\')
+            return qcurses_parse_txt(Q_strdup("Improper filename in SDA database JSON!"));
+    }
+
 #ifdef _WIN32
     char	cmdline[1024];
     STARTUPINFO si;
@@ -399,7 +405,7 @@ qcurses_char_t * Browser_TxtFile() {
 
     Q_snprintfz(cmdline, sizeof(cmdline), "./dzip.exe -s \"%s\" \"%s.txt\"", path, currec());
     if (!CreateProcess(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, com_basedir, &si, &pi)) {
-        return qcurses_parse_txt(va("Couldn't execute %s/dzip.exe\n", com_basedir));
+        return qcurses_parse_txt(Q_strdup(va("Couldn't execute %s/dzip.exe\n", com_basedir)));
     } else {
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
@@ -414,7 +420,7 @@ qcurses_char_t * Browser_TxtFile() {
 #else
     switch (pid = fork()) {
     case -1:
-        return qcurses_parse_txt("ERROR: creating dzip process to read txt!\n");
+        return qcurses_parse_txt(Q_strdup("ERROR: creating dzip process to read txt!\n"));
     case 0:
         dup2 (pipes[1], STDERR_FILENO);
         dup2 (pipes[1], STDOUT_FILENO);
