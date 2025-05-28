@@ -193,8 +193,10 @@ void M_Demos_KeyHandle_Browser (int k) {
                 Cbuf_AddText (va("playdemo \"../.demo_cache/%s/%s.dz\"\n", curtype(), currec()));
             }
         }
-        browser_col = min(COL_COMMENT_LOADING, browser_col + 1);
-        S_LocalSound("misc/menu2.wav");
+        if (columns[browser_col]->list.len > 0) {
+            browser_col = min(COL_COMMENT_LOADING, browser_col + 1);
+            S_LocalSound("misc/menu2.wav");
+        }
         break;
     case K_BACKSPACE:
     case K_LEFTARROW:
