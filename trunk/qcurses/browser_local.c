@@ -37,7 +37,7 @@ extern int browserscale;
 
 static qboolean search_input = false;
 
-static char search_term[40] = "\0";
+static char search_term[41] = "\0";
 static char * qcurses_skills[4] = { "Easy", "Normal", "Hard", "Nightmare" };
 
 SDL_sem *filelist_lock = NULL;

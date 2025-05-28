@@ -42,6 +42,7 @@
 #include "set.h"
 #include <curl/curl.h>
 #include "browser_curl.h"
+#include <ctype.h>
 
 #define curmap() columns[COL_MAP]->array[columns[COL_MAP]->list.cursor]
 #define curtype() columns[COL_TYPE]->array[columns[COL_TYPE]->list.cursor]
@@ -60,7 +61,7 @@ static enum demos_tabs demos_tab = TAB_LOCAL_DEMOS;
 static enum browser_columns browser_col = COL_MAP;
 static enum map_filters map_filter = FILTER_DOWNLOADED, prev_map_filter = FILTER_ALL;
 
-static char search_term[40] = "\0";
+static char search_term[41] = "\0";
 static qboolean search_input = false;
 qboolean mod_changed = false;
 
@@ -124,7 +125,7 @@ void M_Demos_KeyHandle_Browser_Search (int k) {
             search_term[len - 1] = '\0';
         break;
     default:
-        if (k >= '0' && k <= 'z')
+        if (isalnum(k) || k == '_')
             if (len < 40)
                 search_term[len] = k;
         break;
@@ -485,7 +486,7 @@ qcurses_recordlist_t * Browser_CreateMapColumn(const cJSON * json, int rows, enu
 /*
  * create box that displays help for each tab
  */
-void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * search_term, qboolean search_input) {
+void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * search_str, qboolean search_input) {
     qcurses_make_bar(help_box, 0);
     qcurses_print_centered(help_box, 2, "Navigation: arrows keys OR hjkl OR enter/backspace", false);
     qcurses_print_centered(help_box, 3, "Paging: page keys OR Ctrl+b and Ctrl+d", false);
@@ -507,7 +508,7 @@ void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * searc
         qcurses_print_centered(
             help_box,
             6,
-            va("Search: \x10%-40s\x11 (/ or Ctrl+f)", va("%s%c", search_term, search_input ? blink(0xb) : ' ')),
+            va("Search: \x10%-40s\x11 (/ or Ctrl+f)", va("%s%c", search_str, search_input ? blink(0xb) : ' ')),
             search_input
         );
     } else {
