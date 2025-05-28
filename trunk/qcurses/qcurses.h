@@ -83,6 +83,7 @@ typedef struct qcurses_recordlist_s {
 typedef struct qcurses_demlist_s {
     qcurses_list_t list;
     direntry_t * entries;
+    int ** mem_freed;
     demo_summary_t ** summaries;
 } qcurses_demlist_t;
 

@@ -180,12 +180,16 @@ int get_summary_thread(void * entry) {
         return 1;
 
     int ok = DS_GetDemoSummary(demo_file, summary);
-    if (ok) {
-        SDL_SemWait(filelist_lock);
+    SDL_SemWait(filelist_lock);
+    if (ok && *((thread_data_t *) entry)->mem_freed == 2) {
         memcpy(((thread_data_t *) entry)->summary, summary, sizeof(demo_summary_t));
-        SDL_SemPost(filelist_lock);
     }
 
+    if (*((thread_data_t *) entry)->mem_freed == 1)
+        free(((thread_data_t *) entry)->mem_freed);
+    else
+        *((thread_data_t *) entry)->mem_freed = 1;
+    SDL_SemPost(filelist_lock);
     fclose(demo_file);
     free((thread_data_t *) entry);
     free(summary);
@@ -198,15 +202,22 @@ int get_summary_thread(void * entry) {
 void M_Demos_LocalRead(int rows, char * prevdir) {
     SearchForDemos ();
 
+    SDL_SemWait(filelist_lock);
     if (demlist) {
         for (int i = 0; i < demlist->list.len; i++) {
             free(demlist->entries[i].name);
             free(demlist->summaries[i]);
+            if (*(demlist->mem_freed[i]) == 1)
+                free(demlist->mem_freed[i]);
+            else
+                *(demlist->mem_freed[i]) = 1;
         }
+        free(demlist->mem_freed);
         free(demlist->entries);
         free(demlist->summaries);
         free(demlist);
     }
+    SDL_SemPost(filelist_lock);
 
     demlist = calloc(1, sizeof(qcurses_demlist_t));
     demlist->list.len = num_files;
@@ -215,7 +226,7 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     demlist->list.window_start = 0;
     demlist->entries = calloc(demlist->list.len, sizeof(direntry_t));
     demlist->summaries = calloc(demlist->list.len, sizeof(demo_summary_t*));
-
+    demlist->mem_freed = calloc(demlist->list.len, sizeof(qboolean*));
 
     int j = 0;
     for (int i = 0; i < num_files; i++) {
@@ -227,6 +238,8 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
             demlist->summaries[j] = calloc(1, sizeof(demo_summary_t));
             demlist->summaries[j]->total_time = -1;
 
+            demlist->mem_freed[j] = calloc(1, sizeof(int));
+
             if (prevdir && !strcmp(demlist->entries[j].name, prevdir)) {
                 demlist->list.cursor = j;
                 demlist->list.window_start = 0;
@@ -235,9 +248,13 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
             if (!search_input && demlist->entries[j].type == 0 && !Q_strcasestr(demlist->entries[j].name, ".dz")) {
                 thread_data_t * data = calloc(1, sizeof(thread_data_t));
 
+                *(demlist->mem_freed[j]) = 2;
+                data->mem_freed = demlist->mem_freed[j];
                 data->summary = *(demlist->summaries + j);
                 Q_snprintfz(data->path, sizeof(data->path), "..%s/%s.dem", demodir, demlist->entries[j].name);
                 SDL_CreateThread(get_summary_thread, "make summary", (void *) data);
+            } else {
+                *(demlist->mem_freed[j]) = 1;
             }
             j++;
         }
