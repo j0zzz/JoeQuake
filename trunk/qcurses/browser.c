@@ -322,13 +322,21 @@ void Browser_UpdateFurtherColumns (enum browser_columns start_column) {
     const cJSON *item = NULL;
     switch (start_column) {
     case COL_MAP:
-        if (columns[COL_TYPE])
+        if (columns[COL_TYPE]) {
+            if (columns[COL_TYPE]->array)
+                free(columns[COL_TYPE]->array);
             free(columns[COL_TYPE]);
+        }
         item = cJSON_GetObjectItemCaseSensitive(json, curmap());
         columns[COL_TYPE] = Browser_CreateTypeColumn(item, 15 - 2);
     case COL_TYPE:
-        if (columns[COL_RECORD])
+        if (columns[COL_RECORD]) {
+            if (columns[COL_RECORD]->array)
+                free(columns[COL_RECORD]->array);
+            if (columns[COL_RECORD]->sda_name)
+                free(columns[COL_RECORD]->sda_name);
             free(columns[COL_RECORD]);
+        }
         item = cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(json, curmap()), curtype());
         columns[COL_RECORD] = Browser_CreateRecordColumn(item, 15 - 2);
     case COL_RECORD:
