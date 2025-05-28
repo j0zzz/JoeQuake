@@ -8815,7 +8815,7 @@ void M_Draw (void)
 
 	case m_demos:
 #ifdef GLQUAKE
-		browserscale = vid.width / 8 >=240 ? 2 : 1;
+		browserscale = max(vid.width / 8 / 120, 1);
 		glMatrixMode (GL_PROJECTION);
 		glLoadIdentity ();
 		glOrtho (0, vid.width / browserscale, vid.height / browserscale, 0, -99999, 99999);
