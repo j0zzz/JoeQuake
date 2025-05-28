@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern int browserscale;
 extern qboolean refresh_demlist;
+extern qboolean mod_changed;
 qboolean vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
@@ -6741,6 +6742,8 @@ void M_Mods_Key(int k)
 		Cbuf_AddText(va("disconnect\ngamedir %s\nexec quake.rc\n", filelist[list_base + list_cursor].name));
 		Cbuf_Execute();
 		Draw_ReloadPics();
+
+		mod_changed = true;
 
 		Q_strncpyz(prevdir, filelist[list_base + list_cursor].name, sizeof(prevdir));
 

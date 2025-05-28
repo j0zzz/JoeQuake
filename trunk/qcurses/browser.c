@@ -62,6 +62,7 @@ static enum map_filters map_filter = FILTER_DOWNLOADED, prev_map_filter = FILTER
 
 static char search_term[40] = "\0";
 static qboolean search_input = false;
+qboolean mod_changed = false;
 
 qcurses_recordlist_t * columns[COL_RECORD + 1];
 qcurses_char_t * comments;
@@ -656,7 +657,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     }
 
     /* handle map column display */
-    if (prev_map_filter != map_filter || search_input) { /* apply filtering */
+    if (prev_map_filter != map_filter || search_input || mod_changed) { /* apply filtering */
         if (columns[COL_MAP]){
             free(columns[COL_MAP]->array);
             free(columns[COL_MAP]);
@@ -664,6 +665,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         columns[COL_MAP] = Browser_CreateMapColumn(json, rows - 12, map_filter);
         Browser_UpdateFurtherColumns(COL_MAP);
         prev_map_filter = map_filter;
+        mod_changed = false;
     }
 
     for (int i = 0; i < min(columns[COL_MAP]->list.len, columns[COL_MAP]->list.places); i++)
@@ -809,8 +811,18 @@ display:
  */
 void Browser_CreateMapSet() {
     SearchForMaps();
+
+    if (maps) {
+        set_destroy(maps);
+        free(maps);
+    }
     maps = calloc(1, sizeof(simple_set));
     set_init(maps);
+
+    if (id_maps) {
+        set_destroy(id_maps);
+        free(id_maps);
+    }
     id_maps = calloc(1, sizeof(simple_set));
     set_init(id_maps);
 
@@ -887,7 +899,7 @@ void M_Demos_Display (int width, int height) {
         main_box = qcurses_init(width / 8, height / 8);
     }
 
-    if (!maps)
+    if (!maps || mod_changed)
         Browser_CreateMapSet();
 
     if (!demlist || refresh_demlist) {
