@@ -767,6 +767,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     if (browser_col == COL_COMMENT_LOADED && comments) {
         comment_rows = qcurses_boxprint_wrapped(comment_box, comments, comment_box->cols * comment_box->rows, 1);
         comment_page = min(comment_page, comment_rows - comment_box->rows);
+        comment_page = min(comment_page, comment_box->rows * 14); /* limit row display */
         comment_page = max(comment_page, 0);
         comment_box->paged = comment_page;
         if (comment_rows - comment_box->rows > 0) {
