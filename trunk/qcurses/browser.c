@@ -319,6 +319,9 @@ qcurses_recordlist_t * Browser_CreateRecordColumn(const cJSON * json, int rows) 
  * going down the tree
  */
 void Browser_UpdateFurtherColumns (enum browser_columns start_column) {
+    if (!columns[start_column])
+        return;
+
     const cJSON *item = NULL;
     switch (start_column) {
     case COL_MAP:

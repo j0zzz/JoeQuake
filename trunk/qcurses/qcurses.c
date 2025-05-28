@@ -237,11 +237,13 @@ void qcurses_insert(qcurses_box_t *dest, int col, int row, qcurses_box_t *src) {
  * helper function to move cursor in a list
  */
 void qcurses_list_move_cursor(qcurses_list_t *col, int move) {
-    col->cursor = max(min(col->cursor + move, col->len - 1), 0);
-    if (col->cursor >= col->window_start + col->places)
-        col->window_start = col->cursor - col->places + 1;
-    if (col->cursor < col->window_start)
-        col->window_start = col->cursor;
+    if (col) {
+        col->cursor = max(min(col->cursor + move, col->len - 1), 0);
+        if (col->cursor >= col->window_start + col->places)
+            col->window_start = col->cursor - col->places + 1;
+        if (col->cursor < col->window_start)
+            col->window_start = col->cursor;
+    }
 }
 
 /*
