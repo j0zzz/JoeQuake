@@ -43,7 +43,7 @@ static size_t mem_cb(char *data, size_t size, size_t nmemb, void *clientp) {
     size_t realsize = size * nmemb;
     struct memory *mem = (struct memory *)clientp;
 
-    char *ptr = realloc(mem->buf, mem->size + realsize + 1);
+    char *ptr = Q_realloc(mem->buf, mem->size + realsize + 1);
     if(!ptr)
         return CURL_WRITEFUNC_ERROR; /* out of memory */
 
@@ -59,7 +59,7 @@ static size_t mem_cb(char *data, size_t size, size_t nmemb, void *clientp) {
  * Start the download using curl.
  */
 browser_curl_t *browser_curl_start(char *path, char *href) {
-    browser_curl_t *curl = calloc(1, sizeof(browser_curl_t));
+    browser_curl_t *curl = Q_calloc(1, sizeof(browser_curl_t));
     int err;
     if (!curl) {
         Con_Printf("curl allocation error!\n");

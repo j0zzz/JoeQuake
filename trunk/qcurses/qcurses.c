@@ -46,7 +46,7 @@ int comment_rows = 0;
  * parse the text data into a grid
  */
 qcurses_char_t * qcurses_parse_txt(char * txt){
-    qcurses_char_t * qstr = calloc(strlen(txt) + 1, sizeof(qcurses_char_t));
+    qcurses_char_t * qstr = Q_calloc(strlen(txt) + 1, sizeof(qcurses_char_t));
     int i = 0, j = 0, rows = 0;
     for (i = 0; i < strlen(txt); i++){
         qstr[j++].symbol = txt[i];
@@ -70,7 +70,7 @@ qcurses_char_t * qcurses_parse_news(char * html){
     int i = 0, j = 0;
     char * src = Q_strcasestr(html, "<p class=\"d\">");
     char * end = Q_strcasestr(src + 1, "<p class=\"d\">");
-    qcurses_char_t * qstr = calloc(strlen(html), sizeof(qcurses_char_t));
+    qcurses_char_t * qstr = Q_calloc(strlen(html), sizeof(qcurses_char_t));
     for (i = 0; i < end - src; i++){
         if( src[i] == '<'){
             tag = true;
@@ -110,15 +110,15 @@ qcurses_box_t * qcurses_init(int cols, int rows) {
  * out directly when needed.
  */
 qcurses_box_t * qcurses_init_callback(int cols, int rows, void (*callback)(qcurses_char_t * self, const mouse_state_t * ms)) {
-    qcurses_box_t * box = malloc(sizeof(qcurses_box_t));
+    qcurses_box_t * box = Q_malloc(sizeof(qcurses_box_t));
 
     box->cols = cols;
     box->rows = box->page_rows = rows;
     box->paged = -1;
 
-    box->grid = calloc(rows, sizeof(qcurses_char_t *));
+    box->grid = Q_calloc(rows, sizeof(qcurses_char_t *));
     for (int i = 0; i < rows; i++){
-        box->grid[i] = calloc(cols, sizeof(qcurses_char_t));
+        box->grid[i] = Q_calloc(cols, sizeof(qcurses_char_t));
         for (int j = 0; j < cols; j++) {
             box->grid[i][j].symbol = ' ';
             box->grid[i][j].callback = callback;
@@ -134,16 +134,16 @@ qcurses_box_t * qcurses_init_callback(int cols, int rows, void (*callback)(qcurs
  * initialize a paged box, with no callback.
  */
 qcurses_box_t * qcurses_init_paged(int cols, int rows) {
-    qcurses_box_t * box = malloc(sizeof(qcurses_box_t));
+    qcurses_box_t * box = Q_malloc(sizeof(qcurses_box_t));
 
     box->cols = cols;
     box->rows = rows;
     box->page_rows = 16 * rows;
     box->paged = 0;
 
-    box->grid = calloc(16 * rows, sizeof(qcurses_char_t *));
+    box->grid = Q_calloc(16 * rows, sizeof(qcurses_char_t *));
     for (int i = 0; i < 16 * rows; i++){
-        box->grid[i] = calloc(cols, sizeof(qcurses_char_t));
+        box->grid[i] = Q_calloc(cols, sizeof(qcurses_char_t));
         for (int j = 0; j < cols; j++)
             box->grid[i][j].symbol = ' ';
     }

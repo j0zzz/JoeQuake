@@ -173,7 +173,7 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
  * get summary, in a separate thread.
  */
 int get_summary_thread(void * entry) {
-    demo_summary_t *summary = calloc(1, sizeof(demo_summary_t));
+    demo_summary_t *summary = Q_calloc(1, sizeof(demo_summary_t));
 
     FILE *demo_file = Ghost_OpenDemoOrDzip(((thread_data_t *) entry)->path);;
     if (!demo_file)
@@ -219,14 +219,14 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     }
     SDL_SemPost(filelist_lock);
 
-    demlist = calloc(1, sizeof(qcurses_demlist_t));
+    demlist = Q_calloc(1, sizeof(qcurses_demlist_t));
     demlist->list.len = num_files;
     demlist->list.places = rows;
     demlist->list.cursor = 0;
     demlist->list.window_start = 0;
-    demlist->entries = calloc(demlist->list.len, sizeof(direntry_t));
-    demlist->summaries = calloc(demlist->list.len, sizeof(demo_summary_t*));
-    demlist->mem_freed = calloc(demlist->list.len, sizeof(qboolean*));
+    demlist->entries = Q_calloc(demlist->list.len, sizeof(direntry_t));
+    demlist->summaries = Q_calloc(demlist->list.len, sizeof(demo_summary_t*));
+    demlist->mem_freed = Q_calloc(demlist->list.len, sizeof(qboolean*));
 
     int j = 0;
     for (int i = 0; i < num_files; i++) {
@@ -235,10 +235,10 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
             demlist->entries[j].type = filelist[i].type;
             demlist->entries[j].size = filelist[i].size;
 
-            demlist->summaries[j] = calloc(1, sizeof(demo_summary_t));
+            demlist->summaries[j] = Q_calloc(1, sizeof(demo_summary_t));
             demlist->summaries[j]->total_time = -1;
 
-            demlist->mem_freed[j] = calloc(1, sizeof(int));
+            demlist->mem_freed[j] = Q_calloc(1, sizeof(int));
 
             if (prevdir && !strcmp(demlist->entries[j].name, prevdir)) {
                 demlist->list.cursor = j;
@@ -246,7 +246,7 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
             }
 
             if (!search_input && demlist->entries[j].type == 0 && !Q_strcasestr(demlist->entries[j].name, ".dz")) {
-                thread_data_t * data = calloc(1, sizeof(thread_data_t));
+                thread_data_t * data = Q_calloc(1, sizeof(thread_data_t));
 
                 *(demlist->mem_freed[j]) = 2;
                 data->mem_freed = demlist->mem_freed[j];

@@ -264,13 +264,13 @@ void M_Demos_KeyHandle (int k) {
 qcurses_recordlist_t * Browser_CreateTypeColumn(const cJSON * json, int rows) {
     const cJSON *type = NULL;
 
-    qcurses_recordlist_t *column = calloc(1, sizeof(qcurses_recordlist_t));
+    qcurses_recordlist_t *column = Q_calloc(1, sizeof(qcurses_recordlist_t));
 
     column->list.cursor = 0;
     column->list.len = cJSON_GetArraySize(json);
     column->list.places = rows;
     column->list.window_start = 0;
-    column->array = calloc(column->list.len, sizeof(char[80]));
+    column->array = Q_calloc(column->list.len, sizeof(char[80]));
 
     int i = 0;
     cJSON_ArrayForEach(type, json) {
@@ -286,14 +286,14 @@ qcurses_recordlist_t * Browser_CreateTypeColumn(const cJSON * json, int rows) {
 qcurses_recordlist_t * Browser_CreateRecordColumn(const cJSON * json, int rows) {
     const cJSON *record = NULL;
 
-    qcurses_recordlist_t *column = calloc(1, sizeof(qcurses_recordlist_t));
+    qcurses_recordlist_t *column = Q_calloc(1, sizeof(qcurses_recordlist_t));
 
     column->list.cursor = 0;
     column->list.len = cJSON_GetArraySize(json);
     column->list.places = rows;
     column->list.window_start = 0;
-    column->array = calloc(column->list.len, sizeof(char[80]));
-    column->sda_name = calloc(column->list.len, sizeof(char[50]));
+    column->array = Q_calloc(column->list.len, sizeof(char[80]));
+    column->sda_name = Q_calloc(column->list.len, sizeof(char[50]));
 
     int i = 0;
     cJSON_ArrayForEach(record, json) {
@@ -416,7 +416,7 @@ qcurses_char_t * Browser_TxtFile() {
         CloseHandle(child_stdout_write);
     }
 
-    char * txt = calloc(4096*8, sizeof(char));
+    char * txt = Q_calloc(4096*8, sizeof(char));
     ReadFile(child_stdout_read, txt, 4096*8, &dwRead, NULL);
     CloseHandle(child_stdout_read);
     return qcurses_parse_txt(txt);
@@ -433,7 +433,7 @@ qcurses_char_t * Browser_TxtFile() {
         return qcurses_parse_txt("Not supposed to get here.\n");
     default:
         close(pipes[1]);
-        char * txt = calloc(4096*8, sizeof(char));
+        char * txt = Q_calloc(4096*8, sizeof(char));
         read(pipes[0], txt, 4096*8);
         waitpid(-1, NULL, 0);
         close(pipes[0]);
@@ -470,13 +470,13 @@ void Browser_DownloadDzip() {
 qcurses_recordlist_t * Browser_CreateMapColumn(const cJSON * json, int rows, enum map_filters filter) {
     const cJSON *map = NULL;
 
-    qcurses_recordlist_t *column = calloc(1, sizeof(qcurses_recordlist_t));
+    qcurses_recordlist_t *column = Q_calloc(1, sizeof(qcurses_recordlist_t));
 
     column->list.cursor = 0;
     column->list.len = cJSON_GetArraySize(json);
     column->list.places = rows;
     column->list.window_start = 0;
-    column->array = calloc(column->list.len, sizeof(char[80]));
+    column->array = Q_calloc(column->list.len, sizeof(char[80]));
 
     int i = 0;
     cJSON_ArrayForEach(map, json) {
@@ -835,14 +835,14 @@ void Browser_CreateMapSet() {
         set_destroy(maps);
         free(maps);
     }
-    maps = calloc(1, sizeof(simple_set));
+    maps = Q_calloc(1, sizeof(simple_set));
     set_init(maps);
 
     if (id_maps) {
         set_destroy(id_maps);
         free(id_maps);
     }
-    id_maps = calloc(1, sizeof(simple_set));
+    id_maps = Q_calloc(1, sizeof(simple_set));
     set_init(id_maps);
 
     for (int i = 0; i < num_files; i++)
