@@ -802,8 +802,6 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 false
             );
         }
-    } else if (browser_col == COL_COMMENT_LOADED) {
-        qcurses_print_centered(comment_box, comment_box->rows / 2, "Text file not provided.", false);
     }
 
     M_Demos_HelpBox (help_box, demos_tab, search_term, search_input);
