@@ -91,6 +91,17 @@ extern int comment_rows;
 extern char ghost_demo_path[MAX_OSPATH];
 
 /*
+ * sanitise inputs
+ */
+char * sanitise(char * str) {
+    for (int i = 0; i < strlen(str); i++)
+        if (!isalnum(str[i]) && str[i] != '_' && str[i] != '.' && str[i] != '/' && str[i] != '\\')
+            return NULL;
+
+    return str;
+}
+
+/*
  * get time with no decimals, important for filenames
  */
 char *GetPrintedTimeNoDec(float time, qboolean strip) {
@@ -354,6 +365,9 @@ void Browser_UpdateFurtherColumns (enum browser_columns start_column) {
 qboolean Browser_DzipDownloaded() {
     char path[50];
 
+    if (!sanitise(curtype()) || !sanitise(currec()))
+        return false;
+
     Q_snprintfz(path, sizeof(path), ".demo_cache/%s/%s.dz", curtype(), currec());
 
 #ifdef _WIN32
@@ -368,14 +382,11 @@ qboolean Browser_DzipDownloaded() {
  */
 qcurses_char_t * Browser_TxtFile() {
     char path[50];
+    
+    if (!sanitise(curtype()) || !sanitise(currec()))
+        return qcurses_parse_txt(Q_strdup("Improper filename in SDA database JSON!"));
 
     Q_snprintfz(path, sizeof(path), ".demo_cache/%s/%s.dz", curtype(), currec());
-
-    Con_Printf("%s\n", path);
-    for (int i = 0; i < strlen(path); i++){
-        if (!isalnum(path[i]) && path[i] != '_' && path[i] != '.' && path[i] != '/' && path[i] != '\\')
-            return qcurses_parse_txt(Q_strdup("Improper filename in SDA database JSON!"));
-    }
 
 #ifdef _WIN32
     char	cmdline[1024];
@@ -448,6 +459,9 @@ qcurses_char_t * Browser_TxtFile() {
 void Browser_DownloadDzip() {
     char path[50];
     char href[100];
+
+    if (!sanitise(curtype()) || !sanitise(currec()))
+        return;
 
     Q_snprintfz(path, sizeof(path), ".demo_cache/%s/", curtype());
     COM_CreatePath(path);
