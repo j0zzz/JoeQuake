@@ -44,8 +44,6 @@ static size_t mem_cb(char *data, size_t size, size_t nmemb, void *clientp) {
     struct memory *mem = (struct memory *)clientp;
 
     char *ptr = Q_realloc(mem->buf, mem->size + realsize + 1);
-    if(!ptr)
-        return CURL_WRITEFUNC_ERROR; /* out of memory */
 
     mem->buf = ptr;
     memcpy(&(mem->buf[mem->size]), data, realsize);
