@@ -25,7 +25,7 @@
 typedef struct thread_data_s {
     char path[MAX_OSPATH];
     demo_summary_t * summary;
-    int * mem_freed;
+    uint32_t localread_count;
 } thread_data_t;
 
 int get_summary_thread(void * entry);

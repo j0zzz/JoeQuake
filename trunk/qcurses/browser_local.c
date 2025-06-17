@@ -40,6 +40,8 @@ static qboolean search_input = false;
 static char search_term[41] = "\0";
 static char * qcurses_skills[4] = { "Easy", "Normal", "Hard", "Nightmare" };
 
+static uint32_t localread_count = 0;
+
 SDL_sem *filelist_lock = NULL;
 
 extern void SearchForDemos (void);
@@ -176,19 +178,17 @@ int get_summary_thread(void * entry) {
     demo_summary_t *summary = Q_calloc(1, sizeof(demo_summary_t));
 
     FILE *demo_file = Ghost_OpenDemoOrDzip(((thread_data_t *) entry)->path);;
-    if (!demo_file)
+    if (!demo_file) {
+        free(summary);
+        free((thread_data_t *) entry);
         return 1;
+    }
 
     int ok = DS_GetDemoSummary(demo_file, summary);
     SDL_SemWait(filelist_lock);
-    if (ok && *((thread_data_t *) entry)->mem_freed == 2) {
+    if (ok && ((thread_data_t *) entry)->localread_count == localread_count) {
         memcpy(((thread_data_t *) entry)->summary, summary, sizeof(demo_summary_t));
     }
-
-    if (*((thread_data_t *) entry)->mem_freed == 1)
-        free(((thread_data_t *) entry)->mem_freed);
-    else
-        *((thread_data_t *) entry)->mem_freed = 1;
     SDL_SemPost(filelist_lock);
     fclose(demo_file);
     free((thread_data_t *) entry);
@@ -202,22 +202,22 @@ int get_summary_thread(void * entry) {
 void M_Demos_LocalRead(int rows, char * prevdir) {
     SearchForDemos ();
 
+    if (!filelist_lock)
+        filelist_lock = SDL_CreateSemaphore(1);
+
     SDL_SemWait(filelist_lock);
+
+    localread_count++;
+
     if (demlist) {
         for (int i = 0; i < demlist->list.len; i++) {
             free(demlist->entries[i].name);
             free(demlist->summaries[i]);
-            if (*(demlist->mem_freed[i]) == 1)
-                free(demlist->mem_freed[i]);
-            else
-                *(demlist->mem_freed[i]) = 1;
         }
-        free(demlist->mem_freed);
         free(demlist->entries);
         free(demlist->summaries);
         free(demlist);
     }
-    SDL_SemPost(filelist_lock);
 
     demlist = Q_calloc(1, sizeof(qcurses_demlist_t));
     demlist->list.len = num_files;
@@ -226,7 +226,8 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     demlist->list.window_start = 0;
     demlist->entries = Q_calloc(demlist->list.len, sizeof(direntry_t));
     demlist->summaries = Q_calloc(demlist->list.len, sizeof(demo_summary_t*));
-    demlist->mem_freed = Q_calloc(demlist->list.len, sizeof(qboolean*));
+
+    SDL_SemPost(filelist_lock);
 
     int j = 0;
     for (int i = 0; i < num_files; i++) {
@@ -238,7 +239,6 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
             demlist->summaries[j] = Q_calloc(1, sizeof(demo_summary_t));
             demlist->summaries[j]->total_time = -1;
 
-            demlist->mem_freed[j] = Q_calloc(1, sizeof(int));
 
             if (prevdir && !strcmp(demlist->entries[j].name, prevdir)) {
                 demlist->list.cursor = j;
@@ -248,13 +248,10 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
             if (!search_input && demlist->entries[j].type == 0 && !Q_strcasestr(demlist->entries[j].name, ".dz")) {
                 thread_data_t * data = Q_calloc(1, sizeof(thread_data_t));
 
-                *(demlist->mem_freed[j]) = 2;
-                data->mem_freed = demlist->mem_freed[j];
                 data->summary = *(demlist->summaries + j);
+                data->localread_count = localread_count;
                 Q_snprintfz(data->path, sizeof(data->path), "..%s/%s.dem", demodir, demlist->entries[j].name);
-                SDL_CreateThread(get_summary_thread, "make summary", (void *) data);
-            } else {
-                *(demlist->mem_freed[j]) = 1;
+                SDL_DetachThread(SDL_CreateThread(get_summary_thread, "make summary", (void *) data));
             }
             j++;
         }
@@ -351,7 +348,7 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
                     *p = 0;
                 }
             } else {
-                strncat (demodir, va("/%s", demlist->entries[demlist->list.cursor].name), sizeof(demodir) - 1);
+                strncat (demodir, va("/%s", demlist->entries[demlist->list.cursor].name), sizeof(demodir) - strlen(demodir) - 1);
             }
             M_Demos_LocalRead(max_lines, prevdir);
         } else {
