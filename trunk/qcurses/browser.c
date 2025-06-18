@@ -360,10 +360,70 @@ void Browser_UpdateFurtherColumns (enum browser_columns start_column) {
 }
 
 /*
+ * portable function to check if downloaded dzip is valid
+ */
+qboolean Browser_VerifyDzip(char * path) {
+#ifdef _WIN32
+    char	cmdline[1024];
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    HANDLE child_stdout_read = NULL;
+    HANDLE child_stdout_write = NULL;
+    SECURITY_ATTRIBUTES sa_attr;
+    DWORD dwRead;
+#else
+    pid_t pid;
+    int status = 0;
+#endif
+
+#ifdef _WIN32
+    sa_attr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa_attr.bInheritHandle = TRUE;
+    sa_attr.lpSecurityDescriptor = NULL;
+
+    CreatePipe(&child_stdout_read, &child_stdout_write, &sa_attr, 0);
+    SetHandleInformation(child_stdout_read, HANDLE_FLAG_INHERIT, 0);
+
+    memset (&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    si.hStdError = child_stdout_write;
+    si.hStdOutput = child_stdout_write;
+    si.wShowWindow = SW_HIDE;
+    si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+
+    Q_snprintfz(cmdline, sizeof(cmdline), "./dzip.exe -v \"%s\" \"%s.txt\"", path, currec());
+    if (!CreateProcess(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, com_basedir, &si, &pi)) {
+        return qcurses_parse_txt(Q_strdup(va("Couldn't execute %s/dzip.exe\n", com_basedir)));
+    } else {
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+
+        CloseHandle(child_stdout_write);
+    }
+
+    char * txt = Q_calloc(4096*8, sizeof(char));
+    ReadFile(child_stdout_read, txt, 4096*8, &dwRead, NULL);
+    CloseHandle(child_stdout_read);
+    return qcurses_parse_txt(txt);
+#else
+    switch (pid = fork()) {
+    case -1:
+        return false;
+    case 0:
+        execlp("./dzip-linux", "dzip-linux", "-v", path, "-e", NULL);
+    default:
+        waitpid(-1, &status, 0);
+        return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+    }
+#endif
+}
+
+/*
  * portable function to check if the requested dzip is downloaded
  */
 qboolean Browser_DzipDownloaded() {
     char path[50];
+    qboolean downloaded = false;
 
     if (!sanitise(curtype()) || !sanitise(currec()))
         return false;
@@ -371,10 +431,27 @@ qboolean Browser_DzipDownloaded() {
     Q_snprintfz(path, sizeof(path), ".demo_cache/%s/%s.dz", curtype(), currec());
 
 #ifdef _WIN32
-    return _access(path, 0) == 0;
+    downloaded = _access(path, 0) == 0;
 #else
-    return access(path, F_OK) == 0;
+    downloaded = access(path, F_OK) == 0;
 #endif
+
+    return downloaded;
+}
+
+/*
+ * portable function to check if the requested dzip is downloaded
+ */
+qboolean Browser_DzipValid() {
+    char path[50];
+    qboolean valid = false;
+
+    if (!sanitise(curtype()) || !sanitise(currec()))
+        return false;
+
+    Q_snprintfz(path, sizeof(path), ".demo_cache/%s/%s.dz", curtype(), currec());
+
+    return Browser_VerifyDzip(path);
 }
 
 /*
@@ -767,17 +844,24 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
 
     if (browser_col == COL_COMMENT_LOADING) {
         if (!Browser_DzipDownloaded()) { /* start download of demo */
-            qcurses_print_centered(comment_box, comment_box->rows / 2, "Downloading...", false);
+            qcurses_print_centered(comment_box, comment_box->rows / 2, "Starting download...", false);
             if (!curl || !curl->running) {
                 Browser_DownloadDzip();
             }
+        } else if ((!curl || curl->running == CURL_ERROR) && !Browser_DzipValid()) {
+            qcurses_print_centered(comment_box, comment_box->rows / 2, "Redownloading...", false);
+            if (curl) {
+                browser_curl_clean(curl);
+                curl = NULL;
+            }
+            Browser_DownloadDzip();
         } else if (curl && curl->running == CURL_DOWNLOADING) { /* progress demo download */
             qcurses_print_centered(comment_box, comment_box->rows / 2, "Downloading...", false);
             float progress = browser_curl_step(curl);
 
             if (progress == -1.0) { /* error during step */
                 qcurses_print_centered(comment_box, comment_box->rows / 2, "Error during download!", false);
-                curl = NULL;
+                curl->running = CURL_ERROR;
             } else {
                 qcurses_print_centered(comment_box, comment_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
                 qcurses_print(comment_box, comment_box->cols / 2 - 5 + (int)(10.0 * progress), comment_box->rows / 2 + 1, "\x83", false);
