@@ -45,8 +45,8 @@ static uint32_t localread_count = 0;
 SDL_sem *filelist_lock = NULL;
 
 extern void SearchForDemos (void);
-extern FILE *Ghost_OpenDemoOrDzip(const char * demo_path);
 extern char *GetPrintedTime(double time);
+extern FILE *Ghost_OpenDemoOrDzip (const char *demo_path);
 extern char *toYellow(char *s);
 
 /* 
@@ -72,34 +72,52 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     if (!filelist_lock)
         filelist_lock = SDL_CreateSemaphore(1);
 
-    qcurses_box_t * local_box  = qcurses_init(cols, rows);
+    int total_cols = 0;
     qcurses_box_t * help_box   = qcurses_init(cols, 10);
-    qcurses_box_t * map_box    = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
-    qcurses_box_t * skill_box  = qcurses_init_callback(10, rows - help_box->rows, mouse_move_cursor);
-    qcurses_box_t * kill_box   = qcurses_init_callback(12, rows - help_box->rows, mouse_move_cursor);
-    qcurses_box_t * secret_box = qcurses_init_callback(9 , rows - help_box->rows, mouse_move_cursor);
+    qcurses_box_t * local_box  = qcurses_init(cols, rows);
     qcurses_box_t * time_box   = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
-    qcurses_box_t * player_box = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
+    total_cols += 15;
     qcurses_box_t * size_box   = qcurses_init_callback(8 , rows - help_box->rows, mouse_move_cursor);
-    qcurses_box_t * name_box   = qcurses_init_callback(cols - map_box->cols - skill_box->cols - kill_box->cols - secret_box->cols - time_box->cols - size_box->cols - player_box->cols, rows - help_box->rows, mouse_move_cursor);
+    total_cols += 8;
+    qcurses_box_t * skill_box  = NULL;
+    qcurses_box_t * kill_box   = NULL;
+    qcurses_box_t * secret_box = NULL;
+    qcurses_box_t * map_box    = NULL;
+    qcurses_box_t * player_box = NULL;
+
+    if (cols >= 90) {
+        skill_box  = qcurses_init_callback(10, rows - help_box->rows, mouse_move_cursor);
+        total_cols += 10;
+        kill_box   = qcurses_init_callback(12, rows - help_box->rows, mouse_move_cursor);
+        total_cols += 12;
+        secret_box = qcurses_init_callback(9, rows - help_box->rows, mouse_move_cursor);
+        total_cols += 9;
+    }
+    if (cols >= 70) {
+        map_box    = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
+        total_cols += 15;
+        player_box = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
+        total_cols += 15;
+    }
+    qcurses_box_t * name_box   = qcurses_init_callback(cols - total_cols, rows - help_box->rows, mouse_move_cursor);
 
     /* header */
+    qcurses_print(time_box, 0, 0, "TIME", true);
+    qcurses_make_bar(time_box, 1);
+    qcurses_print(size_box, 0, 0, "SIZE", true);
+    qcurses_make_bar(size_box, 1);
     qcurses_print(name_box, 0, 0, "NAME", true);
     qcurses_make_bar(name_box, 1);
-    qcurses_print(map_box, 0, 0, "MAP", true);
-    qcurses_make_bar(map_box, 1);
-    qcurses_print(player_box, 0, 0, "PLAYER", true);
-    qcurses_make_bar(player_box, 1);
     qcurses_print(skill_box, 0, 0, "SKILL", true);
     qcurses_make_bar(skill_box, 1);
     qcurses_print(kill_box, 0, 0, "KILLS", true);
     qcurses_make_bar(kill_box, 1);
     qcurses_print(secret_box, 0, 0, "SECRETS", true);
     qcurses_make_bar(secret_box, 1);
-    qcurses_print(time_box, 0, 0, "TIME", true);
-    qcurses_make_bar(time_box, 1);
-    qcurses_print(size_box, 0, 0, "SIZE", true);
-    qcurses_make_bar(size_box, 1);
+    qcurses_print(map_box, 0, 0, "MAP", true);
+    qcurses_make_bar(map_box, 1);
+    qcurses_print(player_box, 0, 0, "PLAYER", true);
+    qcurses_make_bar(player_box, 1);
 
     /* parse each individual potential file */
     for (int i = 0; i < min(demlist->list.len, demlist->list.places); i++) {
@@ -148,23 +166,46 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     M_Demos_HelpBox (help_box, TAB_LOCAL_DEMOS, search_term, search_input);
 
     int filled_cols = 0;
+
     qcurses_insert(local_box, filled_cols, 0, name_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + name_box->cols, 0, map_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + map_box->cols, 0, player_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + player_box->cols, 0, skill_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + skill_box->cols, 0, kill_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + kill_box->cols, 0, secret_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + secret_box->cols, 0, time_box);
-    qcurses_insert(local_box, filled_cols = filled_cols + time_box->cols, 0, size_box);
+    filled_cols += name_box->cols;
+
+    if (map_box && player_box) {
+        qcurses_insert(local_box, filled_cols, 0, map_box);
+        filled_cols += map_box->cols;
+
+        qcurses_insert(local_box, filled_cols, 0, player_box);
+        filled_cols += player_box->cols;
+    }
+    if (skill_box && kill_box && secret_box) {
+        qcurses_insert(local_box, filled_cols, 0, skill_box);
+        filled_cols += skill_box->cols;
+
+        qcurses_insert(local_box, filled_cols, 0, kill_box);
+        filled_cols += kill_box->cols;
+
+        qcurses_insert(local_box, filled_cols, 0, secret_box);
+        filled_cols += secret_box->cols;
+    }
+    qcurses_insert(local_box, filled_cols, 0, time_box);
+    filled_cols += time_box->cols;
+
+    qcurses_insert(local_box, filled_cols, 0, size_box);
+    filled_cols += size_box->cols;
+
     qcurses_insert(local_box, 0, name_box->rows, help_box);
     qcurses_insert(main_box, start_col, start_row, local_box);
 
     qcurses_free(name_box);
-    qcurses_free(map_box);
-    qcurses_free(skill_box);
-    qcurses_free(player_box);
-    qcurses_free(kill_box);
-    qcurses_free(secret_box);
+    if (map_box && player_box) {
+        qcurses_free(map_box);
+        qcurses_free(player_box);
+    }
+    if (skill_box && kill_box && secret_box) {
+        qcurses_free(skill_box);
+        qcurses_free(kill_box);
+        qcurses_free(secret_box);
+    }
     qcurses_free(time_box);
     qcurses_free(size_box);
     qcurses_free(help_box);
@@ -177,7 +218,7 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
 int get_summary_thread(void * entry) {
     demo_summary_t *summary = Q_calloc(1, sizeof(demo_summary_t));
 
-    FILE *demo_file = Ghost_OpenDemoOrDzip(((thread_data_t *) entry)->path);;
+    FILE *demo_file = Ghost_OpenDemoOrDzip(((thread_data_t *) entry)->path);
     if (!demo_file) {
         free(summary);
         free((thread_data_t *) entry);
@@ -185,11 +226,14 @@ int get_summary_thread(void * entry) {
     }
 
     int ok = DS_GetDemoSummary(demo_file, summary);
+
     SDL_SemWait(filelist_lock);
-    if (ok && ((thread_data_t *) entry)->localread_count == localread_count) {
+
+    if (ok && ((thread_data_t *) entry)->localread_count == localread_count) 
         memcpy(((thread_data_t *) entry)->summary, summary, sizeof(demo_summary_t));
-    }
+
     SDL_SemPost(filelist_lock);
+
     fclose(demo_file);
     free((thread_data_t *) entry);
     free(summary);

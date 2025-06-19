@@ -86,6 +86,14 @@ void M_Demos_KeyHandle_News(int k) {
  * display the news tab
  */
 void M_Demos_DisplayNews (int cols, int rows, int start_col, int start_row) {
+    if (cols < 40 || rows < 30) {
+    qcurses_box_t * local_box = qcurses_init(cols, rows);
+        qcurses_print_centered(local_box, rows/2, "Resolution too small!", true);
+        qcurses_insert(main_box, start_col, start_row, local_box);
+        qcurses_free(local_box);
+        return;
+    }
+
     qcurses_box_t * local_box = qcurses_init_paged(cols, rows - 10);
     qcurses_box_t * help_box  = qcurses_init(cols, rows - local_box->rows);
     if (!news) {

@@ -726,6 +726,14 @@ void mouse_record_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
  */
 void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     qcurses_box_t * local_box = qcurses_init(cols, rows);
+
+    if (cols < 40 || rows < 30) {
+        qcurses_print_centered(local_box, rows/2, "Resolution too small!", true);
+        qcurses_insert(main_box, start_col, start_row, local_box);
+        qcurses_free(local_box);
+        return;
+    }
+
     qcurses_box_t * map_box   = qcurses_init_callback(25, rows - 10, mouse_map_cursor);
     qcurses_box_t * skill_box = qcurses_init_callback(6, 15, mouse_type_cursor);
     qcurses_box_t * time_box  = qcurses_init_callback(cols - map_box->cols - skill_box->cols, 15, mouse_record_cursor);

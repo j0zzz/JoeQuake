@@ -205,6 +205,9 @@ void qcurses_print(qcurses_box_t *dest, int col, int row, char *src, qboolean bo
  * print characters to a box, with mouse callback 
  */
 void qcurses_print_callback(qcurses_box_t * dest, int col, int row, char * src, qboolean bold, void (*callback)(qcurses_char_t * self, const mouse_state_t * ms)) {
+    if (!dest)
+        return;
+
     if (row >= dest->page_rows)
         return;
 
@@ -219,8 +222,14 @@ void qcurses_print_callback(qcurses_box_t * dest, int col, int row, char * src, 
  * print characters, centered in a box.
  */
 void qcurses_print_centered(qcurses_box_t *dest, int row, char *src, qboolean bold){
+    if (!dest)
+        return;
+
     int col = (dest->cols - strlen(src)) / 2;
-    qcurses_print(dest, col, row, src, bold);
+    if (col >= 0)
+        qcurses_print(dest, col, row, src, bold);
+    else 
+        qcurses_print(dest, 0, row, src, bold);
 }
 
 /*
@@ -250,6 +259,9 @@ void qcurses_list_move_cursor(qcurses_list_t *col, int move) {
  * helper function to draw a horizontal bar
  */
 void qcurses_make_bar(qcurses_box_t * box, int row){
+    if (!box)
+        return;
+
     for (int i = 0; i < box->cols; i++)
         qcurses_print(box, i, row, "\x1e", true);
     qcurses_print(box, 0, row, "\x1d", true);
