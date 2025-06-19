@@ -367,44 +367,29 @@ qboolean Browser_VerifyDzip(char * path) {
     char	cmdline[1024];
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
-    HANDLE child_stdout_read = NULL;
-    HANDLE child_stdout_write = NULL;
-    SECURITY_ATTRIBUTES sa_attr;
-    DWORD dwRead;
+    DWORD ec;
 #else
     pid_t pid;
     int status = 0;
 #endif
 
 #ifdef _WIN32
-    sa_attr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    sa_attr.bInheritHandle = TRUE;
-    sa_attr.lpSecurityDescriptor = NULL;
-
-    CreatePipe(&child_stdout_read, &child_stdout_write, &sa_attr, 0);
-    SetHandleInformation(child_stdout_read, HANDLE_FLAG_INHERIT, 0);
-
     memset (&si, 0, sizeof(si));
     si.cb = sizeof(si);
-    si.hStdError = child_stdout_write;
-    si.hStdOutput = child_stdout_write;
     si.wShowWindow = SW_HIDE;
-    si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+    si.dwFlags = STARTF_USESHOWWINDOW;
 
-    Q_snprintfz(cmdline, sizeof(cmdline), "./dzip.exe -v \"%s\" \"%s.txt\"", path, currec());
+    Q_snprintfz(cmdline, sizeof(cmdline), "./dzip.exe -v -e \"%s\"", path, currec());
     if (!CreateProcess(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, com_basedir, &si, &pi)) {
-        return qcurses_parse_txt(Q_strdup(va("Couldn't execute %s/dzip.exe\n", com_basedir)));
+        return true;
     } else {
+        WaitForSingleObject( pi.hProcess, 100 );
+        GetExitCodeProcess(pi.hProcess, &ec);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
-
-        CloseHandle(child_stdout_write);
     }
 
-    char * txt = Q_calloc(4096*8, sizeof(char));
-    ReadFile(child_stdout_read, txt, 4096*8, &dwRead, NULL);
-    CloseHandle(child_stdout_read);
-    return qcurses_parse_txt(txt);
+    return ec == 0;
 #else
     switch (pid = fork()) {
     case -1:
