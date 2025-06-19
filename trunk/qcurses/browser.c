@@ -382,7 +382,7 @@ qboolean Browser_VerifyDzip(char * path) {
     if (!CreateProcess(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, com_basedir, &si, &pi)) {
         return true;
     } else {
-        WaitForSingleObject( pi.hProcess, 100 );
+        WaitForSingleObject( pi.hProcess, 1000 );
         GetExitCodeProcess(pi.hProcess, &ec);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
