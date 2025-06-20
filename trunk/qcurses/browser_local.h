@@ -28,6 +28,16 @@ typedef struct thread_data_s {
     uint32_t localread_count;
 } thread_data_t;
 
+enum local_columns {
+    LOC_MAP,
+    LOC_SIZE,
+    LOC_TIME,
+    LOC_SKILL,
+    LOC_KILL,
+    LOC_SECRET,
+    LOC_PLAYER
+};
+
 int get_summary_thread(void * entry);
 
 qboolean M_Demos_MouseLocal(const mouse_state_t *ms);

@@ -32,6 +32,7 @@
 #include <SDL_thread.h>
 #endif
 
+
 qcurses_demlist_t * demlist = NULL;
 extern qcurses_box_t * main_box;
 extern char ghost_demo_path[MAX_OSPATH];
@@ -43,6 +44,16 @@ static qboolean search_input = false;
 static char search_term[41] = "\0";
 static char * qcurses_skills[4] = { "Easy", "Normal", "Hard", "Nightmare" };
 
+static int col_width[7] = {
+    15, /* LOC_MAP    */
+    8 , /* LOC_SIZE   */
+    15, /* LOC_TIME   */
+    10, /* LOC_SKILL  */
+    12, /* LOC_KILL   */
+    9 , /* LOC_SECRET */
+    15  /* LOC_PLAYER */
+};
+
 static uint32_t localread_count = 0;
 
 #if defined(SDL2)
@@ -53,6 +64,21 @@ extern void SearchForDemos (void);
 extern char *GetPrintedTime(double time);
 extern FILE *Ghost_OpenDemoOrDzip (const char *demo_path);
 extern char *toYellow(char *s);
+
+/*
+ * helpers to simplify counting
+ */
+static int count_width(int * counter, enum local_columns column){
+    int ret = *counter;
+    *counter += col_width[column];
+    return col_width[column];
+}
+
+static int count_draws(int * counter, qcurses_box_t * box) {
+    int ret = *counter;
+    *counter += box->cols;
+    return ret;
+}
 
 /* 
  * mouse callback for the local demo list
@@ -83,10 +109,16 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     int total_cols = 0;
     qcurses_box_t * help_box   = qcurses_init(cols, 10);
     qcurses_box_t * local_box  = qcurses_init(cols, rows);
-    qcurses_box_t * time_box   = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
-    total_cols += 15;
-    qcurses_box_t * size_box   = qcurses_init_callback(8 , rows - help_box->rows, mouse_move_cursor);
-    total_cols += 8;
+    qcurses_box_t * time_box   = qcurses_init_callback(
+        count_width(&total_cols, LOC_MAP),
+        rows - help_box->rows,
+        mouse_move_cursor
+    );
+    qcurses_box_t * size_box   = qcurses_init_callback(
+        count_width(&total_cols, LOC_SIZE),
+        rows - help_box->rows,
+        mouse_move_cursor
+    );
     qcurses_box_t * skill_box  = NULL;
     qcurses_box_t * kill_box   = NULL;
     qcurses_box_t * secret_box = NULL;
@@ -94,20 +126,39 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     qcurses_box_t * player_box = NULL;
 
     if (cols >= 90) {
-        skill_box  = qcurses_init_callback(10, rows - help_box->rows, mouse_move_cursor);
-        total_cols += 10;
-        kill_box   = qcurses_init_callback(12, rows - help_box->rows, mouse_move_cursor);
-        total_cols += 12;
-        secret_box = qcurses_init_callback(9, rows - help_box->rows, mouse_move_cursor);
-        total_cols += 9;
+        skill_box  = qcurses_init_callback(
+            count_width(&total_cols, LOC_SKILL), 
+            rows - help_box->rows, 
+            mouse_move_cursor
+        );
+        kill_box   = qcurses_init_callback(
+            count_width(&total_cols, LOC_KILL),
+            rows - help_box->rows,
+            mouse_move_cursor
+        );
+        secret_box = qcurses_init_callback(
+            count_width(&total_cols, LOC_SECRET),
+            rows - help_box->rows,
+            mouse_move_cursor
+        );
     }
     if (cols >= 70) {
-        map_box    = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
-        total_cols += 15;
-        player_box = qcurses_init_callback(15, rows - help_box->rows, mouse_move_cursor);
-        total_cols += 15;
+        map_box    = qcurses_init_callback(
+            count_width(&total_cols, LOC_MAP),
+            rows - help_box->rows,
+            mouse_move_cursor
+        );
+        player_box = qcurses_init_callback(
+            count_width(&total_cols, LOC_PLAYER),
+            rows - help_box->rows,
+            mouse_move_cursor
+        );
     }
-    qcurses_box_t * name_box   = qcurses_init_callback(cols - total_cols, rows - help_box->rows, mouse_move_cursor);
+    qcurses_box_t * name_box   = qcurses_init_callback(
+        cols - total_cols,
+        rows - help_box->rows,
+        mouse_move_cursor
+    );
 
     /* header */
     qcurses_print(time_box, 0, 0, "TIME", true);
@@ -181,31 +232,19 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
 
     int filled_cols = 0;
 
-    qcurses_insert(local_box, filled_cols, 0, name_box);
-    filled_cols += name_box->cols;
+    qcurses_insert(local_box, count_draws(&filled_cols, name_box), 0, name_box);
 
     if (map_box && player_box) {
-        qcurses_insert(local_box, filled_cols, 0, map_box);
-        filled_cols += map_box->cols;
-
-        qcurses_insert(local_box, filled_cols, 0, player_box);
-        filled_cols += player_box->cols;
+        qcurses_insert(local_box, count_draws(&filled_cols, map_box), 0, map_box);
+        qcurses_insert(local_box, count_draws(&filled_cols, player_box), 0, player_box);
     }
     if (skill_box && kill_box && secret_box) {
-        qcurses_insert(local_box, filled_cols, 0, skill_box);
-        filled_cols += skill_box->cols;
-
-        qcurses_insert(local_box, filled_cols, 0, kill_box);
-        filled_cols += kill_box->cols;
-
-        qcurses_insert(local_box, filled_cols, 0, secret_box);
-        filled_cols += secret_box->cols;
+        qcurses_insert(local_box, count_draws(&filled_cols, skill_box), 0, skill_box);
+        qcurses_insert(local_box, count_draws(&filled_cols, kill_box), 0, kill_box);
+        qcurses_insert(local_box, count_draws(&filled_cols, secret_box), 0, secret_box);
     }
-    qcurses_insert(local_box, filled_cols, 0, time_box);
-    filled_cols += time_box->cols;
-
-    qcurses_insert(local_box, filled_cols, 0, size_box);
-    filled_cols += size_box->cols;
+    qcurses_insert(local_box, count_draws(&filled_cols, time_box), 0, time_box);
+    qcurses_insert(local_box, count_draws(&filled_cols, size_box), 0, size_box);
 
     qcurses_insert(local_box, 0, name_box->rows, help_box);
     qcurses_insert(main_box, start_col, start_row, local_box);
