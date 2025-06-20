@@ -45,13 +45,13 @@ static char search_term[41] = "\0";
 static char * qcurses_skills[4] = { "Easy", "Normal", "Hard", "Nightmare" };
 
 static int col_width[7] = {
-    15, /* LOC_MAP    */
-    8 , /* LOC_SIZE   */
-    15, /* LOC_TIME   */
-    10, /* LOC_SKILL  */
-    12, /* LOC_KILL   */
-    9 , /* LOC_SECRET */
-    15  /* LOC_PLAYER */
+    [LOC_MAP]    = 15,
+    [LOC_SIZE]   = 8 ,
+    [LOC_TIME]   = 15,
+    [LOC_SKILL]  = 10,
+    [LOC_KILL]   = 12,
+    [LOC_SECRET] = 9 ,
+    [LOC_PLAYER] = 15
 };
 
 static uint32_t localread_count = 0;
