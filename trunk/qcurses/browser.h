@@ -31,6 +31,11 @@
 #define mouse_col(x) (int)((x / browserscale) / 8)
 #define mouse_row(y) (int)((y / browserscale) / 8)
 
+#define COL_MAP_WIDTH 20
+#define COL_SKILL_WIDTH 6
+#define COL_RECORD_MIN_WIDTH 15
+#define COL_RECORD_HEIGHT 15
+
 enum demos_tabs {
     TAB_LOCAL_DEMOS = 1,
     TAB_SDA_NEWS,
