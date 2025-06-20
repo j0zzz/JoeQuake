@@ -233,16 +233,11 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     int filled_cols = 0;
 
     qcurses_insert(local_box, count_draws(&filled_cols, name_box), 0, name_box);
-
-    if (map_box && player_box) {
-        qcurses_insert(local_box, count_draws(&filled_cols, map_box), 0, map_box);
-        qcurses_insert(local_box, count_draws(&filled_cols, player_box), 0, player_box);
-    }
-    if (skill_box && kill_box && secret_box) {
-        qcurses_insert(local_box, count_draws(&filled_cols, skill_box), 0, skill_box);
-        qcurses_insert(local_box, count_draws(&filled_cols, kill_box), 0, kill_box);
-        qcurses_insert(local_box, count_draws(&filled_cols, secret_box), 0, secret_box);
-    }
+    qcurses_insert(local_box, count_draws(&filled_cols, map_box), 0, map_box);
+    qcurses_insert(local_box, count_draws(&filled_cols, player_box), 0, player_box);
+    qcurses_insert(local_box, count_draws(&filled_cols, skill_box), 0, skill_box);
+    qcurses_insert(local_box, count_draws(&filled_cols, kill_box), 0, kill_box);
+    qcurses_insert(local_box, count_draws(&filled_cols, secret_box), 0, secret_box);
     qcurses_insert(local_box, count_draws(&filled_cols, time_box), 0, time_box);
     qcurses_insert(local_box, count_draws(&filled_cols, size_box), 0, size_box);
 
