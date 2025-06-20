@@ -25,9 +25,12 @@
 #include "browser.h"
 #include "qcurses.h"
 #include "browser_local.h"
+#include <ctype.h>
+
+#if defined(SDL2)
 #include <SDL.h>
 #include <SDL_thread.h>
-#include <ctype.h>
+#endif
 
 qcurses_demlist_t * demlist = NULL;
 extern qcurses_box_t * main_box;
@@ -42,7 +45,9 @@ static char * qcurses_skills[4] = { "Easy", "Normal", "Hard", "Nightmare" };
 
 static uint32_t localread_count = 0;
 
+#if defined(SDL2)
 SDL_sem *filelist_lock = NULL;
+#endif
 
 extern void SearchForDemos (void);
 extern char *GetPrintedTime(double time);
@@ -69,8 +74,11 @@ void mouse_move_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
  * Needs thread support from SDL.
  */
 void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
+
+#if defined(SDL2)
     if (!filelist_lock)
         filelist_lock = SDL_CreateSemaphore(1);
+#endif
 
     int total_cols = 0;
     qcurses_box_t * help_box   = qcurses_init(cols, 10);
@@ -122,7 +130,9 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     /* parse each individual potential file */
     for (int i = 0; i < min(demlist->list.len, demlist->list.places); i++) {
         direntry_t * d = demlist->entries + demlist->list.window_start + i;
+#if defined(SDL2)
         demo_summary_t * s = *(demlist->summaries + demlist->list.window_start + i);
+#endif
         if (Q_strcasestr(ghost_demo_path, ".dem")) {
             if (ghost_demo_path[0] != '\0' && strcmp(ghost_demo_path, va("..%s/%s.dem", demodir, demlist->entries[demlist->list.window_start + i].name)) == 0)
                 qcurses_print(name_box, 0, i + 2, "\x0b", false);
@@ -135,8 +145,9 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
         switch (d->type) {
         case 0:
             qcurses_print(size_box, 0, i + 2, toYellow(va("%7ik", (d->size) >> 10)), false); 
+#if defined(SDL2)
             if (search_input) {
-                qcurses_print(map_box, 0, i + 2, "not in search", false); 
+                qcurses_print(time_box, 0, i + 2, "not in search", false); 
             } else {
                 SDL_SemWait(filelist_lock);
                 if (s->total_time != -1) {
@@ -150,6 +161,9 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
                 }
                 SDL_SemPost(filelist_lock);
             }
+#else
+            qcurses_print(time_box, 0, i + 2, "SDL only", false); 
+#endif
             break;
         case 1:
             qcurses_print(size_box, 0, i + 2, "  folder", false); 
@@ -212,6 +226,7 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     qcurses_free(local_box);
 }
 
+#if defined(SDL2)
 /*
  * get summary, in a separate thread.
  */
@@ -239,6 +254,7 @@ int get_summary_thread(void * entry) {
     free(summary);
     return ok;
 }
+#endif
 
 /*
  * read the demo list from filesystem and parse it
@@ -246,11 +262,12 @@ int get_summary_thread(void * entry) {
 void M_Demos_LocalRead(int rows, char * prevdir) {
     SearchForDemos ();
 
+#if defined(SDL2)
     if (!filelist_lock)
         filelist_lock = SDL_CreateSemaphore(1);
 
     SDL_SemWait(filelist_lock);
-
+#endif
     localread_count++;
 
     if (demlist) {
@@ -271,7 +288,9 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     demlist->entries = Q_calloc(demlist->list.len, sizeof(direntry_t));
     demlist->summaries = Q_calloc(demlist->list.len, sizeof(demo_summary_t*));
 
+#if defined(SDL2)
     SDL_SemPost(filelist_lock);
+#endif
 
     int j = 0;
     for (int i = 0; i < num_files; i++) {
@@ -288,7 +307,7 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
                 demlist->list.cursor = j;
                 demlist->list.window_start = 0;
             }
-
+#if defined(SDL2)
             if (!search_input && demlist->entries[j].type == 0 && !Q_strcasestr(demlist->entries[j].name, ".dz")) {
                 thread_data_t * data = Q_calloc(1, sizeof(thread_data_t));
 
@@ -297,6 +316,7 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
                 Q_snprintfz(data->path, sizeof(data->path), "..%s/%s.dem", demodir, demlist->entries[j].name);
                 SDL_DetachThread(SDL_CreateThread(get_summary_thread, "make summary", (void *) data));
             }
+#endif
             j++;
         }
     }
