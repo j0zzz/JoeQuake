@@ -778,14 +778,23 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             columns[COL_MAP]->list.cursor == columns[COL_MAP]->list.window_start + i /* currently active */
         );
 
-    if (browser_col == COL_MAP) /* cursor display for map */
+    if (browser_col == COL_MAP) { /* cursor and box display for map */
         qcurses_print(
             map_box,
-            0, 
+            0,
             2 + columns[COL_MAP]->list.cursor - columns[COL_MAP]->list.window_start, 
             blinkstr(0x0d), 
             false
         );
+        Draw_AlphaFillRGB(
+            start_col * 8,
+            start_row * 8,
+            map_box->cols * browserscale,
+            map_box->rows * browserscale,
+            255 + (165<<8),
+            0.05
+        );
+    }
 
     /* handle type column display */
     if (columns[COL_TYPE]){
@@ -798,7 +807,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 browser_col >= COL_TYPE && columns[COL_TYPE]->list.cursor == columns[COL_TYPE]->list.window_start + i
             );
 
-        if (browser_col == COL_TYPE) /* cursor display */
+        if (browser_col == COL_TYPE) {/* cursor display */
             qcurses_print(
                 skill_box,
                 0,
@@ -806,6 +815,15 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 blinkstr(0x0d),
                 false
             );
+            Draw_AlphaFillRGB(
+                (start_col + map_box->cols) * 8,
+                start_row * 8,
+                skill_box->cols * browserscale,
+                skill_box->rows * browserscale,
+                255 + (165<<8),
+                0.05
+            );
+        }
     }
 
     /* handle record column display */
@@ -824,7 +842,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 qcurses_print(time_box, 0, 2 + i, "\x0b", false);
         }
 
-        if (browser_col == COL_RECORD)
+        if (browser_col == COL_RECORD) {
             qcurses_print(
                 time_box,
                 0,
@@ -832,6 +850,15 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 blinkstr(0x0d),
                 false
             );
+            Draw_AlphaFillRGB(
+                (start_col + map_box->cols + skill_box->cols) * 8,
+                start_row * 8,
+                time_box->cols * browserscale,
+                time_box->rows * browserscale,
+                255 + (165<<8),
+                0.05
+            );
+        }
     }
 
     if (browser_col == COL_COMMENT_LOADING) {
@@ -892,6 +919,14 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 false
             );
         }
+        Draw_AlphaFillRGB(
+            (start_col + map_box->cols) * 8,
+            (start_row + skill_box->rows) * 8,
+            comment_box->cols * browserscale,
+            comment_box->rows * browserscale,
+            255 + (165<<8),
+            0.05
+        );
     }
 
     M_Demos_HelpBox (help_box, demos_tab, search_term, search_input);
