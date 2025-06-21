@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct
 {
     FILE *demo_file;
+    char *map_name;
     float level_time;
     demo_summary_t *demo_summary;
     int model_num;
@@ -39,9 +40,6 @@ typedef struct
     int kills, total_kills;
     int secrets, total_secrets;
 } ds_ctx_t;
-
-
-static char *map_name;
 
 
 static qboolean
@@ -59,9 +57,9 @@ DS_ServerInfoModel_cb (const char *model, void *ctx)
     demo_summary_t *ds = pctx->demo_summary;
 
     if (pctx->model_num == 0 && ds->num_maps < DS_MAX_MAP_NAMES) {
-        map_name = ds->maps[ds->num_maps];
-		Q_strncpyz(map_name, (char *)model, DS_MAP_NAME_SIZE);
-        COM_StripExtension(COM_SkipPath(map_name), map_name);
+        pctx->map_name = ds->maps[ds->num_maps];
+        Q_strncpyz(pctx->map_name, (char *)model, DS_MAP_NAME_SIZE);
+        COM_StripExtension(COM_SkipPath(pctx->map_name), pctx->map_name);
 
         // `num_maps` is incremented on intermission, so that we don't list
         // start map.
@@ -220,7 +218,7 @@ DS_Cutscene_cb (void *ctx)
 {
     ds_ctx_t *pctx = ctx;
 
-    if (MapHasCutsceneAsIntermission(map_name)) {
+    if (MapHasCutsceneAsIntermission(pctx->map_name)) {
         if (!pctx->intermission_seen) {
             pctx->demo_summary->total_time += pctx->level_time;
             pctx->demo_summary->num_maps ++;
