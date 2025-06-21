@@ -36,6 +36,8 @@
 #define COL_RECORD_MIN_WIDTH 15
 #define COL_RECORD_HEIGHT 15
 
+#define BROWSER_HIGHLIGHT_COLOR (0xdc << 16) + (0xdc << 8)
+
 enum demos_tabs {
     TAB_LOCAL_DEMOS = 1,
     TAB_SDA_NEWS,
