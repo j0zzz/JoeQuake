@@ -789,8 +789,8 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         Draw_AlphaFillRGB(
             start_col * 8,
             start_row * 8,
-            map_box->cols * browserscale,
-            map_box->rows * browserscale,
+            map_box->cols * 8 / Sbar_GetScaleAmount(),
+            map_box->rows * 8 / Sbar_GetScaleAmount(),
             BROWSER_HIGHLIGHT_COLOR,
             0.15
         );
@@ -818,8 +818,8 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             Draw_AlphaFillRGB(
                 (start_col + map_box->cols) * 8,
                 start_row * 8,
-                skill_box->cols * browserscale,
-                skill_box->rows * browserscale,
+                skill_box->cols * 8 / Sbar_GetScaleAmount(),
+                skill_box->rows * 8 / Sbar_GetScaleAmount(),
                 BROWSER_HIGHLIGHT_COLOR,
                 0.15
             );
@@ -853,8 +853,8 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             Draw_AlphaFillRGB(
                 (start_col + map_box->cols + skill_box->cols) * 8,
                 start_row * 8,
-                time_box->cols * browserscale,
-                time_box->rows * browserscale,
+                time_box->cols * 8 / Sbar_GetScaleAmount(),
+                time_box->rows * 8 / Sbar_GetScaleAmount(),
                 BROWSER_HIGHLIGHT_COLOR,
                 0.15
             );
@@ -922,8 +922,8 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         Draw_AlphaFillRGB(
             (start_col + map_box->cols) * 8,
             (start_row + skill_box->rows) * 8,
-            comment_box->cols * browserscale,
-            comment_box->rows * browserscale,
+            comment_box->cols * 8 / Sbar_GetScaleAmount(),
+            comment_box->rows * 8 / Sbar_GetScaleAmount(),
             BROWSER_HIGHLIGHT_COLOR,
             0.15
         );
