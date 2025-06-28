@@ -55,7 +55,8 @@ enum browser_columns {
 enum map_filters {
     FILTER_DOWNLOADED,
     FILTER_ALL,
-    FILTER_ID
+    FILTER_NEW,
+    FILTER_ID,
 };
 
 void Browser_UpdateFurtherColumns (enum browser_columns start_column);

@@ -69,9 +69,13 @@ qcurses_recordlist_t * columns[COL_RECORD + 1];
 qcurses_char_t * comments;
 cJSON * json = NULL;
 
+static qcurses_record_t * news_records = NULL;
+static int news_records_count = 0;
+
 static qboolean demos_update = true;
 static simple_set * maps = NULL;
 static simple_set * id_maps = NULL;
+static simple_set * new_maps = NULL;
 
 extern qcurses_demlist_t * demlist;
 
@@ -85,6 +89,7 @@ extern char *toYellow (char *s);
 
 static browser_curl_t * curl = NULL;
 static browser_curl_t * history_curl = NULL;
+static browser_curl_t * news_curl = NULL;
 
 static int comment_page = 0;
 extern int comment_rows;
@@ -284,8 +289,18 @@ qcurses_recordlist_t * Browser_CreateTypeColumn(const cJSON * json, int rows) {
 
     int i = 0;
     cJSON_ArrayForEach(type, json) {
+        if (map_filter == FILTER_NEW) {
+            qboolean found = false;
+
+            for (int j = 0; j < news_records_count && !found; j++)
+                found = Q_strcasestr(curmap(), news_records[j].map) && Q_strcasestr(news_records[j].type, type->string);
+
+            if (!found)
+                continue;
+        }
         Q_strncpy(column->array[i++], type->string, 80);
     }
+    column->list.len = i;
 
     return column;
 }
@@ -307,6 +322,17 @@ qcurses_recordlist_t * Browser_CreateRecordColumn(const cJSON * json, int rows) 
 
     int i = 0;
     cJSON_ArrayForEach(record, json) {
+        if (map_filter == FILTER_NEW) {
+            qboolean found = false;
+            char * timestr = GetPrintedTimeNoDec(cJSON_GetObjectItemCaseSensitive(record, "time")->valueint, true);
+            Con_Printf("%s\n", timestr);
+            for (int j = 0; j < news_records_count && !found; j++)
+                found = Q_strcasestr(curmap(), news_records[j].map) && Q_strcasestr(curtype(), news_records[j].type) && Q_strcasestr(timestr, news_records[j].time);
+
+            if (!found)
+                continue;
+        }
+
         Q_snprintfz(column->array[i], sizeof(column->array[i]), "\x10%s\x11 %5s %s",
             cJSON_GetObjectItemCaseSensitive(record, "date")->valuestring,
             toYellow(GetPrintedTimeNoDec(cJSON_GetObjectItemCaseSensitive(record, "time")->valueint, false)),
@@ -320,6 +346,7 @@ qcurses_recordlist_t * Browser_CreateRecordColumn(const cJSON * json, int rows) 
 
         i++;
     }
+    column->list.len = i;
 
     return column;
 }
@@ -564,6 +591,10 @@ qcurses_recordlist_t * Browser_CreateMapColumn(const cJSON * json, int rows, enu
             if (set_contains(maps, map->string) == SET_TRUE)
                 goto valid;
             break;
+        case FILTER_NEW:
+            if (set_contains(new_maps, map->string) == SET_TRUE)
+                goto valid;
+            break;
         case FILTER_ALL:
         valid:
             if (Q_strcasestr(map->string, search_term))
@@ -587,9 +618,10 @@ void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * searc
         qcurses_print_centered(
             help_box,
             5,
-            va("Filter: \x10%c\x11 DOWNLOADED MAPS | \x10%c\x11 ALL MAPS | \x10%c\x11 ID MAPS | (Ctrl+p)", 
+            va("Filter: \x10%c\x11 PLAYABLE | \x10%c\x11 ALL | \x10%c\x11 NEW | \x10%c\x11 ID | (Ctrl+p)", 
                 map_filter == FILTER_DOWNLOADED ? 0x0b : ' ',
                 map_filter == FILTER_ALL ? 0x0b : ' ',
+                map_filter == FILTER_NEW ? 0x0b : ' ',
                 map_filter == FILTER_ID ? 0x0b : ' '
             ),
             true
@@ -705,6 +737,68 @@ void mouse_record_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
     }
 }
 
+qcurses_record_t * get_newest_records(char * html) {
+    char * matchstart, * matchend;
+    char * pch;
+    char * src = Q_strcasestr(html + 1024 /* offset for tests */, "<p class=\"d\">");
+    char * end = Q_strcasestr(src + 1, "<p class=\"d\">");
+
+    *end = 0;
+
+    pch = strtok (src, "\n");
+
+    while (pch != NULL) {
+
+        if ((matchstart = Q_strcasestr(pch, "<span class=\"y\">"))){
+            while (matchstart && !isdigit(matchstart[16]))
+                matchstart = Q_strcasestr(matchstart+1, "<span class=\"y\">");
+
+            if (matchstart){
+                news_records = Q_realloc(news_records, (news_records_count + 1) * sizeof(qcurses_record_t));
+                /* get time */
+                matchend = Q_strcasestr(matchstart, "</span>");
+                int j = 0;
+                for (char * ptr = matchstart + 16; ptr < matchend; ptr++) 
+                    if (*ptr != ':')
+                        news_records[news_records_count].time[j++] = *ptr;
+                news_records[news_records_count].time[j] = 0;
+
+                /* get type */
+                j = 0;
+                if (Q_strcasestr(pch, "Easy"))
+                    news_records[news_records_count].type[j++] = 'E';
+                else
+                    news_records[news_records_count].type[j++] = 'N';
+
+                if (Q_strcasestr(pch, "100%"))
+                    news_records[news_records_count].type[j++] = 'H';
+                else
+                    news_records[news_records_count].type[j++] = 'R';
+
+                if ((matchstart = Q_strcasestr(pch, "-player")))
+                    news_records[news_records_count].type[j++] = matchstart[-1];
+
+                news_records[news_records_count].type[j] = 0;
+
+                /* get map */
+                j = 0;
+                if ((matchstart = Q_strcasestr(pch, "level:"))){
+                    matchstart += 6;
+                    while (*matchstart != '"')
+                        news_records[news_records_count].map[j++] = *(matchstart++);
+                }
+                news_records[news_records_count].map[j] = 0;
+
+                news_records_count++;
+            }
+        }
+
+        pch = strtok (NULL, "\n");
+    }
+
+    return news_records;
+}
+
 /*
  * display the browser, by compositing together various boxes
  */
@@ -735,7 +829,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     if (!json) {
         if (!history_curl || !history_curl->running) { /* start curl */
             COM_CreatePath(Q_strdup(".demo_cache/"));
-            qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
+            qcurses_print_centered(local_box, local_box->rows / 2, "Starting SDA database download...", false);
             history_curl = browser_curl_start(NULL, "https://speeddemosarchive.com/quake/mkt.pl?dump");
         } else if (history_curl->running == CURL_DOWNLOADING) { /* progress curl download */
             float progress = browser_curl_step(history_curl);
@@ -744,7 +838,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 history_curl = NULL;
             } else {
                 progress = progress < 0 ? 0.0 : progress;
-                qcurses_print_centered(local_box, local_box->rows / 2, "Downloading...", false);
+                qcurses_print_centered(local_box, local_box->rows / 2, "Downloading SDA database...", false);
                 qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
                 qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
             }
@@ -752,6 +846,34 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             json = cJSON_Parse(history_curl->mem.buf);
             browser_curl_clean(history_curl);
             history_curl = NULL;
+        }
+
+        goto display;
+    }
+
+    if (!news_records) {
+        if (!news_curl || !news_curl->running) { /* start downloading the news */
+            qcurses_print_centered(local_box, local_box->rows / 2, "Starting SDA news download...", false);
+            news_curl = browser_curl_start(NULL, "https://speeddemosarchive.com/quake/news.html");
+            if (!news_curl)
+                news_records = Q_strdup("Couldn't properly start download of news.html.");
+        } else if (news_curl->running == CURL_DOWNLOADING) { /* perform download of the news */
+            float progress = browser_curl_step(news_curl);
+            if (progress == -1.0) {
+                qcurses_print_centered(local_box, local_box->rows / 2, "Error during download!", false);
+                news_curl = NULL;
+            } else {
+                qcurses_print_centered(local_box, local_box->rows / 2, "Downloading SDA news...", false);
+                qcurses_print_centered(local_box, local_box->rows / 2 + 1, "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82", false);
+                qcurses_print(local_box, local_box->cols / 2 - 5 + (int)(10.0 * progress), local_box->rows / 2 + 1, "\x83", false);
+            }
+        } else if (news_curl->running == CURL_FINISHED) { /* download finished, time to parse */
+            if (news_curl->mem.buf)
+                news_records = get_newest_records(news_curl->mem.buf);
+            for (int i = 0; i < news_records_count; i++)
+                set_add(new_maps, news_records[i].map);
+            browser_curl_clean(news_curl);
+            news_curl = NULL;
         }
 
         goto display;
@@ -992,6 +1114,13 @@ void Browser_CreateMapSet() {
     set_add(id_maps, "e3m2long");
     set_add(id_maps, "e3m3zom");
     set_add(id_maps, "e4m5long");
+
+    if (new_maps) {
+        set_destroy(new_maps);
+        free(new_maps);
+    }
+    new_maps = Q_calloc(1, sizeof(simple_set));
+    set_init(new_maps);
 }
 
 /*

@@ -40,6 +40,13 @@
 #define blink(ch) (((int)(realtime * 4) & 1) ? ch : ' ')
 #define blinkstr(ch) (((int)(realtime * 4) & 1) ? va("%c", ch) : " ")
 
+/* struct for record display */
+typedef struct qcurses_record_s {
+    char map[50];
+    char type[4];
+    char time[5];
+} qcurses_record_t;
+
 /* data for callbacks */
 typedef struct qcurses_callback_data_s {
     int row;
