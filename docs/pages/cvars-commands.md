@@ -1335,3 +1335,12 @@ The speed of the zoom animation is controlled by the `zoom_speed` cvar.
 ##### `-zoom`
 
 Same as togglezoom, but with 2 different commands (aliases) for zooming in and out separately.
+
+##### `demo_browser_vim`
+
+When set to `1`, it will switch the behavior of the Demos menu to support a Vim-like control scheme.
+This includes the use of HJKL, Ctrl B/D, and search is done by entering a 'search mode' that you
+have to finish typing in by pressing Enter.
+
+When set to `0` (default value), the search behavior roughly matches the previous Demos menu: typing
+alphanumeric characters will add/remove from the search box.
