@@ -65,6 +65,8 @@ extern char *GetPrintedTime(double time);
 extern FILE *Ghost_OpenDemoOrDzip (const char *demo_path);
 extern char *toYellow(char *s);
 
+extern cvar_t demo_browser_vim;
+
 /*
  * helpers to simplify counting
  */
@@ -379,20 +381,31 @@ void M_Demos_KeyHandle_Local_Search (int k, int max_lines) {
         break;
     default:
         if (isalnum(k) || k == '_'){
-            if (len < 40)
+            if (len < 40) {
                 search_term[len] = k;
+            }
         }
         break;
     }
 
-    M_Demos_LocalRead(max_lines, NULL);
+    if (strlen(search_term) != len)
+        M_Demos_LocalRead(max_lines, NULL);
 }
 
 /*
  * keyboard input handler for local demos
+ *
+ * Similar to the remote browser, we have to handle two control schemes.
+ * Check M_Demos_KeyHandle_Browser comments for explanation of the scheme.
  */
 void M_Demos_KeyHandle_Local (int k, int max_lines) {
-    if (search_input) {
+    
+    if (!demo_browser_vim.value && !keydown[K_CTRL]) {
+        if (isalnum(k) || k == '_' || k == K_BACKSPACE){
+            M_Demos_KeyHandle_Local_Search(k, max_lines);
+            return;
+        }
+    } else if (search_input) {
         M_Demos_KeyHandle_Local_Search(k, max_lines);
         return;
     }
@@ -401,7 +414,7 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
 
     switch (k) {
     case 'b':
-        if (!keydown[K_CTRL])
+        if (!keydown[K_CTRL] || !demo_browser_vim.value)
             break;
     case K_PGUP:
     case K_HOME:
@@ -409,11 +422,13 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
         distance = keydown[K_HOME] ? 10000 : 10;
     case K_UPARROW:
     case 'k':
+        if (k == 'k' && !demo_browser_vim.value)
+            break;
         qcurses_list_move_cursor((qcurses_list_t*)demlist, -distance);
         S_LocalSound("misc/menu1.wav");
         break;
     case 'd':
-        if (!keydown[K_CTRL])
+        if (!keydown[K_CTRL] || !demo_browser_vim.value)
             break;
     case K_PGDN:
     case K_END:
@@ -421,13 +436,16 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
         distance = keydown[K_END] ? 10000 : 10;
     case K_DOWNARROW:
     case 'j':
+        if (k == 'j' && !demo_browser_vim.value)
+            break;
         qcurses_list_move_cursor((qcurses_list_t*)demlist, distance);
         S_LocalSound("misc/menu1.wav");
         break;
     case 'f':
         if (keydown[K_CTRL])
     case '/':
-            search_input = true;
+            if (demo_browser_vim.value)
+                search_input = true;
         break;
     case K_ENTER:
     case K_MOUSE1:

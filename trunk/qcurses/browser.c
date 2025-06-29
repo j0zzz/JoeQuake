@@ -63,6 +63,7 @@ static enum map_filters map_filter = FILTER_DOWNLOADED, prev_map_filter = FILTER
 
 static char search_term[41] = "\0";
 static qboolean search_input = false;
+static qboolean search_refresh = false;
 qboolean mod_changed = false;
 
 qcurses_recordlist_t * columns[COL_RECORD + 1];
@@ -94,6 +95,8 @@ static browser_curl_t * news_curl = NULL;
 static int comment_page = 0;
 extern int comment_rows;
 extern char ghost_demo_path[MAX_OSPATH];
+
+cvar_t demo_browser_vim = {"demo_browser_vim", "0", true};
 
 /*
  * sanitise inputs
@@ -135,29 +138,68 @@ void M_Demos_KeyHandle_Browser_Search (int k) {
     case K_ESCAPE:
     case K_ENTER:
         search_input = false;
+        search_refresh = true;
         break;
     case K_BACKSPACE:
-        if (len)
+        if (len){
             search_term[len - 1] = '\0';
+            search_refresh = true;
+        }
         break;
     default:
-        if (isalnum(k) || k == '_')
-            if (len < 40)
+        if (isalnum(k) || k == '_') {
+            if (len < 40) {
                 search_term[len] = k;
+                search_refresh = true;
+            }
+        }
         break;
     }
 }
 
 /*
  * handle keyboard input for the browser and various columns
+ *
+ * This looks complicated because we're supporting two control schemes.
+ * Both schemes support:
+ *  * Arrows and Enter for navigation
+ *  * Escape to leave the menu
+ *  * Page Up/Page Down/Home/End
+ *  * Ctrl + P switches filter
+ *  * Ctrl + Enter sets ghost
+ *  * Ctrl + Shift + Enter unsets ghost
+ *  * Tab switches the tab
+ *
+ * Scheme 1 is regular:
+ *  * filtering happens by simply typing.
+ *  * Backspace immediately removes last typed character in the query
+ *
+ * Scheme 2 is for psychos like me, set with the demo_browser_vim cvar.
+ *
+ * It's Vim controls.
+ *  * hjkl in addition to arrows
+ *  * backspace works like back arrow
+ *  * Ctrl + B / Ctrl + D for paging
+ *  * to search/filter, one has to enter search mode by using '/'. When in this 
+ *    mode, only typing works. Enter finishes the writing.
+ * 
+ * That's really it. The resulting logic is pretty complicated, but should
+ * be possible to understand when you remember the scheme.
  */
 void M_Demos_KeyHandle_Browser (int k) {
     if (curl && curl->running)
         return;
 
-    if (search_input) {
-        M_Demos_KeyHandle_Browser_Search(k);
-        return;
+    if (!demo_browser_vim.value && !keydown[K_CTRL]) {
+        if (isalnum(k) || k == '_' || k == K_BACKSPACE){
+            M_Demos_KeyHandle_Browser_Search(k);
+            return;
+        }
+    } else {
+        if (search_input) {
+            M_Demos_KeyHandle_Browser_Search(k);
+            return;
+        }
     }
 
     if (!json)
@@ -166,13 +208,15 @@ void M_Demos_KeyHandle_Browser (int k) {
     int distance = 1;
     switch (k) {
     case 'b':
-        if (!keydown[K_CTRL])
+        if (!keydown[K_CTRL] || !demo_browser_vim.value)
             break;
     case K_PGUP:
     case K_HOME:
         distance = keydown[K_HOME] ? 10000 : 10;
-    case K_UPARROW:
     case 'k':
+        if (k == 'k' && !demo_browser_vim.value)
+            break;
+    case K_UPARROW:
         if (browser_col <= COL_RECORD){
             qcurses_list_move_cursor((qcurses_list_t*)columns[browser_col], -distance);
             Browser_UpdateFurtherColumns(browser_col);
@@ -182,13 +226,15 @@ void M_Demos_KeyHandle_Browser (int k) {
         }
         break;
     case 'd':
-        if (!keydown[K_CTRL])
+        if (!keydown[K_CTRL] || !demo_browser_vim.value)
             break;
     case K_PGDN:
     case K_END:
         distance = keydown[K_END] ? 10000 : 10;
-    case K_DOWNARROW:
     case 'j':
+        if (k == 'j' && !demo_browser_vim.value)
+            break;
+    case K_DOWNARROW:
         if (browser_col <= COL_RECORD) {
             qcurses_list_move_cursor((qcurses_list_t*)columns[browser_col], distance);
             Browser_UpdateFurtherColumns(browser_col);
@@ -197,9 +243,11 @@ void M_Demos_KeyHandle_Browser (int k) {
             comment_page += distance;
         }
         break;
+    case 'l':
+        if (!demo_browser_vim.value)
+            break;
     case K_ENTER:
     case K_RIGHTARROW:
-    case 'l':
         if (browser_col == COL_COMMENT_LOADED){
             if (keydown[K_CTRL] && keydown[K_SHIFT]) {
                 Cbuf_AddText ("ghost_remove\n");
@@ -215,9 +263,11 @@ void M_Demos_KeyHandle_Browser (int k) {
             S_LocalSound("misc/menu2.wav");
         }
         break;
-    case K_BACKSPACE:
-    case K_LEFTARROW:
     case 'h':
+    case K_BACKSPACE:
+        if (!demo_browser_vim.value)
+            break;
+    case K_LEFTARROW:
         if (browser_col == COL_COMMENT_LOADED)
             browser_col--;
         browser_col = max(COL_MAP, browser_col - 1);
@@ -232,7 +282,8 @@ void M_Demos_KeyHandle_Browser (int k) {
     case 'f':
         if (keydown[K_CTRL])
     case '/':
-            search_input = true;
+            if (demo_browser_vim.value)
+                search_input = true;
 
     default:
         break;
@@ -613,9 +664,15 @@ qcurses_recordlist_t * Browser_CreateMapColumn(const cJSON * json, int rows, enu
  */
 void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * search_str, qboolean search_input) {
     qcurses_make_bar(help_box, 0);
-    qcurses_print_centered(help_box, 2, "Navigation: arrows keys OR hjkl OR enter/backspace", false);
-    qcurses_print_centered(help_box, 3, "Paging: page keys OR Ctrl+b and Ctrl+d", false);
-    qcurses_print_centered(help_box, 4, "TAB to switch tabs", false);
+    if (demo_browser_vim.value) {
+        qcurses_print_centered(help_box, 2, "Navigation: arrows keys OR hjkl OR enter/backspace", false);
+        qcurses_print_centered(help_box, 3, "Paging: page keys OR Ctrl+b and Ctrl+d", false);
+        qcurses_print_centered(help_box, 4, "TAB to switch tabs", false);
+    } else {
+        qcurses_print_centered(help_box, 2, "Navigation: arrows keys, enter", false);
+        qcurses_print_centered(help_box, 3, "Paging: page keys", false);
+        qcurses_print_centered(help_box, 4, "TAB to switch tabs", false);
+    }
     if (tab == TAB_SDA_DATABASE) {
         qcurses_print_centered(
             help_box,
@@ -631,12 +688,21 @@ void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * searc
     }
 
     if (tab != TAB_SDA_NEWS) {
-        qcurses_print_centered(
-            help_box,
-            6,
-            va("Search: \x10%-40s\x11 (/ or Ctrl+f)", va("%s%c", search_str, search_input ? blink(0xb) : ' ')),
-            search_input
-        );
+        if (demo_browser_vim.value)
+            qcurses_print_centered(
+                help_box,
+                6,
+                va("Search: \x10%-40s\x11 (/ or Ctrl+f)", va("%s%c", search_str, search_input || !demo_browser_vim.value ? blink(0xb) : ' ')),
+                search_input
+            );
+        else if (search_str[0])
+            qcurses_print_centered(
+                help_box,
+                6,
+                va("Search: \x10%-40s\x11", va("%s%c", search_str, search_input || !demo_browser_vim.value ? blink(0xb) : ' ')),
+                search_input
+            );
+
     } else {
         qcurses_print_centered(
             help_box,
@@ -884,7 +950,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
     }
 
     /* handle map column display */
-    if (prev_map_filter != map_filter || search_input || mod_changed) { /* apply filtering */
+    if (prev_map_filter != map_filter || search_refresh || mod_changed) { /* apply filtering */
         if (columns[COL_MAP]){
             free(columns[COL_MAP]->array);
             free(columns[COL_MAP]);
@@ -893,6 +959,7 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         Browser_UpdateFurtherColumns(COL_MAP);
         prev_map_filter = map_filter;
         mod_changed = false;
+        search_refresh = false;
     }
 
     for (int i = 0; i < min(columns[COL_MAP]->list.len, columns[COL_MAP]->list.places); i++)
@@ -1160,6 +1227,7 @@ void mouse_tab_remote(qcurses_char_t * self, const mouse_state_t *ms) { if (ms->
  */
 void M_Demos_Display (int width, int height) {
     if (!main_box) {
+        Cvar_Register (&demo_browser_vim);
         oldwidth = width;
         oldheight = height;
         main_box = qcurses_init(width / 8, height / 8);

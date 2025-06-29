@@ -38,6 +38,8 @@
 
 #define BROWSER_HIGHLIGHT_COLOR (0xdc << 16) + (0xdc << 8)
 
+extern cvar_t demo_browser_vim;
+
 enum demos_tabs {
     TAB_LOCAL_DEMOS = 1,
     TAB_SDA_NEWS,
