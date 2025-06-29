@@ -61,6 +61,8 @@ You may freely redistribute or modify JoeQuake as you wish.
 	* Andrei Drexler
 	* Spike
 * Creators of the Minizip library: http://www.winimage.com/zLibDll/minizip.html
+* Creators of the cJSON library: https://github.com/DaveGamble/cJSON
+* Creators of the set library: https://github.com/barrust/set
 * fenix@io.com, for alias model interpolation
 * LordHavoc, for lerping alias model textures
 * Alexander Kovalchuk, for plenty of [sons]Quake additions
