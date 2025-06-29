@@ -96,8 +96,6 @@ static int comment_page = 0;
 extern int comment_rows;
 extern char ghost_demo_path[MAX_OSPATH];
 
-cvar_t demo_browser_vim = {"demo_browser_vim", "0", true};
-
 /*
  * sanitise inputs
  */
@@ -1227,7 +1225,6 @@ void mouse_tab_remote(qcurses_char_t * self, const mouse_state_t *ms) { if (ms->
  */
 void M_Demos_Display (int width, int height) {
     if (!main_box) {
-        Cvar_Register (&demo_browser_vim);
         oldwidth = width;
         oldheight = height;
         main_box = qcurses_init(width / 8, height / 8);

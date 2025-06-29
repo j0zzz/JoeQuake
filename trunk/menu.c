@@ -183,6 +183,7 @@ int	menuheight = 240;
 #endif
 
 cvar_t	scr_centermenu = {"scr_centermenu", "1"};
+cvar_t demo_browser_vim = {"demo_browser_vim", "0", true};
 int	m_yofs = 0;
 
 /*
@@ -8616,6 +8617,7 @@ void M_Menu_Credits_f(void)
 void M_Init (void)
 {
 	Cvar_Register (&scr_centermenu);
+	Cvar_Register (&demo_browser_vim);
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 
