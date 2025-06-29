@@ -224,8 +224,10 @@ void M_Demos_KeyHandle_Browser (int k) {
         S_LocalSound("misc/menu2.wav");
         break;
     case 'p':
-        if (keydown[K_CTRL])
+        if (keydown[K_CTRL]){
             map_filter = (map_filter + 1) % (FILTER_ID + 1);
+            S_LocalSound("buttons/switch21.wav");
+        }
         break;
     case 'f':
         if (keydown[K_CTRL])
@@ -251,7 +253,7 @@ void M_Demos_KeyHandle (int k) {
             break;
         case K_TAB:
             demos_tab = demos_tab % TAB_SDA_DATABASE + 1;
-            S_LocalSound("misc/menu1.wav");
+            S_LocalSound("buttons/switch04.wav");
             if (demos_tab == TAB_LOCAL_DEMOS) 
                 M_Demos_LocalRead(main_box->rows - 20, NULL);
 
@@ -740,7 +742,7 @@ void mouse_record_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
 qcurses_record_t * get_newest_records(char * html) {
     char * matchstart, * matchend;
     char * pch;
-    char * src = Q_strcasestr(html + 1024 /* offset for tests */, "<p class=\"d\">");
+    char * src = Q_strcasestr(html, "<p class=\"d\">");
     char * end = Q_strcasestr(src + 1, "<p class=\"d\">");
 
     *end = 0;
@@ -870,6 +872,8 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
         } else if (news_curl->running == CURL_FINISHED) { /* download finished, time to parse */
             if (news_curl->mem.buf)
                 news_records = get_newest_records(news_curl->mem.buf);
+            if (!news_records)
+                news_records = Q_calloc(1, sizeof(qcurses_record_t));
             for (int i = 0; i < news_records_count; i++)
                 set_add(new_maps, news_records[i].map);
             browser_curl_clean(news_curl);
