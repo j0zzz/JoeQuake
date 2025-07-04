@@ -22,7 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "sound.h"
 #include "winquake.h"
+#include "qcurses/browser.h"
 
+extern int browserscale;
+extern qboolean refresh_demlist;
+extern qboolean mod_changed;
 qboolean vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
@@ -179,6 +183,7 @@ int	menuheight = 240;
 #endif
 
 cvar_t	scr_centermenu = {"scr_centermenu", "1"};
+cvar_t demo_browser_vim = {"demo_browser_vim", "0", true};
 int	m_yofs = 0;
 
 /*
@@ -479,7 +484,7 @@ char	demodir[MAX_OSPATH] = "";
 char	prevdir[MAX_OSPATH] = "";
 char	searchfile[MAX_FILELENGTH] = "";
 
-static	int	list_cursor = 0, list_base = 0, num_searchs = 0;
+int	list_cursor = 0, list_base = 0, num_searchs = 0;
 static qboolean	searchbox = false;
 
 extern	int	key_insert;
@@ -510,7 +515,7 @@ void SaveCursorPos (void)
 	}
 }
 
-static char *toYellow (char *s)
+char *toYellow (char *s)
 {
 	static	char	buf[20];
 
@@ -6530,6 +6535,7 @@ void M_Menu_Demos_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_demos;
+	refresh_demlist = true;
 	m_entersound = true;
 
 	SearchForDemos ();
@@ -6679,17 +6685,6 @@ void M_Demos_Key (int k)
 	}
 }
 
-qboolean M_Demos_Mouse_Event(const mouse_state_t *ms)
-{
-	int entries = min(num_files, MAXLINES);
-	M_Mouse_Select(&list_window, ms, entries, &list_cursor);
-
-	if (ms->button_up == 1) M_Demos_Key(K_MOUSE1);
-	if (ms->button_up == 2) M_Demos_Key(K_MOUSE2);
-
-	return true;
-}
-
 //=============================================================================
 /* MODS MENU */
 
@@ -6748,6 +6743,8 @@ void M_Mods_Key(int k)
 		Cbuf_AddText(va("disconnect\ngamedir %s\nexec quake.rc\n", filelist[list_base + list_cursor].name));
 		Cbuf_Execute();
 		Draw_ReloadPics();
+
+		mod_changed = true;
 
 		Q_strncpyz(prevdir, filelist[list_base + list_cursor].name, sizeof(prevdir));
 
@@ -8620,6 +8617,7 @@ void M_Menu_Credits_f(void)
 void M_Init (void)
 {
 	Cvar_Register (&scr_centermenu);
+	Cvar_Register (&demo_browser_vim);
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 
@@ -8818,7 +8816,13 @@ void M_Draw (void)
 		break;
 
 	case m_demos:
-		M_Demos_Draw ();
+#ifdef GLQUAKE
+		browserscale = max(vid.width / 8 / 120, 1);
+		glMatrixMode (GL_PROJECTION);
+		glLoadIdentity ();
+		glOrtho (0, vid.width / browserscale, vid.height / browserscale, 0, -99999, 99999);
+		M_Demos_Display(vid.width / browserscale, vid.height / browserscale);
+#endif
 		break;
 
 	case m_mods:
@@ -8923,7 +8927,7 @@ void M_Keydown (int key)
 	case m_videomodes:		M_VideoModes_Key (key); return;
 	case m_nehdemos:		M_NehDemos_Key (key); return;
 	case m_maps:			M_Maps_Key (key); return;
-	case m_demos:			M_Demos_Key (key); return;
+	case m_demos:			M_Demos_KeyHandle (key); return;
 	case m_mods:			M_Mods_Key(key); return;
 	case m_help:			M_Help_Key (key); return;
 	case m_quit:			M_Quit_Key (key); return;

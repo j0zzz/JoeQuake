@@ -678,7 +678,6 @@ static void PlayDZDemo (void)
 			break;
 		case DZIP_EXTRACT_IN_PROGRESS:
 			Con_Printf ("\x02" "\nunpacking demo. please wait...\n\n");
-			key_dest = key_game;
 
 			dz_unpacking = dz_playback = true;
 

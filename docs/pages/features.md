@@ -96,6 +96,16 @@ IMPORTANT: make sure the dzip binary (dzip.exe, comes with the JoeQuake zip) is 
 
 {% include subfeatures/md3-models.md %}
 
+### SDA Demo browser
+
+The SpeedDemosArchive Quake repository is the definite place for Quake speedruns. To allow watching demos effectively, an SDA news browser and a browser for the SDA demo database are provided.
+
+The news browser displays the last demo update.
+
+The SDA demo database browser allows quickly looking through individual maps, showcasing a list of records for desired categories. Easy display of comments files is also provided. Ghosts can be set from the remote database.
+
+The demo database browser loads a database dumb from SDA. Filters, such as only downloaded maps, are provided. Demos are automatically downloaded on both Windows and Linux, and stored in the `.demo_cache` directory in the main Quake directory.
+
 ### Path Tracer
 
 Sometimes it might be helpful to see the path the player took. That can help to analyse the situation. There are several options:

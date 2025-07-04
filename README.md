@@ -15,6 +15,7 @@ JoeQuake features several improvements over the vanilla GLQuake client, just to 
 * Colored static and dynamic lighting
 * External texture formats (TGA/PNG/JPG)
 * Capturing demos to AVI file
+* SDA demo database, for directly downloading/watching speedrun records from speeddemosarchive.com/quake/
 
 ## Binaries
 
@@ -46,7 +47,7 @@ You may freely redistribute or modify JoeQuake as you wish.
 * Jozsef Szalontai - lead programmer
 * Sphere - server/client bugfixes, several QoL improvements
 * Matthew Earl - entire ghost recording feature, SDL port
-* Karol Urbański - vorbis/mp3 cross-platform support, bunnyhop practice display 
+* Karol Urbański - vorbis/mp3 cross-platform support, bhop practice display, SDA demo browser
 
 ### Authors whose code was re-used in JoeQuake
 
@@ -60,6 +61,8 @@ You may freely redistribute or modify JoeQuake as you wish.
 	* Andrei Drexler
 	* Spike
 * Creators of the Minizip library: http://www.winimage.com/zLibDll/minizip.html
+* Creators of the cJSON library: https://github.com/DaveGamble/cJSON
+* Creators of the set library: https://github.com/barrust/set
 * fenix@io.com, for alias model interpolation
 * LordHavoc, for lerping alias model textures
 * Alexander Kovalchuk, for plenty of [sons]Quake additions

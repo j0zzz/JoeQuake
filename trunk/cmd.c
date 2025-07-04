@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "winquake.h"
+#include "ghost/demosummary.h"
 
 // joe: ReadDir()'s stuff
 #ifndef _WIN32
@@ -1024,7 +1025,7 @@ static void toLower (char* str)		// for strings
 	}
 }
 
-static void AddNewEntry (char *fname, int ftype, long fsize)
+static void AddNewEntry (char *fname, int ftype, long fsize, char *path)
 {
 	int	i, pos;
 
@@ -1143,7 +1144,7 @@ void ReadDir (char *path, char *the_arg)
 	{
 		if (RDFlags & RD_MENU_DEMOS)
 		{
-			AddNewEntry ("Error reading directory", 3, 0);
+			AddNewEntry ("Error reading directory", 3, 0, NULL);
 			num_files = 1;
 		}
 		else if (RDFlags & RD_COMPLAIN)
@@ -1155,7 +1156,7 @@ void ReadDir (char *path, char *the_arg)
 
 	if (RDFlags & RD_MENU_DEMOS && !(RDFlags & RD_MENU_DEMOS_MAIN))
 	{
-		AddNewEntry ("..", 2, 0);
+		AddNewEntry ("..", 2, 0, path);
 		num_files = 1;
 	}
 
@@ -1258,7 +1259,7 @@ void ReadDir (char *path, char *the_arg)
 				continue;	// file already on list
 		}
 #endif
-		AddNewEntry (filename, fdtype, fdsize);
+		AddNewEntry (filename, fdtype, fdsize, path);
 	}
 #ifdef _WIN32
 	while (FindNextFile(h, &fd));
@@ -1272,7 +1273,7 @@ void ReadDir (char *path, char *the_arg)
 	{
 		if (RDFlags & RD_MENU_DEMOS)
 		{
-			AddNewEntry ("[ no files ]", 3, 0);
+			AddNewEntry ("[ no files ]", 3, 0, NULL);
 			num_files = 1;
 		}
 		else if (RDFlags & RD_COMPLAIN)
@@ -1339,7 +1340,7 @@ void FindFilesInPak (char *the_arg)
 						if (CheckEntryName(filename))
 							continue;
 
-						AddNewEntry(filename, 0, l);
+						AddNewEntry(filename, 0, l, NULL);
 						pak_files++;
 					}
 				}
