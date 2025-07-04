@@ -39,6 +39,7 @@
 #define BROWSER_HIGHLIGHT_COLOR (0xdc << 16) + (0xdc << 8)
 
 extern cvar_t demo_browser_vim;
+extern cvar_t demo_browser_filter;
 
 enum demos_tabs {
     TAB_LOCAL_DEMOS = 1,
@@ -66,9 +67,9 @@ void Browser_UpdateFurtherColumns (enum browser_columns start_column);
 void Browser_CurlStart(char *path, char *href);
 void Browser_CurlClean();
 
-qboolean M_Demos_Mouse_Event(const mouse_state_t *ms);
-void M_Demos_Display(int width, int height);
-void M_Demos_KeyHandle(int key);
+qboolean M_Browser_Mouse_Event(const mouse_state_t *ms);
+void M_Browser_Draw(int width, int height);
+void M_Browser_Key(int key);
 void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char *search_term, qboolean search_input);
 char *GetPrintedTimeNoDec(float time, qboolean strip);
 

@@ -37,8 +37,8 @@ enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_
 	m_view, m_renderer, m_textures, m_particles, m_decals, m_weapons, m_screenflashes, m_sky_colorchooser,
 	m_outline_colorchooser,
 #endif
-	m_videomodes, m_nehdemos, m_maps, m_demos, m_mods, m_help, m_quit, m_serialconfig, m_modemconfig,
-	m_lanconfig, m_gameoptions, m_search, m_servers, m_slist, m_sedit} m_state;
+	m_videomodes, m_nehdemos, m_maps, m_demos, m_browser, m_mods, m_help, m_quit, m_serialconfig,
+	m_modemconfig, m_lanconfig, m_gameoptions, m_search, m_servers, m_slist, m_sedit} m_state;
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);
@@ -71,6 +71,7 @@ void M_Menu_Main_f (void);
 	void M_Menu_NehDemos_f (void);
 	void M_Menu_Maps_f (void);
 	void M_Menu_Demos_f(void);
+	void M_Menu_Browser_f(void);
 	void M_Menu_Mods_f (void);
 	void M_Menu_Help_f (void);	// not used anymore
 	void M_Menu_Quit_f (void);
@@ -184,6 +185,7 @@ int	menuheight = 240;
 
 cvar_t	scr_centermenu = {"scr_centermenu", "1"};
 cvar_t demo_browser_vim = {"demo_browser_vim", "0", true};
+cvar_t demo_browser_filter = {"demo_browser_filter", "0", true};
 int	m_yofs = 0;
 
 /*
@@ -934,7 +936,8 @@ void M_Main_Key (int key)
 				break;
 
 			case 4:
-				M_Menu_Demos_f ();
+				//M_Menu_Demos_f ();	//old demos menu - add a cvar to this?
+				M_Menu_Browser_f ();
 				break;
 
 			case 5:
@@ -6514,6 +6517,7 @@ void M_NehDemos_Key (int k)
 }
 
 // JoeQuake's Demos Menu
+// Deprecated after 2025-07: instead, the new Browser menu is displayed
 
 void SearchForDemos (void)
 {
@@ -6684,6 +6688,32 @@ void M_Demos_Key (int k)
 		break;
 	}
 }
+
+qboolean M_Demos_Mouse_Event(const mouse_state_t *ms)
+{
+	int entries = min(num_files, MAXLINES);
+	M_Mouse_Select(&list_window, ms, entries, &list_cursor);
+
+	if (ms->button_up == 1) M_Demos_Key(K_MOUSE1);
+	if (ms->button_up == 2) M_Demos_Key(K_MOUSE2);
+
+	return true;
+}
+
+//=============================================================================
+/* BROWSER MENU */
+
+void M_Menu_Browser_f (void)
+{
+	key_dest = key_menu;
+	m_state = m_browser;
+	refresh_demlist = true;
+	m_entersound = true;
+
+	SearchForDemos ();
+}
+
+// see browser*.c files for the complete implementation
 
 //=============================================================================
 /* MODS MENU */
@@ -8618,6 +8648,7 @@ void M_Init (void)
 {
 	Cvar_Register (&scr_centermenu);
 	Cvar_Register (&demo_browser_vim);
+	Cvar_Register (&demo_browser_filter);
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 
@@ -8651,6 +8682,7 @@ void M_Init (void)
 	Cmd_AddCommand ("menu_maps", M_Menu_Maps_f);
 	Cmd_AddCommand("menu_mods", M_Menu_Mods_f);
 	Cmd_AddCommand ("menu_demos", M_Menu_Demos_f);
+	Cmd_AddCommand ("menu_browser", M_Menu_Browser_f);
 	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
 
 	if (machine)
@@ -8816,12 +8848,16 @@ void M_Draw (void)
 		break;
 
 	case m_demos:
+		M_Demos_Draw();
+		break;
+
+	case m_browser:
 #ifdef GLQUAKE
 		browserscale = max(vid.width / 8 / 120, 1);
-		glMatrixMode (GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho (0, vid.width / browserscale, vid.height / browserscale, 0, -99999, 99999);
-		M_Demos_Display(vid.width / browserscale, vid.height / browserscale);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, vid.width / browserscale, vid.height / browserscale, 0, -99999, 99999);
+		M_Browser_Draw(vid.width / browserscale, vid.height / browserscale);
 #endif
 		break;
 
@@ -8927,7 +8963,8 @@ void M_Keydown (int key)
 	case m_videomodes:		M_VideoModes_Key (key); return;
 	case m_nehdemos:		M_NehDemos_Key (key); return;
 	case m_maps:			M_Maps_Key (key); return;
-	case m_demos:			M_Demos_KeyHandle (key); return;
+	case m_demos:			M_Demos_Key(key); return;
+	case m_browser:			M_Browser_Key (key); return;
 	case m_mods:			M_Mods_Key(key); return;
 	case m_help:			M_Help_Key (key); return;
 	case m_quit:			M_Quit_Key (key); return;
@@ -8977,6 +9014,7 @@ qboolean Menu_Mouse_Event(const mouse_state_t* ms)
 	case m_videomodes:		return M_Video_Mouse_Event(ms);
 	case m_setup:			return M_Setup_Mouse_Event(ms);
 	case m_demos:			return M_Demos_Mouse_Event(ms);
+	case m_browser:			return M_Browser_Mouse_Event(ms);
 	case m_maps:			return M_Maps_Mouse_Event(ms);
 	case m_mods:			return M_Mods_Mouse_Event(ms);
 	case m_crosshair_colorchooser: return M_ColorChooser_Mouse_Event(ms, cs_crosshair);

@@ -292,7 +292,7 @@ void M_Demos_KeyHandle_Browser (int k) {
 /*
  * handle keyboard input for each individual tab
  */
-void M_Demos_KeyHandle (int k) {
+void M_Browser_Key (int k) {
     demos_update = true;
 
     switch (k) {
@@ -1201,7 +1201,7 @@ void Browser_CreateMapSet() {
  * Since the boxes are composited by copying them wholesale, we can set behavior
  * locally and yet have it handled in the final composition.
  */
-qboolean M_Demos_Mouse_Event(const mouse_state_t *ms) {
+qboolean M_Browser_Mouse_Event(const mouse_state_t *ms) {
     int col = mouse_col(ms->x);
     int row = mouse_row(ms->y);
 
@@ -1223,7 +1223,7 @@ void mouse_tab_remote(qcurses_char_t * self, const mouse_state_t *ms) { if (ms->
 /*
  * display the main menu, handing off to submenus depending on tab.
  */
-void M_Demos_Display (int width, int height) {
+void M_Browser_Draw (int width, int height) {
     if (!main_box) {
         oldwidth = width;
         oldheight = height;

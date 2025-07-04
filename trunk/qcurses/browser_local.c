@@ -65,8 +65,6 @@ extern char *GetPrintedTime(double time);
 extern FILE *Ghost_OpenDemoOrDzip (const char *demo_path);
 extern char *toYellow(char *s);
 
-extern cvar_t demo_browser_vim;
-
 /*
  * helpers to simplify counting
  */
@@ -328,9 +326,13 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     SDL_SemPost(filelist_lock);
 #endif
 
+	// clear out the search term always after a fresh read, when no filtering is enabled
+    if (!demo_browser_filter.value)
+        memset(search_term, 0, sizeof(search_term));
+
     int j = 0;
     for (int i = 0; i < num_files; i++) {
-        if (!search_term[0] || Q_strcasestr(filelist[i].name, search_term)) {
+        if (!search_term[0] || Q_strcasestr(filelist[i].name, search_term) == filelist[i].name) {
             demlist->entries[j].name = Q_strdup(filelist[i].name);
             demlist->entries[j].type = filelist[i].type;
             demlist->entries[j].size = filelist[i].size;
@@ -378,18 +380,52 @@ void M_Demos_KeyHandle_Local_Search (int k, int max_lines) {
         if (len){
             search_term[len - 1] = '\0';
         }
-        break;
+        if (!demo_browser_filter.value)    // don't break when filtering is enabled, we want to maintain the filtered list also when deleting from search
+		    break;
     default:
         if (isalnum(k) || k == '_'){
             if (len < 40) {
                 search_term[len] = k;
             }
         }
+        if (strlen(search_term) != len)
+        {
+            // we need to start an initial search to realize if we have anything to show based on the search term
+            // we can also quickly set the cursor to the first match and exit
+            qboolean found = false;
+            for (int i = 0; i < num_files; i++)
+            {
+                if (!search_term[0] || Q_strcasestr(filelist[i].name, search_term) == filelist[i].name)
+                {
+                    found = true;
+                    if (!demo_browser_filter.value)
+                    {
+                        S_LocalSound("misc/menu1.wav");
+                        demlist->list.window_start = i - 10;
+                        if (demlist->list.window_start < 0 || num_files < max_lines)
+                        {
+                            demlist->list.window_start = 0;
+                        }
+                        else if (demlist->list.window_start > (num_files - max_lines))
+                        {
+                            demlist->list.window_start = num_files - max_lines;
+                        }
+                        demlist->list.cursor = i;
+                    }
+                    break;
+                }
+            }
+
+			// if we found anything and filtering is enabled, we can rebuild the demo list 
+            if (found && demo_browser_filter.value)
+                M_Demos_LocalRead(max_lines, NULL);
+            
+			// also don't display such search terms that would not match anything
+            if (!found)
+                search_term[len] = '\0';
+        }
         break;
     }
-
-    if (strlen(search_term) != len)
-        M_Demos_LocalRead(max_lines, NULL);
 }
 
 /*
