@@ -111,7 +111,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>..\misc\include;..\dxsdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\misc\include;..\dxsdk\Include;..\curl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;USE_CODEC_VORBIS;USE_CODEC_MP3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -136,12 +136,12 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;libmad.lib;libvorbis.lib;libvorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;libmad.lib;libvorbis.lib;libvorbisfile.lib;libcurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\release_gl\joequake-gl.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>..\misc\lib;..\dxsdk\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\misc\lib;..\dxsdk\Lib;..\curl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ProgramDatabaseFile>.\release_gl/joequake-gl.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -193,7 +193,7 @@
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>..\misc\lib;..\dxsdk\Lib;..\SDL2\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\misc\lib;..\dxsdk\Lib;..\SDL2\lib;..\curl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ProgramDatabaseFile>.\release_gl/joequake-gl.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -263,7 +263,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\misc\include;..\dxsdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\misc\include;..\dxsdk\Include;..\curl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;GLQUAKE;_CRT_SECURE_NO_DEPRECATE;USE_CODEC_VORBIS;USE_CODEC_MP3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -292,13 +292,13 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;libmad.lib;libvorbis.lib;libvorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxguid.lib;opengl32.lib;wsock32.lib;winmm.lib;libpng.lib;libjpeg.lib;zlib.lib;libmad.lib;libvorbis.lib;libvorbisfile.lib;libcurl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <OutputFile>.\debug_gl\joequake-gl-DEV.exe</OutputFile>
       <Version>
       </Version>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>..\misc\lib;..\dxsdk\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\misc\lib;..\dxsdk\Lib;..\curl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\debug_gl/joequake-gl.pdb</ProgramDatabaseFile>

@@ -30,7 +30,7 @@ static void __relayout_nodes(SimpleSet *set, uint64_t start, short end_on_null);
 *******************************************************************************/
 
 int set_init_alt(SimpleSet *set, uint64_t num_els, set_hash_function hash) {
-    set->nodes = (simple_set_node**) malloc(num_els * sizeof(simple_set_node*));
+    set->nodes = (simple_set_node**) malloc((size_t)num_els * sizeof(simple_set_node*));
     if (set->nodes == NULL) {
         return SET_MALLOC_ERROR;
     }
@@ -94,7 +94,7 @@ uint64_t set_length(SimpleSet *set) {
 
 char** set_to_array(SimpleSet *set, uint64_t *size) {
     *size = set->used_nodes;
-    char** results = (char**)calloc(set->used_nodes + 1, sizeof(char*));
+    char** results = (char**)calloc((size_t)set->used_nodes + 1, sizeof(char*));
     uint64_t i, j = 0;
     size_t len;
     for (i = 0; i < set->number_nodes; ++i) {
@@ -249,7 +249,7 @@ static int __set_add(SimpleSet *set, const char *key, uint64_t hash) {
     // Expand nodes if we are close to our desired fullness
     if ((float)set->used_nodes / set->number_nodes > MAX_FULLNESS_PERCENT) {
         uint64_t num_els = set->number_nodes * 2; // we want to double each time
-        simple_set_node** tmp = (simple_set_node**)realloc(set->nodes, num_els * sizeof(simple_set_node*));
+        simple_set_node** tmp = (simple_set_node**)realloc(set->nodes, (size_t)num_els * sizeof(simple_set_node*));
         if (tmp == NULL || set->nodes == NULL) // malloc failure
             return SET_MALLOC_ERROR;
 
