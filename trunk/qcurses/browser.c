@@ -289,6 +289,9 @@ void M_Demos_KeyHandle_Browser (int k) {
 
 }
 
+extern qboolean IsSearchBoxVisible();
+extern void ClearSearchBoxContent();
+
 /*
  * handle keyboard input for each individual tab
  */
@@ -298,7 +301,10 @@ void M_Browser_Key (int k) {
     switch (k) {
         case K_ESCAPE:
         case K_MOUSE2:
-            M_Menu_Main_f ();
+            if (IsSearchBoxVisible())
+                ClearSearchBoxContent();
+            else
+                M_Menu_Main_f ();
             break;
         case K_TAB:
             demos_tab = demos_tab % TAB_SDA_DATABASE + 1;

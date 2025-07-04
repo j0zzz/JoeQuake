@@ -186,6 +186,7 @@ int	menuheight = 240;
 cvar_t	scr_centermenu = {"scr_centermenu", "1"};
 cvar_t demo_browser_vim = {"demo_browser_vim", "0", true};
 cvar_t demo_browser_filter = {"demo_browser_filter", "0", true};
+cvar_t demo_oldmenu = { "demo_oldmenu", "0", true };
 int	m_yofs = 0;
 
 /*
@@ -936,8 +937,10 @@ void M_Main_Key (int key)
 				break;
 
 			case 4:
-				//M_Menu_Demos_f ();	//old demos menu - add a cvar to this?
-				M_Menu_Browser_f ();
+				if (demo_oldmenu.value)
+					M_Menu_Demos_f ();
+				else
+					M_Menu_Browser_f ();
 				break;
 
 			case 5:
@@ -8649,6 +8652,7 @@ void M_Init (void)
 	Cvar_Register (&scr_centermenu);
 	Cvar_Register (&demo_browser_vim);
 	Cvar_Register (&demo_browser_filter);
+	Cvar_Register (&demo_oldmenu);
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 

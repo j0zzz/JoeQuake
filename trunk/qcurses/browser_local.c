@@ -32,6 +32,7 @@
 #include <SDL_thread.h>
 #endif
 
+#define MW_SCROLL_LINES 3;
 
 qcurses_demlist_t * demlist = NULL;
 extern qcurses_box_t * main_box;
@@ -290,6 +291,16 @@ int get_summary_thread(void * entry) {
 }
 #endif
 
+qboolean IsSearchBoxVisible()
+{
+    return strlen(search_term) > 0;
+}
+
+void ClearSearchBoxContent()
+{
+    memset(search_term, 0, sizeof(search_term));
+}
+
 /*
  * read the demo list from filesystem and parse it
  */
@@ -328,7 +339,7 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
 
 	// clear out the search term always after a fresh read, when no filtering is enabled
     if (!demo_browser_filter.value)
-        memset(search_term, 0, sizeof(search_term));
+        ClearSearchBoxContent();
 
     int j = 0;
     for (int i = 0; i < num_files; i++) {
@@ -447,6 +458,7 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
     }
 
     int distance = 1;
+	int scroll_lines = MW_SCROLL_LINES;
 
     switch (k) {
     case 'b':
@@ -454,8 +466,7 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
             break;
     case K_PGUP:
     case K_HOME:
-    case K_MWHEELUP:
-        distance = keydown[K_HOME] ? 10000 : 10;
+        distance = keydown[K_HOME] ? num_files : max_lines - 1;
     case K_UPARROW:
     case 'k':
         if (k == 'k' && !demo_browser_vim.value)
@@ -463,13 +474,16 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
         qcurses_list_move_cursor((qcurses_list_t*)demlist, -distance);
         S_LocalSound("misc/menu1.wav");
         break;
+    case K_MWHEELUP:
+        if (demlist->list.window_start > 0)
+            demlist->list.window_start = max(demlist->list.window_start - scroll_lines, 0);
+        break;
     case 'd':
         if (!keydown[K_CTRL] || !demo_browser_vim.value)
             break;
     case K_PGDN:
     case K_END:
-    case K_MWHEELDOWN:
-        distance = keydown[K_END] ? 10000 : 10;
+        distance = keydown[K_END] ? num_files : max_lines - 1;
     case K_DOWNARROW:
     case 'j':
         if (k == 'j' && !demo_browser_vim.value)
@@ -477,11 +491,15 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
         qcurses_list_move_cursor((qcurses_list_t*)demlist, distance);
         S_LocalSound("misc/menu1.wav");
         break;
+    case K_MWHEELDOWN:
+        if (demlist->list.window_start + max_lines < num_files)
+            demlist->list.window_start = min(demlist->list.window_start + scroll_lines, num_files - max_lines);
+        break;
     case 'f':
         if (keydown[K_CTRL])
     case '/':
-            if (demo_browser_vim.value)
-                search_input = true;
+        if (demo_browser_vim.value)
+            search_input = true;
         break;
     case K_ENTER:
     case K_MOUSE1:
