@@ -204,42 +204,53 @@ void M_Demos_KeyHandle_Browser (int k) {
         return;
 
     int distance = 1;
+    int scroll_lines = MW_SCROLL_LINES;
+    qcurses_list_t *mapslist = (qcurses_list_t*)columns[browser_col];
+    
     switch (k) {
     case 'b':
         if (!keydown[K_CTRL] || !demo_browser_vim.value)
             break;
     case K_PGUP:
     case K_HOME:
-        distance = keydown[K_HOME] ? 10000 : 10;
+        distance = keydown[K_HOME] ? mapslist->len : mapslist->places - 1;
     case 'k':
         if (k == 'k' && !demo_browser_vim.value)
             break;
     case K_UPARROW:
         if (browser_col <= COL_RECORD){
-            qcurses_list_move_cursor((qcurses_list_t*)columns[browser_col], -distance);
+            qcurses_list_move_cursor(mapslist, -distance);
             Browser_UpdateFurtherColumns(browser_col);
             S_LocalSound("misc/menu1.wav");
         } else if (browser_col == COL_COMMENT_LOADED) {
             comment_page = max(0, comment_page - distance);
         }
         break;
+    case K_MWHEELUP:
+        if (mapslist->window_start > 0)
+            mapslist->window_start = max(mapslist->window_start - scroll_lines, 0);
+        break;
     case 'd':
         if (!keydown[K_CTRL] || !demo_browser_vim.value)
             break;
     case K_PGDN:
     case K_END:
-        distance = keydown[K_END] ? 10000 : 10;
+        distance = keydown[K_END] ? mapslist->len : mapslist->places - 1;
     case 'j':
         if (k == 'j' && !demo_browser_vim.value)
             break;
     case K_DOWNARROW:
         if (browser_col <= COL_RECORD) {
-            qcurses_list_move_cursor((qcurses_list_t*)columns[browser_col], distance);
+            qcurses_list_move_cursor(mapslist, distance);
             Browser_UpdateFurtherColumns(browser_col);
             S_LocalSound("misc/menu1.wav");
         } else if (browser_col == COL_COMMENT_LOADED) {
             comment_page += distance;
         }
+        break;
+    case K_MWHEELDOWN:
+        if (mapslist->window_start + mapslist->places < mapslist->len)
+            mapslist->window_start = min(mapslist->window_start + scroll_lines, mapslist->len - mapslist->places);
         break;
     case 'l':
         if (!demo_browser_vim.value)

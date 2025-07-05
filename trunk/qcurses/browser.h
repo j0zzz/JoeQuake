@@ -38,6 +38,8 @@
 
 #define BROWSER_HIGHLIGHT_COLOR (0xdc << 16) + (0xdc << 8)
 
+#define MW_SCROLL_LINES 3;
+
 extern cvar_t demo_browser_vim;
 extern cvar_t demo_browser_filter;
 

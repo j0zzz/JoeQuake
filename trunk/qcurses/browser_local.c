@@ -32,8 +32,6 @@
 #include <SDL_thread.h>
 #endif
 
-#define MW_SCROLL_LINES 3;
-
 qcurses_demlist_t * demlist = NULL;
 extern qcurses_box_t * main_box;
 extern char ghost_demo_path[MAX_OSPATH];
