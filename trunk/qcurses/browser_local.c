@@ -234,9 +234,11 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     qcurses_insert(local_box, count_draws(&filled_cols, name_box), 0, name_box);
     qcurses_insert(local_box, count_draws(&filled_cols, map_box), 0, map_box);
     qcurses_insert(local_box, count_draws(&filled_cols, player_box), 0, player_box);
-    qcurses_insert(local_box, count_draws(&filled_cols, skill_box), 0, skill_box);
-    qcurses_insert(local_box, count_draws(&filled_cols, kill_box), 0, kill_box);
-    qcurses_insert(local_box, count_draws(&filled_cols, secret_box), 0, secret_box);
+    if (skill_box && kill_box && secret_box) {
+        qcurses_insert(local_box, count_draws(&filled_cols, skill_box), 0, skill_box);
+        qcurses_insert(local_box, count_draws(&filled_cols, kill_box), 0, kill_box);
+        qcurses_insert(local_box, count_draws(&filled_cols, secret_box), 0, secret_box);
+    }
     qcurses_insert(local_box, count_draws(&filled_cols, time_box), 0, time_box);
     qcurses_insert(local_box, count_draws(&filled_cols, size_box), 0, size_box);
 
@@ -303,6 +305,8 @@ void ClearSearchBoxContent()
  * read the demo list from filesystem and parse it
  */
 void M_Demos_LocalRead(int rows, char * prevdir) {
+    int demlist_cursor = 0;
+
     SearchForDemos ();
 
 #if defined(SDL2)
@@ -314,6 +318,7 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     localread_count++;
 
     if (demlist) {
+		demlist_cursor = demlist->list.cursor;
         for (int i = 0; i < demlist->list.len; i++) {
             free(demlist->entries[i].name);
             free(demlist->summaries[i]);
@@ -326,7 +331,7 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     demlist = Q_calloc(1, sizeof(qcurses_demlist_t));
     demlist->list.len = num_files;
     demlist->list.places = rows;
-    demlist->list.cursor = 0;
+    demlist->list.cursor = !demo_browser_filter.value ? demlist_cursor : 0;
     demlist->list.window_start = 0;
     demlist->entries = Q_calloc(demlist->list.len, sizeof(direntry_t));
     demlist->summaries = Q_calloc(demlist->list.len, sizeof(demo_summary_t*));
@@ -410,7 +415,7 @@ void M_Demos_KeyHandle_Local_Search (int k, int max_lines) {
                     if (!demo_browser_filter.value)
                     {
                         S_LocalSound("misc/menu1.wav");
-                        demlist->list.window_start = i - 10;
+                        demlist->list.window_start = i - (max_lines / 2);
                         if (demlist->list.window_start < 0 || num_files < max_lines)
                         {
                             demlist->list.window_start = 0;
@@ -469,7 +474,8 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
     case 'k':
         if (k == 'k' && !demo_browser_vim.value)
             break;
-        qcurses_list_move_cursor((qcurses_list_t*)demlist, -distance);
+        distance = (demlist->list.cursor == 0) ? num_files : -distance;
+        qcurses_list_move_cursor((qcurses_list_t*)demlist, distance);
         S_LocalSound("misc/menu1.wav");
         break;
     case K_MWHEELUP:
@@ -486,6 +492,7 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
     case 'j':
         if (k == 'j' && !demo_browser_vim.value)
             break;
+        distance = (demlist->list.cursor == num_files - 1) ? -num_files : distance;
         qcurses_list_move_cursor((qcurses_list_t*)demlist, distance);
         S_LocalSound("misc/menu1.wav");
         break;
