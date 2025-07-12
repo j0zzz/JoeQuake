@@ -948,6 +948,13 @@ Shows current mouse rate. Useful to set m_rate. Only works when the game is star
 Mouse look is enabled when it's turned on. Default value is `1`.
 It does the same effect like switching `-mlook`/`+mlook`.
 
+#### Music
+
+##### `bgm_extmusic`
+
+Toggles music on/off. Default value is `1`.
+The music volume can be adjusted using the `bgmvolume` cvar.
+
 #### AVI Capture
 
 ##### `capture_codec`
@@ -1062,6 +1069,29 @@ The line will not be drawn if the length between the frames is larger than this 
 
 Default: `160`
 
+#### Demo browser
+
+##### `demo_browser_vim`
+
+When set to `1`, it will switch the behavior of the Demos menu to support a Vim-like control scheme.
+This includes the use of HJKL, Ctrl B/D, and search is done by entering a 'search mode' that you
+have to finish typing in by pressing Enter.
+
+When set to `0` (default value), the search behavior roughly matches the previous Demos menu: typing
+alphanumeric characters will add/remove from the search box.
+
+##### `demo_browser_filter`
+
+When set to `1`, while searching in the Demos menu, the list is automatically show a filtered set of filenames according to the search criteria. Similar to Total Commander's filtering method (Ctrl+S).
+
+Default value is `0`.
+
+##### `demo_oldmenu`
+
+Fallback to the old Demos menu used before version 0.18.0. If you encounter any issues with the new SDA Browser Demos menu, you can always switch this cvar to `1` and use the old Demos menu instead.
+
+Default value is `0`.
+
 
 ### Commands
 
@@ -1099,6 +1129,7 @@ So please omit the .dem extension from the wildcard.
 
 ##### `menu_maps`  
 ##### `menu_demos`  
+##### `menu_browser`  
 ##### `menu_mods`
 
 These commands display the appropriate new main menus, 
@@ -1335,12 +1366,3 @@ The speed of the zoom animation is controlled by the `zoom_speed` cvar.
 ##### `-zoom`
 
 Same as togglezoom, but with 2 different commands (aliases) for zooming in and out separately.
-
-##### `demo_browser_vim`
-
-When set to `1`, it will switch the behavior of the Demos menu to support a Vim-like control scheme.
-This includes the use of HJKL, Ctrl B/D, and search is done by entering a 'search mode' that you
-have to finish typing in by pressing Enter.
-
-When set to `0` (default value), the search behavior roughly matches the previous Demos menu: typing
-alphanumeric characters will add/remove from the search box.

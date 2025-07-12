@@ -1,4 +1,36 @@
 
+ version 0.18.0 build 8347
+ -----------------------
+
+Added SDA demo browser (by Karol Urbanski)
+	New, detailed demo browser with seperate tabs to display SDA website and downloadable demos
+	New commands: menu_browser
+	New cvars: demo_browser_vim, demo_browser_filter, demo_oldmenu
+Added bunnyhop practice display tools (by Karol Urbanski)
+	Display histogram-style visual information about bunnyhopping to help improve speed, technique, etc
+	New cvars: show_bhop_* (see online help for more details)
+Added player path tracer (by Philipp Kölmel)
+	Visualize the path the player took, to help e.g. learning bunnyhops from another player
+	New cvars: pathtracer_* (see online help for more details)
+Cross-platform support of Vorbis/MP3 music files (by Karol Urbanski)
+	Instead of fmod, the libogg and libvorbis libraries are used to play music files
+	These libraries provide much better cross-platform support (on e.g. Linux)
+	New cvars: bgm_extmusic (in place of fmod_music, which was removed)
+Improvements on bbox displays (by Matthew Earl)
+	- show bboxes for point entities
+	- added color options for bboxes (cl_bboxcolors)
+	- bboxes can be toggled on the demo player UI
+	- additional display modes for live/demo playback
+Added option to keep information about entites outside fov (by Matthew Earl)
+	This is useful for e.g. recams to see where the players and monsters are on the map
+	New cvar: sv_novis
+Orbit camera mode added (by Matthew Earl)
+	Orbit camera is an additional freefly camera that orbits around the player
+	New cvars: orbit_speed
+	New commands: democam_mode, orbit
+Additional freefly commands to support ReMaic recams (by Matthew Earl)
+	New cvars: freefly_speed, freefly_show_pos* (see online help for more details)
+
  version 0.17.9 build 8149
  -----------------------
 
