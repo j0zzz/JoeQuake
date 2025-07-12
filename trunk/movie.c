@@ -144,7 +144,7 @@ void Movie_Stop (void)
 
 void Movie_Stop_f (void)
 {
-	if (!Movie_IsActive())
+	if (!movie_is_capturing)
 	{
 		Con_Printf ("Not capturing\n");
 		return;
