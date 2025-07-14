@@ -1261,7 +1261,7 @@ void M_Browser_Draw (int width, int height) {
 
     if (!demlist || refresh_demlist) {
         refresh_demlist = false;
-        M_Demos_LocalRead(main_box->rows - 20, NULL);
+        M_Demos_LocalRead(main_box->rows - 20, demodir);
     }
 
     if (curl && curl->running)

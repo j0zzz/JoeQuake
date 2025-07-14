@@ -331,7 +331,14 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
     demlist = Q_calloc(1, sizeof(qcurses_demlist_t));
     demlist->list.len = num_files;
     demlist->list.places = rows;
-    demlist->list.cursor = !demo_browser_filter.value ? demlist_cursor : 0;
+    if (!demo_browser_filter.value)
+    {
+        demlist->list.cursor = demlist_cursor;
+        if (!prevdir)
+        {
+            demlist->list.cursor = 0;
+        }
+    }
     demlist->list.window_start = 0;
     demlist->entries = Q_calloc(demlist->list.len, sizeof(direntry_t));
     demlist->summaries = Q_calloc(demlist->list.len, sizeof(demo_summary_t*));
