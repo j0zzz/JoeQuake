@@ -1,5 +1,5 @@
 
- version 0.18.0 build 8347
+ version 0.18.0 build 8350
  -----------------------
 
 Added SDA demo browser (by Karol Urbanski)
