@@ -1065,8 +1065,7 @@ void Host_Init (quakeparms_t *parms)
 	        Neh_Init ();
 #endif
 
-	if (machine)
-		LOC_Init(); // for the machinegames mission pack from the 2021 rerelease
+	LOC_Init(); // for the machinegames mission pack from the 2021 rerelease (and the Nintendo 64 remaster)
 
 	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = Hunk_LowMark ();
