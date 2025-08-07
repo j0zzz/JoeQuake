@@ -388,7 +388,7 @@ the direction he's looking at.
 ##### `sv_override_spawnparams`
 
 Allows to enable or disable overriding the spawn parameters on every spawn of a player.
-The overriding values can be set using the command `setspawnparam <paramnum> <value> [0]`.
+The overriding values can be set using the commands `setspawnparam <paramnum> <value> [0]` and `setserverflags <value>`.
 This allows to set starting stats for when starting levels with the `map` or `record` commands, e.g. for singleplayer segmented runs.
 
 ##### `sv_noclipspeed`
@@ -1262,6 +1262,11 @@ Usage:
 ##### `fog_set`
 
 Saves the actual fog values (set at map start) to the `fog_custom` variable.
+
+##### `setserverflags <value>`
+
+Sets the serverflags to `value`.
+Can be used to set the runes of the player on spawn.
 
 ##### `printspawnparams [clientnum]`
 
