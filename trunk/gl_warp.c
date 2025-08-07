@@ -196,6 +196,13 @@ void SubdividePolygon (int numverts, float *verts)
 		t = DotProduct (verts, warpface->texinfo->vecs[1]);
 		poly->verts[i][3] = s;
 		poly->verts[i][4] = t;
+
+		// Q64 RERELEASE texture shift
+		if (warpface->texinfo->texture->shift > 0)
+		{
+			poly->verts[i][3] /= ( 2 * warpface->texinfo->texture->shift);
+			poly->verts[i][4] /= ( 2 * warpface->texinfo->texture->shift);
+		}
 	}
 }
 
@@ -470,6 +477,64 @@ void R_InitSky(texture_t *mt)
 
 	GL_Bind (alphaskytexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, halfwidth, mt->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_sky);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_sky);
+}
+
+/*
+=============
+R_InitSkyQ64
+
+Quake64 sky textures are 32*64 where the first 32 rows are the front layer
+and the second 32 rows are the back layer
+==============
+*/
+void R_InitSkyQ64 (texture_t *mt)
+{
+	int			i;
+	byte		*front, *back;
+	unsigned	*trans, halfheight;
+	byte rgba[4];
+
+	if (mt->width != 32 || mt->height != 64)
+	{
+		Con_Printf("Sky texture %s is %d x %d, expected 32 x 64\n", mt->name, mt->width, mt->height);
+		if (mt->width < 2 || mt->height < 1)
+			return;
+	}
+
+	halfheight = mt->height / 2;
+	trans = (unsigned *)Hunk_AllocName(mt->width * halfheight * 4, "skytex");
+
+	// pointers to both layer textures
+	front = (byte *)(mt+1);
+	back = (byte *)(mt+1) + (mt->width * halfheight);
+
+	for (i=0 ; i < (mt->width * halfheight) ; i++)
+	{
+		memcpy(&rgba, &d_8to24table[front[i]], 4);
+		rgba[3] = 128;
+		memcpy(&trans[i], &rgba, 4);
+	}
+
+	if (!alphaskytexture)
+		alphaskytexture = texture_extension_number++;
+
+	GL_Bind (alphaskytexture);
+	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, mt->width, halfheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_sky);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_sky);
+
+	for (i=0 ; i < (mt->width * halfheight) ; i++)
+	{
+		memcpy(&trans[i], &d_8to24table[back[i]], 4);
+	}
+
+	if (!solidskytexture)
+		solidskytexture = texture_extension_number++;
+
+	GL_Bind (solidskytexture);
+	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, mt->width, halfheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_minmax_sky);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_minmax_sky);
 }

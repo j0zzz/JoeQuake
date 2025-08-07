@@ -400,6 +400,7 @@ int R_SetSky (char *skyname);
 void Sky_NewMap(void);
 void R_DrawSky(void);
 void R_InitSky(texture_t *mt);		// called at level load
+void R_InitSkyQ64(texture_t *mt);
 void R_UpdateWarpTextures(void);
 extern int gl_warpimagesize;
 

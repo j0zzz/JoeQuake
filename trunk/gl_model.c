@@ -462,6 +462,27 @@ int Mod_LoadBrushModelTexture (texture_t *tx, int flags)
 	return tx->gl_texturenum;
 }
 
+
+/*
+=================
+Mod_CheckAnimTextureArrayQ64
+
+Quake64 bsp
+Check if we have any missing textures in the array
+=================
+*/
+qboolean Mod_CheckAnimTextureArrayQ64(texture_t *anims[], int numTex)
+{
+	int i;
+
+	for (i = 0; i < numTex; i++)
+	{
+		if (!anims[i])
+			return false;
+	}
+	return true;
+}
+
 /*
 =================
 Mod_LoadTextures
@@ -470,10 +491,13 @@ Mod_LoadTextures
 void Mod_LoadTextures (lump_t *l)
 {
 	int			i, j, pixels, num, max, altmax, texture_flag, nummiptex;
-	miptex_t	*mt;
+	miptex_t	*mt, mt_dummy_q64;
+	miptex64_t	*mt64;
+	unsigned	mt_shift;
+	size_t		sizeof_mt_header;
 	texture_t	*tx, *tx2, *anims[10], *altanims[10];
 	dmiptexlump_t *m;
-	byte		*data;
+	byte        *mt_data, *data;
 	char		bspname[64];
 
 	//johnfitz -- don't return early if no textures; still need to create dummy texture
@@ -504,6 +528,23 @@ void Mod_LoadTextures (lump_t *l)
 			continue;
 
 		mt = (miptex_t *)((byte *)m + m->dataofs[i]);
+		mt_shift = 0;
+		mt_data = (byte*)(mt + 1);
+		sizeof_mt_header = sizeof(miptex_t);
+
+		if (loadmodel->bspversion == BSPVERSION_QUAKE64)
+		{
+			mt64 = (miptex64_t *)mt;
+			memcpy(mt_dummy_q64.name, mt->name, sizeof(mt->name));
+			mt_dummy_q64.width = mt64->width;
+			mt_dummy_q64.height = mt64->height;
+			memcpy(mt_dummy_q64.offsets, mt64->offsets, sizeof(mt64->offsets));
+
+			mt = &mt_dummy_q64;
+			mt_shift = LittleLong(mt64->shift);
+			mt_data = (byte*)(mt64 + 1);
+			sizeof_mt_header = sizeof(miptex64_t);
+		}
 
 		mt->width = LittleLong(mt->width);
 		mt->height = LittleLong(mt->height);
@@ -511,7 +552,10 @@ void Mod_LoadTextures (lump_t *l)
 			mt->offsets[j] = LittleLong(mt->offsets[j]);
 
 		if ((mt->width & 15) || (mt->height & 15))
-			Con_DPrintf("Warning: texture %s (%d x %d) is not 16 aligned\n", mt->name, mt->width, mt->height);
+		{
+			if (loadmodel->bspversion != BSPVERSION_QUAKE64)
+				Con_DPrintf("Warning: texture %s (%d x %d) is not 16 aligned\n", mt->name, mt->width, mt->height);
+		}
 
 		pixels = mt->width * mt->height; // only copy the first mip, the rest are auto-generated
 		tx = (texture_t *)Hunk_AllocName(sizeof(texture_t) + pixels, loadname);
@@ -530,38 +574,42 @@ void Mod_LoadTextures (lump_t *l)
 
 		tx->width = mt->width;
 		tx->height = mt->height;
+		tx->shift = mt_shift;
 
 		for (j = 0; j<MIPLEVELS; j++)
-			tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
+			tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof_mt_header;
 		// the pixels immediately follow the structures
 
 		// HACK HACK HACK
 		if (!strcmp(mt->name, "shot1sid") && mt->width == 32 && mt->height == 32 && 
-		    CRC_Block((byte *)(mt + 1), mt->width * mt->height) == 65393)
+		    CRC_Block(mt_data, mt->width * mt->height) == 65393)
 		{	// This texture in b_shell1.bsp has some of the first 32 pixels painted white.
 			// They are invisible in software, but look really ugly in GL. So we just copy
 			// 32 pixels from the bottom to make it look nice.
-			memcpy (mt + 1, (byte *)(mt + 1) + 32*31, 32);
+			memcpy (mt_data, mt_data + 32*31, 32);
 		}
 
 		// ericw -- check for pixels extending past the end of the lump.
 		// appears in the wild; e.g. jam2_tronyn.bsp (func_mapjam2),
 		// kellbase1.bsp (quoth), and can lead to a segfault if we read past
 		// the end of the .bsp file buffer
-		if (((byte*)(mt + 1) + pixels) > (mod_base + l->fileofs + l->filelen))
+		if ((mt_data + pixels) > (mod_base + l->fileofs + l->filelen))
 		{
 			Con_DPrintf("Texture %s extends past end of lump\n", mt->name);
-			pixels = max(0, (mod_base + l->fileofs + l->filelen) - (byte*)(mt + 1));
+			pixels = max(0, (mod_base + l->fileofs + l->filelen) - mt_data);
 		}
 
 		tx->update_warp = false; //johnfitz
 		tx->warp_texturenum = 0;
 
-		memcpy(tx + 1, mt + 1, pixels);
+		memcpy(tx + 1, mt_data, pixels);
 
 		if (loadmodel->isworldmodel && ISSKYTEX(tx->name))
 		{
-			R_InitSky (tx);
+			if (loadmodel->bspversion == BSPVERSION_QUAKE64)
+				R_InitSkyQ64 (tx);
+			else
+				R_InitSky (tx);
 			continue;
 		}
 
@@ -663,6 +711,9 @@ void Mod_LoadTextures (lump_t *l)
 			}
 		}
 
+		if (loadmodel->bspversion == BSPVERSION_QUAKE64 && !Mod_CheckAnimTextureArrayQ64(anims, max))
+			continue; // Just pretend this is a normal texture
+
 #define	ANIM_CYCLE	2
 	// link them all together
 		for (j = 0 ; j < max ; j++)
@@ -726,7 +777,7 @@ Mod_LoadLighting
 void Mod_LoadLighting (lump_t *l)
 {
 	int		i, lit_ver, mark;
-	byte	*in, *out, *data, d;
+	byte	*in, *out, *data, d, q64_b0, q64_b1;
 	char	*litfilename;
 
 	loadmodel->lightdata = NULL;
@@ -775,6 +826,28 @@ void Mod_LoadLighting (lump_t *l)
 	if (!l->filelen)
 	{
 		loadmodel->lightdata = NULL;
+		return;
+	}
+
+	// Quake64 bsp lighmap data
+	if (loadmodel->bspversion == BSPVERSION_QUAKE64)
+	{
+		// RGB lightmap samples are packed in 16bits.
+		// RRRRR GGGGG BBBBBB
+
+		loadmodel->lightdata = (byte*)Hunk_AllocName((l->filelen / 2) * 3, loadmodel->name);
+		in = mod_base + l->fileofs;
+		out = loadmodel->lightdata;
+
+		for (i = 0; i < (l->filelen / 2); i++)
+		{
+			q64_b0 = *in++;
+			q64_b1 = *in++;
+
+			*out++ = q64_b0 & 0xf8;/* 0b11111000 */
+			*out++ = ((q64_b0 & 0x07) << 5) + ((q64_b1 & 0xc0) >> 5);/* 0b00000111, 0b11000000 */
+			*out++ = (q64_b1 & 0x3f) << 2;/* 0b00111111 */
+		}
 		return;
 	}
 
@@ -1137,6 +1210,13 @@ void Mod_PolyForUnlitSurface(msurface_t *fa)
 		VectorCopy(vec, poly->verts[i]);
 		poly->verts[i][3] = DotProduct(vec, fa->texinfo->vecs[0]) * texscale;
 		poly->verts[i][4] = DotProduct(vec, fa->texinfo->vecs[1]) * texscale;
+
+		// Q64 RERELEASE texture shift
+		if (fa->texinfo->texture->shift > 0)
+		{
+			poly->verts[i][3] /= ( 2 * fa->texinfo->texture->shift);
+			poly->verts[i][4] /= ( 2 * fa->texinfo->texture->shift);
+		}
 	}
 }
 
@@ -1255,6 +1335,9 @@ void Mod_LoadFaces (lump_t *l, qboolean bsp2)
 		Mod_CalcSurfaceBounds(out); //johnfitz -- for per-surface frustum culling 
 
 	// lighting info
+		if (loadmodel->bspversion == BSPVERSION_QUAKE64)
+			lofs /= 2; // Q64 samples are 16bits instead 8 in normal Quake
+
 		if (lofs == -1)
 			out->samples = NULL;
 		else
@@ -1952,8 +2035,8 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 
 	header = (dheader_t *)buffer;
 
-	i = LittleLong (header->version);
-	switch (i)
+	mod->bspversion = LittleLong (header->version);
+	switch (mod->bspversion)
 	{
 	case BSPVERSION:
 		bsp2 = false;
@@ -1964,8 +2047,11 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	case BSP2VERSION_BSP2:
 		bsp2 = 2;	//sanitised revision
 		break;
+	case BSPVERSION_QUAKE64:
+		bsp2 = false;
+		break;
 	default:
-		Sys_Error("Mod_LoadBrushModel: %s has wrong version number (%i should be %i)", mod->name, i, BSPVERSION);
+		Sys_Error("Mod_LoadBrushModel: %s has wrong version number (%i should be %i)", mod->name, mod->bspversion, BSPVERSION);
 		break;
 	}
 
