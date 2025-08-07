@@ -1878,8 +1878,13 @@ static void WriteNextSpawnParams (FILE *f, const struct spawn_params_to_write pa
 	fprintf(f, "setspawnparam 8 %f %i\n", params.armortype, client_num);
 }
 
-static float GetActiveWeaponForQdQstatsSpawnParams (const int active_weapon)
+static float GetActiveWeaponForSpawnParams (const int active_weapon)
 {
+	if (!pr_qdqstats)
+	{
+		return active_weapon;
+	}
+
 	// qdqstats progs handle the spawn param for the active weapon in a special
 	// way. We mirror that in this function to be able to figure out the next
 	// spawn params.
@@ -1922,7 +1927,7 @@ static void WriteNextSpawnParamsForServerClient (FILE *f, entvars_t *client_vars
 	params.ammo_nails = client_vars->ammo_nails;
 	params.ammo_rockets = client_vars->ammo_rockets;
 	params.ammo_cells = client_vars->ammo_cells;
-	params.active_weapon = GetActiveWeaponForQdQstatsSpawnParams((int)client_vars->weapon);
+	params.active_weapon = GetActiveWeaponForSpawnParams((int)client_vars->weapon);
 	params.armortype = roundf(client_vars->armortype * 100.0f);
 	WriteNextSpawnParams(f, params, client_num);
 }
@@ -1937,7 +1942,7 @@ static void WriteNextSpawnParamsForThisClient (FILE *f, int client_num)
 	params.ammo_nails = (float)cl.stats[STAT_NAILS];
 	params.ammo_rockets = (float)cl.stats[STAT_ROCKETS];
 	params.ammo_cells = (float)cl.stats[STAT_CELLS];
-	params.active_weapon = GetActiveWeaponForQdQstatsSpawnParams(cl.stats[STAT_ACTIVEWEAPON]);
+	params.active_weapon = GetActiveWeaponForSpawnParams(cl.stats[STAT_ACTIVEWEAPON]);
 
 	if (cl.items & IT_ARMOR1)
 		params.armortype = 30.0f;
