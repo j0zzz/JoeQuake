@@ -284,6 +284,8 @@ void Host_Ping_f (void)
 ===============================================================================
 */
 
+static float serverflags_override = 0.0f;
+
 /*
 ======================
 Host_Map_f
@@ -329,6 +331,9 @@ void Host_Map_f (void)
 	strcat (cls.mapstring, "\n");
 
 	svs.serverflags = 0;			// haven't completed an episode yet
+	if (sv_override_spawnparams.value) {
+		svs.serverflags = serverflags_override;
+	}
 	strcpy (name, Cmd_Argv(1));
 	SV_SpawnServer (name);
 	if (!sv.active)
@@ -1750,6 +1755,22 @@ void Host_GetCoords_f (void)
 ===============================================================================
 */
 
+void Host_SetServerFlags_f (void)
+{
+	if (cmd_source != src_command || !sv.active)
+		return;
+
+	const int argc = Cmd_Argc();
+	if (argc != 2)
+	{
+		Con_Printf ("Usage: setserverflags <value>\n");
+		return;
+	}
+
+	svs.serverflags = atof(Cmd_Argv(1));
+	serverflags_override = svs.serverflags;
+}
+
 static char* spawnparam_names[NUM_SPAWN_PARMS] = {
 	"items",
 	"health",
@@ -1865,8 +1886,14 @@ struct spawn_params_to_write
 
 static void WriteNextSpawnParams (FILE *f, const struct spawn_params_to_write params, const int client_num)
 {
-	// remove items that would be removed with level change
-	const int items = params.items - (params.items & (IT_SUPERHEALTH|IT_KEY1|IT_KEY2|IT_INVISIBILITY|IT_INVULNERABILITY|IT_SUIT|IT_QUAD));
+	// Remove items that would be removed with level change.
+	// Also remove sigils, as stuff doesn't fit into float precision with them,
+	// so they are handled through svs.serverflags instead.
+	const int items = params.items - (params.items & (
+		IT_SUPERHEALTH|IT_KEY1|IT_KEY2|IT_INVISIBILITY|IT_INVULNERABILITY|IT_SUIT|IT_QUAD|
+		IT_SIGIL1|IT_SIGIL2|IT_SIGIL3|IT_SIGIL4)
+	);
+	fprintf(f, "setserverflags %f\n", (float)(params.items >> 28));
 	fprintf(f, "setspawnparam 0 %f %i\n", (float)items, client_num);
 	fprintf(f, "setspawnparam 1 %f %i\n", min(max(params.health, 50.0f), 100.0f), client_num);
 	fprintf(f, "setspawnparam 2 %f %i\n", params.armorvalue, client_num);
@@ -1878,8 +1905,13 @@ static void WriteNextSpawnParams (FILE *f, const struct spawn_params_to_write pa
 	fprintf(f, "setspawnparam 8 %f %i\n", params.armortype, client_num);
 }
 
-static float GetActiveWeaponForQdQstatsSpawnParams (const int active_weapon)
+static float GetActiveWeaponForSpawnParams (const int active_weapon)
 {
+	if (!pr_qdqstats)
+	{
+		return active_weapon;
+	}
+
 	// qdqstats progs handle the spawn param for the active weapon in a special
 	// way. We mirror that in this function to be able to figure out the next
 	// spawn params.
@@ -1922,7 +1954,7 @@ static void WriteNextSpawnParamsForServerClient (FILE *f, entvars_t *client_vars
 	params.ammo_nails = client_vars->ammo_nails;
 	params.ammo_rockets = client_vars->ammo_rockets;
 	params.ammo_cells = client_vars->ammo_cells;
-	params.active_weapon = GetActiveWeaponForQdQstatsSpawnParams((int)client_vars->weapon);
+	params.active_weapon = GetActiveWeaponForSpawnParams((int)client_vars->weapon);
 	params.armortype = roundf(client_vars->armortype * 100.0f);
 	WriteNextSpawnParams(f, params, client_num);
 }
@@ -1937,7 +1969,7 @@ static void WriteNextSpawnParamsForThisClient (FILE *f, int client_num)
 	params.ammo_nails = (float)cl.stats[STAT_NAILS];
 	params.ammo_rockets = (float)cl.stats[STAT_ROCKETS];
 	params.ammo_cells = (float)cl.stats[STAT_CELLS];
-	params.active_weapon = GetActiveWeaponForQdQstatsSpawnParams(cl.stats[STAT_ACTIVEWEAPON]);
+	params.active_weapon = GetActiveWeaponForSpawnParams(cl.stats[STAT_ACTIVEWEAPON]);
 
 	if (cl.items & IT_ARMOR1)
 		params.armortype = 30.0f;
@@ -2086,6 +2118,7 @@ void Host_InitCommands (void)
 
 	Cmd_AddCommand ("getcoords", Host_GetCoords_f);
 
+	Cmd_AddCommand ("setserverflags", Host_SetServerFlags_f);
 	Cmd_AddCommand ("printspawnparams", Host_PrintSpawnParams_f);
 	Cmd_AddCommand ("setspawnparam", Host_SetSpawnParam_f);
 	Cmd_AddCommand ("writenextspawnparams", Host_WriteNextSpawnParams_f);

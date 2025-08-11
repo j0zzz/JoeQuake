@@ -74,6 +74,7 @@ typedef struct texture_s
 {
 	char		name[16];
 	unsigned	width, height;
+	unsigned	shift;					// texture shift for Q64 (Nintendo 64 Remaster)
 	int			gl_texturenum;
 	int			fb_texturenum;			// index of fullbright mask or 0
 	int			warp_texturenum;
@@ -588,6 +589,7 @@ typedef struct model_s
 	byte		*lightdata;
 	char		*entities;
 
+	int			bspversion;
 	qboolean	isworldmodel;
 	qboolean	haslitwater;
 

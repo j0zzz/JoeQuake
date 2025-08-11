@@ -125,6 +125,12 @@
     <Filter Include="Header Files\Bhop_h">
       <UniqueIdentifier>{bfb8de77-baba-44c1-ad88-299a7e0f5170}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Browser_h">
+      <UniqueIdentifier>{9e19bd18-4554-482c-ae05-7dc8673d0a1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Browser">
+      <UniqueIdentifier>{8c86e5df-b336-4df6-9f4f-9ef7a8f6c13c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\joequake.rc">
@@ -483,6 +489,27 @@
     <ClCompile Include="..\..\trunk\bhop\practice.c">
       <Filter>Source Files\Bhop</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\trunk\qcurses\browser.c">
+      <Filter>Source Files\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\trunk\qcurses\browser_curl.c">
+      <Filter>Source Files\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\trunk\qcurses\browser_local.c">
+      <Filter>Source Files\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\trunk\qcurses\browser_news.c">
+      <Filter>Source Files\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\trunk\qcurses\cJSON.c">
+      <Filter>Source Files\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\trunk\qcurses\qcurses.c">
+      <Filter>Source Files\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\trunk\qcurses\set.c">
+      <Filter>Source Files\Browser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\trunk\adivtab.h">
@@ -694,6 +721,27 @@
     </ClInclude>
     <ClInclude Include="..\..\trunk\bhop\practice.h">
       <Filter>Header Files\Bhop_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\qcurses\browser.h">
+      <Filter>Header Files\Browser_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\qcurses\browser_curl.h">
+      <Filter>Header Files\Browser_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\qcurses\browser_local.h">
+      <Filter>Header Files\Browser_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\qcurses\browser_news.h">
+      <Filter>Header Files\Browser_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\qcurses\cJSON.h">
+      <Filter>Header Files\Browser_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\qcurses\qcurses.h">
+      <Filter>Header Files\Browser_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\qcurses\set.h">
+      <Filter>Header Files\Browser_h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
