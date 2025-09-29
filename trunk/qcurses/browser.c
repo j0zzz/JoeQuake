@@ -218,6 +218,7 @@ void M_Demos_KeyHandle_Browser (int k) {
         if (k == 'k' && !demo_browser_vim.value)
             break;
     case K_UPARROW:
+    case K_MWHEELUP:
         if (browser_col <= COL_RECORD){
             qcurses_list_move_cursor(mapslist, -distance);
             Browser_UpdateFurtherColumns(browser_col);
@@ -225,10 +226,6 @@ void M_Demos_KeyHandle_Browser (int k) {
         } else if (browser_col == COL_COMMENT_LOADED) {
             comment_page = max(0, comment_page - distance);
         }
-        break;
-    case K_MWHEELUP:
-        if (mapslist->window_start > 0)
-            mapslist->window_start = max(mapslist->window_start - scroll_lines, 0);
         break;
     case 'd':
         if (!keydown[K_CTRL] || !demo_browser_vim.value)
@@ -240,6 +237,7 @@ void M_Demos_KeyHandle_Browser (int k) {
         if (k == 'j' && !demo_browser_vim.value)
             break;
     case K_DOWNARROW:
+    case K_MWHEELDOWN:
         if (browser_col <= COL_RECORD) {
             qcurses_list_move_cursor(mapslist, distance);
             Browser_UpdateFurtherColumns(browser_col);
@@ -247,10 +245,6 @@ void M_Demos_KeyHandle_Browser (int k) {
         } else if (browser_col == COL_COMMENT_LOADED) {
             comment_page += distance;
         }
-        break;
-    case K_MWHEELDOWN:
-        if (mapslist->window_start + mapslist->places < mapslist->len)
-            mapslist->window_start = min(mapslist->window_start + scroll_lines, mapslist->len - mapslist->places);
         break;
     case 'l':
         if (!demo_browser_vim.value)

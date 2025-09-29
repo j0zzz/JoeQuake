@@ -479,15 +479,12 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
         distance = keydown[K_HOME] ? num_files : max_lines - 1;
     case K_UPARROW:
     case 'k':
+    case K_MWHEELUP:
         if (k == 'k' && !demo_browser_vim.value)
             break;
         distance = (demlist->list.cursor == 0) ? num_files : -distance;
         qcurses_list_move_cursor((qcurses_list_t*)demlist, distance);
         S_LocalSound("misc/menu1.wav");
-        break;
-    case K_MWHEELUP:
-        if (demlist->list.window_start > 0)
-            demlist->list.window_start = max(demlist->list.window_start - scroll_lines, 0);
         break;
     case 'd':
         if (!keydown[K_CTRL] || !demo_browser_vim.value)
@@ -497,15 +494,12 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
         distance = keydown[K_END] ? num_files : max_lines - 1;
     case K_DOWNARROW:
     case 'j':
+    case K_MWHEELDOWN:
         if (k == 'j' && !demo_browser_vim.value)
             break;
         distance = (demlist->list.cursor == num_files - 1) ? -num_files : distance;
         qcurses_list_move_cursor((qcurses_list_t*)demlist, distance);
         S_LocalSound("misc/menu1.wav");
-        break;
-    case K_MWHEELDOWN:
-        if (demlist->list.window_start + max_lines < num_files)
-            demlist->list.window_start = min(demlist->list.window_start + scroll_lines, num_files - max_lines);
         break;
     case 'f':
         if (keydown[K_CTRL])
