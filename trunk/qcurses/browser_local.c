@@ -224,8 +224,17 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
         }
     }
 
-    if (demlist)
+    if (demlist) {
+        Draw_AlphaFillRGB(
+            start_col * 8,
+            (start_row + 2 + demlist->list.cursor - demlist->list.window_start) * 8,
+            cols * 8 / Sbar_GetScaleAmount(),
+            8 / Sbar_GetScaleAmount(),
+            BROWSER_HIGHLIGHT_COLOR,
+            0.15
+        );
         qcurses_print(name_box, 0, 2 + demlist->list.cursor - demlist->list.window_start, blinkstr(0x0d), false);
+    }
 
     M_Demos_HelpBox (help_box, TAB_LOCAL_DEMOS, search_term, search_input);
 

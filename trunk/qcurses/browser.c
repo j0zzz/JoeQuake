@@ -988,11 +988,21 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             blinkstr(0x0d), 
             false
         );
+        /* This gives a full highlight around the whole box
+         *Draw_AlphaFillRGB(
+         *    start_col * 8,
+         *    start_row * 8,
+         *    map_box->cols * 8 / Sbar_GetScaleAmount(),
+         *    map_box->rows * 8 / Sbar_GetScaleAmount(),
+         *    BROWSER_HIGHLIGHT_COLOR,
+         *    0.15
+         *);
+         */
         Draw_AlphaFillRGB(
             start_col * 8,
-            start_row * 8,
+            (start_row + 2 + columns[COL_MAP]->list.cursor - columns[COL_MAP]->list.window_start) * 8,
             map_box->cols * 8 / Sbar_GetScaleAmount(),
-            map_box->rows * 8 / Sbar_GetScaleAmount(),
+            8 / Sbar_GetScaleAmount(),
             BROWSER_HIGHLIGHT_COLOR,
             0.15
         );
@@ -1017,11 +1027,21 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 blinkstr(0x0d),
                 false
             );
+            /* This gives a full highlight around the whole box
+             *Draw_AlphaFillRGB(
+             *    (start_col + map_box->cols) * 8,
+             *    start_row * 8,
+             *    skill_box->cols * 8 / Sbar_GetScaleAmount(),
+             *    skill_box->rows * 8 / Sbar_GetScaleAmount(),
+             *    BROWSER_HIGHLIGHT_COLOR,
+             *    0.15
+             *);
+             */
             Draw_AlphaFillRGB(
                 (start_col + map_box->cols) * 8,
-                start_row * 8,
+                (start_row + 2 + columns[COL_TYPE]->list.cursor - columns[COL_TYPE]->list.window_start) * 8,
                 skill_box->cols * 8 / Sbar_GetScaleAmount(),
-                skill_box->rows * 8 / Sbar_GetScaleAmount(),
+                8 / Sbar_GetScaleAmount(),
                 BROWSER_HIGHLIGHT_COLOR,
                 0.15
             );
@@ -1052,11 +1072,21 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 blinkstr(0x0d),
                 false
             );
+            /* This gives a full highlight around the whole box
+             *Draw_AlphaFillRGB( 
+             *    (start_col + map_box->cols + skill_box->cols) * 8,
+             *    start_row * 8,
+             *    time_box->cols * 8 / Sbar_GetScaleAmount(),
+             *    time_box->rows * 8 / Sbar_GetScaleAmount(),
+             *    BROWSER_HIGHLIGHT_COLOR,
+             *    0.15
+             *);
+             */
             Draw_AlphaFillRGB(
                 (start_col + map_box->cols + skill_box->cols) * 8,
-                start_row * 8,
+                (start_row + 2 + columns[COL_RECORD]->list.cursor - columns[COL_RECORD]->list.window_start) * 8,
                 time_box->cols * 8 / Sbar_GetScaleAmount(),
-                time_box->rows * 8 / Sbar_GetScaleAmount(),
+                8 / Sbar_GetScaleAmount(),
                 BROWSER_HIGHLIGHT_COLOR,
                 0.15
             );
