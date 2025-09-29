@@ -28,6 +28,23 @@ typedef struct thread_data_s {
     uint32_t localread_count;
 } thread_data_t;
 
+typedef struct thread_list_s {
+    thread_data_t * data;
+    struct thread_list_s *prev;
+    struct thread_list_s *next;
+} thread_list_t;
+
+typedef struct thread_queue_s {
+    thread_list_t * first;
+    thread_list_t * last;
+} thread_queue_t;
+
+thread_queue_t * create_queue();
+void enqueue(thread_queue_t * queue, thread_data_t * data);
+int len_queue(thread_queue_t * queue);
+thread_data_t * dequeue(thread_queue_t * queue);
+void destroy_queue(thread_queue_t * queue);
+
 enum local_columns {
     LOC_MAP,
     LOC_SIZE,

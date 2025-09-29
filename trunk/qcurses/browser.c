@@ -218,6 +218,7 @@ void M_Demos_KeyHandle_Browser (int k) {
         if (k == 'k' && !demo_browser_vim.value)
             break;
     case K_UPARROW:
+    case K_MWHEELUP:
         if (browser_col <= COL_RECORD){
             qcurses_list_move_cursor(mapslist, -distance);
             Browser_UpdateFurtherColumns(browser_col);
@@ -225,10 +226,6 @@ void M_Demos_KeyHandle_Browser (int k) {
         } else if (browser_col == COL_COMMENT_LOADED) {
             comment_page = max(0, comment_page - distance);
         }
-        break;
-    case K_MWHEELUP:
-        if (mapslist->window_start > 0)
-            mapslist->window_start = max(mapslist->window_start - scroll_lines, 0);
         break;
     case 'd':
         if (!keydown[K_CTRL] || !demo_browser_vim.value)
@@ -240,6 +237,7 @@ void M_Demos_KeyHandle_Browser (int k) {
         if (k == 'j' && !demo_browser_vim.value)
             break;
     case K_DOWNARROW:
+    case K_MWHEELDOWN:
         if (browser_col <= COL_RECORD) {
             qcurses_list_move_cursor(mapslist, distance);
             Browser_UpdateFurtherColumns(browser_col);
@@ -247,10 +245,6 @@ void M_Demos_KeyHandle_Browser (int k) {
         } else if (browser_col == COL_COMMENT_LOADED) {
             comment_page += distance;
         }
-        break;
-    case K_MWHEELDOWN:
-        if (mapslist->window_start + mapslist->places < mapslist->len)
-            mapslist->window_start = min(mapslist->window_start + scroll_lines, mapslist->len - mapslist->places);
         break;
     case 'l':
         if (!demo_browser_vim.value)
@@ -994,11 +988,21 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
             blinkstr(0x0d), 
             false
         );
+        /* This gives a full highlight around the whole box
+         *Draw_AlphaFillRGB(
+         *    start_col * 8,
+         *    start_row * 8,
+         *    map_box->cols * 8 / Sbar_GetScaleAmount(),
+         *    map_box->rows * 8 / Sbar_GetScaleAmount(),
+         *    BROWSER_HIGHLIGHT_COLOR,
+         *    0.15
+         *);
+         */
         Draw_AlphaFillRGB(
             start_col * 8,
-            start_row * 8,
+            (start_row + 2 + columns[COL_MAP]->list.cursor - columns[COL_MAP]->list.window_start) * 8,
             map_box->cols * 8 / Sbar_GetScaleAmount(),
-            map_box->rows * 8 / Sbar_GetScaleAmount(),
+            8 / Sbar_GetScaleAmount(),
             BROWSER_HIGHLIGHT_COLOR,
             0.15
         );
@@ -1023,11 +1027,21 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 blinkstr(0x0d),
                 false
             );
+            /* This gives a full highlight around the whole box
+             *Draw_AlphaFillRGB(
+             *    (start_col + map_box->cols) * 8,
+             *    start_row * 8,
+             *    skill_box->cols * 8 / Sbar_GetScaleAmount(),
+             *    skill_box->rows * 8 / Sbar_GetScaleAmount(),
+             *    BROWSER_HIGHLIGHT_COLOR,
+             *    0.15
+             *);
+             */
             Draw_AlphaFillRGB(
                 (start_col + map_box->cols) * 8,
-                start_row * 8,
+                (start_row + 2 + columns[COL_TYPE]->list.cursor - columns[COL_TYPE]->list.window_start) * 8,
                 skill_box->cols * 8 / Sbar_GetScaleAmount(),
-                skill_box->rows * 8 / Sbar_GetScaleAmount(),
+                8 / Sbar_GetScaleAmount(),
                 BROWSER_HIGHLIGHT_COLOR,
                 0.15
             );
@@ -1058,11 +1072,21 @@ void M_Demos_DisplayBrowser (int cols, int rows, int start_col, int start_row) {
                 blinkstr(0x0d),
                 false
             );
+            /* This gives a full highlight around the whole box
+             *Draw_AlphaFillRGB( 
+             *    (start_col + map_box->cols + skill_box->cols) * 8,
+             *    start_row * 8,
+             *    time_box->cols * 8 / Sbar_GetScaleAmount(),
+             *    time_box->rows * 8 / Sbar_GetScaleAmount(),
+             *    BROWSER_HIGHLIGHT_COLOR,
+             *    0.15
+             *);
+             */
             Draw_AlphaFillRGB(
                 (start_col + map_box->cols + skill_box->cols) * 8,
-                start_row * 8,
+                (start_row + 2 + columns[COL_RECORD]->list.cursor - columns[COL_RECORD]->list.window_start) * 8,
                 time_box->cols * 8 / Sbar_GetScaleAmount(),
-                time_box->rows * 8 / Sbar_GetScaleAmount(),
+                8 / Sbar_GetScaleAmount(),
                 BROWSER_HIGHLIGHT_COLOR,
                 0.15
             );
