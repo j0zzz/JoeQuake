@@ -67,6 +67,7 @@ cvar_t	cl_independentphysics = {"cl_independentphysics", "1", CVAR_INIT};
 cvar_t	cl_viewweapons = {"cl_viewweapons", "0"};
 cvar_t	cl_autodemo = { "cl_autodemo", "0" };
 cvar_t	cl_autodemo_format = { "cl_autodemo_format", "#map#_#time#_#skill#_#player#" };
+cvar_t  cl_autodemo_allowunfinished = { "cl_autodemo_allowunfinished", "0" };
 cvar_t	cl_demoui = {"cl_demoui", "1", CVAR_ARCHIVE};
 cvar_t	cl_demouitimeout = {"cl_demouitimeout", "2.5", CVAR_ARCHIVE};
 cvar_t	cl_demouihidespeed = {"cl_demouihidespeed", "2", CVAR_ARCHIVE};
@@ -1500,6 +1501,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_viewweapons);
 	Cvar_Register(&cl_autodemo);
 	Cvar_Register(&cl_autodemo_format);
+	Cvar_Register(&cl_autodemo_allowunfinished);
 	Cvar_Register(&cl_demoui);
 	Cvar_Register(&cl_demouitimeout);
 	Cvar_Register(&cl_demouihidespeed);
