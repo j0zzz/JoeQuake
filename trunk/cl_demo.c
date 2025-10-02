@@ -988,6 +988,7 @@ void CL_KeepDemo_f(void)
 	double	finishtime;
 	char	oldname[MAX_OSPATH*2], autodemo_name[MAX_OSPATH*2], *currentdemo_name, newname[MAX_OSPATH*2], basename[MAX_OSPATH*2], cleared_playername[16];
 	extern cvar_t cl_autodemo_format;
+	extern cvar_t cl_autodemo_allowunfinished;
 
 	if (cmd_source != src_command)
 		return;
@@ -998,9 +999,9 @@ void CL_KeepDemo_f(void)
 		return;
 	}
 
-	if (!cl.intermission)
+	if (!cl.intermission && !cl_autodemo_allowunfinished.value)
 	{
-		Con_Printf("Keepdemo is only allowed after you finished the level\n");
+		Con_Printf("Keepdemo not allowed unless cl_autodemo_allowunfinished > 0\n");
 		return;
 	}
 
@@ -1018,10 +1019,23 @@ void CL_KeepDemo_f(void)
 	Q_strncpyz(autodemo_name, cl_autodemo_format.string, sizeof(autodemo_name));
 	currentdemo_name = autodemo_name;
 	currentdemo_name = Q_strreplace(currentdemo_name, "#map#", CL_MapName());
-	currentdemo_name = Q_strreplace(currentdemo_name, "#time#", va("%i%02i%03i", mins, secs, millisecs));
+
+	if (cl.intermission)
+	{
+		currentdemo_name = Q_strreplace(currentdemo_name, "#time#", va("%i%02i%03i", mins, secs, millisecs));
+	}
+	else
+	{
+		Q_strreplace(currentdemo_name, "#time#", "unfinished");
+
+		time_t t = time(NULL);
+		struct tm tm = *localtime(&t);
+		strcat(currentdemo_name, va("_%d-%02d-%02d_%02d-%02d-%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour + 1, tm.tm_min, tm.tm_sec));
+	}
+
 	currentdemo_name = Q_strreplace(currentdemo_name, "#skill#", skill.string);
 	currentdemo_name = Q_strreplace(currentdemo_name, "#player#", cleared_playername);
-	
+
 	Q_snprintfz(newname, sizeof(newname), "%s/%s", com_gamedir, currentdemo_name);
 
 	// try with a different name if this file already exists
