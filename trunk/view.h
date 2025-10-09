@@ -32,6 +32,7 @@ extern	cvar_t	v_gunkick;
 extern	cvar_t	show_stats;
 extern	cvar_t	show_stats_small;
 extern	cvar_t	show_movekeys;
+extern	cvar_t	show_grenadecounter;
 
 extern	cvar_t  v_contentblend;
 extern	cvar_t	v_damagecshift;

@@ -983,6 +983,49 @@ byte *StringToRGB (char *s)
 
 /*
 ================
+Draw_CustomScaledString
+================
+*/
+void Draw_CustomScaledString (int x, int y, char *str, int scale_amount)
+{
+	float	frow, fcol;
+	int	num, size;
+
+	if (y <= -8)
+		return;		// totally off screen
+
+	if (!*str)
+		return;
+
+	size = (int)(8 * scale_amount);
+
+	GL_Bind (char_texture);
+
+	glBegin (GL_QUADS);
+
+	while (*str)		// stop rendering when out of characters
+	{
+		if ((num = *str++) != 32)	// skip spaces
+		{
+			frow = (float)(num >> 4) * 0.0625;
+			fcol = (float)(num & 15) * 0.0625;
+			glTexCoord2f (fcol, frow);
+			glVertex2f (x, y);
+			glTexCoord2f (fcol + 0.0625, frow);
+			glVertex2f (x + size, y);
+			glTexCoord2f (fcol + 0.0625, frow + 0.03125);
+			glVertex2f (x + size, y + size);
+			glTexCoord2f (fcol, frow + 0.03125);
+			glVertex2f (x, y + size);
+		}
+		x += size;
+	}
+
+	glEnd ();
+}
+
+/*
+================
 Draw_Crosshair		-- joe, from FuhQuake
 ================
 */
