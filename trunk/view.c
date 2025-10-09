@@ -64,6 +64,7 @@ cvar_t	show_stats_small = {"show_stats_small", "0"};
 cvar_t	show_stats_length = {"show_stats_length", "0.5"};
 
 cvar_t	show_movekeys = {"show_movekeys", "0"};
+cvar_t	show_grenadecounter = {"show_grenadecounter", "0"};
 
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "2.0"};
@@ -1664,6 +1665,7 @@ void V_Init (void)
 	Cvar_Register (&show_stats_length);
 
 	Cvar_Register (&show_movekeys);
+	Cvar_Register (&show_grenadecounter);
 
 	Cvar_Register (&cl_rollspeed);
 	Cvar_Register (&cl_rollangle);
