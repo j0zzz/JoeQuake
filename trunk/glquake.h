@@ -175,6 +175,7 @@ extern	cvar_t	r_fullbright;
 extern	cvar_t	r_lightmap;
 extern	cvar_t	r_shadows;
 extern	cvar_t	r_wateralpha;
+extern	cvar_t	r_wateralpha_override;
 extern	cvar_t	r_litwater;
 extern	cvar_t	r_dynamic;
 extern	cvar_t	r_novis;
