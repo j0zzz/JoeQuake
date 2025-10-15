@@ -1,4 +1,5 @@
 /*
+ * p_su
  * Bunnyhopping statistics and practice module
  * Prepares display for various graphics showcasing how well the user is
  * bunnyhopping. 
@@ -512,18 +513,6 @@ void Bhop_GatherData(void)
 }
 
 /*
- * print a summary to console
- */
-void Bhop_PrintSummary(void)
-{
-    bhop_summary_t summary = Bhop_GetSummary(bhop_history, Bhop_Len(bhop_history), false);
-    Con_Printf(
-        "overall bhop summary:\n+forward ground accuracy: %3.1f%%\n+forward overall accuracy: %3.1f%%\nstrafe accuracy: %3.1f\n%%",
-        summary.fwd_on_ground_percent, summary.fwd_percent, summary.strafe_percent
-    );
-}
-
-/*
  * speed up drawing of the key arrays by detecting continuous chunks
  */
 void Bhop_DrawKeyContinuous(int *frames, int window, int x, int y, int height)
@@ -812,8 +801,6 @@ void BHOP_Stop (void)
     Bhop_CullHistory(bhop_history, 0);
     bhop_history = NULL;
     if (bhop_summary) {
-        if (show_bhop_stats.value > 0)
-            Bhop_PrintSummary();
         if (bhop_summary->speeds)
             free(bhop_summary->speeds);
         if (bhop_summary->keys) {
@@ -960,6 +947,12 @@ void SCR_DrawBHOPIntermission(void)
         histlen = Bhop_Len(bhop_history);
         bhop_summary = malloc(sizeof(bhop_summary_t));
         *bhop_summary = Bhop_GetSummary(bhop_history, histlen, true);
+    }
+
+    if (!bhop_summary->keys) {
+        free(bhop_summary);
+        bhop_summary = NULL;
+        return;
     }
 
     if ((int)show_bhop_stats.value & BHOP_AVG_SPEED) {

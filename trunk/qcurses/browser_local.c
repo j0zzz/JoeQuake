@@ -57,12 +57,75 @@ static uint32_t localread_count = 0;
 
 #if defined(SDL2)
 SDL_sem *filelist_lock = NULL;
+static SDL_atomic_t threads;
+static thread_queue_t * queue = NULL;
+static int thread_max = 1;
 #endif
 
 extern void SearchForDemos (void);
 extern char *GetPrintedTime(double time);
 extern FILE *Ghost_OpenDemoOrDzip (const char *demo_path);
 extern char *toYellow(char *s);
+
+/* queue operations */
+thread_queue_t * create_queue(void) {
+    thread_queue_t * queue = Q_calloc(1, sizeof(thread_queue_t));
+    queue->first = queue->last = NULL;
+    return queue;
+}
+
+void enqueue(thread_queue_t * queue, thread_data_t * data) {
+    thread_list_t * ls = Q_calloc(1, sizeof(thread_list_t));
+    ls->next = ls->prev = NULL;
+    ls->data = data;
+    if (!queue->last) {
+        queue->first = queue->last = ls;
+    } else {
+        ls->prev = queue->last;
+        queue->last->next = ls;
+        queue->last = ls;
+    }
+}
+
+thread_data_t * dequeue(thread_queue_t * queue) {
+    if (!queue->first)
+        return NULL;
+
+    thread_data_t * data = queue->first->data;
+
+    thread_list_t * item = queue->first;
+
+    if (queue->first == queue->last) {
+        queue->first = queue->last = NULL;
+    } else {
+        queue->first = item->next;
+        queue->first->prev = NULL;
+    }
+
+    free(item);
+    return data;
+}
+
+int len_queue(thread_queue_t * queue) {
+    int i = 0;
+    thread_list_t * ls = queue->first;
+    while (ls) {
+        ls = ls->next;
+        i++;
+    }
+    return i;
+}
+
+void destroy_queue(thread_queue_t * queue) {
+    thread_list_t * ls = queue->first;
+    while (ls) {
+        thread_list_t * tmp = ls;
+        ls = ls->next;
+        free(tmp->data);
+        free(tmp);
+    }
+    free(queue);
+}
 
 /*
  * helpers to simplify counting
@@ -99,10 +162,17 @@ void mouse_move_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
  * Needs thread support from SDL.
  */
 void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
-
 #if defined(SDL2)
-    if (!filelist_lock)
+    if (!filelist_lock) {
         filelist_lock = SDL_CreateSemaphore(1);
+    }
+
+    SDL_SemWait(filelist_lock);
+    if (!queue) {
+        queue = create_queue();
+        SDL_AtomicSet(&threads, 0);
+    }
+    SDL_SemPost(filelist_lock);
 #endif
 
     int total_cols = 0;
@@ -177,6 +247,18 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
     qcurses_print(player_box, 0, 0, "PLAYER", true);
     qcurses_make_bar(player_box, 1);
 
+#if defined(SDL2)
+    /* handle thread pool */
+    SDL_SemWait(filelist_lock);
+    if (SDL_AtomicGet(&threads) <= thread_max){
+        if (queue->first) {
+            SDL_AtomicAdd(&threads, 1);
+            SDL_DetachThread(SDL_CreateThread(get_summary_thread, "make summary", (void *) dequeue(queue)));
+        }
+    }
+    SDL_SemPost(filelist_lock);
+#endif
+
     /* parse each individual potential file */
     for (int i = 0; i < min(demlist->list.len, demlist->list.places); i++) {
         direntry_t * d = demlist->entries + demlist->list.window_start + i;
@@ -196,21 +278,17 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
         case 0:
             qcurses_print(size_box, 0, i + 2, toYellow(va("%7ik", (d->size) >> 10)), false); 
 #if defined(SDL2)
-            if (search_input) {
-                qcurses_print(time_box, 0, i + 2, "not in search", false); 
-            } else {
-                SDL_SemWait(filelist_lock);
-                if (s->total_time != -1) {
-                    if (s->skill >= 0 && s->skill <= 3)
-                        qcurses_print(skill_box, 0, i + 2, qcurses_skills[s->skill], false); 
-                    qcurses_print(map_box, 0, i + 2, s->maps[0], false); 
-                    qcurses_print(player_box, 0, i + 2, s->client_names[0], true); 
-                    qcurses_print(kill_box, 0, i + 2, va("%4d/%s", s->kills, toYellow(va("%4d", s->total_kills))), true);
-                    qcurses_print(secret_box, 0, i + 2, va("%3d/%s", s->secrets, toYellow(va("%3d", s->total_secrets))), true);
-                    qcurses_print(time_box, 0, i + 2, s->total_time ? GetPrintedTime(s->total_time) : "N/A", true); 
-                }
-                SDL_SemPost(filelist_lock);
+            SDL_SemWait(filelist_lock);
+            if (s->total_time != -1) {
+                if (s->skill >= 0 && s->skill <= 3)
+                    qcurses_print(skill_box, 0, i + 2, qcurses_skills[s->skill], false); 
+                qcurses_print(map_box, 0, i + 2, s->maps[0], false); 
+                qcurses_print(player_box, 0, i + 2, s->client_names[0], true); 
+                qcurses_print(kill_box, 0, i + 2, va("%4d/%s", s->kills, toYellow(va("%4d", s->total_kills))), true);
+                qcurses_print(secret_box, 0, i + 2, va("%3d/%s", s->secrets, toYellow(va("%3d", s->total_secrets))), true);
+                qcurses_print(time_box, 0, i + 2, s->total_time ? GetPrintedTime(s->total_time) : "N/A", true); 
             }
+            SDL_SemPost(filelist_lock);
 #else
             qcurses_print(time_box, 0, i + 2, "SDL only", false); 
 #endif
@@ -224,8 +302,17 @@ void M_Demos_DisplayLocal (int cols, int rows, int start_col, int start_row) {
         }
     }
 
-    if (demlist)
+    if (demlist) {
+        Draw_AlphaFillRGB(
+            start_col * 8,
+            (start_row + 2 + demlist->list.cursor - demlist->list.window_start) * 8,
+            cols * 8 / Sbar_GetScaleAmount(),
+            8 / Sbar_GetScaleAmount(),
+            BROWSER_HIGHLIGHT_COLOR,
+            0.15
+        );
         qcurses_print(name_box, 0, 2 + demlist->list.cursor - demlist->list.window_start, blinkstr(0x0d), false);
+    }
 
     M_Demos_HelpBox (help_box, TAB_LOCAL_DEMOS, search_term, search_input);
 
@@ -282,11 +369,12 @@ int get_summary_thread(void * entry) {
     if (ok && ((thread_data_t *) entry)->localread_count == localread_count) 
         memcpy(((thread_data_t *) entry)->summary, summary, sizeof(demo_summary_t));
 
-    SDL_SemPost(filelist_lock);
 
     fclose(demo_file);
     free((thread_data_t *) entry);
     free(summary);
+    SDL_AtomicAdd(&threads, -1);
+    SDL_SemPost(filelist_lock);
     return ok;
 }
 #endif
@@ -314,11 +402,19 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
         filelist_lock = SDL_CreateSemaphore(1);
 
     SDL_SemWait(filelist_lock);
+    if (!queue) {
+        queue = create_queue();
+        thread_max = SDL_GetCPUCount();
+        SDL_AtomicSet(&threads, 0);
+    } else {
+        destroy_queue(queue);
+        queue = create_queue();
+    }
 #endif
     localread_count++;
 
     if (demlist) {
-		demlist_cursor = demlist->list.cursor;
+        demlist_cursor = demlist->list.cursor;
         for (int i = 0; i < demlist->list.len; i++) {
             free(demlist->entries[i].name);
             free(demlist->summaries[i]);
@@ -367,13 +463,15 @@ void M_Demos_LocalRead(int rows, char * prevdir) {
                 demlist->list.window_start = 0;
             }
 #if defined(SDL2)
-            if (!search_input && demlist->entries[j].type == 0 && !Q_strcasestr(demlist->entries[j].name, ".dz")) {
+            if (demlist->entries[j].type == 0 && !Q_strcasestr(demlist->entries[j].name, ".dz")) {
                 thread_data_t * data = Q_calloc(1, sizeof(thread_data_t));
 
                 data->summary = *(demlist->summaries + j);
                 data->localread_count = localread_count;
                 Q_snprintfz(data->path, sizeof(data->path), "..%s/%s.dem", demodir, demlist->entries[j].name);
-                SDL_DetachThread(SDL_CreateThread(get_summary_thread, "make summary", (void *) data));
+                SDL_SemWait(filelist_lock);
+                enqueue(queue, data);
+                SDL_SemPost(filelist_lock);
             }
 #endif
             j++;
@@ -402,7 +500,7 @@ void M_Demos_KeyHandle_Local_Search (int k, int max_lines) {
             search_term[len - 1] = '\0';
         }
         if (!demo_browser_filter.value)    // don't break when filtering is enabled, we want to maintain the filtered list also when deleting from search
-		    break;
+            break;
     default:
         if (isalnum(k) || k == '_'){
             if (len < 40) {
@@ -437,11 +535,11 @@ void M_Demos_KeyHandle_Local_Search (int k, int max_lines) {
                 }
             }
 
-			// if we found anything and filtering is enabled, we can rebuild the demo list 
+            // if we found anything and filtering is enabled, we can rebuild the demo list 
             if (found && demo_browser_filter.value)
                 M_Demos_LocalRead(max_lines, NULL);
-            
-			// also don't display such search terms that would not match anything
+
+            // also don't display such search terms that would not match anything
             if (!found)
                 search_term[len] = '\0';
         }
@@ -479,15 +577,12 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
         distance = keydown[K_HOME] ? num_files : max_lines - 1;
     case K_UPARROW:
     case 'k':
+    case K_MWHEELUP:
         if (k == 'k' && !demo_browser_vim.value)
             break;
         distance = (demlist->list.cursor == 0) ? num_files : -distance;
         qcurses_list_move_cursor((qcurses_list_t*)demlist, distance);
         S_LocalSound("misc/menu1.wav");
-        break;
-    case K_MWHEELUP:
-        if (demlist->list.window_start > 0)
-            demlist->list.window_start = max(demlist->list.window_start - scroll_lines, 0);
         break;
     case 'd':
         if (!keydown[K_CTRL] || !demo_browser_vim.value)
@@ -497,15 +592,12 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
         distance = keydown[K_END] ? num_files : max_lines - 1;
     case K_DOWNARROW:
     case 'j':
+    case K_MWHEELDOWN:
         if (k == 'j' && !demo_browser_vim.value)
             break;
         distance = (demlist->list.cursor == num_files - 1) ? -num_files : distance;
         qcurses_list_move_cursor((qcurses_list_t*)demlist, distance);
         S_LocalSound("misc/menu1.wav");
-        break;
-    case K_MWHEELDOWN:
-        if (demlist->list.window_start + max_lines < num_files)
-            demlist->list.window_start = min(demlist->list.window_start + scroll_lines, num_files - max_lines);
         break;
     case 'f':
         if (keydown[K_CTRL])
