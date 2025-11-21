@@ -916,7 +916,9 @@ Controls the displayed bunnyhopping practice tools. The desired value of `show_b
 * `8` - display acceleration during recent frames; the display is logarithmic (so small gains in speed are visible).
 * `16` - display precision of forward keypresses and strafe accuracy, as a bar. Top bar displays forward accuracy, while the bottom bar displays the left direction on top and right on bottom. When strafes are synced, colors mix to yellow.
 * `32` - display under the crosshair the bar signifying where you needed to look to gain speed in air, as well as a history over recent frames. The closer aligned the center bar and the red line are, the more accurate your turning was.
-* `64` - display above crosshair some number stats on each jump (gained speed in air, loss due to friction, time spent on ground and velocity of prestrafe), as well as multiple boxes more clearly marking forward tap accuracy. It shows the ground frame above the crosshair, and frames preceding and after the last ground touch; the amount of frames shown in both direction is controlled with the variable `show_bhop_frames`.
+* `64` - display above crosshair some number stats on each jump (gained speed in air, loss due to friction)
+* `128` - display above crosshair multiple boxes more clearly marking forward tap accuracy. It shows the ground frame above the crosshair, and frames preceding and after the last ground touch; the amount of frames shown in both direction is controlled with the variable `show_bhop_frames`.
+* `256` - display above crosshair a bar showing prestrafe success. The bar fills up from 320 to 480; prestrafes above 480 are assumed to be 'nearly perfect.' The bar's color changes in a gradient from red to green; the 'sharpness' of the gradient is controlled by the variable `show_bhop_prestrafe_diff`: the higher the value above 1.0, the more aggressively close to 480 the prestrafe speed needs to be to produce a green hue. The speed after jump is shown on the left side of the bar; the other value shown are the frames taken for the prestrafe. The frame count is approximate, because it counts the prestrafe from the moment you cross the 320 speed barrier. Nevertheless, quickening it is also a good goal.
 
 `_x` and `_y` control the position of the graphs.
 
@@ -925,11 +927,12 @@ The amount of frames shown for the graph displays is controlled by `show_bhop_wi
 Stats are also shown in intermission; the display shows everything that is in recorded history. The amount of frames stored is controlled by `show_bhop_histlen`.
 
 The defaults are as follows:
-* `show_bhop_stats` is `0`, signifying no display. To set everything on, use `127`. The displays are all turned off during demo recording, regardless of setting.
+* `show_bhop_stats` is `0`, signifying no display. To set everything on, use `511`. The displays are all turned off during demo recording, regardless of setting.
 * `show_bhop_stats_x,y` are `1` and `4` respectively.
 * `show_bhop_window` is `144`, corresponding to two seconds. This is the max effective value of this variable.
 * `show_bhop_histlen` is `0`, corresponding to storing everything until the intermission.
 * `show_bhop_frames` is `7`.
+* `show_bhop_prestrafe_diff` is `8`. This makes green show up around 465-ish prestrafes, a decent goal for most players. If you're very new, setting to 1 will make green appear around 400. If you're very advanced, you might want to pop it up even higher: 16 for 475-ish, and maybe 100 to redden anything but perfect prestrafes.
 
 To display some of the graphs, a lot of rectangles are drawn. So you might lose some FPS due to that.
 

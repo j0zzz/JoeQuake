@@ -28,6 +28,7 @@
  *
  */
 
+#include <math.h>
 #include <string.h>
 #include "../quakedef.h"
 #include "practice.h"
@@ -38,6 +39,7 @@ cvar_t show_bhop_stats_y = {"show_bhop_stats_y", "4", true};
 cvar_t show_bhop_histlen = {"show_bhop_histlen", "0", true};
 cvar_t show_bhop_window = {"show_bhop_window", "144", true};
 cvar_t show_bhop_frames = {"show_bhop_frames", "7", true};
+cvar_t show_bhop_prestrafe_diff = {"show_bhop_prestrafe_diff", "8", true};
 
 /* new items will be added at the beginning; newest is close to the pointer */
 bhop_data_t *bhop_history = NULL;
@@ -424,7 +426,8 @@ void Bhop_DrawCurrentMark(bhop_data_t *history, int scale)
 
     Draw_AlphaFill(history->bar.x_start, y, (history->bar.x_end - history->bar.x_start) / scale, 1, BHOP_WHITE, 0.8);
     Draw_AlphaFillRGB(history->bar.x_start, y + 1 * scale, (history->bar.x_end - history->bar.x_start) / scale, BHOP_SMALL, BHOP_LGREEN_RGB, 0.5);
-    Draw_AlphaFillRGB(history->bar.x_mid - 1 * scale, y + 1 * scale, 2, BHOP_SMALL, BHOP_RED_RGB, 1.0);
+    int color = history->on_ground ? BHOP_BLUE_RGB : BHOP_RED_RGB;
+    Draw_AlphaFillRGB(history->bar.x_mid - 1 * scale, y + 1 * scale, 2, BHOP_SMALL, color, 1.0);
     Draw_AlphaFill(history->bar.x_start, y + (1 + BHOP_SMALL) * scale, (history->bar.x_end - history->bar.x_start) / scale, 1, BHOP_WHITE, 0.8);
 }
 
@@ -442,7 +445,8 @@ void Bhop_DrawOldMarks(bhop_data_t *history, int window, int scale)
     Draw_AlphaFillRGB(x - 1 * scale, y, 2, window, BHOP_GREEN_RGB, 0.3);
 
     while (history && i++ < window) {
-        Draw_AlphaFillRGB(history->bar.x_mid - 1 * scale, y, 2, 1, BHOP_RED_RGB, 0.8 * (float)(window - i) / window);
+        int color = history->on_ground ? BHOP_BLUE_RGB : BHOP_RED_RGB;
+        Draw_AlphaFillRGB(history->bar.x_mid - 1 * scale, y, 2, 1, color, 1.0 * (float)(window - i) / window);
         y += scale;
         history = history->next;
     }
@@ -728,9 +732,9 @@ void Bhop_DrawCrosshairGain(bhop_data_t *history, int x, int y, int scale, int c
 }
 
 /*
- * draw info about prestrafe
+ * draw visual feedback about prestrafe
  */
-void Bhop_DrawCrosshairPrestrafe(bhop_data_t *history, int x, int y, int scale, int charsize)
+void Bhop_DrawCrosshairPrestrafeVis(bhop_data_t *history, int x, int y, int scale, int charsize)
 {
     char str[20];
     int i = 0, j = 0, lastground = 0;
@@ -738,7 +742,6 @@ void Bhop_DrawCrosshairPrestrafe(bhop_data_t *history, int x, int y, int scale, 
 
     if (!history || history->on_ground)
         return;
-
 
     /* find the first on_ground */
     while (history && i++ < 36 * 4) {
@@ -748,9 +751,10 @@ void Bhop_DrawCrosshairPrestrafe(bhop_data_t *history, int x, int y, int scale, 
                 speed = history->speed;
             }
 
+            j++;
+
             if (speed && history->speed <= 321.0)
                 break;
-            j++;
         } else if (speed != 0.0) {
             break;
         }
@@ -760,10 +764,31 @@ void Bhop_DrawCrosshairPrestrafe(bhop_data_t *history, int x, int y, int scale, 
     if (!speed || lastground >= 36 || lastground < show_bhop_frames.value)
         return;
 
-    Q_snprintfz (str, sizeof(str), "v: %3.0f", speed);
+    if (j <= 1) /* we are not interested in hops */
+        return;
+
+    float color_pos = 0.0;
+
+    if (speed >= 480)
+        color_pos = 1.0;
+    else if (speed >= 320)
+        color_pos = ((float)(speed - 320)) / 160.0;
+
+    float difficulty = max(show_bhop_prestrafe_diff.value, 1.0);
+
+    int color_green = ((int)round(255.0 * pow(color_pos, difficulty)))<<8;
+    int color_red = (int)round(255.0 * (1.0 - pow(color_pos, difficulty)));
+    int color_bar = color_green + color_red;
+
+    Draw_AlphaFillRGB((x - 40) * scale, (y - 1) * scale, (int)round(80.0), 10, BHOP_WHITE_RGB, 1.0);
+    Draw_AlphaFillRGB((x - 40) * scale, y * scale, (int)round(80.0), 8, BHOP_BLACK_RGB, 1.0);
+    Draw_AlphaFillRGB((x - 40) * scale, y * scale, (int)round(80.0 * color_pos), 8, color_bar, 1.0);
+
+    Q_snprintfz (str, sizeof(str), "%3.0f", speed);
     Draw_String (x * scale - (strlen(str) + 1) * charsize, y * scale, str, true);
 
-    Q_snprintfz (str, sizeof(str), "t: %1.2f", j / 72.0);
+    /* amount of frames detected prestrafe */
+    Q_snprintfz (str, sizeof(str), "(%d)", j);
     Draw_String (x * scale + 1 * charsize, y * scale, str, true);
 }
 
@@ -780,6 +805,7 @@ void BHOP_Init (void)
     Cvar_Register (&show_bhop_histlen);
     Cvar_Register (&show_bhop_window);
     Cvar_Register (&show_bhop_frames);
+    Cvar_Register (&show_bhop_prestrafe_diff);
 }
 
 /*
@@ -907,16 +933,17 @@ void SCR_DrawBHOP (void)
         Bhop_DrawOldMarks(bhop_history, window, scale);
     }
 
-    if ((int)show_bhop_stats.value & BHOP_CROSSHAIR_INFO) {
-        x = Bhop_InverseScale(scr_vrect.x + scr_vrect.width / 2.0);
-        y = Bhop_InverseScale(scr_vrect.y + scr_vrect.height / 2.0);
+    x = Bhop_InverseScale(scr_vrect.x + scr_vrect.width / 2.0);
+    y = Bhop_InverseScale(scr_vrect.y + scr_vrect.height / 2.0);
 
+    if ((int)show_bhop_stats.value & BHOP_CROSSHAIR_INFO)
+        Bhop_DrawCrosshairGain(bhop_history, x, y - 36, scale, charsize);
+
+    if ((int)show_bhop_stats.value & BHOP_CROSSHAIR_TAP_PREC)
         Bhop_DrawCrosshairSquares(bhop_history, x - 2 + (show_bhop_frames.value - 1) * 5, y - 12);
 
-        Bhop_DrawCrosshairGain(bhop_history, x, y - 24, scale, charsize);
-
-        Bhop_DrawCrosshairPrestrafe(bhop_history, x, y - 24 - charsize / scale, scale, charsize);
-    }
+    if ((int)show_bhop_stats.value & BHOP_CROSSHAIR_PRESTRAFE)
+        Bhop_DrawCrosshairPrestrafeVis(bhop_history, x, y - 24, scale, charsize);
 }
 
 /*

@@ -79,6 +79,7 @@ extern cvar_t show_bhop_stats_y;
 extern cvar_t show_bhop_histlen;
 extern cvar_t show_bhop_window;
 extern cvar_t show_bhop_frames;
+extern cvar_t show_bhop_prestrafe_diff;
 extern bhop_data_t *bhop_history;
 
 /* side displays */
@@ -91,6 +92,8 @@ extern bhop_data_t *bhop_history;
 /* crosshair displays */
 #define BHOP_ANGLE_MARK             1<<5  /* mark in viewport showing where the optimal direction is, last tick */
 #define BHOP_CROSSHAIR_INFO         1<<6 /* info above crosshair */
+#define BHOP_CROSSHAIR_TAP_PREC     1<<7 /* tap info above crosshair */
+#define BHOP_CROSSHAIR_PRESTRAFE    1<<8 /* prestrafe info above crosshair */
 
 /* color constants for convenience */
 #define BHOP_GREEN 184 /* actually blue because the green sucks shit */ 
@@ -104,7 +107,7 @@ extern bhop_data_t *bhop_history;
 #define BHOP_LRED_RGB 96
 #define BHOP_ORANGE_RGB 255 + (165<<8)
 #define BHOP_GREEN_RGB 255<<8
-#define BHOP_LGREEN_RGB 96<<8
+#define BHOP_LGREEN_RGB (96<<8)
 #define BHOP_BLUE_RGB 255<<16
 #define BHOP_LBLUE_RGB 96<<16
 
@@ -142,7 +145,7 @@ void Bhop_DrawCurrentMark(bhop_data_t *history, int scale);
 void Bhop_DrawOldMarks(bhop_data_t *history, int window, int scale);
 void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y);
 void Bhop_DrawCrosshairGain(bhop_data_t *history, int x, int y, int scale, int charsize);
-void Bhop_DrawCrosshairPrestrafe(bhop_data_t *history, int x, int y, int scale, int charsize);
+void Bhop_DrawCrosshairPrestrafeVis(bhop_data_t *history, int x, int y, int scale, int charsize);
 void Bhop_DrawKeyContinuous(int *frames, int window, int x, int y, int height);
 void Bhop_DrawKeyGraph(int **frames, int window, int x, int y, int offset);
 void Bhop_DrawSpeedGraph(float *frames, int window, int x, int y);
