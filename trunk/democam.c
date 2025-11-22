@@ -241,6 +241,79 @@ static void DemoCam_CopyCam_f (void)
 }
 
 
+static void DemoCam_PrintEntities_f(void)
+{
+	typedef struct {
+		int index;
+		char* name;
+		double distance;
+	} entity_info_t;
+
+	if (cls.state != ca_connected)
+	{
+		Con_Printf("ERROR: You must be connected\n");
+
+	}
+	else if (cl.democam_mode != DEMOCAM_MODE_FREEFLY)
+	{
+		Con_Printf("ERROR: freefly not enabled\n");
+
+	}
+	else {
+
+		Con_Printf("ID     Dist  Model\n----------------------------\n");
+
+		entity_info_t entity_list[4096];
+		int entity_count = 0;
+
+		entity_t* ent;
+		int i, j;
+
+		for (i = 0, ent = cl_entities; i < cl.num_entities; i++, ent++)
+		{
+			if (!ent->model)
+			{
+				continue;
+			}
+			if (strchr(ent->model->name, '*'))
+			{
+				continue;
+			}
+
+			double dx_squared = pow(ent->origin[0] - cl.democam_freefly_origin[0], 2);
+			double dy_squared = pow(ent->origin[1] - cl.democam_freefly_origin[1], 2);
+			double dz_squared = pow(ent->origin[2] - (cl.democam_freefly_origin[2] - DEFAULT_VIEWHEIGHT), 2);
+
+			double entity_distance = sqrt(dx_squared + dy_squared + dz_squared);
+
+			entity_list[entity_count].index = i;
+			entity_list[entity_count].name = ent->model->name;
+			entity_list[entity_count].distance = entity_distance;
+			entity_count++;
+		}
+
+		for (i = 0; i < entity_count - 1; i++)
+		{
+			for (j = 0; j < entity_count - i - 1; j++)
+			{
+				if (entity_list[j].distance < entity_list[j + 1].distance)
+				{
+					entity_info_t temp = entity_list[j];
+					entity_list[j] = entity_list[j + 1];
+					entity_list[j + 1] = temp;
+				}
+			}
+		}
+
+		int start_index = (entity_count > 6) ? (entity_count - 6) : 0;
+		for (i = start_index; i < entity_count; i++)
+		{
+			Con_Printf("E%-4i %5.1f  %s\n", entity_list[i].index, entity_list[i].distance, entity_list[i].name);
+		}
+	}
+}
+
+
 qboolean DemoCam_MLook (void)
 {
 	return cl.democam_mode != DEMOCAM_MODE_FIRST_PERSON
@@ -387,4 +460,5 @@ void DemoCam_Init (void)
 	Cmd_AddCommand("orbit", DemoCam_Orbit_Toggle_f);
 	Cmd_AddCommand("freefly_copycam", DemoCam_CopyCam_f);
 	Cmd_AddCommand("freefly_writecam", DemoCam_WriteCam_f);
+	Cmd_AddCommand("freefly_print_entities", DemoCam_PrintEntities_f);
 }
