@@ -263,7 +263,7 @@ static void DemoCam_PrintEntities_f(void)
 
 		Con_Printf("ID     Dist  Model\n----------------------------\n");
 
-		entity_info_t entity_list[4096];
+		entity_info_t entity_list[MAX_EDICTS];
 		int entity_count = 0;
 
 		entity_t* ent;
