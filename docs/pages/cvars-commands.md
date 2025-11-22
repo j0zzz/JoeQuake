@@ -1364,6 +1364,10 @@ This command currently does not work on the win32 build.
 Like `freefly_copycam`, but append commands to the provided filename instead.
 This command is available on all builds.
 
+##### `freefly_print_entities
+
+Print's the ID, distance from camera and model of entities near the freefly camera. Can be used to indentify entities for use in ReMaic recams. 
+
 ##### `togglezoom`
 
 Toggles between zoomed in and zoomed out views.
