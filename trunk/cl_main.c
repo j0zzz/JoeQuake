@@ -1229,7 +1229,8 @@ void CL_RelinkEntities (void)
 #ifdef GLQUAKE
 		// view weapon support
 		GetViewWeaponModel(&vwep_modelindex);
-		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && r_loadviewweapons && !r_loadq3player && (vwep_modelindex != -1))
+		if (cl_viewweapons.value && ent->modelindex == cl_modelindex[mi_player] && r_loadviewweapons && !r_loadq3player && (vwep_modelindex != -1) &&
+			((ent->frame >= 6 && ent->frame <= 16) || (ent->frame >= 35 && ent->frame <= 40) || (ent->frame >= 103 && ent->frame <= 118)))
 		{
 			entity_t *vwepent = &view_weapons[num_vweps];
 
