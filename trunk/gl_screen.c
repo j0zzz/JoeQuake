@@ -96,6 +96,7 @@ cvar_t		scr_printspeed = {"scr_printspeed", "8"};
 cvar_t		gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 cvar_t		scr_sshot_format = {"scr_sshot_format", "jpg"};
 cvar_t		scr_autoid = { "scr_autoid", "0" };
+cvar_t		scr_autoid_scale = { "scr_autoid_scale", "2" };
 cvar_t		scr_widescreen_fov = {"scr_widescreen_fov", "1", CVAR_ARCHIVE};
 cvar_t		cl_gun_fovscale = {"cl_gun_fovscale", "0", CVAR_ARCHIVE}; // Qrack
 cvar_t		scr_usekfont = { "scr_usekfont", "0" }; // 2021 re-release
@@ -516,6 +517,7 @@ void SCR_Init (void)
 	Cvar_Register (&gl_triplebuffer);
 	Cvar_Register (&scr_sshot_format);
 	Cvar_Register (&scr_autoid);
+	Cvar_Register (&scr_autoid_scale);
 	Cvar_Register (&scr_widescreen_fov);
 	Cvar_Register (&cl_gun_fovscale);
 	Cvar_Register (&scr_usekfont); // 2021 re-release
@@ -819,23 +821,144 @@ void SCR_SetupAutoID (void)
 
 }
 
+void Draw_CustomScaledString(int x, int y, char* str, int scale_amount);
+
 void SCR_DrawAutoID (void)
 {
 	int	i, x, y, size, half_size;
+	float scale_amount = scr_autoid_scale.value;
+	scoreboard_t	*player = &cl.scores[0];
 
 	if (!scr_autoid.value || (cl.gametype == GAME_DEATHMATCH && !cls.demoplayback))
 		return;
 
-	size = Sbar_GetScaledCharacterSize();
+	size = (int)(8 * scale_amount);
 	half_size = size / 2;
+
+	if (scr_autoid.value == 2 && cl_thirdperson.value == 0 && player->name)
+	{
+		int len = strlen(player->name);
+
+		x = scr_vrect.x + (scr_vrect.width / 2) - ((len * size) / 2);
+		y = scr_vrect.y + (scr_vrect.height / 4);
+		Draw_CustomScaledString (x, y, player->name, scale_amount);
+		return;
+	}
 
 	for (i = 0 ; i < autoid_count ; i++)
 	{
 		x = autoids[i].x * vid.width / glwidth;
 		y = (glheight - autoids[i].y) * vid.height / glheight;
-		Draw_String (x - strlen(autoids[i].player->name) * half_size, y - size, autoids[i].player->name, true);
+		Draw_CustomScaledString (x - strlen(autoids[i].player->name) * half_size, y - size, autoids[i].player->name, scale_amount);
 	}
 }
+
+const double GRENADE_EXPLOSION_TIME = 2.5f;
+
+void SCR_DrawGrenadeTimer(void)
+{
+	int	i, x, y, size, half_size, pos, grenade_timer_width = 24;
+	float a = 0.0, diff;
+	edict_t *e, *self, *owner;
+	vec3_t dist;
+	int bestd = 9999;
+	static qboolean finish_state = false;
+
+	if (cls.state != ca_connected || !show_grenadecounter.value)
+	{
+		//finish_state = false;
+		return;
+	}
+
+	for (i=0 ; i<sv.num_edicts ; i++)
+	{
+		e = EDICT_NUM(i);
+		if (e->free)
+			continue;
+
+		if (!strcmp(PR_GetString(e->v.classname), "grenade"))
+		{
+			owner = PROG_TO_EDICT(e->v.owner);
+			self = EDICT_NUM(1);
+			if (owner->v.modelindex == self->v.modelindex)
+			{
+				VectorSubtract(e->v.origin, self->v.origin, dist);
+				if (VectorLength(dist) < bestd)
+				{
+					bestd = VectorLength(dist);
+					if (!e->v.touch)
+						a = 0;
+					else
+						a = e->v.nextthink - cl.time;
+				}
+			}
+		}
+	}
+	if (bestd == 9999)
+	{
+		//if (finish_state)
+		//	a = 0.0;
+		//else
+			return;
+	}
+
+	//Con_Printf("grenade counter: %.3f\n", a);
+	//a = a * 10;
+	//a = floor(a);
+	//a = a / 10;
+
+	if (a >= 2.5 || a < 0.0)
+	{
+		finish_state = false;
+		return;
+	}
+
+	if (a > 0.2)
+		finish_state = false;
+	else if (a < 0.02)
+		finish_state = true;
+
+	if (finish_state)
+		a = 0.0;
+
+	size = Sbar_GetScaledCharacterSize();
+	half_size = size / 2;
+
+	x = scr_vrect.x + (scr_vrect.width / 2);
+	y = scr_vrect.y + (scr_vrect.height * 0.4);
+
+	// draw outer box
+	glDisable(GL_TEXTURE_2D);
+	glColor4ub(0, 50, 35, 150);
+	glEnable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	glBegin(GL_QUADS);
+	glVertex2f(x - (grenade_timer_width/2 * size), y - half_size);
+	glVertex2f(x + (grenade_timer_width/2 * size), y - half_size);
+	glVertex2f(x + (grenade_timer_width/2 * size), y + half_size);
+	glVertex2f(x - (grenade_timer_width/2 * size), y + half_size);
+	glEnd();
+	glDisable(GL_BLEND);
+	glEnable(GL_ALPHA_TEST);
+	glEnable(GL_TEXTURE_2D);
+	glColor3ubv(color_white);
+
+	// draw inner line
+	Draw_AlphaLineRGB(
+		x - (grenade_timer_width/2 * size) + half_size, y, 
+		x + (grenade_timer_width/2 * size) - half_size, y, 
+		size/2, 
+		RGBA_TO_COLOR(255, 255, 255, 150));
+
+	// draw timer position
+	//diff = max(0.0, grenade_timer_expl_time - cl.time);
+	diff = max(0.0, a);
+	pos = ((grenade_timer_width * size) - size) * (diff / GRENADE_EXPLOSION_TIME);
+	Draw_AlphaLineRGB(
+		x - (grenade_timer_width/2 * size) + half_size + pos, y - half_size/2, 
+		x - (grenade_timer_width/2 * size) + half_size + pos, y + half_size/2, 
+		size/2, 
+		RGBA_TO_COLOR(255, 0, 0, 255));}
 
 /* 
 ============================================================================== 
@@ -1248,6 +1371,7 @@ void SCR_UpdateScreen (void)
 		SCR_DrawTurtle ();
 		SCR_DrawPause ();
 		SCR_DrawAutoID ();
+		SCR_DrawGrenadeTimer();
 		if (nehahra)
 			SHOWLMP_drawall ();
 		SCR_CheckDrawCenterString ();

@@ -318,6 +318,9 @@ static void R_ParseWorldspawn(void)
 	map_lavaalpha = r_wateralpha.value;
 	map_slimealpha = r_wateralpha.value;
 
+	if (r_wateralpha_override.value)
+		return;
+
 	data = COM_Parse(cl.worldmodel->entities);
 	if (!data)
 		return; // error
