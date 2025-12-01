@@ -29,6 +29,7 @@
  */
 
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 #include "../quakedef.h"
 #include "practice.h"
@@ -244,6 +245,34 @@ int Bhop_GetLStrafeColor(bhop_data_t * history)
         color |= BHOP_LGREEN_RGB;
 
     return color;
+}
+
+enum bhop_kb_state Bhop_GetStrafeState(bhop_data_t * history) {
+    if (!history)
+        return BHOP_KB_NONE;
+
+    /* keyboard */
+    if (history->movement.left && history->movement.right)
+        return BHOP_KB_BOTH;
+    else if (history->movement.left)
+        return BHOP_KB_LEFT;
+    else if (history->movement.right)
+        return BHOP_KB_RIGHT;
+
+    return BHOP_KB_NONE;
+}
+
+enum bhop_m_state Bhop_GetMouseState(bhop_data_t * history) {
+    if (!history)
+        return BHOP_M_NONE;
+
+    /* keyboard */
+    if (history->angle_change < 0.0)
+        return BHOP_M_LEFT;
+    else if (history->angle_change)
+        return BHOP_M_RIGHT;
+
+    return BHOP_M_NONE;
 }
 
 /*
@@ -663,7 +692,7 @@ void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y)
         return;
 
     /* find the first on_ground */
-    while (history && i < 36 && count == -1) {
+    while (history && i < 48 && count == -1) {
         if (history->on_ground)
             count = i;
         i++;
@@ -674,7 +703,7 @@ void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y)
         return;
 
     history = history_it;
-    alpha = min((36 - 10 - count) / 10.0, 1.0);
+    alpha = min((48 - count) / 10.0, 1.0);
     i = 0;
 
     while (history && i < count + show_bhop_frames.value) {
@@ -699,6 +728,196 @@ void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y)
         i++;
         history = history->next;
     }
+}
+
+/*
+ * draw info about strafes changes midair
+ */
+void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
+{
+    bhop_data_t * history_it = history;
+    int count = -1; 
+    int i = 0, j = 0;
+    float alpha = 1.0;
+    int last_ground, previous_ground;
+
+    if (!history)
+        return;
+
+    /* find the first on_ground */
+    while (history && i < 48 && count == -1) {
+        if (history->on_ground)
+            count = i;
+        i++;
+        history = history->next;
+    }
+
+    if (count < show_bhop_frames.value) 
+        return;
+
+    last_ground = count;
+    history_it = history;
+
+    /* find the second on_ground */
+    while (history && i < 144 && count == last_ground) {
+        if (history->on_ground)
+            count = i;
+        i++;
+        history = history->next;
+    }
+
+    previous_ground = count;
+
+    int jump_len = previous_ground - last_ground;
+
+    if (jump_len <= 1)
+        return;
+
+    /* collect states between the two */
+    enum bhop_kb_state * kb = Q_calloc(previous_ground - last_ground, sizeof(enum bhop_kb_state));
+    enum bhop_m_state * m = Q_calloc(previous_ground - last_ground, sizeof(enum bhop_m_state));
+
+    history = history_it;
+    i = 0;
+    alpha = min((48 - last_ground) / 10.0, 1.0);
+
+    while (history && i < jump_len) {
+        kb[i] = Bhop_GetStrafeState(history);
+        m[i] = Bhop_GetMouseState(history);
+        i++;
+        history = history->next;
+    }
+
+    /* now, detect the frames where mouse direction change happens */
+
+    int * strafe_starts = Q_calloc(previous_ground - last_ground, sizeof(int));
+    int strafe_count = 0;
+
+    enum bhop_m_state last_m_dir = BHOP_M_NONE;
+    for (i = 0; i < jump_len; i++) {
+        if (last_m_dir == BHOP_M_NONE && m[i] != BHOP_M_NONE)
+            last_m_dir = m[i];
+
+        if (last_m_dir != BHOP_M_NONE && m[i] != BHOP_M_NONE && m[i] != last_m_dir){
+            last_m_dir = m[i];
+            strafe_starts[strafe_count++] = i;
+        }
+    }
+
+    /* for each strafe, detect: last frame the things were synced, first frame they were synced, draw between */
+
+    int cur_x = x - 16 * strafe_count;
+    for (int strafe = 0; strafe < strafe_count; strafe++){
+        int start_lim = 0;
+        if (strafe > 0)
+            start_lim = strafe_starts[strafe - 1];
+
+        int frame = strafe_starts[strafe] - 1;
+        while (frame >= start_lim) {
+            if (m[frame] == BHOP_M_LEFT && kb[frame] == BHOP_KB_LEFT)
+                break;
+            if (m[frame] == BHOP_M_RIGHT && kb[frame] == BHOP_KB_RIGHT)
+                break;
+            frame--;
+        }
+
+        int prev_sync = frame;
+
+        int end_lim = jump_len;
+        if (strafe < strafe_count - 1)
+            end_lim = strafe_starts[strafe + 1];
+
+        frame = strafe_starts[strafe];
+        while (frame < end_lim) {
+            if (m[frame] == BHOP_M_LEFT && kb[frame] == BHOP_KB_LEFT)
+                break;
+            if (m[frame] == BHOP_M_RIGHT && kb[frame] == BHOP_KB_RIGHT)
+                break;
+            frame++;
+        }
+        int cur_sync = frame;
+
+        int cur_y = y;
+        for (i = prev_sync; i <= cur_sync; i++) {
+            Draw_BoxScaledOrigin(cur_x, cur_y, BHOP_SMALL * 2 + 1, 1, BHOP_WHITE_RGB, alpha);
+            Draw_BoxScaledOrigin(cur_x, cur_y, 1, BHOP_SMALL * 2 + 1, BHOP_WHITE_RGB, alpha);
+            Draw_BoxScaledOrigin(cur_x + BHOP_SMALL * 2, cur_y, 1, BHOP_SMALL * 2 + 1, BHOP_WHITE_RGB, alpha);
+            Draw_BoxScaledOrigin(cur_x + 1, cur_y + BHOP_SMALL, BHOP_SMALL * 2 - 1, 1, BHOP_BLACK_RGB, alpha);
+            Draw_BoxScaledOrigin(cur_x + BHOP_SMALL, cur_y + 1, 1, BHOP_SMALL * 2 - 1, BHOP_BLACK_RGB, alpha);
+            if (i == cur_sync)
+                Draw_BoxScaledOrigin(cur_x, cur_y + BHOP_SMALL * 2, BHOP_SMALL * 2 + 1, 1, BHOP_WHITE_RGB, alpha);
+
+            /* draw LEFT upper - mouse state */
+            int color = BHOP_BLACK_RGB;
+            if (m[i] == BHOP_M_LEFT) {
+                if(kb[i] == BHOP_KB_LEFT)
+                    color = BHOP_GREEN_RGB;
+                else if (kb[i] == BHOP_KB_RIGHT)
+                    color = BHOP_RED_RGB;
+                else
+                    color = BHOP_ORANGE_RGB;
+            }
+            if (color != BHOP_BLACK_RGB)
+                Draw_BoxScaledOrigin(cur_x + 1, cur_y + 1, BHOP_SMALL - 1, BHOP_SMALL - 1, color, alpha);
+
+            /* draw RIGHT upper - mouse state */
+            color = BHOP_BLACK_RGB;
+            if (m[i] == BHOP_M_RIGHT) {
+                if(kb[i] == BHOP_KB_RIGHT)
+                    color = BHOP_GREEN_RGB;
+                else if (kb[i] == BHOP_KB_LEFT)
+                    color = BHOP_RED_RGB;
+                else
+                    color = BHOP_ORANGE_RGB;
+            }
+            if (color != BHOP_BLACK_RGB)
+                Draw_BoxScaledOrigin(cur_x + 1 + BHOP_SMALL, cur_y + 1, BHOP_SMALL - 1, BHOP_SMALL - 1, color, alpha);
+
+            /* draw LEFT lower - kb state */
+            color = BHOP_BLACK_RGB;
+            if (kb[i] == BHOP_KB_LEFT) {
+                if (m[i] == BHOP_M_LEFT)
+                    color = BHOP_GREEN_RGB;
+                else if (m[i] == BHOP_M_RIGHT)
+                    color = BHOP_RED_RGB;
+                else
+                    color = BHOP_ORANGE_RGB;
+            }
+            if (kb[i] == BHOP_KB_BOTH)
+                color = BHOP_ORANGE_RGB;
+
+            if (color != BHOP_BLACK_RGB)
+                Draw_BoxScaledOrigin(cur_x + 1, cur_y + 1 + BHOP_SMALL, BHOP_SMALL - 1, BHOP_SMALL - 1, color, alpha);
+
+            /* draw RIGHT lower - kb state */
+            color = BHOP_BLACK_RGB;
+            if (kb[i] == BHOP_KB_RIGHT) {
+                if (m[i] == BHOP_M_RIGHT)
+                    color = BHOP_GREEN_RGB;
+                else if (m[i] == BHOP_M_LEFT)
+                    color = BHOP_RED_RGB;
+                else
+                    color = BHOP_ORANGE_RGB;
+            }
+            if (kb[i] == BHOP_KB_BOTH)
+                color = BHOP_ORANGE_RGB;
+
+            if (color != BHOP_BLACK_RGB)
+                Draw_BoxScaledOrigin(cur_x + 1 + BHOP_SMALL, cur_y + 1 + BHOP_SMALL, BHOP_SMALL - 1, BHOP_SMALL - 1, color, alpha);
+
+
+
+            cur_y += BHOP_SMALL * 2;
+        }
+        cur_x += 16;
+    }
+
+    if (kb)
+        free(kb);
+    if (m)
+        free(m);
+    if (strafe_starts)
+        free(strafe_starts);
 }
 
 /*
@@ -944,6 +1163,9 @@ void SCR_DrawBHOP (void)
 
     if ((int)show_bhop_stats.value & BHOP_CROSSHAIR_PRESTRAFE)
         Bhop_DrawCrosshairPrestrafeVis(bhop_history, x, y - 24, scale, charsize);
+
+    if ((int)show_bhop_stats.value & BHOP_CROSSHAIR_SYNC)
+        Bhop_DrawStrafeSquares(bhop_history, x - 32, y - 24);
 }
 
 /*

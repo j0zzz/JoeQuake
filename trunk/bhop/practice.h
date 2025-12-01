@@ -38,6 +38,19 @@ typedef struct bhop_keystate_s
     float right;
 } bhop_keystate_t;
 
+enum bhop_kb_state {
+    BHOP_KB_NONE = 0, 
+    BHOP_KB_BOTH,
+    BHOP_KB_LEFT,
+    BHOP_KB_RIGHT
+};
+
+enum bhop_m_state {
+    BHOP_M_NONE = 0,
+    BHOP_M_LEFT,
+    BHOP_M_RIGHT
+};
+
 /* stores the display of the bar */
 typedef struct bhop_mark_s
 {
@@ -94,6 +107,7 @@ extern bhop_data_t *bhop_history;
 #define BHOP_CROSSHAIR_INFO         1<<6 /* info above crosshair */
 #define BHOP_CROSSHAIR_TAP_PREC     1<<7 /* tap info above crosshair */
 #define BHOP_CROSSHAIR_PRESTRAFE    1<<8 /* prestrafe info above crosshair */
+#define BHOP_CROSSHAIR_SYNC         1<<9 /* strafes info near crosshair */
 
 /* color constants for convenience */
 #define BHOP_GREEN 184 /* actually blue because the green sucks shit */ 
