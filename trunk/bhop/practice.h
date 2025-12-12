@@ -67,6 +67,8 @@ typedef struct bhop_data_s
     qboolean on_ground;	
     vec3_t velocity;
 
+    vec3_t position;
+
     float speed;
     float speed_gain;
     float friction_loss;

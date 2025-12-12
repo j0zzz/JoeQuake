@@ -497,6 +497,8 @@ void Bhop_GatherData(void)
 
     VectorCopy(sv_player->v.velocity, data_frame->velocity);
 
+    VectorCopy(sv_player->v.origin, data_frame->position);
+
     bhop_keystate_t keystate = {
         .fwd = CL_KeyState(&in_forward), 
         .left = CL_KeyState(&in_moveleft), 
@@ -736,6 +738,8 @@ void Bhop_DrawCrosshairSquares(bhop_data_t *history, int x, int y)
 void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
 {
     bhop_data_t * history_it = history;
+    bhop_data_t * prev_ground_frame = NULL;
+    bhop_data_t * last_ground_frame = NULL;
     int count = -1; 
     int i = 0, j = 0;
     float alpha = 1.0;
@@ -746,8 +750,10 @@ void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
 
     /* find the first on_ground */
     while (history && i < 48 && count == -1) {
-        if (history->on_ground)
+        if (history->on_ground) {
             count = i;
+            last_ground_frame = history;
+        }
         i++;
         history = history->next;
     }
@@ -760,8 +766,10 @@ void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
 
     /* find the second on_ground */
     while (history && i < 144 && count == last_ground) {
-        if (history->on_ground)
+        if (history->on_ground) {
             count = i;
+            prev_ground_frame = history;
+        }
         i++;
         history = history->next;
     }
@@ -776,6 +784,7 @@ void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
     /* collect states between the two */
     enum bhop_kb_state * kb = Q_calloc(previous_ground - last_ground, sizeof(enum bhop_kb_state));
     enum bhop_m_state * m = Q_calloc(previous_ground - last_ground, sizeof(enum bhop_m_state));
+    bhop_data_t ** air_history = Q_calloc(previous_ground - last_ground, sizeof(bhop_data_t));
 
     history = history_it;
     i = 0;
@@ -784,6 +793,7 @@ void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
     while (history && i < jump_len) {
         kb[i] = Bhop_GetStrafeState(history);
         m[i] = Bhop_GetMouseState(history);
+        air_history[i] = history;
         i++;
         history = history->next;
     }
@@ -794,7 +804,19 @@ void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
     int strafe_count = 0;
 
     enum bhop_m_state last_m_dir = BHOP_M_NONE;
+    // calculate distance curved from ground to ground
+    float diff_x = last_ground_frame->position[0] - air_history[0]->position[0];
+    float diff_y = last_ground_frame->position[1] - air_history[0]->position[1];
+
+    float distance_curved = sqrt(diff_x * diff_x + diff_y * diff_y);
+
     for (i = 0; i < jump_len; i++) {
+        if (i > 0) {
+            float diff_x = air_history[i]->position[0] - air_history[i-1]->position[0];
+            float diff_y = air_history[i]->position[1] - air_history[i-1]->position[1];
+            distance_curved += sqrt(diff_x * diff_x + diff_y * diff_y);
+        }
+
         if (last_m_dir == BHOP_M_NONE && m[i] != BHOP_M_NONE)
             last_m_dir = m[i];
 
@@ -804,6 +826,18 @@ void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
         }
     }
 
+    diff_x = prev_ground_frame->position[0] - last_ground_frame->position[0];
+    diff_y = prev_ground_frame->position[1] - last_ground_frame->position[1];
+
+    float distance_straight = sqrt(diff_x * diff_x + diff_y * diff_y);
+
+    char str[24];
+
+    int scale = Sbar_GetScaleAmount();
+    int charsize = Sbar_GetScaledCharacterSize();
+
+    Q_snprintfz (str, sizeof(str), "%3.1f (%.3f)", distance_straight, distance_straight/distance_curved);
+    Draw_String (x * scale, y * scale, str, true);
     /* for each strafe, detect: last frame the things were synced, first frame they were synced, draw between */
 
     int cur_x = x - 16 * strafe_count;
@@ -838,6 +872,8 @@ void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
         int cur_sync = frame;
 
         int cur_y = y;
+
+        // data for each strafe
         for (i = prev_sync; i <= cur_sync; i++) {
             Draw_BoxScaledOrigin(cur_x, cur_y, BHOP_SMALL * 2 + 1, 1, BHOP_WHITE_RGB, alpha);
             Draw_BoxScaledOrigin(cur_x, cur_y, 1, BHOP_SMALL * 2 + 1, BHOP_WHITE_RGB, alpha);
@@ -905,17 +941,18 @@ void Bhop_DrawStrafeSquares(bhop_data_t *history, int x, int y)
             if (color != BHOP_BLACK_RGB)
                 Draw_BoxScaledOrigin(cur_x + 1 + BHOP_SMALL, cur_y + 1 + BHOP_SMALL, BHOP_SMALL - 1, BHOP_SMALL - 1, color, alpha);
 
-
-
             cur_y += BHOP_SMALL * 2;
         }
         cur_x += 16;
     }
 
+    
     if (kb)
         free(kb);
     if (m)
         free(m);
+    if (air_history)
+        free(air_history);
     if (strafe_starts)
         free(strafe_starts);
 }
