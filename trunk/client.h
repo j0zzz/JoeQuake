@@ -226,7 +226,7 @@ typedef struct
 	int		intermission;		// don't change view angle, full screen, etc
 	double	completed_time;		// latched at intermission start
 
-	double		mtime[2];		// the timestamp of last two messages	
+	double		mtime[3];		// the timestamp of last three messages	
 	double		time;			// clients view of time, should be between
 								// servertime and oldservertime to generate
 								// a lerp point for other data
