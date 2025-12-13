@@ -48,6 +48,10 @@ You may freely redistribute or modify JoeQuake as you wish.
 * Sphere - server/client bugfixes, several QoL improvements
 * Matthew Earl - entire ghost recording feature, SDL port
 * Karol Urbański - vorbis/mp3 cross-platform support, bhop practice display, SDA demo browser
+* Philipp Kölmel - complete path tracer feature
+* Cymx - allow unfinished autodemos to be saved
+* Jntr - print entity information in freefly mode
+* Emil Gestsson - player velocity calculation improvement during demo playback
 
 ### Authors whose code was re-used in JoeQuake
 
