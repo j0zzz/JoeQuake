@@ -745,6 +745,7 @@ void CL_ParseUpdate (int bits)
 	ent->effects = (bits & U_EFFECTS) ? MSG_ReadByte() : ent->baseline.effects;
 
 	// shift the known values for interpolation
+	VectorCopy (ent->msg_origins[1], ent->msg_origins[2]);
 	VectorCopy (ent->msg_origins[0], ent->msg_origins[1]);
 	VectorCopy (ent->msg_angles[0], ent->msg_angles[1]);
 
@@ -833,6 +834,7 @@ void CL_ParseUpdate (int bits)
 
 	if (forcelink)
 	{	// didn't have an update last message
+		VectorCopy(ent->msg_origins[1], ent->msg_origins[2]);
 		VectorCopy (ent->msg_origins[0], ent->msg_origins[1]);
 		VectorCopy (ent->msg_origins[0], ent->origin);
 		VectorCopy (ent->msg_angles[0], ent->msg_angles[1]);
@@ -1386,6 +1388,7 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_time:
+			cl.mtime[2] = cl.mtime[1];
 			cl.mtime[1] = cl.mtime[0];
 			cl.mtime[0] = MSG_ReadFloat ();
 			break;
