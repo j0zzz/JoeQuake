@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "bhop/practice.h"
+#include "billiards/billiards.h"
 #ifdef _WIN32
 #include "movie.h"
 #endif
@@ -522,6 +523,7 @@ void SCR_Init (void)
 	Cvar_Register (&cl_gun_fovscale);
 	Cvar_Register (&scr_usekfont); // 2021 re-release
     BHOP_Init();
+    Billiards_Init();
 
 	Cvar_Register(&scr_cursor_scale);
 #ifdef GLQUAKE
@@ -1387,6 +1389,8 @@ void SCR_UpdateScreen (void)
 		SCR_DrawMovementKeys ();
 		SCR_DrawPlaybackStats ();
 		Sbar_Draw ();
+        if(CL_TrackEdicts())
+            SCR_DrawEdictTracker();
 		SCR_DrawConsole ();
 		M_Draw ();
 		DemoCam_DrawPos ();

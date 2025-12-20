@@ -111,6 +111,11 @@ cvar_t	v_bonusflash = {"cl_bonusflash", "1"};
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 float	xyspeed;
 
+extern int tracked_edict;
+extern ddef_t * ED_FindField(char*);
+extern char * PR_ValueString(etype_t type, eval_t *val);
+
+
 
 /*
 ===============
@@ -1357,6 +1362,127 @@ void SCR_DrawStats (void)
 	}
 }
 
+#define getfield(ed, field) (PR_ValueString(ED_FindField(field)->type, (eval_t *)(int *)((char *)&ed->v + (ED_FindField(field))->ofs*4)))
+
+void SCR_DrawDelayEdicts (void)
+{
+	int i, pos = 0;
+	edict_t * ed;
+	char *field;
+
+	float scale = Sbar_GetScaleAmount();
+	int size = Sbar_GetScaledCharacterSize();
+
+	Draw_AlphaFill(vid.width - (size * 25), 0, 25 * size / scale, 6 * size / scale, 0, 0.8);
+
+	for (i = 1; i < sv.num_edicts && pos < 6; i++) {
+		ed = EDICT_NUM(i);
+		field = getfield(ed, "classname");
+		
+		if (Q_strncasecmp(field, "DelayedUse", 10) == 0){
+			float next = atof(getfield(ed, "nextthink"));
+			char string[31];
+
+			Q_snprintfz(string, 25, "delay: %s at %.2f", getfield(ed, "target"), next);
+			Draw_String (vid.width - (size * 25), size * (pos++), string, true);
+		}
+	}
+
+}
+void SCR_DrawEdictTracker (void)
+{
+	int *v;
+	float diff;
+	edict_t * ed;
+	ddef_t *d;
+	char *field;
+	char string[31];
+
+	float scale = Sbar_GetScaleAmount();
+	int size = Sbar_GetScaledCharacterSize();
+
+	if (cl_track_edict.value >= 1) 
+		tracked_edict = cl_track_edict.value;
+
+	if (cl_track_edict.value == -1)
+		SCR_DrawDelayEdicts();
+
+	if (!tracked_edict || tracked_edict >= sv.num_edicts)
+		return;
+
+
+	ed = EDICT_NUM(tracked_edict);
+
+	Draw_AlphaFill(vid.width - (size * 25), 0, 25 * size / scale, 20 * size / scale, 0, 0.8);
+
+	field = getfield(ed, "classname");
+	Q_snprintfz(string, 25, "%d: %s", tracked_edict, field);
+	Draw_String (vid.width - (size * 25), 0, string, true);
+
+	field = getfield(ed, "netname");
+	Q_snprintfz(string, 25, "%s", field);
+	Draw_String (vid.width - (size * 25), size, string, true);
+
+	field = getfield(ed, "origin");
+	Draw_String (vid.width - (size * 25), 2 * size, field, true);
+
+	field = getfield(ed, "target");
+	Q_snprintfz(string, 25, "target    : %s", field);
+	Draw_String (vid.width - (size * 25), 4 * size, string, true);
+
+	field = getfield(ed, "killtarget");
+	Q_snprintfz(string, 25, "killtarget: %s", field);
+	Draw_String (vid.width - (size * 25), 5 * size, string, true);
+
+	field = getfield(ed, "targetname");
+	Q_snprintfz(string, 25, "targetname: %s", field);
+	Draw_String (vid.width - (size * 25), 6 * size, string, true);
+
+	field = getfield(ed, "health");
+	Q_snprintfz(string, 25, "health    : %s", field);
+	Draw_String (vid.width - (size * 25), 8 * size, string, true);
+
+	field = getfield(ed, "think");
+	Q_snprintfz(string, 25, "think     : %s", field);
+	Draw_String (vid.width - (size * 25), 9 * size, string, true);
+
+	field = getfield(ed, "nextthink");
+	diff = atof(field) - cl.ctime;
+	Q_snprintfz(string, 25, "nextthink : %.3f (%dms)", atof(field), diff > 0.0 ? (int)(1000.0 * diff) : 0);
+	Draw_String (vid.width - (size * 25), 10 * size, string, true);
+
+	field = getfield(ed, "touch");
+	Q_snprintfz(string, 25, "touch     : %s", field);
+	Draw_String (vid.width - (size * 25), 11 * size, string, true);
+
+	field = getfield(ed, "pain_finished");
+	Q_snprintfz(string, 25, "pain_fin  : %.2f (%.3f)", atof(field), atof(field) - cl.ctime);
+	Draw_String (vid.width - (size * 25), 12 * size, string, true);
+
+	field = getfield(ed, "attack_finished");
+	Q_snprintfz(string, 25, "attack_fin: %.2f (%.3f)", atof(field), atof(field) - cl.ctime);
+	Draw_String (vid.width - (size * 25), 13 * size, string, true);
+
+	field = getfield(ed, "search_time");
+    Q_snprintfz(string, 25, "searchtime: %.2f (%.3f)", atof(field), cl.ctime - atof(field));
+    Draw_String (vid.width - (size * 25), 14 * size, string, true);
+
+    field = getfield(ed, "show_hostile");
+    Q_snprintfz(string, 25, "showhostil: %.2f (%.3f)", atof(field), cl.ctime - atof(field));
+    Draw_String (vid.width - (size * 25), 15 * size, string, true);
+
+    field = getfield(ed, "enemy");
+    Q_snprintfz(string, 25, "enemy     : %s", field);
+    Draw_String (vid.width - (size * 25), 17 * size, string, true);
+
+    field = getfield(ed, "goalentity");
+    Q_snprintfz(string, 25, "goalentity: %s", field);
+    Draw_String (vid.width - (size * 25), 18 * size, string, true);
+
+    field = getfield(ed, "movetarget");
+    Q_snprintfz(string, 25, "movetarget: %s", field);
+    Draw_String (vid.width - (size * 25), 19 * size, string, true);
+}
 /*
 ===============
 SCR_DrawVolume
