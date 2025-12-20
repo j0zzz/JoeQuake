@@ -146,7 +146,11 @@ static int count_draws(int * counter, qcurses_box_t * box) {
  * mouse callback for the local demo list
  */
 void mouse_move_cursor(qcurses_char_t * self, const mouse_state_t *ms) {
+    if (ms->button_up != 1 && ms->button_up != 2)  
+        return;
+
     int row = self->callback_data.row - 2;
+
     if (row < 0 || row >= demlist->list.places || row >= demlist->list.len - demlist->list.window_start)
         return;
 
@@ -574,10 +578,11 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
             break;
     case K_PGUP:
     case K_HOME:
+    case K_MWHEELUP:
         distance = keydown[K_HOME] ? num_files : max_lines - 1;
+        distance = keydown[K_MWHEELUP] ? 10 : distance;
     case K_UPARROW:
     case 'k':
-    case K_MWHEELUP:
         if (k == 'k' && !demo_browser_vim.value)
             break;
         distance = (demlist->list.cursor == 0) ? num_files : -distance;
@@ -589,10 +594,11 @@ void M_Demos_KeyHandle_Local (int k, int max_lines) {
             break;
     case K_PGDN:
     case K_END:
+    case K_MWHEELDOWN:
         distance = keydown[K_END] ? num_files : max_lines - 1;
+        distance = keydown[K_MWHEELDOWN] ? 10 : distance;
     case K_DOWNARROW:
     case 'j':
-    case K_MWHEELDOWN:
         if (k == 'j' && !demo_browser_vim.value)
             break;
         distance = (demlist->list.cursor == num_files - 1) ? -num_files : distance;
