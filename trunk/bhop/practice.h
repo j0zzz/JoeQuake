@@ -66,6 +66,7 @@ typedef struct bhop_data_s
 
     qboolean on_ground;	
     vec3_t velocity;
+    vec3_t angles;
 
     vec3_t position;
 
@@ -110,6 +111,9 @@ extern bhop_data_t *bhop_history;
 #define BHOP_CROSSHAIR_TAP_PREC     1<<7 /* tap info above crosshair */
 #define BHOP_CROSSHAIR_PRESTRAFE    1<<8 /* prestrafe info above crosshair */
 #define BHOP_CROSSHAIR_SYNC         1<<9 /* strafes info near crosshair */
+
+/* bhop circle chart */
+#define BHOP_CIRCLE                 1<<10 /* draw bhop circle */
 
 /* color constants for convenience */
 #define BHOP_GREEN 184 /* actually blue because the green sucks shit */ 
