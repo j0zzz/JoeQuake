@@ -1,6 +1,7 @@
 #include "../quakedef.h"
 
 static cvar_t pathtracer_record_player = { "pathtracer_record_player", "0" };
+static cvar_t pathtracer_record_samplerate = { "pathtracer_record_samplerate", "0" };
 static cvar_t pathtracer_show_player = { "pathtracer_show_player", "0" };
 static cvar_t pathtracer_show_demo = { "pathtracer_show_demo", "0" };
 static cvar_t pathtracer_show_ghost = { "pathtracer_show_ghost", "0" };
@@ -15,6 +16,8 @@ static cvar_t pathtracer_line_skip_threshold = { "pathtracer_line_skip_threshold
 static ghost_level_t* demo_current_level = NULL;
 
 static double prev_cltime = -1;
+extern qboolean physframe;
+
 
 ghost_info_t player_record_info;
 ghost_level_t* player_record_current_level = NULL;
@@ -287,12 +290,21 @@ void PathTracer_Sample_Each_Frame(void) {
 
 	// Determine if we should sample
 	qboolean track = false;
-	if (cl.time > prev_cltime + 1.f / cl_maxfps.value) {
-		track = true;
-		prev_cltime = cl.time;
-	}
-	else {
-		track = false;
+	if (pathtracer_record_samplerate.value == 0.f) {
+		// sample each physics frame
+		if (physframe)
+			track = true;
+		else
+			track = false;
+	} else {
+		// sample each cl_maxfps frame
+		if (cl.time > prev_cltime + 1.f / cl_maxfps.value) {
+			track = true;
+			prev_cltime = cl.time;
+		}
+		else {
+			track = false;
+		}
 	}
 
 	// Sample movement
@@ -354,6 +366,7 @@ void PathTracer_Load(void)
 void PathTracer_Init (void)
 {
 	Cvar_Register (&pathtracer_record_player);
+	Cvar_Register (&pathtracer_record_samplerate);
 	Cvar_Register (&pathtracer_show_player);
 	Cvar_Register (&pathtracer_show_ghost);
 	Cvar_Register (&pathtracer_show_demo);
