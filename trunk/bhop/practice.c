@@ -1076,6 +1076,7 @@ void Draw_CircleWithColoredSegments(int x_center, int y_center, float radius, fl
         int r, g, b;
         if (v < 0.0f) {
             if (colorize)
+                // TODO PK: replace color values with constants as defined in practice.h
                 interpolate_color(v + 1.0f, 255, 0, 0, 128, 128, 128, &r, &g, &b);
             else
                 interpolate_color(v + 1.0f, 10, 10, 10, 128, 128, 128, &r, &g, &b);
@@ -1155,8 +1156,9 @@ void Bhop_CalculateAirAcceleration(vec3_t velocity, vec3_t angles, vec3_t veloci
 /*
  * draw wishdir chart
  */
-void Bhop_DrawWishDir()
+void Bhop_DrawWishDir(bhop_data_t* history)
 {
+	// TODO PK: replace color values with constants as defined in practice.h
     color_t velocity_color = RGBA_TO_COLOR(255, 255, 255, 255);
     color_t wish_color = RGBA_TO_COLOR(255, 0, 0, 255);
     color_t velocity_increase_color = RGBA_TO_COLOR(0, 255, 0, 255);
@@ -1171,21 +1173,24 @@ void Bhop_DrawWishDir()
 
     vec3_t velocity_new, velocity_increase, wishvel_original;
 
-    VectorCopy(bhop_history->velocity, velocity);
-    VectorCopy(bhop_history->angles, angles);
+    if (!history)
+        return;
+
+    VectorCopy(history->velocity, velocity);
+    VectorCopy(history->angles, angles);
 
     Bhop_CalculateAirAcceleration(velocity, angles, velocity_new, wishvel_original, velocity_increase);
     float speed = VectorLength(velocity);
-    float speed_diff[360]; // TODO PK: There are somewhere crashes with the speed_diff, safeguard values (rename to acceleration :))
+    float speed_diff[360];
     memset(speed_diff, 0, sizeof(speed_diff));
     float max_test_speed_left = -10.f;
-    int max_test_segment_index_left = 0;
+    int max_test_segment_index_left = -10000;
     float max_test_speed_right = -10.f;
-    int max_test_segment_index_right = 0;
+    int max_test_segment_index_right = -10000;
     for (int i = -180; i < 180; i++) { // test all segments to see how much speed they would yield or lose
         vec3_t test_angles;
         vec3_t test_velocity_new, test_velocity_increase, test_wishvel_original;
-        VectorCopy(bhop_history->angles, test_angles);
+        VectorCopy(history->angles, test_angles);
         test_angles[1] += i;
         if (test_angles[1] >= 180.f)
             test_angles[1] -= 360.f;
@@ -1196,7 +1201,8 @@ void Bhop_DrawWishDir()
         VectorNormalize(test_wishvel_original);
         vectoangles(test_wishvel_original, test_angles);
         int segment_index = (int)(test_angles[1]);
-        speed_diff[segment_index] = (test_speed - speed) * 1.f;
+        segment_index %= 360; // vectoangles allow 360 as a result, turn it into a zero to avoid index out of range error
+		speed_diff[segment_index] = (test_speed - speed) * 1.f;
         if (i >= 0 && speed_diff[segment_index] > max_test_speed_left) {
             max_test_speed_left = speed_diff[segment_index];
             max_test_segment_index_left = segment_index;
@@ -1208,8 +1214,10 @@ void Bhop_DrawWishDir()
     }
 
     // highlight the best segments
-    speed_diff[max_test_segment_index_left] = 1000.f;
-    speed_diff[max_test_segment_index_right] = 1000.f;
+	if (max_test_segment_index_left != -10000)
+        speed_diff[max_test_segment_index_left] = 1000.f;
+	if (max_test_segment_index_right != -10000)
+        speed_diff[max_test_segment_index_right] = 1000.f;
 
     center[0] = scr_vrect.x + scr_vrect.width / 2;
     center[1] = scr_vrect.y + scr_vrect.height / 2;
@@ -1235,7 +1243,7 @@ void Bhop_DrawWishDir()
     VectorCopy(wishvel_original, tmp_vector);   RotatePointAroundVector(wishvel_original, up, tmp_vector, rotate);
     VectorCopy(velocity_increase, tmp_vector);  RotatePointAroundVector(velocity_increase, up, tmp_vector, rotate);
 
-    float ui_scale = .5f; // vectors get too large for the screen
+    float ui_scale = 0.5f; // vectors get too large for the screen
     VectorScale(velocity, ui_scale, velocity);
     VectorScale(velocity_new, ui_scale, velocity_new);
     VectorScale(wishvel_original, ui_scale, wishvel_original);
@@ -1248,14 +1256,14 @@ void Bhop_DrawWishDir()
     VectorSubtract(velocity_pointer, velocity_increase, velocity_increase_pointer);
 
     // draw vectors
-    Draw_AlphaLineRGB(center[0], center[1], velocity_pointer[0], velocity_pointer[1], 2, bhop_history->on_ground ? onground_color : velocity_color);
-    Draw_AlphaLineRGB(center[0], center[1], velocity_new_pointer[0], velocity_new_pointer[1], 2, bhop_history->on_ground ? onground_color : velocity_color);
-    Draw_AlphaLineRGB(center[0], center[1], wishvel_pointer[0], wishvel_pointer[1], 2, bhop_history->on_ground ? onground_color : wish_color);
-    Draw_AlphaLineRGB(velocity_pointer[0], velocity_pointer[1], velocity_increase_pointer[0], velocity_increase_pointer[1], 4, bhop_history->on_ground ? onground_color : velocity_increase_color);
+    Draw_AlphaLineRGB(center[0], center[1], velocity_pointer[0], velocity_pointer[1], 2, history->on_ground ? onground_color : velocity_color);
+    Draw_AlphaLineRGB(center[0], center[1], velocity_new_pointer[0], velocity_new_pointer[1], 2, history->on_ground ? onground_color : velocity_color);
+    Draw_AlphaLineRGB(center[0], center[1], wishvel_pointer[0], wishvel_pointer[1], 2, history->on_ground ? onground_color : wish_color);
+    Draw_AlphaLineRGB(velocity_pointer[0], velocity_pointer[1], velocity_increase_pointer[0], velocity_increase_pointer[1], 4, history->on_ground ? onground_color : velocity_increase_color);
 
     // TODO PK: convert parameters to degrees instead radians for consistency
     // draw acceleration circle
-    Draw_CircleWithColoredSegments(center[0], center[1], 200.f, 0.f, 2 * M_PI, 1, speed_diff, 360, rotate * (float)(M_PI / 180.0f), !bhop_history->on_ground);
+    Draw_CircleWithColoredSegments(center[0], center[1], 200.f, 0.f, 2 * M_PI, 1, speed_diff, 360, rotate * (float)(M_PI / 180.0f), !history->on_ground);
 }
 
 /*
@@ -1414,8 +1422,8 @@ void SCR_DrawBHOP (void)
     if ((int)show_bhop_stats.value & BHOP_CROSSHAIR_SYNC)
         Bhop_DrawStrafeSquares(bhop_history, x - 32, y - 24);
 
-    if ((int)show_bhop_stats.value & BHOP_CIRCLE && bhop_history != NULL)
-        Bhop_DrawWishDir();
+    if ((int)show_bhop_stats.value & BHOP_CIRCLE)
+        Bhop_DrawWishDir(bhop_history);
 }
 
 /*
