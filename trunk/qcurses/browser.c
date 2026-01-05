@@ -822,6 +822,9 @@ qcurses_record_t * get_newest_records(char * html) {
     char * src = Q_strcasestr(html, "<p class=\"d\">");
     char * end = Q_strcasestr(src + 1, "<p class=\"d\">");
 
+    if (!end) 
+        return NULL;
+
     *end = 0;
 
     pch = strtok (src, "\n");
