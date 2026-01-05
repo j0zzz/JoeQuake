@@ -4177,7 +4177,6 @@ void R_EmitLine(edict_t * start, edict_t * end, vec3_t color){
 
 }
 
-#define getfield(ed, field) (PR_ValueString(ED_FindField(field)->type, (eval_t *)(int *)((char *)&ed->v + (ED_FindField(field))->ofs*4)))
 extern ddef_t * ED_FindField(char*);
 extern char * PR_ValueString(etype_t type, eval_t *val);
 void R_DrawEdicts (){
@@ -4255,9 +4254,9 @@ void R_DrawEdicts (){
 		categories[focused] = BBOX_CAT_HIGHLIGHT;
 		tracked_edict = bboxes[focused];
 
-		char * target = Q_strdup(getfield(EDICT_NUM(tracked_edict), "target"));
-		char * killtarget = Q_strdup(getfield(EDICT_NUM(tracked_edict), "killtarget"));
-		char * targetname = Q_strdup(getfield(EDICT_NUM(tracked_edict), "targetname"));
+		char * target = Q_strdup(GETEDICTFIELDNAME(EDICT_NUM(tracked_edict), "target"));
+		char * killtarget = Q_strdup(GETEDICTFIELDNAME(EDICT_NUM(tracked_edict), "killtarget"));
+		char * targetname = Q_strdup(GETEDICTFIELDNAME(EDICT_NUM(tracked_edict), "targetname"));
 
 		for (i = 1; i < sv.num_edicts; i++)
 		{
@@ -4268,7 +4267,7 @@ void R_DrawEdicts (){
 				continue;
 				
 			//check which is targeted
-			field = getfield(ed, "targetname");
+			field = GETEDICTFIELDNAME(ed, "targetname");
 
 			if ((strlen(target) && strlen(field) && Q_strcasecmp(target, field) == 0) || 
 				(strlen(killtarget) && strlen(field) && Q_strcasecmp(killtarget, field) == 0)) {
@@ -4278,7 +4277,7 @@ void R_DrawEdicts (){
 						categories[k] = BBOX_CAT_LINKED;
 			}
 
-			field = getfield(ed, "target");
+			field = GETEDICTFIELDNAME(ed, "target");
 
 			if (strlen(targetname) && strlen(field) && Q_strcasecmp(targetname, field) == 0) {
 				R_EmitLine(ed, EDICT_NUM(tracked_edict), bbox_colors[BBOX_CAT_LINKED]);
@@ -4287,7 +4286,7 @@ void R_DrawEdicts (){
 						categories[k] = BBOX_CAT_LINKED;
 			}
 
-			field = getfield(ed, "killtarget");
+			field = GETEDICTFIELDNAME(ed, "killtarget");
 
 			if (strlen(targetname) && strlen(field) && Q_strcasecmp(targetname, field) == 0) {
 				R_EmitLine(ed, EDICT_NUM(tracked_edict), bbox_colors[BBOX_CAT_LINKED]);

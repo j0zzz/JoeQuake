@@ -52,6 +52,7 @@ typedef struct edict_s
 
 #define	EDICT_FROM_AREA(l) STRUCT_FROM_LINK(l,edict_t,area)
 #define	GETEDICTFIELDVALUE(ed, fieldoffset) (fieldoffset ? (eval_t *)((byte *)&ed->v + fieldoffset) : NULL)
+#define GETEDICTFIELDNAME(ed, field) (ED_FindField(field) ? PR_ValueString(ED_FindField(field)->type, (eval_t *)(int *)((char *)&ed->v + (ED_FindField(field))->ofs*4)) : "")
 
 extern	int	eval_gravity, eval_items2, eval_ammo_shells1, eval_ammo_nails1;
 extern	int	eval_ammo_lava_nails, eval_ammo_rockets1, eval_ammo_multi_rockets;
