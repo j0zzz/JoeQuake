@@ -105,6 +105,7 @@ cvar_t	r_outline_players = { "r_outline_players", "0" };
 cvar_t	r_outline_monsters = { "r_outline_monsters", "0" };
 cvar_t	r_outline_color = {"r_outline_color", "0 0 0" };
 cvar_t	r_fullbrightskins = {"r_fullbrightskins", "0"};
+cvar_t	r_fullbrightskins_monsters = {"r_fullbrightskins_monsters", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_skycolor = {"r_skycolor", "4"};
 cvar_t	r_drawflame = {"r_drawflame", "1"};
@@ -1575,7 +1576,7 @@ R_SetupLighting
 void R_SetupLighting (entity_t *ent)
 {
 	int		lnum;
-	float	add, theta;
+	float	add, theta, fb_skins_value;
 	vec3_t	dist, dlight_color;
 	model_t	*clmodel = ent->model;
 	static float shadescale = 0;
@@ -1675,33 +1676,33 @@ void R_SetupLighting (entity_t *ent)
 	// never allow players to go totally black
 	if (Mod_IsAnyKindOfPlayerModel(clmodel))
 	{
+		add = 24.0f - (lightcolor[0] + lightcolor[1] + lightcolor[2]);
+		if (add > 0.0f)
+		{
+			lightcolor[0] += add / 3.0f;
+			lightcolor[1] += add / 3.0f;
+			lightcolor[2] += add / 3.0f;
+		}
+
 		// brighten player models if r_fullbrightskins is not 0
 		if (r_fullbrightskins.value)
 		{
-			lightcolor[0] = 176.0f;
-			lightcolor[1] = 176.0f;
-			lightcolor[2] = 176.0f;
+			fb_skins_value = bound(0.0, r_fullbrightskins.value, 1.0);
+			lightcolor[0] += (176.0f - lightcolor[0]) * fb_skins_value;
+			lightcolor[1] += (176.0f - lightcolor[1]) * fb_skins_value;
+			lightcolor[2] += (176.0f - lightcolor[2]) * fb_skins_value;
 			overbright = false;
 			full_light = true;
 		}
-		else
-		{
-			add = 24.0f - (lightcolor[0] + lightcolor[1] + lightcolor[2]);
-			if (add > 0.0f)
-			{
-				lightcolor[0] += add / 3.0f;
-				lightcolor[1] += add / 3.0f;
-				lightcolor[2] += add / 3.0f;
-			}
-		}
 	}
 
-	// brighten monster models if r_fullbrightskins is 2
-	if (Mod_IsMonsterModel(ent->modelindex) && r_fullbrightskins.value == 2)
+	// brighten monster models if r_fullbrightskins_monsters is not 0
+	if (Mod_IsMonsterModel(ent->modelindex) && r_fullbrightskins_monsters.value)
 	{
-		lightcolor[0] = 176.0f;
-		lightcolor[1] = 176.0f;
-		lightcolor[2] = 176.0f;
+		fb_skins_value = bound(0.0, r_fullbrightskins_monsters.value, 1.0);
+		lightcolor[0] += (176.0f - lightcolor[0]) * fb_skins_value;
+		lightcolor[1] += (176.0f - lightcolor[1]) * fb_skins_value;
+		lightcolor[2] += (176.0f - lightcolor[2]) * fb_skins_value;
 		overbright = false;
 		full_light = true;
 	}
@@ -4039,6 +4040,7 @@ void R_Init (void)
 	Cvar_Register (&r_outline_monsters);
 	Cvar_Register (&r_outline_color);
 	Cvar_Register (&r_fullbrightskins);
+	Cvar_Register (&r_fullbrightskins_monsters);
 	Cvar_Register (&r_fastsky);
 	Cvar_Register (&r_skycolor);
 	Cvar_Register (&r_drawflame);
