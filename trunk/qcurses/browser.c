@@ -724,7 +724,7 @@ void M_Demos_HelpBox (qcurses_box_t *help_box, enum demos_tabs tab, char * searc
     }
 
     if ((tab == TAB_SDA_DATABASE && browser_col == COL_COMMENT_LOADED) || tab == TAB_LOCAL_DEMOS){
-        qcurses_print_centered(help_box, 8, "Play demo: Enter | Quickplay: Alt+Enter | Set ghost: Ctrl + Enter", true);
+        qcurses_print_centered(help_box, 8, "Play demo: Enter | Quickplay: Alt + Enter | Set ghost: Ctrl + Enter", true);
         if (ghost_demo_path[0] != '\0')
             qcurses_print_centered(help_box, 9, "Unset ghost: Ctrl + Shift + Enter", true);
     }
