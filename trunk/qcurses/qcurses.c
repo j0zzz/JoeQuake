@@ -70,6 +70,8 @@ qcurses_char_t * qcurses_parse_news(char * html){
     int i = 0, j = 0;
     char * src = Q_strcasestr(html, "<p class=\"d\">");
     char * end = Q_strcasestr(src + 1, "<p class=\"d\">");
+    if (end == NULL)
+        end = Q_strcasestr(html, "<p><a href=\"oldnews/\"");
     qcurses_char_t * qstr = Q_calloc(strlen(html), sizeof(qcurses_char_t));
     for (i = 0; i < end - src; i++){
         if( src[i] == '<'){

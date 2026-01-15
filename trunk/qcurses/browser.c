@@ -214,8 +214,10 @@ void M_Demos_KeyHandle_Browser (int k) {
     case K_PGUP:
     case K_HOME:
     case K_MWHEELUP:
-        distance = keydown[K_HOME] ? mapslist->len : mapslist->places - 1;
-        distance = keydown[K_MWHEELUP] ? 10 : distance;
+        if (browser_col != COL_COMMENT_LOADED) {
+            distance = keydown[K_HOME] ? mapslist->len : mapslist->places - 1;
+            distance = keydown[K_MWHEELUP] ? 10 : distance;
+        }
     case 'k':
         if (k == 'k' && !demo_browser_vim.value)
             break;
@@ -234,8 +236,10 @@ void M_Demos_KeyHandle_Browser (int k) {
     case K_PGDN:
     case K_END:
     case K_MWHEELDOWN:
-        distance = keydown[K_END] ? mapslist->len : mapslist->places - 1;
-        distance = keydown[K_MWHEELUP] ? 10 : distance;
+        if (browser_col != COL_COMMENT_LOADED) {
+            distance = keydown[K_END] ? mapslist->len : mapslist->places - 1;
+            distance = keydown[K_MWHEELUP] ? 10 : distance;
+        }
     case 'j':
         if (k == 'j' && !demo_browser_vim.value)
             break;
