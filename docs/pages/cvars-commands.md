@@ -1074,6 +1074,12 @@ The line will not be drawn if the length between the frames is larger than this 
 
 Default: `160`
 
+##### `pathtracer_record_samplerate`
+
+If this is zero then the pathtracer will only record physics frames from the player. If set to 1 it will record every frame it will record at `cl_maxfps` rate. 
+
+Default: `0`
+
 #### Demo browser
 
 ##### `demo_browser_vim`
