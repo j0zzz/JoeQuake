@@ -488,7 +488,7 @@ void Bhop_GatherData(void)
     if (sv_player->v.health <= 0 || cl.intermission)
         return;
 
-    vec3_t vel, angles;
+    vec3_t vel;
     bhop_data_t * data_frame = malloc(sizeof(bhop_data_t));
     bhop_mark_t bar;
     float focal_len = (vid.width / 2.0) / tan( r_refdef.fov_x * M_PI / 360.0);
@@ -519,14 +519,14 @@ void Bhop_GatherData(void)
         last_ground_speed = data_frame->speed;
     }
 
-    VectorCopy(sv_player->v.angles, angles);
+    VectorCopy(sv_player->v.angles, data_frame->angles);
 
     if(!data_frame->on_ground){
         VectorCopy(pre_sv_velocity, vel);
-        bar = Bhop_CalcAirBar(vel, angles, focal_len);
+        bar = Bhop_CalcAirBar(vel, data_frame->angles, focal_len);
     } else if (data_frame->on_ground) {
         VectorCopy(post_friction_velocity, vel);
-        bar = Bhop_CalcGroundBar(vel, angles, focal_len);
+        bar = Bhop_CalcGroundBar(vel, data_frame->angles, focal_len);
     }
 
     /* flip angles if moving to the left */
@@ -1046,6 +1046,226 @@ void Bhop_DrawCrosshairPrestrafeVis(bhop_data_t *history, int x, int y, int scal
     Draw_String (x * scale + 1 * charsize, y * scale, str, true);
 }
 
+// Interpolate between two colors (r,g,b) in [0,255]
+static void interpolate_color(float t, int r1, int g1, int b1, int r2, int g2, int b2, int* r, int* g, int* b) {
+    *r = (int)(r1 + (r2 - r1) * t);
+    *g = (int)(g1 + (g2 - g1) * t);
+    *b = (int)(b1 + (b2 - b1) * t);
+}
+
+// Draws a colored circle/arc with per-segment color based on values[] in [-1,1]
+void Draw_CircleWithColoredSegments(int x_center, int y_center, float radius, float segment_start, float segment_end, float thickness, const float* values, int num_segments, float rotate, qboolean colorize) {
+    float angle_range = segment_end - segment_start;
+    float angle_step = -angle_range / num_segments;
+    glDisable(GL_TEXTURE_2D);
+
+    glEnable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+
+    glBegin(GL_LINES);
+    glLineWidth(thickness);
+
+    for (int i = 0; i < num_segments; ++i) {
+        float angle0 = segment_start + i * angle_step + rotate;
+        float angle1 = segment_start + (i + 1) * angle_step + rotate;
+
+        float v = values[i];
+        if (v < -1.0f) v = -1.0f;
+        else if (v < 1000.0f && v > 1.0f) v = 1.0f;
+
+        int r, g, b;
+        if (v < 0.0f) {
+            if (colorize)
+                // TODO PK: replace color values with constants as defined in practice.h
+                interpolate_color(v + 1.0f, 255, 0, 0, 128, 128, 128, &r, &g, &b);
+            else
+                interpolate_color(v + 1.0f, 10, 10, 10, 128, 128, 128, &r, &g, &b);
+        }
+        else if (v >= 1000.f) {
+            if (colorize) {
+                r = 0;
+                g = 0;
+                b = 255;
+            }
+            else
+                interpolate_color(v, 10, 10, 10, 10, 10, 10, &r, &g, &b);
+        }
+        else {
+            if (colorize)
+                interpolate_color(v, 128, 128, 128, 0, 255, 0, &r, &g, &b);
+            else
+                interpolate_color(v, 10, 10, 10, 10, 10, 10, &r, &g, &b);
+        }
+
+        glColor4ub(r, g, b, 255);
+
+        glVertex2f(x_center + cosf(angle0) * radius, y_center + sinf(angle0) * radius);
+        glVertex2f(x_center + cosf(angle1) * radius, y_center + sinf(angle1) * radius);
+    }
+    glEnd();
+
+    glLineWidth(1.0f); // Reset to default
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_ALPHA_TEST);
+    glDisable(GL_BLEND);
+
+}
+
+void Bhop_CalculateAirAcceleration(vec3_t velocity, vec3_t angles, vec3_t velocity_new, vec3_t wishvel_original, vec3_t velocity_increase)
+{
+    vec3_t wishdir, wishvel, fwd_vec, right_vec, up_vec;
+    float addspeed, currentspeed, wishspd, accelspeed;
+
+    AngleVectors(angles, fwd_vec, right_vec, up_vec);
+
+    for (int i = 0; i < 3; i++)
+        wishvel[i] = fwd_vec[i] * cmd.forwardmove + right_vec[i] * cmd.sidemove;
+    wishvel[2] = 0;
+
+    VectorCopy(wishvel, wishvel_original);
+    VectorCopy(wishvel, wishdir);
+    float wishspeed = VectorNormalize(wishdir);
+
+    wishspd = VectorNormalize(wishvel);
+    if (wishspd > 30)
+        wishspd = 30;
+
+    currentspeed = DotProduct(velocity, wishvel);
+    addspeed = wishspd - currentspeed;
+
+    VectorCopy(velocity, velocity_new);
+
+    if (addspeed <= 0) {
+        addspeed = 0;
+        for (int i = 0; i < 3; i++)
+            velocity_increase[i] = 0.f;
+    }
+    else {
+        //	accelspeed = sv_accelerate.value * sv_frametime;
+        accelspeed = sv_accelerate.value * wishspeed * sv_frametime;
+        if (accelspeed > addspeed)
+            accelspeed = addspeed;
+
+        for (int i = 0; i < 3; i++) {
+            velocity_increase[i] = accelspeed * wishvel[i];
+            velocity_new[i] += velocity_increase[i];
+        }
+    }
+}
+
+/*
+ * draw wishdir chart
+ */
+void Bhop_DrawWishDir(bhop_data_t* history)
+{
+	// TODO PK: replace color values with constants as defined in practice.h
+    color_t velocity_color = RGBA_TO_COLOR(255, 255, 255, 255);
+    color_t wish_color = RGBA_TO_COLOR(255, 0, 0, 255);
+    color_t velocity_increase_color = RGBA_TO_COLOR(0, 255, 0, 255);
+    color_t onground_color = RGBA_TO_COLOR(10, 10, 10, 255);
+    vec3_t velocity;
+    vec3_t center = { 0.f, 0.f, 0.f };
+    vec3_t velocity_pointer;
+    vec3_t wishvel_pointer;
+    vec3_t velocity_increase_pointer;
+    vec3_t velocity_new_pointer;
+    vec3_t angles;
+
+    vec3_t velocity_new, velocity_increase, wishvel_original;
+
+    if (!history)
+        return;
+
+    VectorCopy(history->velocity, velocity);
+    VectorCopy(history->angles, angles);
+
+    Bhop_CalculateAirAcceleration(velocity, angles, velocity_new, wishvel_original, velocity_increase);
+    float speed = VectorLength(velocity);
+    float speed_diff[360];
+    memset(speed_diff, 0, sizeof(speed_diff));
+    float max_test_speed_left = -10.f;
+    int max_test_segment_index_left = -10000;
+    float max_test_speed_right = -10.f;
+    int max_test_segment_index_right = -10000;
+    for (int i = -180; i < 180; i++) { // test all segments to see how much speed they would yield or lose
+        vec3_t test_angles;
+        vec3_t test_velocity_new, test_velocity_increase, test_wishvel_original;
+        VectorCopy(history->angles, test_angles);
+        test_angles[1] += i;
+        if (test_angles[1] >= 180.f)
+            test_angles[1] -= 360.f;
+        if (test_angles[1] < -180.f)
+            test_angles[1] += 360.f;
+        Bhop_CalculateAirAcceleration(velocity, test_angles, test_velocity_new, test_wishvel_original, test_velocity_increase);
+        float test_speed = VectorLength(test_velocity_new);
+        VectorNormalize(test_wishvel_original);
+        vectoangles(test_wishvel_original, test_angles);
+        int segment_index = (int)(test_angles[1]);
+        segment_index %= 360; // vectoangles allow 360 as a result, turn it into a zero to avoid index out of range error
+		speed_diff[segment_index] = (test_speed - speed) * 1.f;
+        if (i >= 0 && speed_diff[segment_index] > max_test_speed_left) {
+            max_test_speed_left = speed_diff[segment_index];
+            max_test_segment_index_left = segment_index;
+        }
+        if (i < 0 && speed_diff[segment_index] > max_test_speed_right) {
+            max_test_speed_right = speed_diff[segment_index];
+            max_test_segment_index_right = segment_index;
+        }
+    }
+
+    // highlight the best segments
+	if (max_test_segment_index_left != -10000)
+        speed_diff[max_test_segment_index_left] = 1000.f;
+	if (max_test_segment_index_right != -10000)
+        speed_diff[max_test_segment_index_right] = 1000.f;
+
+    center[0] = scr_vrect.x + scr_vrect.width / 2;
+    center[1] = scr_vrect.y + scr_vrect.height / 2;
+
+    vec3_t rotation_vector;
+    vectoangles(velocity, rotation_vector);
+    float rotate = rotation_vector[1] - 90.f; // rotate all vectors and the circle to make velocity point up
+    if (rotate > 180.f)
+        rotate -= 360.f;
+    if (rotate < -180.f)
+        rotate += 360.f;
+
+    // flip x axis, so that they match the mouse movement direction
+    velocity[0] = -velocity[0];
+    velocity_new[0] = -velocity_new[0];
+    wishvel_original[0] = -wishvel_original[0];
+    velocity_increase[0] = -velocity_increase[0];
+
+    vec3_t up = { 0.f, 0.f, 1 };  // rotate around z axis
+    vec3_t tmp_vector;
+    VectorCopy(velocity, tmp_vector);           RotatePointAroundVector(velocity, up, tmp_vector, rotate);
+    VectorCopy(velocity_new, tmp_vector);       RotatePointAroundVector(velocity_new, up, tmp_vector, rotate);
+    VectorCopy(wishvel_original, tmp_vector);   RotatePointAroundVector(wishvel_original, up, tmp_vector, rotate);
+    VectorCopy(velocity_increase, tmp_vector);  RotatePointAroundVector(velocity_increase, up, tmp_vector, rotate);
+
+    float ui_scale = 0.5f; // vectors get too large for the screen
+    VectorScale(velocity, ui_scale, velocity);
+    VectorScale(velocity_new, ui_scale, velocity_new);
+    VectorScale(wishvel_original, ui_scale, wishvel_original);
+    VectorScale(velocity_increase, ui_scale, velocity_increase);
+
+    // add vectors to center
+    VectorSubtract(center, velocity, velocity_pointer);
+    VectorSubtract(center, velocity_new, velocity_new_pointer);
+    VectorSubtract(center, wishvel_original, wishvel_pointer);
+    VectorSubtract(velocity_pointer, velocity_increase, velocity_increase_pointer);
+
+    // draw vectors
+    Draw_AlphaLineRGB(center[0], center[1], velocity_pointer[0], velocity_pointer[1], 2, history->on_ground ? onground_color : velocity_color);
+    Draw_AlphaLineRGB(center[0], center[1], velocity_new_pointer[0], velocity_new_pointer[1], 2, history->on_ground ? onground_color : velocity_color);
+    Draw_AlphaLineRGB(center[0], center[1], wishvel_pointer[0], wishvel_pointer[1], 2, history->on_ground ? onground_color : wish_color);
+    Draw_AlphaLineRGB(velocity_pointer[0], velocity_pointer[1], velocity_increase_pointer[0], velocity_increase_pointer[1], 4, history->on_ground ? onground_color : velocity_increase_color);
+
+    // TODO PK: convert parameters to degrees instead radians for consistency
+    // draw acceleration circle
+    Draw_CircleWithColoredSegments(center[0], center[1], 200.f, 0.f, 2 * M_PI, 1, speed_diff, 360, rotate * (float)(M_PI / 180.0f), !history->on_ground);
+}
+
 /*
  * BHOP_Init() initialises cvars and global vars
  */
@@ -1201,6 +1421,9 @@ void SCR_DrawBHOP (void)
 
     if ((int)show_bhop_stats.value & BHOP_CROSSHAIR_SYNC)
         Bhop_DrawStrafeSquares(bhop_history, x - 32, y - 24);
+
+    if ((int)show_bhop_stats.value & BHOP_CIRCLE)
+        Bhop_DrawWishDir(bhop_history);
 }
 
 /*
