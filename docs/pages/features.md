@@ -116,4 +116,23 @@ Sometimes it might be helpful to see the path the player took. That can help to 
 - Fadeout: `pathtracer_fadeout_ghost` and `pathtracer_fadeout_demo` if set to `1` will fadeout the path around the current position. This helps to keep an overview if the path gets a bit convoluted. Per default the fadeout is disabled for ghosts, enabled for demos. The time the path will be drawn is defined by `pathtracer_fadeout_seconds` in seconds (defaults to `3`).
 - Bolder lines: `pathtracer_line_smooth` to `1` produces bolder lines, making them better visible on videos and screenshots.
 
+### Edict tracker
+
+Sometimes you might want to learn how to manipulate the map and monsters. A feature only available when not demo recording will allow you to track individual edicts and see the most pertinent speedrunning info:
+
+- Track edict number: if `cl_track_edict` is set to an integer higher than `0`, the edict number in question will be printed in the top right of the screen. The following information is printed: target, killtarget and targetname (links between entities), health, think function names and delays, as well as the enemy and the movetarget.
+- Track delayed triggers: if `cl_track_edict` is set to `-1`, the list will show the delayed edicts waiting for triggers. This allows seeing how long until a certain edict fires.
+
+When set to `0`, the feature is off.
+
+### Grenade trails
+
+To set up intricate grenades, it can be useful to be able to draw the path a grenade would take, and look at it from different angles. A feature only available when not demo recording will allow setting this up:
+
+- Show grenade trail: `cl_billiards` set to `1` will showcase a path a grenade would take, with each 0.5s increment marked with a big dot and each 0.05s increment marked with a small dot. The color goes from green at the start of the grenade timer to red at the end.
+- Show grenade trails through walls: if `cl_billiards_wh` is set to `1`, the paths will show through walls.
+- Save a grenade trail: the command `billiards_save <num>` will save a grenade trail's origin and angle to a slot numbered from 0 to 4, allowing 5 grenades to be stored. This grenade will now show from any other angle.
+- Delete a grenade trail: the command `billiards_delete <num>` will clear a grenade from the corresponding slot.
+- Delete all grenade trails: the command `billiards_clear` will clear all saved grenades.
+
 {% include subfeatures/bhop-practice.md %}
