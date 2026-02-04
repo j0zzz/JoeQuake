@@ -32,7 +32,6 @@
 
 #define MAX_BILLIARDS 5
 
-extern int billiards_index;
 extern cvar_t cl_billiards;
 extern cvar_t cl_billiards_wh;
 

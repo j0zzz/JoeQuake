@@ -36,7 +36,7 @@ extern void SV_Physics_Toss (edict_t *ent);
 extern void ED_ClearEdict(edict_t *e);
 extern double sv_frametime;
 edict_t * grenade_list[MAX_BILLIARDS];
-static int grenade_list_index;
+edict_t * current_grenade;
 
 cvar_t	cl_billiards_wh = {"cl_billiards_wh", "0"};
 
@@ -53,36 +53,69 @@ void Billiards_Shutdown(void)
 
         grenade_list[i] = NULL;
     }
+
+    if (current_grenade) {
+        free(current_grenade);
+        current_grenade = NULL;
+    }
 }
 
 void Billiards_SaveTrail(void)
 {
-    grenade_list_index++;
-    grenade_list_index %= MAX_BILLIARDS;
+    if (Cmd_Argc() <= 1) {
+        Con_Printf("command needs slot index (0 to %d)\n", MAX_BILLIARDS);
+        return;
+    }
+
+    int index = Q_atoi(Cmd_Argv(1));
+
+    if (index > MAX_BILLIARDS || index < 0) {
+        Con_Printf("command needs slot index (0 to %d)\n", MAX_BILLIARDS);
+        return;
+    }
+
+    if (index < 0)
+        index = 0;
+
+    if (grenade_list[index]) 
+        free(grenade_list[index]);
+
+    grenade_list[index] = current_grenade;
+    current_grenade = NULL;
 }
 
-void Billiards_DeleteLast(void)
+void Billiards_DeleteTrail(void)
 {
-    if (grenade_list[grenade_list_index]) {
-        free(grenade_list[grenade_list_index]);
-        grenade_list[grenade_list_index] = NULL;
+
+    if (Cmd_Argc() <= 1) {
+        Con_Printf("command needs slot index (0 to %d)\n", MAX_BILLIARDS);
+        return;
     }
-    grenade_list_index--;
-    if (grenade_list_index < 0)
-        grenade_list_index += MAX_BILLIARDS;
+
+    int index = Q_atoi(Cmd_Argv(1));
+
+    if (index > MAX_BILLIARDS || index < 0) {
+        Con_Printf("command needs slot index (0 to %d)\n", MAX_BILLIARDS);
+        return;
+    }
+
+    if (grenade_list[index]) {
+        free(grenade_list[index]);
+        grenade_list[index] = NULL;
+    }
 }
 
 void Billiards_Init(void)
 {
     Cvar_Register (&cl_billiards_wh);
     Cmd_AddCommand("billiards_save", Billiards_SaveTrail);
-    Cmd_AddCommand("billiards_delete", Billiards_DeleteLast);
+    Cmd_AddCommand("billiards_delete", Billiards_DeleteTrail);
     Cmd_AddCommand("billiards_clear", Billiards_Shutdown);
 
     for (int i = 0; i < MAX_BILLIARDS; i++)
         grenade_list[i] = NULL;
 
-    grenade_list_index = 0;
+    current_grenade = NULL;
 }
 
 edict_t * Billiards_SpawnTrail(void)
@@ -173,6 +206,7 @@ void Billiards_DrawTrail(const edict_t * src)
     memcpy(nade, src, pr_edict_size);
 
     VectorCopy(nade->v.origin, prev_loc);
+
     while (time < 2.5) {
         SV_Physics_Toss(nade);
         nade->v.watertype = 0;
@@ -196,10 +230,10 @@ void R_DrawBilliards(void)
     if (!CL_ShowBilliards())
         return;
 
-    if (grenade_list[grenade_list_index])
-        free(grenade_list[grenade_list_index]);
-
-    grenade_list[grenade_list_index] = Billiards_SpawnTrail();
+    if (current_grenade)
+        free(current_grenade);
+    current_grenade = Billiards_SpawnTrail();
+    Billiards_DrawTrail(current_grenade);
 
     for (i = 0, nade = grenade_list[i]; i < MAX_BILLIARDS; nade = grenade_list[++i]) {
         if (!nade)

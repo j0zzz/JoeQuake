@@ -1403,12 +1403,13 @@ void SCR_DrawEdictTracker (void)
 	if (cl_track_edict.value >= 1) 
 		tracked_edict = cl_track_edict.value;
 
-	if (cl_track_edict.value == -1)
+	if (cl_track_edict.value == -1) {
 		SCR_DrawDelayEdicts();
+		return;
+	}
 
 	if (!tracked_edict || tracked_edict >= sv.num_edicts)
 		return;
-
 
 	ed = EDICT_NUM(tracked_edict);
 

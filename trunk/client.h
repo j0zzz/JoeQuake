@@ -321,7 +321,7 @@ extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_confirmquit;
 extern	cvar_t	cl_bbox;
-extern	cvar_t	cl_bbox_wallhack;
+extern	cvar_t	cl_bbox_wh;
 extern	cvar_t	cl_bboxcolors;
 
 extern	cvar_t	cl_demoui;

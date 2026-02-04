@@ -60,7 +60,7 @@ cvar_t	cl_bobbing = {"cl_bobbing", "0"};
 cvar_t	cl_deadbodyfilter = {"cl_deadbodyfilter", "0"};
 cvar_t	cl_gibfilter = {"cl_gibfilter", "0"};
 cvar_t	cl_bbox = {"cl_bbox", "0"};
-cvar_t	cl_bbox_wallhack = {"cl_bbox_wallhack", "0"};
+cvar_t	cl_bbox_wh = {"cl_bbox_wh", "0"};
 cvar_t	cl_bboxcolors = {"cl_bboxcolors", "1"};
 cvar_t	cl_track_edict = {"cl_track_edict", "0"};
 cvar_t	cl_billiards = {"cl_billiards", "0"};
@@ -1514,7 +1514,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_deadbodyfilter);
 	Cvar_Register (&cl_gibfilter);
 	Cvar_Register (&cl_bbox);
-	Cvar_Register (&cl_bbox_wallhack);
+	Cvar_Register (&cl_bbox_wh);
 	Cvar_Register (&cl_bboxcolors);
 	Cvar_Register (&cl_track_edict);
 	Cvar_Register (&cl_billiards);

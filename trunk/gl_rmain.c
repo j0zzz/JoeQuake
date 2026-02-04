@@ -3504,7 +3504,7 @@ void R_DrawEntitiesOnList ()
 			continue;
 
 		if (CL_ShowBBoxes()) {
-			if (cl_bbox_wallhack.value)
+			if (cl_bbox_wh.value)
 				glDepthRange (0, 0.3);
 			R_DrawEntBbox(currententity);
 			glDepthRange (0, 1.0);
@@ -4247,7 +4247,7 @@ void R_DrawEdicts (){
 		}
 	}
 
-	if (cl_bbox_wallhack.value)
+	if (cl_bbox_wh.value)
 		glDepthRange (0, 0.3);
 
 	if (0 <= focused) {
