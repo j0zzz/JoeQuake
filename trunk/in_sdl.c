@@ -36,6 +36,98 @@ extern cvar_t cl_minpitch; //johnfitz -- variable pitch clamping
 qboolean use_m_smooth;
 cvar_t m_rate = {"m_rate", "60"};
 
+// joystick defines and variables
+SDL_Joystick* joystick;
+int joyIndex = -1;
+int joyCount = -1;
+int joyNumAxes = 0;
+int joyNumButtons = 0;
+#define	JOY_MAX_BUTTONS		32			// 32 internal buttons are used (4 more defined but unused)
+#define JOY_ABSOLUTE_AXIS	0x00000000		// control like a joystick
+#define JOY_RELATIVE_AXIS	0x00000010		// control like a mouse, spinner, trackball
+#define	JOY_MAX_AXES		6			// X, Y, Z, R, U, V
+#define JOY_AXIS_X		0
+#define JOY_AXIS_Y		1
+#define JOY_AXIS_Z		2
+#define JOY_AXIS_R		3
+#define JOY_AXIS_U		4
+#define JOY_AXIS_V		5
+
+enum _ControlList
+{
+	AxisNada = 0, AxisForward, AxisLook, AxisSide, AxisTurn, AxisDebug = 7
+};
+
+qboolean	joy_avail, joy_advancedinit;
+unsigned long		joy_oldbuttonstate, joy_numbuttons;
+
+unsigned long	dwAxisMap[JOY_MAX_AXES];
+unsigned long	dwControlMap[JOY_MAX_AXES];
+
+cvar_t	in_joystick = {"joystick", "0", CVAR_ARCHIVE};
+cvar_t	joy_name = {"joyname", "joystick"};
+cvar_t	joy_advanced = {"joyadvanced", "0"};
+cvar_t	joy_advaxisx = {"joyadvaxisx", "0"};
+cvar_t	joy_advaxisy = {"joyadvaxisy", "0"};
+cvar_t	joy_advaxisz = {"joyadvaxisz", "0"};
+cvar_t	joy_advaxisr = {"joyadvaxisr", "0"};
+cvar_t	joy_advaxisu = {"joyadvaxisu", "0"};
+cvar_t	joy_advaxisv = {"joyadvaxisv", "0"};
+
+cvar_t	joy_forwardthreshold = {"joyforwardthreshold", "0.15"};
+cvar_t	joy_sidethreshold = {"joysidethreshold", "0.15"};
+cvar_t	joy_pitchthreshold = {"joypitchthreshold", "0.15"};
+cvar_t	joy_yawthreshold = {"joyyawthreshold", "0.15"};
+cvar_t	joy_forwardsensitivity = {"joyforwardsensitivity", "-1.0"};
+cvar_t	joy_sidesensitivity = {"joysidesensitivity", "-1.0"};
+cvar_t	joy_pitchsensitivity = {"joypitchsensitivity", "1.0"};
+cvar_t	joy_yawsensitivity = {"joyyawsensitivity", "-1.0"};
+
+void Joy_AdvancedUpdate_f (void) {
+
+	int	i;
+	unsigned long	dwTemp;
+
+	// initialize all the maps
+	for (i=0 ; i<JOY_MAX_AXES ; i++)
+	{
+		dwAxisMap[i] = AxisNada;
+		dwControlMap[i] = 0;
+	}
+
+	if (joy_advanced.value == 0.0)
+	{
+		// default joystick initialization
+		// 2 axes only with joystick control
+		dwAxisMap[JOY_AXIS_X] = AxisTurn;
+		// dwControlMap[JOY_AXIS_X] = JOY_ABSOLUTE_AXIS;
+		dwAxisMap[JOY_AXIS_Y] = AxisForward;
+		// dwControlMap[JOY_AXIS_Y] = JOY_ABSOLUTE_AXIS;
+	}
+	else
+	{
+		// advanced initialization here
+		// data supplied by user via joy_axisn cvars
+		dwTemp = (unsigned long) joy_advaxisx.value;
+		dwAxisMap[JOY_AXIS_X] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_X] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (unsigned long) joy_advaxisy.value;
+		dwAxisMap[JOY_AXIS_Y] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_Y] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (unsigned long) joy_advaxisz.value;
+		dwAxisMap[JOY_AXIS_Z] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_Z] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (unsigned long) joy_advaxisr.value;
+		dwAxisMap[JOY_AXIS_R] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_R] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (unsigned long) joy_advaxisu.value;
+		dwAxisMap[JOY_AXIS_U] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_U] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (unsigned long) joy_advaxisv.value;
+		dwAxisMap[JOY_AXIS_V] = dwTemp & 0x0000000f;
+		dwControlMap[JOY_AXIS_V] = dwTemp & JOY_RELATIVE_AXIS;
+	}
+};
 
 static int buttonremap[] =
 {
@@ -197,7 +289,7 @@ void Sys_SendKeyEvents (void)
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
 			if (event.button.button < 1 ||
-			    event.button.button > sizeof(buttonremap) / sizeof(buttonremap[0]))
+				event.button.button > sizeof(buttonremap) / sizeof(buttonremap[0]))
 			{
 				Con_Printf ("Ignored event for mouse button %d\n",
 							event.button.button);
@@ -240,25 +332,166 @@ void Force_CenterView_f (void)
 	cl.viewangles[PITCH] = 0;
 }
 
+
+static void Joy_Info_f(void)
+{
+	if (joystick == NULL)
+	{
+		Con_Printf("No Joystick Active\n");
+		return;
+	}
+	Con_Printf("Using Joystick %i: %s\n", joyIndex, SDL_JoystickName(joystick));
+	Con_Printf("\tAxes: %i", joyNumAxes);
+	if (joyNumAxes > JOY_MAX_AXES) Con_Printf(" (%i usable)", JOY_MAX_AXES);
+	Con_Printf("\n");
+
+	int axisButtons = 2*min(joyNumAxes, JOY_MAX_AXES);
+	Con_Printf("\tButtons: %i", axisButtons + joyNumButtons);
+	if (axisButtons != 0 || joyNumButtons != 0)
+		Con_Printf(" (%i digital + %i analog)", axisButtons, joyNumButtons);
+	if (axisButtons + joyNumButtons > JOY_MAX_BUTTONS)
+		Con_Printf("\n\t\t%i usable", JOY_MAX_BUTTONS);
+	Con_Printf("\n");
+}
+
+static void Next_Joystick_f(void)
+{
+	//	(Re-) Init Joystick Systems
+	if (joyCount < 0)
+	{
+		if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) < 0)
+		{
+			Sys_Error("Couldn't init SDL joystick: %s", SDL_GetError());
+			return;
+		}
+	}
+
+	SDL_JoystickEventState(1);
+	joyCount = SDL_NumJoysticks();
+	if (joyCount < 0)
+	{
+		Con_Printf ("Error finding Joysticks\n");
+		return;
+	}
+	if (joyCount == 0)
+	{
+		//	TODO: detect joystick disconnection and do all of this there instead
+		Con_Printf ("No joysticks found\n");
+		joyIndex = -1;
+		joy_avail = 0;
+		joystick = NULL;
+		return;
+	}
+	Con_Printf ("%i joystick(s) found\n", joyCount);
+
+	int i = joyIndex;
+	SDL_Joystick* newJoy = NULL;
+	do
+	{
+		i = (i+1)%joyCount;
+		newJoy = SDL_JoystickOpen(i);
+		if (i == joyIndex)
+		{
+			if (newJoy == NULL)
+			{
+				Con_Printf("No valid joysticks found\n");
+				return;
+			}
+			break;
+		}
+	} while (newJoy == NULL);
+
+	joystick = newJoy;
+	joyIndex = i;
+	joy_avail = true;
+	joy_advancedinit = false;
+	joyNumAxes = SDL_JoystickNumAxes(joystick);
+	joyNumButtons = SDL_JoystickNumButtons(joystick);
+	if (i == joyIndex) Con_Printf("Reinitialised %i: %s\n", joyIndex, SDL_JoystickName(joystick));
+	else Con_Printf("Joystick set to %i: %s\n", joyIndex, SDL_JoystickName(joystick));
+}
+
 void IN_Init (void)
 {
 	Cvar_Register (&m_filter);
 
+	Cvar_Register (&in_joystick);
+	Cvar_Register (&joy_name);
+	Cvar_Register (&joy_advanced);
+	Cvar_Register (&joy_advaxisx);
+	Cvar_Register (&joy_advaxisy);
+	Cvar_Register (&joy_advaxisz);
+	Cvar_Register (&joy_advaxisr);
+	Cvar_Register (&joy_advaxisu);
+	Cvar_Register (&joy_advaxisv);
+
+	Cvar_Register (&joy_forwardthreshold);
+	Cvar_Register (&joy_sidethreshold);
+	Cvar_Register (&joy_pitchthreshold);
+	Cvar_Register (&joy_yawthreshold);
+	Cvar_Register (&joy_forwardsensitivity);
+	Cvar_Register (&joy_sidesensitivity);
+	Cvar_Register (&joy_pitchsensitivity);
+	Cvar_Register (&joy_yawsensitivity);
+
 	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
+	Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
+	Cmd_AddCommand ("joyinfo", Joy_Info_f);
+	Cmd_AddCommand ("joynext", Next_Joystick_f);
+
+ 	// assume no joystick
+	joy_avail = false;
+	joystick = NULL;
+
+	Next_Joystick_f();
 }
 
 void IN_Shutdown (void)
 {
+	if (joystick) SDL_JoystickClose(joystick);
+	joystick = NULL;
 }
 
 void IN_Commands (void)
 {
+	if (!joy_avail)
+		return;
+
+	int	i, key_index;
+	unsigned long	buttonstate = 0;
+
+	for (i = 0; i < JOY_MAX_BUTTONS && i < joyNumButtons; i++)
+	{
+		buttonstate |= (1<<i) * SDL_JoystickGetButton(joystick, i);
+		// AUX1-4 are unused due to how the key_index is calculated
+		// fix below. leaving uncompiled for now
+#ifndef AUXFIX
+		if ((buttonstate & (1<<i)) && !(joy_oldbuttonstate & (1<<i)))
+		{
+			key_index = (i < 4) ? K_JOY1 : K_AUX1;
+			Key_Event (key_index + i, true);
+		}
+
+		if (!(buttonstate & (1<<i)) && (joy_oldbuttonstate & (1<<i)))
+		{
+			key_index = (i < 4) ? K_JOY1 : K_AUX1;
+			Key_Event (key_index + i, false);
+		}
+#else	//	fix
+		//	TODO: increase JOY_MAX_BUTTONS to 36(?), and remove key_index variable
+		if ((buttonstate & (1<<i)) && !(joy_oldbuttonstate & (1<<i)))
+			Key_Event (K_JOY1 + i, true);
+		else if (!(buttonstate & (1<<i)) && (joy_oldbuttonstate & (1<<i)))
+			Key_Event (K_JOY1 + i, false);
+#endif
+	}
+	joy_oldbuttonstate = buttonstate;
 }
 
 static void IN_MouseMove (usercmd_t *cmd)
 {
 	float	sens;
-	
+
 	if (m_filter.value)
 	{
 		mouse_x = (mx + old_mouse_x) * 0.5;
@@ -343,9 +576,130 @@ static void IN_MouseMove (usercmd_t *cmd)
 	mx = my = 0.0;
 }
 
+static void IN_JoyMove (usercmd_t *cmd)
+{
+	// adapted from in_win
+
+	// verify joystick is available and that the user wants to use it
+	if (!joy_avail || !in_joystick.value)
+		return;
+
+	if (joy_advancedinit != true)
+	{
+		Joy_AdvancedUpdate_f ();
+		joy_advancedinit = true;
+	}
+
+	int	i;
+	float	speed, aspeed, fAxisValue;
+
+	speed = (in_speed.state & 1) ? cl_movespeedkey.value : 1;
+	aspeed = speed * host_frametime;
+
+	// loop through the axes
+	for (i=0 ; i<JOY_MAX_AXES && i < joyNumAxes ; i++)
+	{
+		fAxisValue = SDL_JoystickGetAxis(joystick, i);
+		fAxisValue /= 32768.0; // convert range from -32768..32767 to -1..1 
+
+		switch (dwAxisMap[i])
+		{
+		case AxisForward:
+			if ((joy_advanced.value == 0.0) && mlook_active)
+			{
+				// user wants forward control to become look control
+				if (fabs(fAxisValue) > joy_pitchthreshold.value)
+				{		
+					// if mouse invert is on, invert the joystick pitch value
+					// only absolute control support here (joy_advanced is false)
+					if (m_pitch.value < 0.0)
+						cl.viewangles[PITCH] -= (fAxisValue * joy_pitchsensitivity.value) * aspeed * cl_pitchspeed.value;
+					else
+						cl.viewangles[PITCH] += (fAxisValue * joy_pitchsensitivity.value) * aspeed * cl_pitchspeed.value;
+					V_StopPitchDrift ();
+				}
+				else
+				{
+					// no pitch movement
+					// disable pitch return-to-center unless requested by user
+					// *** this code can be removed when the lookspring bug is fixed
+					// *** the bug always has the lookspring feature on
+					if (lookspring.value == 0.0)
+						V_StopPitchDrift ();
+				}
+			}
+			else
+			{
+				// user wants forward control to be forward control
+				if (fabs(fAxisValue) > joy_forwardthreshold.value)
+					cmd->forwardmove += (fAxisValue * joy_forwardsensitivity.value) * speed * cl_forwardspeed.value;
+			}
+			break;
+
+		case AxisSide:
+			if (fabs(fAxisValue) > joy_sidethreshold.value)
+				cmd->sidemove += (fAxisValue * joy_sidesensitivity.value) * speed * cl_sidespeed.value;
+			break;
+
+		case AxisTurn:
+			if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
+			{
+				// user wants turn control to become side control
+				if (fabs(fAxisValue) > joy_sidethreshold.value)
+					cmd->sidemove -= (fAxisValue * joy_sidesensitivity.value) * speed * cl_sidespeed.value;
+			}
+			else
+			{
+				// user wants turn control to be turn control
+				if (fabs(fAxisValue) > joy_yawthreshold.value)
+				{
+					if (dwControlMap[i] == JOY_ABSOLUTE_AXIS)
+						cl.viewangles[YAW] += (fAxisValue * joy_yawsensitivity.value) * aspeed * cl_yawspeed.value;
+					else
+						cl.viewangles[YAW] += (fAxisValue * joy_yawsensitivity.value) * speed * 180.0;
+				}
+			}
+			break;
+
+		case AxisLook:
+			if (mlook_active)
+			{
+				if (fabs(fAxisValue) > joy_pitchthreshold.value)
+				{
+					// pitch movement detected and pitch movement desired by user
+					if (dwControlMap[i] == JOY_ABSOLUTE_AXIS)
+						cl.viewangles[PITCH] += (fAxisValue * joy_pitchsensitivity.value) * aspeed * cl_pitchspeed.value;
+					else
+						cl.viewangles[PITCH] += (fAxisValue * joy_pitchsensitivity.value) * speed * 180.0;
+					V_StopPitchDrift ();
+				}
+				else
+				{
+					// no pitch movement
+					// disable pitch return-to-center unless requested by user
+					// *** this code can be removed when the lookspring bug is fixed
+					// *** the bug always has the lookspring feature on
+					if (lookspring.value == 0.0)
+						V_StopPitchDrift ();
+				}
+			}
+			break;
+		case AxisDebug:
+			Con_Printf ("Axis %i: %f (%f)\n", i, fAxisValue, fAxisValue*32768);
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	cl.viewangles[PITCH] = bound(cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
+}
+
 void IN_Move (usercmd_t *cmd)
 {
 	IN_MouseMove (cmd);
+	IN_JoyMove (cmd);
 }
 
 void IN_ClearStates (void)
