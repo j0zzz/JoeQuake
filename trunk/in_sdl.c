@@ -74,6 +74,7 @@ cvar_t	joy_advaxisr = {"joyadvaxisr", "0"};
 cvar_t	joy_advaxisu = {"joyadvaxisu", "0"};
 cvar_t	joy_advaxisv = {"joyadvaxisv", "0"};
 
+cvar_t	joy_analogdigitalthreshold = {"joyanalogdigitalthreshold", "0.3"};
 cvar_t	joy_forwardthreshold = {"joyforwardthreshold", "0.15"};
 cvar_t	joy_sidethreshold = {"joysidethreshold", "0.15"};
 cvar_t	joy_pitchthreshold = {"joypitchthreshold", "0.15"};
@@ -425,6 +426,7 @@ void IN_Init (void)
 	Cvar_Register (&joy_advaxisu);
 	Cvar_Register (&joy_advaxisv);
 
+	Cvar_Register (&joy_analogdigitalthreshold);
 	Cvar_Register (&joy_forwardthreshold);
 	Cvar_Register (&joy_sidethreshold);
 	Cvar_Register (&joy_pitchthreshold);
@@ -459,10 +461,31 @@ void IN_Commands (void)
 
 	int	i, key_index;
 	unsigned long	buttonstate = 0;
+	float fAxisValue;
 
-	for (i = 0; i < JOY_MAX_BUTTONS && i < joyNumButtons; i++)
+	for (i = 0; i < JOY_MAX_BUTTONS && i < joyNumButtons + (2*joyNumAxes); i++)
 	{
-		buttonstate |= (1<<i) * SDL_JoystickGetButton(joystick, i);
+		if (i < joyNumButtons)
+		{
+			buttonstate |= (1<<i) * SDL_JoystickGetButton(joystick, i);
+		}
+		else
+		{
+			//	convert axes to digital inputs
+
+			//	only allow presses for axes not already bound to movement/aiming
+			//if (dwAxisMap[(i-joyNumButtons)/2] != 0) continue;
+
+			if ((i-joyNumButtons)%2 == 0)
+			{
+				fAxisValue = SDL_JoystickGetAxis(joystick, (i-joyNumButtons)/2);
+				fAxisValue /= 32768.0;
+				buttonstate |= (1<<i) * (fAxisValue < -joy_analogdigitalthreshold.value);
+			}
+			else // check inverse: uses previous fAxisValue
+				buttonstate |= (1<<i) * (fAxisValue > joy_analogdigitalthreshold.value);
+		}
+
 		// AUX1-4 are unused due to how the key_index is calculated
 		// fix below. leaving uncompiled for now
 #ifndef AUXFIX
