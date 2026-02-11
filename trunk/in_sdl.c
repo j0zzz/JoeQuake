@@ -38,10 +38,12 @@ cvar_t m_rate = {"m_rate", "60"};
 
 // joystick defines and variables
 SDL_Joystick* joystick;
+SDL_GameController* controller;
 int joyIndex = -1;
 int joyCount = -1;
 int joyNumAxes = 0;
 int joyNumButtons = 0;
+int joyGyroSensor = SDL_SENSOR_INVALID;
 #define	JOY_MAX_BUTTONS		32			// 32 internal buttons are used (4 more defined but unused)
 #define JOY_ABSOLUTE_AXIS	0x00000000		// control like a joystick
 #define JOY_RELATIVE_AXIS	0x00000010		// control like a mouse, spinner, trackball
@@ -52,6 +54,11 @@ int joyNumButtons = 0;
 #define JOY_AXIS_R		3
 #define JOY_AXIS_U		4
 #define JOY_AXIS_V		5
+#define	GYRO_MAX_AXES		3
+#define JOY_GYRO_PITCH		0	// gyro
+#define JOY_GYRO_YAW		1
+#define JOY_GYRO_ROLL		2
+
 
 enum _ControlList
 {
@@ -63,6 +70,11 @@ unsigned long		joy_oldbuttonstate, joy_numbuttons;
 
 unsigned long	dwAxisMap[JOY_MAX_AXES];
 unsigned long	dwControlMap[JOY_MAX_AXES];
+unsigned long	gyroAxisMap[GYRO_MAX_AXES];
+float 			gyroNoiseOffset[GYRO_MAX_AXES];
+float 			gyroData[GYRO_MAX_AXES];
+float 			gyroBank[GYRO_MAX_AXES] = {0};
+int 			gyroSamples = 0;
 
 cvar_t	in_joystick = {"joystick", "0", CVAR_ARCHIVE};
 cvar_t	joy_name = {"joyname", "joystick"};
@@ -74,6 +86,10 @@ cvar_t	joy_advaxisr = {"joyadvaxisr", "0"};
 cvar_t	joy_advaxisu = {"joyadvaxisu", "0"};
 cvar_t	joy_advaxisv = {"joyadvaxisv", "0"};
 
+cvar_t	gyro_axisp = {"gyroaxisp", "0"};
+cvar_t	gyro_axisr = {"gyroaxisr", "0"};
+cvar_t	gyro_axisy = {"gyroaxisy", "0"};
+
 cvar_t	joy_analogdigitalthreshold = {"joyanalogdigitalthreshold", "0.3"};
 cvar_t	joy_forwardthreshold = {"joyforwardthreshold", "0.15"};
 cvar_t	joy_sidethreshold = {"joysidethreshold", "0.15"};
@@ -83,6 +99,13 @@ cvar_t	joy_forwardsensitivity = {"joyforwardsensitivity", "-1.0"};
 cvar_t	joy_sidesensitivity = {"joysidesensitivity", "-1.0"};
 cvar_t	joy_pitchsensitivity = {"joypitchsensitivity", "1.0"};
 cvar_t	joy_yawsensitivity = {"joyyawsensitivity", "-1.0"};
+cvar_t	gyro_enable = {"gyro_enable", "0"};
+cvar_t	gyro_accel = {"gyro_accel", "0"};
+cvar_t	gyro_threshold = {"gyro_threshold", ".01"};
+cvar_t	gyro_forwardsensitivity = {"gyroforwardsensitivity", "-1.0"};
+cvar_t	gyro_sidesensitivity = {"gyrosidesensitivity", "-1.0"};
+cvar_t	gyro_pitchsensitivity = {"gyropitchsensitivity", "1.0"};
+cvar_t	gyro_yawsensitivity = {"gyroyawsensitivity", "-1.0"};
 
 void Joy_AdvancedUpdate_f (void) {
 
@@ -127,6 +150,12 @@ void Joy_AdvancedUpdate_f (void) {
 		dwTemp = (unsigned long) joy_advaxisv.value;
 		dwAxisMap[JOY_AXIS_V] = dwTemp & 0x0000000f;
 		dwControlMap[JOY_AXIS_V] = dwTemp & JOY_RELATIVE_AXIS;
+		dwTemp = (unsigned long) gyro_axisp.value;
+		gyroAxisMap[JOY_GYRO_PITCH] = dwTemp & 0x0000000f;
+		dwTemp = (unsigned long) gyro_axisr.value;
+		gyroAxisMap[JOY_GYRO_ROLL] = dwTemp & 0x0000000f;
+		dwTemp = (unsigned long) gyro_axisy.value;
+		gyroAxisMap[JOY_GYRO_YAW] = dwTemp & 0x0000000f;
 	}
 };
 
@@ -353,6 +382,18 @@ static void Joy_Info_f(void)
 	if (axisButtons + joyNumButtons > JOY_MAX_BUTTONS)
 		Con_Printf("\n\t\t%i usable", JOY_MAX_BUTTONS);
 	Con_Printf("\n");
+
+	if (controller != NULL)
+	{
+		Con_Printf("\tGyroscope: ", joyGyroSensor);
+		switch (joyGyroSensor)
+		{
+			case SDL_SENSOR_GYRO: Con_Printf("SDL_SENSOR_GYRO\n"); break;
+			case SDL_SENSOR_GYRO_R: Con_Printf("SDL_SENSOR_GYRO_R\n"); break;
+			case SDL_SENSOR_GYRO_L: Con_Printf("SDL_SENSOR_GYRO_L\n"); break;
+			default: Con_Printf("Other\n"); break;
+		}
+	}
 }
 
 static void Next_Joystick_f(void)
@@ -381,6 +422,7 @@ static void Next_Joystick_f(void)
 		joyIndex = -1;
 		joy_avail = 0;
 		joystick = NULL;
+		controller = NULL;
 		return;
 	}
 	Con_Printf ("%i joystick(s) found\n", joyCount);
@@ -410,6 +452,37 @@ static void Next_Joystick_f(void)
 	joyNumButtons = SDL_JoystickNumButtons(joystick);
 	if (i == joyIndex) Con_Printf("Reinitialised %i: %s\n", joyIndex, SDL_JoystickName(joystick));
 	else Con_Printf("Joystick set to %i: %s\n", joyIndex, SDL_JoystickName(joystick));
+
+	// Gyroscope Init
+	controller = NULL;
+	joyGyroSensor = SDL_SENSOR_INVALID;
+	if (SDL_IsGameController(joyIndex))
+	{
+		controller = SDL_GameControllerOpen(joyIndex);
+
+		/*	TODO:	Switch JoyCons support seperate left/right gyro readings
+		 *	-	Code below needs to be actually tested with joycons: made with the assumption that SDL_SENSOR_GYRO and SDL_SENSOR_GYRO_R are independent
+		 *	-	instead of using whichever sensor is found, implement extra axes to allow seperate mappings for each joycon?
+		 */
+		if (SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO))
+			joyGyroSensor = SDL_SENSOR_GYRO;
+		else if (SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO_R))
+			joyGyroSensor = SDL_SENSOR_GYRO_R;
+		else if (SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO_L))
+			joyGyroSensor = SDL_SENSOR_GYRO_L;
+
+		if (joyGyroSensor == SDL_SENSOR_INVALID)
+		{
+			//	No Gyro Sensor: Game Controller interface is useless; forget it
+			SDL_GameControllerClose(controller);
+			controller = NULL;
+		}
+		else
+		{
+			if (!SDL_GameControllerIsSensorEnabled(controller, joyGyroSensor))
+				SDL_GameControllerSetSensorEnabled(controller, joyGyroSensor, 1);
+		}
+	}
 }
 
 void IN_Init (void)
@@ -426,6 +499,10 @@ void IN_Init (void)
 	Cvar_Register (&joy_advaxisu);
 	Cvar_Register (&joy_advaxisv);
 
+	Cvar_Register (&gyro_axisp);
+	Cvar_Register (&gyro_axisr);
+	Cvar_Register (&gyro_axisy);
+
 	Cvar_Register (&joy_analogdigitalthreshold);
 	Cvar_Register (&joy_forwardthreshold);
 	Cvar_Register (&joy_sidethreshold);
@@ -436,6 +513,14 @@ void IN_Init (void)
 	Cvar_Register (&joy_pitchsensitivity);
 	Cvar_Register (&joy_yawsensitivity);
 
+	Cvar_Register (&gyro_enable);
+	Cvar_Register (&gyro_accel);
+	Cvar_Register (&gyro_threshold);
+	Cvar_Register (&gyro_forwardsensitivity);
+	Cvar_Register (&gyro_sidesensitivity);
+	Cvar_Register (&gyro_pitchsensitivity);
+	Cvar_Register (&gyro_yawsensitivity);
+
 	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
 	Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
 	Cmd_AddCommand ("joyinfo", Joy_Info_f);
@@ -444,6 +529,7 @@ void IN_Init (void)
  	// assume no joystick
 	joy_avail = false;
 	joystick = NULL;
+	controller = NULL;
 
 	Next_Joystick_f();
 }
@@ -452,6 +538,8 @@ void IN_Shutdown (void)
 {
 	if (joystick) SDL_JoystickClose(joystick);
 	joystick = NULL;
+	if (controller) SDL_GameControllerClose(controller);
+	controller = NULL;
 }
 
 void IN_Commands (void)
@@ -708,12 +796,100 @@ static void IN_JoyMove (usercmd_t *cmd)
 			}
 			break;
 		case AxisDebug:
+			//	TODO: print this to screen instead of console (i can't get it working - i assume the world gets drawn after this)
 			Con_Printf ("Axis %i: %f (%f)\n", i, fAxisValue, fAxisValue*32768);
 			break;
-
 		default:
 			break;
 		}
+	}
+
+	cl.viewangles[PITCH] = bound(cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
+}
+static void IN_GyroMove (usercmd_t *cmd)
+{
+	if (!joy_avail || !in_joystick.value || controller == NULL || !gyro_enable.value)
+		return;
+	// TODO: nothing ^^^here accounts for if the joystick is disconnected, so this function will still continue,
+	// though gyroData is cleared after being read once, so it's just about fine?
+
+	//	Prepare Gyro Data
+	if (SDL_GameControllerGetSensorData(controller, joyGyroSensor, gyroData, GYRO_MAX_AXES) != 0)
+		return;
+
+	int	i;
+
+	float accel_factor = 0;
+	if (gyro_accel.value != 0)
+	{
+		//	a quick and dirty implementation copied from m_accel: don't use accel personally, so might need to be tested and changed by someone who knows what they're doing
+		//	would per-axis accel work better? especially if more axes were implemented
+		for (i=0 ; i<GYRO_MAX_AXES; i++)
+			if (gyroAxisMap[i] == AxisTurn || gyroAxisMap[i] == AxisLook) // only for aiming
+				accel_factor += gyroData[i]*gyroData[i];
+
+		accel_factor = sqrt(accel_factor);
+		accel_factor *= gyro_accel.value * 0.1;
+	}
+
+	// loop through the axes
+	for (i=0 ; i<GYRO_MAX_AXES; i++)
+	{
+		gyroBank[i] += gyroData[i];
+
+		if (fabs(gyroBank[i]) < gyro_threshold.value)
+		{
+			// decay banked data
+			if (4*gyroBank[i] < gyro_threshold.value && -4*gyroBank[i] < gyro_threshold.value)
+			if (4*fabs(gyroBank[i]) < gyro_threshold.value)
+				gyroBank[i] = 0;
+			else gyroBank[i] /= 1.1;
+			continue;
+		}
+
+		switch (gyroAxisMap[i])
+		{
+		case AxisForward:
+			cmd->forwardmove += (gyroBank[i] * (accel_factor + gyro_forwardsensitivity.value)) * cl_forwardspeed.value;
+			break;
+
+		case AxisSide:
+			cmd->sidemove += (gyroBank[i] * (accel_factor + gyro_sidesensitivity.value)) * cl_sidespeed.value;
+			break;
+
+		case AxisTurn:
+			if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
+			{
+				// user wants turn control to become side control
+				cmd->sidemove -= (gyroBank[i] * (accel_factor + gyro_sidesensitivity.value)) * cl_sidespeed.value;
+			}
+			else
+			{
+				// user wants turn control to be turn control
+				if (dwControlMap[i] == JOY_ABSOLUTE_AXIS)
+					cl.viewangles[YAW] += (gyroBank[i] * (accel_factor + gyro_yawsensitivity.value)) * host_frametime * cl_yawspeed.value;
+				else
+					cl.viewangles[YAW] += (gyroBank[i] * (accel_factor + gyro_yawsensitivity.value)) * 180.0;
+			}
+			break;
+
+		case AxisLook:
+			if (dwControlMap[i] == JOY_ABSOLUTE_AXIS)
+				cl.viewangles[PITCH] += (gyroBank[i] * (accel_factor + gyro_pitchsensitivity.value)) * host_frametime * cl_pitchspeed.value;
+			else
+				cl.viewangles[PITCH] += (gyroBank[i] * (accel_factor + gyro_pitchsensitivity.value)) * 180.0;
+			V_StopPitchDrift ();
+			break;
+
+		case AxisDebug:
+			Con_Printf ("Axis %i: %f (%f)\n", i, gyroBank[i], gyroBank[i]*32768);
+			break;
+		default:
+			break;
+		}
+
+		// gyro data was parsed: clear bank
+		gyroBank[i] = 0;
 	}
 
 	cl.viewangles[PITCH] = bound(cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
@@ -723,6 +899,7 @@ void IN_Move (usercmd_t *cmd)
 {
 	IN_MouseMove (cmd);
 	IN_JoyMove (cmd);
+	IN_GyroMove (cmd);
 }
 
 void IN_ClearStates (void)
