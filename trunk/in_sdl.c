@@ -95,6 +95,8 @@ cvar_t	joy_forwardthreshold = {"joyforwardthreshold", "0.15"};
 cvar_t	joy_sidethreshold = {"joysidethreshold", "0.15"};
 cvar_t	joy_pitchthreshold = {"joypitchthreshold", "0.15"};
 cvar_t	joy_yawthreshold = {"joyyawthreshold", "0.15"};
+cvar_t	joy_movementthreshold = {"joymovementthreshold", "0"};
+cvar_t	joy_aimthreshold = {"joyaimthreshold", "0"};
 cvar_t	joy_forwardsensitivity = {"joyforwardsensitivity", "-1.0"};
 cvar_t	joy_sidesensitivity = {"joysidesensitivity", "-1.0"};
 cvar_t	joy_pitchsensitivity = {"joypitchsensitivity", "1.0"};
@@ -515,6 +517,8 @@ void IN_Init (void)
 	Cvar_Register (&joy_sidethreshold);
 	Cvar_Register (&joy_pitchthreshold);
 	Cvar_Register (&joy_yawthreshold);
+	Cvar_Register (&joy_movementthreshold);
+	Cvar_Register (&joy_aimthreshold);
 	Cvar_Register (&joy_forwardsensitivity);
 	Cvar_Register (&joy_sidesensitivity);
 	Cvar_Register (&joy_pitchsensitivity);
@@ -712,6 +716,7 @@ static void IN_JoyMove (usercmd_t *cmd)
 
 	int	i;
 	float	speed, aspeed, fAxisValue;
+	float	bankedInput[4] = {0};
 
 	speed = (in_speed.state & 1) ? cl_movespeedkey.value : 1;
 	aspeed = speed * host_frametime;
@@ -728,10 +733,11 @@ static void IN_JoyMove (usercmd_t *cmd)
 			if ( in_auxlook & 1 )
 			{
 				// user wants forward control to become look control
-				if (fabs(fAxisValue) > joy_pitchthreshold.value)
-				{		
+				if (joy_aimthreshold.value != 0)
+					bankedInput[2] += fAxisValue;
+				else if (fabs(fAxisValue) > joy_pitchthreshold.value)
+				{
 					// if mouse invert is on, invert the joystick pitch value
-					// only absolute control support here (joy_advanced is false)
 					if (m_pitch.value < 0.0)
 						cl.viewangles[PITCH] -= (fAxisValue * joy_pitchsensitivity.value) * aspeed * cl_pitchspeed.value;
 					else
@@ -751,13 +757,17 @@ static void IN_JoyMove (usercmd_t *cmd)
 			else
 			{
 				// user wants forward control to be forward control
-				if (fabs(fAxisValue) > joy_forwardthreshold.value)
+				if (joy_movementthreshold.value != 0)
+					bankedInput[1] += fAxisValue;
+				else if (fabs(fAxisValue) > joy_forwardthreshold.value)
 					cmd->forwardmove += (fAxisValue * joy_forwardsensitivity.value) * speed * cl_forwardspeed.value;
 			}
 			break;
 
 		case AxisSide:
-			if (fabs(fAxisValue) > joy_sidethreshold.value)
+			if (joy_movementthreshold.value != 0)
+				bankedInput[0] += fAxisValue;
+			else if (fabs(fAxisValue) > joy_sidethreshold.value)
 				cmd->sidemove += (fAxisValue * joy_sidesensitivity.value) * speed * cl_sidespeed.value;
 			break;
 
@@ -771,7 +781,9 @@ static void IN_JoyMove (usercmd_t *cmd)
 			else
 			{
 				// user wants turn control to be turn control
-				if (fabs(fAxisValue) > joy_yawthreshold.value)
+				if (joy_aimthreshold.value != 0)
+					bankedInput[3] += fAxisValue;
+				else if (fabs(fAxisValue) > joy_yawthreshold.value)
 				{
 					if (dwControlMap[i] == JOY_ABSOLUTE_AXIS)
 						cl.viewangles[YAW] += (fAxisValue * joy_yawsensitivity.value) * aspeed * cl_yawspeed.value;
@@ -784,7 +796,9 @@ static void IN_JoyMove (usercmd_t *cmd)
 		case AxisLook:
 			if (mlook_active)
 			{
-				if (fabs(fAxisValue) > joy_pitchthreshold.value)
+				if (joy_aimthreshold.value != 0)
+					bankedInput[2] += fAxisValue;
+				else if (fabs(fAxisValue) > joy_pitchthreshold.value)
 				{
 					// pitch movement detected and pitch movement desired by user
 					if (dwControlMap[i] == JOY_ABSOLUTE_AXIS)
@@ -811,6 +825,21 @@ static void IN_JoyMove (usercmd_t *cmd)
 		default:
 			break;
 		}
+	}
+
+	//	Applying banked input for circular deadzones
+	if (joy_movementthreshold.value != 0
+	&&	fabs( sqrt( (bankedInput[0]*bankedInput[0]) + (bankedInput[1]*bankedInput[1]) )) > joy_movementthreshold.value)
+	{
+		cmd->sidemove += (bankedInput[0] * joy_sidesensitivity.value) * speed * cl_sidespeed.value;
+		cmd->forwardmove += (bankedInput[1] * joy_forwardsensitivity.value) * speed * cl_forwardspeed.value;
+	}
+
+	if (joy_aimthreshold.value != 0
+	&&	fabs( sqrt( (bankedInput[2]*bankedInput[2]) + (bankedInput[3]*bankedInput[3]) )) > joy_aimthreshold.value)
+	{
+		cl.viewangles[PITCH] += (bankedInput[2] * joy_pitchsensitivity.value) * aspeed * cl_pitchspeed.value * (m_pitch.value < 0.0? -1 : 1);
+		cl.viewangles[YAW] += (bankedInput[3] * joy_yawsensitivity.value) * aspeed * cl_yawspeed.value;
 	}
 
 	cl.viewangles[PITCH] = bound(cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
