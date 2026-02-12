@@ -112,6 +112,26 @@ cvar_t	gyro_yawsensitivity = {"gyroyawsensitivity", "-1.0"};
 void IN_AuxLookDown (void) {in_auxlook = 1;}
 void IN_AuxLookUp (void) {in_auxlook = 0;}
 
+static void Next_Joystick_f(void);
+void Joy_Disconnect (void) {
+	joyIndex = -1;
+	joy_avail = 0;
+	joystick = NULL;
+	controller = NULL;
+	joyCount = SDL_NumJoysticks();
+
+	// release any pressed buttons
+	int i, key_index = 0;
+	for (i = 0; i < JOY_MAX_BUTTONS; i++)
+	{
+		if (joy_oldbuttonstate & (1<<i))
+		{
+			key_index = (i < 4) ? K_JOY1 : K_AUX1;
+			Key_Event (key_index + i, false);
+		}
+	}
+	for (i = 0; i < GYRO_MAX_AXES; i++) gyroBank[i] = 0;
+}
 void Joy_AdvancedUpdate_f (void) {
 
 	int	i;
@@ -360,6 +380,17 @@ void Sys_SendKeyEvents (void)
 			Sys_Quit ();
 			break;
 
+		case SDL_JOYDEVICEADDED:
+			joyCount = SDL_NumJoysticks();
+			Con_Printf("Joystick %i Connected\n", event.jdevice.which);
+			if (joystick == NULL) Next_Joystick_f();
+			break;
+		case SDL_JOYDEVICEREMOVED:
+			joyCount = SDL_NumJoysticks();
+			Con_Printf("Joystick %i Disconnected\n", event.jdevice.which);
+			if (event.jdevice.which == joyIndex) Joy_Disconnect();
+			break;
+
 		default:
 			break;
 		}
@@ -426,12 +457,7 @@ static void Next_Joystick_f(void)
 	}
 	if (joyCount == 0)
 	{
-		//	TODO: detect joystick disconnection and do all of this there instead
-		Con_Printf ("No joysticks found\n");
-		joyIndex = -1;
-		joy_avail = 0;
-		joystick = NULL;
-		controller = NULL;
+		Joy_Disconnect();
 		return;
 	}
 	Con_Printf ("%i joystick(s) found\n", joyCount);
@@ -454,13 +480,13 @@ static void Next_Joystick_f(void)
 	} while (newJoy == NULL);
 
 	joystick = newJoy;
-	joyIndex = i;
 	joy_avail = true;
 	joy_advancedinit = false;
 	joyNumAxes = SDL_JoystickNumAxes(joystick);
 	joyNumButtons = SDL_JoystickNumButtons(joystick);
 	if (i == joyIndex) Con_Printf("Reinitialised %i: %s\n", joyIndex, SDL_JoystickName(joystick));
-	else Con_Printf("Joystick set to %i: %s\n", joyIndex, SDL_JoystickName(joystick));
+	else Con_Printf("Joystick set to %i: %s\n", i, SDL_JoystickName(joystick));
+	joyIndex = i;
 
 	// Gyroscope Init
 	controller = NULL;
@@ -848,8 +874,6 @@ static void IN_GyroMove (usercmd_t *cmd)
 {
 	if (!joy_avail || !in_joystick.value || controller == NULL || !gyro_enable.value)
 		return;
-	// TODO: nothing ^^^here accounts for if the joystick is disconnected, so this function will still continue,
-	// though gyroData is cleared after being read once, so it's just about fine?
 
 	//	Prepare Gyro Data
 	if (SDL_GameControllerGetSensorData(controller, joyGyroSensor, gyroData, GYRO_MAX_AXES) != 0)
