@@ -65,7 +65,7 @@ enum _ControlList
 	AxisNada = 0, AxisForward, AxisLook, AxisSide, AxisTurn, AxisDebug = 7
 };
 
-qboolean	joy_avail, joy_advancedinit;
+qboolean	joy_avail, joy_advancedinit, in_auxlook;
 unsigned long		joy_oldbuttonstate, joy_numbuttons;
 
 unsigned long	dwAxisMap[JOY_MAX_AXES];
@@ -107,6 +107,9 @@ cvar_t	gyro_sidesensitivity = {"gyrosidesensitivity", "-1.0"};
 cvar_t	gyro_pitchsensitivity = {"gyropitchsensitivity", "1.0"};
 cvar_t	gyro_yawsensitivity = {"gyroyawsensitivity", "-1.0"};
 
+void IN_AuxLookDown (void) {in_auxlook = 1;}
+void IN_AuxLookUp (void) {in_auxlook = 0;}
+
 void Joy_AdvancedUpdate_f (void) {
 
 	int	i;
@@ -122,11 +125,15 @@ void Joy_AdvancedUpdate_f (void) {
 	if (joy_advanced.value == 0.0)
 	{
 		// default joystick initialization
-		// 2 axes only with joystick control
-		dwAxisMap[JOY_AXIS_X] = AxisTurn;
-		// dwControlMap[JOY_AXIS_X] = JOY_ABSOLUTE_AXIS;
+		// should be default twin-stick mappings: left stick move, right stick aim
+		dwAxisMap[JOY_AXIS_X] = AxisSide;
 		dwAxisMap[JOY_AXIS_Y] = AxisForward;
-		// dwControlMap[JOY_AXIS_Y] = JOY_ABSOLUTE_AXIS;
+		dwAxisMap[JOY_AXIS_Z] = AxisTurn;
+		dwAxisMap[JOY_AXIS_R] = AxisLook;
+		// Gyro Axes
+		gyroAxisMap[JOY_GYRO_PITCH] = AxisLook;
+		gyroAxisMap[JOY_GYRO_ROLL] = AxisNada;
+		gyroAxisMap[JOY_GYRO_YAW] = AxisTurn;
 	}
 	else
 	{
@@ -521,6 +528,8 @@ void IN_Init (void)
 	Cvar_Register (&gyro_pitchsensitivity);
 	Cvar_Register (&gyro_yawsensitivity);
 
+	Cmd_AddCommand ("+auxlook", IN_AuxLookDown);
+	Cmd_AddCommand ("-auxlook", IN_AuxLookUp);
 	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
 	Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
 	Cmd_AddCommand ("joyinfo", Joy_Info_f);
@@ -716,7 +725,7 @@ static void IN_JoyMove (usercmd_t *cmd)
 		switch (dwAxisMap[i])
 		{
 		case AxisForward:
-			if ((joy_advanced.value == 0.0) && mlook_active)
+			if ( in_auxlook & 1 )
 			{
 				// user wants forward control to become look control
 				if (fabs(fAxisValue) > joy_pitchthreshold.value)
@@ -850,7 +859,23 @@ static void IN_GyroMove (usercmd_t *cmd)
 		switch (gyroAxisMap[i])
 		{
 		case AxisForward:
-			cmd->forwardmove += (gyroBank[i] * (accel_factor + gyro_forwardsensitivity.value)) * cl_forwardspeed.value;
+			if ( in_auxlook & 1 )
+			{
+				// user wants forward control to become look control
+
+				// if mouse invert is on, invert the joystick pitch value
+				// only absolute control support here (joy_advanced is false)
+				if (m_pitch.value < 0.0)
+					cl.viewangles[PITCH] -= (gyroBank[i] * (accel_factor + gyro_pitchsensitivity.value)) * host_frametime * cl_pitchspeed.value;
+				else
+					cl.viewangles[PITCH] += (gyroBank[i] * (accel_factor + gyro_pitchsensitivity.value)) * host_frametime * cl_pitchspeed.value;
+				V_StopPitchDrift ();
+			}
+			else
+			{
+				// user wants forward control to be forward control
+				cmd->forwardmove += (gyroBank[i] * (accel_factor + gyro_forwardsensitivity.value)) * cl_forwardspeed.value;
+			}
 			break;
 
 		case AxisSide:
