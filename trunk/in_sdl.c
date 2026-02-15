@@ -70,6 +70,7 @@ unsigned long		joy_oldbuttonstate, joy_numbuttons;
 
 unsigned long	dwAxisMap[JOY_MAX_AXES];
 unsigned long	dwControlMap[JOY_MAX_AXES];
+float			axisSensitivityMap[JOY_MAX_AXES];
 unsigned long	gyroAxisMap[GYRO_MAX_AXES];
 float 			gyroNoiseOffset[GYRO_MAX_AXES];
 float 			gyroData[GYRO_MAX_AXES];
@@ -80,11 +81,17 @@ cvar_t	in_joystick = {"joystick", "0", CVAR_ARCHIVE};
 cvar_t	joy_name = {"joyname", "joystick"};
 cvar_t	joy_advanced = {"joyadvanced", "0"};
 cvar_t	joy_advaxisx = {"joyadvaxisx", "0"};
+cvar_t	joy_advaxisxsensitivity = {"joyadvaxisxsensitivity", "1"};
 cvar_t	joy_advaxisy = {"joyadvaxisy", "0"};
+cvar_t	joy_advaxisysensitivity = {"joyadvaxisysensitivity", "1"};
 cvar_t	joy_advaxisz = {"joyadvaxisz", "0"};
+cvar_t	joy_advaxiszsensitivity = {"joyadvaxiszsensitivity", "1"};
 cvar_t	joy_advaxisr = {"joyadvaxisr", "0"};
+cvar_t	joy_advaxisrsensitivity = {"joyadvaxisrsensitivity", "1"};
 cvar_t	joy_advaxisu = {"joyadvaxisu", "0"};
+cvar_t	joy_advaxisusensitivity = {"joyadvaxisusensitivity", "1"};
 cvar_t	joy_advaxisv = {"joyadvaxisv", "0"};
+cvar_t	joy_advaxisvsensitivity = {"joyadvaxisvsensitivity", "1"};
 
 cvar_t	gyro_axisp = {"gyroaxisp", "0"};
 cvar_t	gyro_axisr = {"gyroaxisr", "0"};
@@ -141,6 +148,7 @@ void Joy_AdvancedUpdate_f (void) {
 	for (i=0 ; i<JOY_MAX_AXES ; i++)
 	{
 		dwAxisMap[i] = AxisNada;
+		axisSensitivityMap[i] = 1;
 		dwControlMap[i] = 0;
 	}
 
@@ -163,21 +171,27 @@ void Joy_AdvancedUpdate_f (void) {
 		// data supplied by user via joy_axisn cvars
 		dwTemp = (unsigned long) joy_advaxisx.value;
 		dwAxisMap[JOY_AXIS_X] = dwTemp & 0x0000000f;
+		axisSensitivityMap[JOY_AXIS_X] = joy_advaxisxsensitivity.value;
 		dwControlMap[JOY_AXIS_X] = dwTemp & JOY_RELATIVE_AXIS;
 		dwTemp = (unsigned long) joy_advaxisy.value;
 		dwAxisMap[JOY_AXIS_Y] = dwTemp & 0x0000000f;
+		axisSensitivityMap[JOY_AXIS_Y] = joy_advaxisysensitivity.value;
 		dwControlMap[JOY_AXIS_Y] = dwTemp & JOY_RELATIVE_AXIS;
 		dwTemp = (unsigned long) joy_advaxisz.value;
 		dwAxisMap[JOY_AXIS_Z] = dwTemp & 0x0000000f;
+		axisSensitivityMap[JOY_AXIS_Z] = joy_advaxiszsensitivity.value;
 		dwControlMap[JOY_AXIS_Z] = dwTemp & JOY_RELATIVE_AXIS;
 		dwTemp = (unsigned long) joy_advaxisr.value;
 		dwAxisMap[JOY_AXIS_R] = dwTemp & 0x0000000f;
+		axisSensitivityMap[JOY_AXIS_R] = joy_advaxisrsensitivity.value;
 		dwControlMap[JOY_AXIS_R] = dwTemp & JOY_RELATIVE_AXIS;
 		dwTemp = (unsigned long) joy_advaxisu.value;
 		dwAxisMap[JOY_AXIS_U] = dwTemp & 0x0000000f;
+		axisSensitivityMap[JOY_AXIS_U] = joy_advaxisusensitivity.value;
 		dwControlMap[JOY_AXIS_U] = dwTemp & JOY_RELATIVE_AXIS;
 		dwTemp = (unsigned long) joy_advaxisv.value;
 		dwAxisMap[JOY_AXIS_V] = dwTemp & 0x0000000f;
+		axisSensitivityMap[JOY_AXIS_V] = joy_advaxisvsensitivity.value;
 		dwControlMap[JOY_AXIS_V] = dwTemp & JOY_RELATIVE_AXIS;
 		dwTemp = (unsigned long) gyro_axisp.value;
 		gyroAxisMap[JOY_GYRO_PITCH] = dwTemp & 0x0000000f;
@@ -528,11 +542,17 @@ void IN_Init (void)
 	Cvar_Register (&joy_name);
 	Cvar_Register (&joy_advanced);
 	Cvar_Register (&joy_advaxisx);
+	Cvar_Register (&joy_advaxisxsensitivity);
 	Cvar_Register (&joy_advaxisy);
+	Cvar_Register (&joy_advaxisysensitivity);
 	Cvar_Register (&joy_advaxisz);
+	Cvar_Register (&joy_advaxiszsensitivity);
 	Cvar_Register (&joy_advaxisr);
+	Cvar_Register (&joy_advaxisrsensitivity);
 	Cvar_Register (&joy_advaxisu);
+	Cvar_Register (&joy_advaxisusensitivity);
 	Cvar_Register (&joy_advaxisv);
+	Cvar_Register (&joy_advaxisvsensitivity);
 
 	Cvar_Register (&gyro_axisp);
 	Cvar_Register (&gyro_axisr);
@@ -751,7 +771,10 @@ static void IN_JoyMove (usercmd_t *cmd)
 	for (i=0 ; i<JOY_MAX_AXES && i < joyNumAxes ; i++)
 	{
 		fAxisValue = SDL_JoystickGetAxis(joystick, i);
-		fAxisValue /= 32768.0; // convert range from -32768..32767 to -1..1 
+		fAxisValue *= axisSensitivityMap[i]; //	Per-Axis Sensitivity
+		//if (axisSensitivityMap[i] < 0) fAxisValue *= -1;	//	Per-Axis Invert instead
+
+		fAxisValue /= 32768.0; // convert range from -32768..32767 to -1..1
 
 		switch (dwAxisMap[i])
 		{
