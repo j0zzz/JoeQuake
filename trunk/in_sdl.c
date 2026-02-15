@@ -65,11 +65,12 @@ enum _ControlList
 	AxisNada = 0, AxisForward, AxisLook, AxisSide, AxisTurn, AxisDebug = 7
 };
 
-qboolean	joy_avail, joy_advancedinit, in_auxlook;
+qboolean	joy_avail, joy_advancedinit, gyro_calibrated, in_auxlook;
 unsigned long		joy_oldbuttonstate, joy_numbuttons;
 
 unsigned long	dwAxisMap[JOY_MAX_AXES];
 unsigned long	dwControlMap[JOY_MAX_AXES];
+long			joyAxisOffset[JOY_MAX_AXES];
 float			axisSensitivityMap[JOY_MAX_AXES];
 unsigned long	gyroAxisMap[GYRO_MAX_AXES];
 float 			gyroNoiseOffset[GYRO_MAX_AXES];
@@ -108,6 +109,7 @@ cvar_t	joy_forwardsensitivity = {"joyforwardsensitivity", "-1.0"};
 cvar_t	joy_sidesensitivity = {"joysidesensitivity", "-1.0"};
 cvar_t	joy_pitchsensitivity = {"joypitchsensitivity", "1.0"};
 cvar_t	joy_yawsensitivity = {"joyyawsensitivity", "-1.0"};
+cvar_t	joy_calibration = {"joycalibration", "0"};
 cvar_t	gyro_enable = {"gyro_enable", "0"};
 cvar_t	gyro_accel = {"gyro_accel", "0"};
 cvar_t	gyro_threshold = {"gyro_threshold", ".01"};
@@ -530,8 +532,24 @@ static void Next_Joystick_f(void)
 		{
 			if (!SDL_GameControllerIsSensorEnabled(controller, joyGyroSensor))
 				SDL_GameControllerSetSensorEnabled(controller, joyGyroSensor, 1);
+			for (i = 0; i < GYRO_MAX_AXES; i++)
+				gyroNoiseOffset[i] = 0;
+			gyroSamples = 0;	// reset calibration
+			gyro_calibrated = 1;
 		}
 	}
+}
+static void Calibrate_Joystick_f(void)
+{
+	// Calibrating Neutral Values for each Axis
+	for (int i = 0; i < JOY_MAX_AXES && i < joyNumAxes; i++)
+		joyAxisOffset[i] = SDL_JoystickGetAxis(joystick, i);
+}
+
+static void Calibrate_Gyro_f(void)
+{
+	gyroSamples = 0;	// reset calibration
+	gyro_calibrated = 0;
 }
 
 void IN_Init (void)
@@ -569,6 +587,7 @@ void IN_Init (void)
 	Cvar_Register (&joy_sidesensitivity);
 	Cvar_Register (&joy_pitchsensitivity);
 	Cvar_Register (&joy_yawsensitivity);
+	Cvar_Register (&joy_calibration);
 
 	Cvar_Register (&gyro_enable);
 	Cvar_Register (&gyro_accel);
@@ -584,6 +603,8 @@ void IN_Init (void)
 	Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
 	Cmd_AddCommand ("joyinfo", Joy_Info_f);
 	Cmd_AddCommand ("joynext", Next_Joystick_f);
+	Cmd_AddCommand ("calibratejoy", Calibrate_Joystick_f);
+	Cmd_AddCommand ("calibrategyro", Calibrate_Gyro_f);
 
  	// assume no joystick
 	joy_avail = false;
@@ -626,6 +647,8 @@ void IN_Commands (void)
 			if ((i-joyNumButtons)%2 == 0)
 			{
 				fAxisValue = SDL_JoystickGetAxis(joystick, (i-joyNumButtons)/2);
+				if (joy_calibration.value)
+					fAxisValue -= joyAxisOffset[(i-joyNumButtons)/2];
 				fAxisValue /= 32768.0;
 				buttonstate |= (1<<i) * (fAxisValue < -joy_analogdigitalthreshold.value);
 			}
@@ -771,6 +794,8 @@ static void IN_JoyMove (usercmd_t *cmd)
 	for (i=0 ; i<JOY_MAX_AXES && i < joyNumAxes ; i++)
 	{
 		fAxisValue = SDL_JoystickGetAxis(joystick, i);
+		if (joy_calibration.value) fAxisValue -= joyAxisOffset[i];
+
 		fAxisValue *= axisSensitivityMap[i]; //	Per-Axis Sensitivity
 		//if (axisSensitivityMap[i] < 0) fAxisValue *= -1;	//	Per-Axis Invert instead
 
@@ -893,6 +918,32 @@ static void IN_JoyMove (usercmd_t *cmd)
 
 	cl.viewangles[PITCH] = bound(cl_minpitch.value, cl.viewangles[PITCH], cl_maxpitch.value);
 }
+
+static void IN_GyroCalibration (void)
+{
+#define GYRO_DENOISE_SAMPLES	200	//	number of frames to calibrate for
+	if (!joy_avail || !in_joystick.value || controller == NULL)
+		return;
+
+	if (gyroSamples >= GYRO_DENOISE_SAMPLES)
+	{
+		for (int i = 0; i < GYRO_MAX_AXES; i++) gyroNoiseOffset[i] /= gyroSamples;
+		gyro_calibrated = 1;
+		Con_Printf("Calibrated: %f %f %f\n", gyroNoiseOffset[0], gyroNoiseOffset[1], gyroNoiseOffset[2]);
+		if (joy_calibration.value == 0) Con_Printf("Offset will be applied when joycalibration is set to 1");
+		return;
+	}
+	if (!gyroSamples)
+		Con_Printf("Calibrating Gyro: Leave Controller on a Flat Surface\n");
+
+	if (SDL_GameControllerGetSensorData(controller, joyGyroSensor, gyroData, GYRO_MAX_AXES) == 0)
+	{
+		for (int i = 0; i < GYRO_MAX_AXES; i++)
+			gyroNoiseOffset[i] += gyroData[i];
+		gyroSamples++;
+	}
+}
+
 static void IN_GyroMove (usercmd_t *cmd)
 {
 	if (!joy_avail || !in_joystick.value || controller == NULL || !gyro_enable.value)
@@ -920,6 +971,8 @@ static void IN_GyroMove (usercmd_t *cmd)
 	// loop through the axes
 	for (i=0 ; i<GYRO_MAX_AXES; i++)
 	{
+		if (joy_calibration.value) gyroData[i] -= gyroNoiseOffset[i];
+
 		gyroBank[i] += gyroData[i];
 
 		if (fabs(gyroBank[i]) < gyro_threshold.value)
@@ -1000,7 +1053,8 @@ void IN_Move (usercmd_t *cmd)
 {
 	IN_MouseMove (cmd);
 	IN_JoyMove (cmd);
-	IN_GyroMove (cmd);
+	if (!gyro_calibrated) IN_GyroCalibration();
+	else IN_GyroMove (cmd);
 }
 
 void IN_ClearStates (void)
