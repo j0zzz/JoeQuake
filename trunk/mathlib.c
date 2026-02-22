@@ -434,3 +434,33 @@ fixed16_t Invert24To16 (fixed16_t val)
 }
 
 #endif
+
+qboolean RayVsBox (const vec3_t org, const vec3_t rcpdelta, const vec3_t mins, const vec3_t maxs, float *frac)
+{
+    int i;
+    float enter, exit;
+
+    if (frac)
+        *frac = 1.f;
+
+    enter = 0.f;
+    exit = 1.f;
+
+    for (i = 0; i < 3; i++)
+    {
+        float t0 = (mins[i] - org[i]) * rcpdelta[i];
+        float t1 = (maxs[i] - org[i]) * rcpdelta[i];
+        float tmin = min (t0, t1);
+        float tmax = max (t0, t1);
+        enter = max (enter, tmin);
+        exit = min (exit, tmax);
+    }
+
+    if (enter > exit)
+        return false;
+
+    if (frac)
+        *frac = enter;
+
+    return true;
+}

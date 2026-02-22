@@ -347,7 +347,7 @@ The number of decimal places can be changed with the `_dp` variable.
 
 ##### `cl_bbox`
 
-Enables bounding boxes for non-map entities. The bounding boxes are derived from
+Enables bounding boxes for entities. The bounding boxes are derived from
 information available to the client, therefore they work while playing a demo as
 well as when playing a live game. However, the bounding boxes have the following
 limitations:
@@ -367,6 +367,9 @@ The cvar takes the following values:
 - `2`: Bounding boxes are drawn only during demo playback.
 - `3`: Bounding boxes are drawn only when playing live, but not when recording.
 
+When aiming at a bbox with the feature on, its edict information is displayed on 
+the edict tracker, assuming `cl_track_edict` is set to `0`.
+
 ##### `cl_bboxcolors`
 
 When set to `1` (the default), `cl_bbox` bounding boxes are colored according to
@@ -376,6 +379,10 @@ entity type:
 - Everything else is white.
 
 When set to `0` bounding boxes are all drawn white.
+
+##### `cl_bbox_wh`
+
+When set to `1`, the bounding boxes are displayed through walls. Defaults to `0`.
 
 #### Server
 

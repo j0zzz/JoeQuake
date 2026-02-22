@@ -161,6 +161,7 @@ void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
 int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_s *plane);
 
 void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, float degrees);
+qboolean RayVsBox (const vec3_t org, const vec3_t rcpdelta, const vec3_t mins, const vec3_t maxs, float *frac);
 
 extern	vec3_t	vec3_origin;
 extern	int	_mathlib_temp_int1, _mathlib_temp_int2;

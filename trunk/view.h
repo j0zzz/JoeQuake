@@ -42,6 +42,8 @@ extern	cvar_t	v_ringcshift;
 extern	cvar_t	v_pentcshift;
 extern	cvar_t	v_bonusflash;
 
+extern cvar_t cl_track_edict;
+
 #ifdef GLQUAKE
 extern	cvar_t	gl_crosshairalpha;
 extern	cvar_t	gl_crosshairimage;
@@ -83,6 +85,7 @@ void SCR_DrawClock (void);
 void SCR_DrawSpeed (void);
 void SCR_DrawFPS (void);
 void SCR_DrawStats (void);
+void SCR_DrawEdictTracker (void);
 void SCR_DrawVolume (void);
 void SCR_DrawMovementKeys(void);
 void SCR_DrawPlaybackStats (void);

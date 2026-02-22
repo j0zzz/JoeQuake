@@ -131,6 +131,12 @@
     <Filter Include="Source Files\Browser">
       <UniqueIdentifier>{8c86e5df-b336-4df6-9f4f-9ef7a8f6c13c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Billiards">
+      <UniqueIdentifier>{a8339ef0-e130-4655-a712-d3de8c9a1be5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Billiards_h">
+      <UniqueIdentifier>{f7a04968-2962-4b3a-984f-f8b798e41d01}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\joequake.rc">
@@ -510,6 +516,9 @@
     <ClCompile Include="..\..\trunk\qcurses\set.c">
       <Filter>Source Files\Browser</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\trunk\billiards\billiards.c">
+      <Filter>Source Files\Billiards</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\trunk\adivtab.h">
@@ -742,6 +751,9 @@
     </ClInclude>
     <ClInclude Include="..\..\trunk\qcurses\set.h">
       <Filter>Header Files\Browser_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\billiards\billiards.h">
+      <Filter>Header Files\Billiards_h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
