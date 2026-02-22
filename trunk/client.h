@@ -321,6 +321,7 @@ extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_confirmquit;
 extern	cvar_t	cl_bbox;
+extern	cvar_t	cl_bbox_wh;
 extern	cvar_t	cl_bboxcolors;
 
 extern	cvar_t	cl_demoui;
@@ -361,6 +362,7 @@ void CL_Disconnect_f (void);
 int CL_NextDemo (void);
 qboolean Model_isDead (int modelindex, int frame);
 qboolean CL_ShowBBoxes(void);
+qboolean CL_TrackEdicts(void);
 
 #define			MAX_VISEDICTS	4096	// larger, now we support BSP2 
 extern	int		cl_numvisedicts;

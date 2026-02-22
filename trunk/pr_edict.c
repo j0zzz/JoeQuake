@@ -331,7 +331,7 @@ char *PR_ValueString (etype_t type, eval_t *val)
 		break;
 
 	case ev_float:
-		sprintf (line, "%5.1f", val->_float);
+		sprintf (line, "%5.2f", val->_float);
 		break;
 
 	case ev_vector:
