@@ -139,6 +139,10 @@ Can be between `3` and `64`.
 When switched on, puts a warp effect on the screen while underwater.
 `0` by default.
 
+##### `r_wateralpha_override`
+
+When set to `1`, it overrides the default wateralpha value loaded during worldspawn with the value of the `r_wateralpha` cvar.
+
 ##### `r_particles`
 
 Toggles drawing of classic particles:  
