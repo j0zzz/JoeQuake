@@ -1,4 +1,42 @@
 
+ version 0.18.1 build 8610
+ -----------------------
+
+Added Controller Support for the SDL version (by Pupy)
+	- Analog Digital Conversion
+	- Gyro Input
+	- Circular Deadzones
+	- Joystick Disconnection Handling
+	- Per-Axis Sensitivity
+	- Joy Calibration
+Added Research tools (by Karol Urbanski)
+	- Edict tracking, for following what a certain monster does to figure out better ways to manipulate them
+	- Extended bbox drawing, mostly for convenience of finding secrets but also to easily get edict numbers
+	- A grenade trail mode (called 'billiards' mode since it looks like oldschool billiards games drawing of
+	  the ball path) that allows figuring out alignments and crossfires
+Fixed a bug whith weapon model lerping (found in Quake Brutalist Jam III)
+Added Radar UI to bunnyhop practise tools (by Philipp Kölmel)
+	- Set the cvar show_bhop_stats to the value '1024' to enable the radar
+Fixed crash in Demos browser when trying to scroll while viewing a demo comment (by Cymx)
+Value of r_fullbrightskins can now be decimal between 0..1 to control the percentage of fullbright amount
+	Added new cvar 'r_fullbrightskins_monsters' to separate fullbright monster skins in a more trivial way
+Fixed segmentation fault error on SDA New Year news in Demos browser (by Karol Urbanski)
+Fixed mouse scrolling in Demos browser (by Karol Urbanski)
+Use numerical derivatives to approximate velocity while demo playback (by Emil Gestsson)
+	New cvar: cl_approx_demo_velocity
+Various changes related to the QFM contest
+	- Mode '2' for scr_drawautoid to draw player name in first person mode
+	- New cvar show_grenadecounter to show client-side grenade counter
+	- New cvar r_wateralpha_override: when set to '1', it overrides the default wateralpha value loaded
+	  during worldspawn with the value of r_wateralpha
+Add option to have nearby entities printed on the screen, while in freefly mode (by Jntr)
+	New command: freefly_print_entities
+Improved strafe and prestrafe display on the bunnyhop practice tools (by Karol Urbanski)
+Added option to save an auto-recording without finishing the level on the intermission (by Cymx)
+	New cvar: cl_autodemo_allowunfinished 
+Fixed runes in spawn param override feature (by Sphere)
+Added support for Q64 (Nintendo 64 remaster) based on vkQuake and QuakeSpasm (by Sphere)
+
  version 0.18.0 build 8350
  -----------------------
 

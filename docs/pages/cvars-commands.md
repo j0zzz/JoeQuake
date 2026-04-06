@@ -67,7 +67,11 @@ Turns forced coloration of powerup glow for quad and pentagram on/off, `1` by de
 
 ##### `r_fullbrightskins`
 
-Makes player(s)'s skins fullbright, `0` by default.
+Makes player(s)'s skins fullbright, `0` by default. This cvar can pick up fraction values between `0..1` to control the intensity of the fullbright amount.
+
+##### `r_fullbrightskins_monsters`
+
+Makes all monsters' skins fullbright, `0` by default. This cvar can pick up fraction values between `0..1` to control the intensity of the fullbright amount.
 
 ##### `r_explosionlightcolor`
 
@@ -249,6 +253,10 @@ The following placeholders are available:
 The default value is `#map#_#time#_#skill#_#player#`  
 For example, exiting e2m1 in 0:07.958 seconds on easy skill by player  'joe' will result the following demo name: `e2m1_007958_0_joe.dem`
 
+##### `cl_autodemo_allowunfinished`
+
+When switched on, the `keepdemo` command can be used anytime during the run to save the .dem file, even if the run is not completed (on the intermission screen). In this case the .dem file name will contain the actual datetime when the demo was saved via `keepdemo`.
+
 ##### `cl_maxfps`
 
 Customizes the maximal fps, `72` by default.  
@@ -383,6 +391,10 @@ When set to `0` bounding boxes are all drawn white.
 ##### `cl_bbox_wh`
 
 When set to `1`, the bounding boxes are displayed through walls. Defaults to `0`.
+
+##### `cl_approx_demo_velocity`
+
+When set to `1`, (and during a demo playback) it will assign the player's velocity based on 4 byte float dx/dt approximation of velocity instead of the compressed single byte representation already used in Quake.
 
 #### Server
 
@@ -781,6 +793,18 @@ Default value is `90`.
 Show two decimal places of precision on the intermission screen time, `0` by
 default.
 
+##### `scr_autoid`
+
+Prints the player's name on the screen. It can have the following values:  
+`0` - Switched off  
+`1` - Player's name is shown right above the player model in 3rd person/recammed view.  
+`2` - Player's name is shown in 1st person mode, just like HUD, crosshair, etc.  
+`0` by default.
+
+##### `scr_autoid_scale`
+
+Sets the scaling amount of the autoid text, `2.0` by default. This value should be managed identical to the `scr_sbarscale_amount` value to have the same scaling as other sbar components.
+
 ##### `zoom_fov`
 
 Sets the FOV when zoomed in, `30` by default.
@@ -908,6 +932,10 @@ Displays movement key indicators around the crosshair. `0` by deafult.
 ##### `cl_clock_y`
 
 Shows clock in the lower left corner. Position can be changed with the `_x` and `_y` coordinates. There are 4 predefined clock formats. `0` by default.
+
+##### `show_grenadecounter`
+
+Shows a graphic bar on the middle of the screen when a grenade was thrown by the player. The bar slider shows the amount of time remaining until the grenade explodes. Similar to the QdQstats-style grenade counter. Its value is `0` (switched off) by default.
 
 ##### `show_bhop_stats`
 ##### `show_bhop_stats_x`
