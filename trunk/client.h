@@ -328,6 +328,8 @@ extern	cvar_t	cl_demoui;
 extern	cvar_t	cl_demouitimeout;
 extern	cvar_t	cl_demouihidespeed;
 
+extern	cvar_t	cl_powerbhops;
+
 #define	MAX_TEMP_ENTITIES	256		// lightning bolts, etc
 #define	MAX_STATIC_ENTITIES	4096	//ericw -- was 512
 

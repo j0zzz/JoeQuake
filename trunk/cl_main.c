@@ -76,6 +76,9 @@ cvar_t	cl_demouitimeout = {"cl_demouitimeout", "2.5", CVAR_ARCHIVE};
 cvar_t	cl_demouihidespeed = {"cl_demouihidespeed", "2", CVAR_ARCHIVE};
 cvar_t	cl_approx_demo_velocity = {"cl_approx_demo_velocity", "1", CVAR_ARCHIVE};
 
+static qboolean OnChange_cl_powerbhops(cvar_t* var, char* string);
+cvar_t	cl_powerbhops = { "cl_powerbhops", "1", CVAR_ARCHIVE, OnChange_cl_powerbhops };
+
 client_static_t	cls;
 client_state_t	cl;
 // FIXME: put these on hunk?
@@ -140,6 +143,27 @@ static qboolean OnChange_cl_demospeed (cvar_t *var, char *string)
 
 	if (newval < 0 || newval > 20)
 		return true;
+
+	return false;
+}
+
+static qboolean OnChange_cl_powerbhops(cvar_t* var, char* string)
+{
+	float	newval = Q_atof(string);
+
+	if (newval < 0)
+		return true;
+	
+	if (newval > 0)
+	{
+		Cvar_SetValue(&cl_forwardspeed, 200);
+		Cvar_SetValue(&cl_backspeed, 200);
+		Cmd_ExecuteString("+speed", src_command);
+	}
+	else
+	{
+		Cmd_ExecuteString("-speed", src_command);
+	}
 
 	return false;
 }
@@ -1529,6 +1553,7 @@ void CL_Init (void)
 	Cvar_Register(&cl_demouitimeout);
 	Cvar_Register(&cl_demouihidespeed);
 	Cvar_Register(&cl_approx_demo_velocity);
+	Cvar_Register(&cl_powerbhops);
 
 	if (COM_CheckParm("-noindphys"))
 	{

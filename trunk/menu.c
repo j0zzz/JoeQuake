@@ -3043,16 +3043,7 @@ void M_Misc_Key(int k)
 			break;
 
 		case 1:	// power bunnyhopping
-			if (!(cl_forwardspeed.value == 200 && (in_speed.state & 1)))
-			{
-				Cvar_SetValue(&cl_forwardspeed, 200);
-				Cvar_SetValue(&cl_backspeed, 200);
-				Cmd_ExecuteString("+speed", src_command);
-			}
-			else
-			{
-				Cmd_ExecuteString("-speed", src_command);
-			}
+			Cvar_SetValue(&cl_powerbhops, !cl_powerbhops.value);
 			break;
 
 		case 2:
