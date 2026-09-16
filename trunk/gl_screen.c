@@ -101,6 +101,7 @@ cvar_t		scr_autoid_scale = { "scr_autoid_scale", "2" };
 cvar_t		scr_widescreen_fov = {"scr_widescreen_fov", "1", CVAR_ARCHIVE};
 cvar_t		cl_gun_fovscale = {"cl_gun_fovscale", "0", CVAR_ARCHIVE}; // Qrack
 cvar_t		scr_usekfont = { "scr_usekfont", "0" }; // 2021 re-release
+cvar_t		scr_showtitle = { "scr_showtitle", "0" };
 
 cvar_t		scr_cursor_scale = { "scr_cursor_scale", "1" };				// The mouse cursor scale
 #ifdef GLQUAKE
@@ -521,7 +522,8 @@ void SCR_Init (void)
 	Cvar_Register (&scr_autoid_scale);
 	Cvar_Register (&scr_widescreen_fov);
 	Cvar_Register (&cl_gun_fovscale);
-	Cvar_Register (&scr_usekfont); // 2021 re-release
+	Cvar_Register(&scr_usekfont); // 2021 re-release
+	Cvar_Register (&scr_showtitle);
     BHOP_Init();
     Billiards_Init();
 
@@ -823,7 +825,7 @@ void SCR_SetupAutoID (void)
 
 }
 
-void Draw_CustomScaledString(int x, int y, char* str, int scale_amount);
+void Draw_CustomScaled_String(int x, int y, char* str, float alpha, float scale_amount);
 
 void SCR_DrawAutoID (void)
 {
@@ -843,7 +845,7 @@ void SCR_DrawAutoID (void)
 
 		x = scr_vrect.x + (scr_vrect.width / 2) - ((len * size) / 2);
 		y = scr_vrect.y + (scr_vrect.height / 4);
-		Draw_CustomScaledString (x, y, player->name, scale_amount);
+		Draw_CustomScaled_String (x, y, player->name, 1.0, scale_amount);
 		return;
 	}
 
@@ -851,7 +853,7 @@ void SCR_DrawAutoID (void)
 	{
 		x = autoids[i].x * vid.width / glwidth;
 		y = (glheight - autoids[i].y) * vid.height / glheight;
-		Draw_CustomScaledString (x - strlen(autoids[i].player->name) * half_size, y - size, autoids[i].player->name, scale_amount);
+		Draw_CustomScaled_String (x - strlen(autoids[i].player->name) * half_size, y - size, autoids[i].player->name, 1.0, scale_amount);
 	}
 }
 
@@ -960,7 +962,65 @@ void SCR_DrawGrenadeTimer(void)
 		x - (grenade_timer_width/2 * size) + half_size + pos, y - half_size/2, 
 		x - (grenade_timer_width/2 * size) + half_size + pos, y + half_size/2, 
 		size/2, 
-		RGBA_TO_COLOR(255, 0, 0, 255));}
+		RGBA_TO_COLOR(255, 0, 0, 255));
+}
+
+static char scr_last_mapname[128] = { 0 };
+static float scr_mapname_start_time = 0.0f;
+static const float SCR_MAPNAME_DURATION = 3.0f;
+static const float SCR_MAPNAME_FADE_SECONDS = 1.0f;
+
+void SCR_DrawMapName()
+{
+	char* map = CL_MapName(), *mapname;
+	int	x, y;
+	float elapsed, alpha;
+
+	if (!scr_showtitle.value)
+		return;
+
+	// If no map name available, reset state and return
+	if (!map || !map[0])
+	{
+		scr_last_mapname[0] = 0;
+		scr_mapname_start_time = 0.0f;
+		return;
+	}
+
+	mapname = cl.levelname[0] ? cl.levelname : map;
+	// If the map has changed, store new name and start time
+	if (Q_strcasecmp(mapname, scr_last_mapname) != 0)
+	{
+		Q_strncpyz(scr_last_mapname, mapname, sizeof(scr_last_mapname));
+		scr_mapname_start_time = cl.time;
+	}
+
+	// Ensure start time is initialized
+	if (scr_mapname_start_time <= 0.0f)
+		scr_mapname_start_time = cl.time;
+
+	// Compute elapsed time since we started showing the map name
+	elapsed = cl.time - scr_mapname_start_time;
+	if (elapsed < 0.0f)
+		elapsed = 0.0f;
+
+	// Only show for the configured duration
+	if (elapsed > SCR_MAPNAME_DURATION)
+		return;
+
+	// Compute alpha for fade-out during the final second
+	if (elapsed <= (SCR_MAPNAME_DURATION - SCR_MAPNAME_FADE_SECONDS))
+		alpha = 1.0f;
+	else
+	{
+		alpha = 1.0f - (elapsed - (SCR_MAPNAME_DURATION - SCR_MAPNAME_FADE_SECONDS)) / SCR_MAPNAME_FADE_SECONDS;
+		max(alpha, 0.0f);
+	}
+
+	x = scr_vrect.x + (scr_vrect.width / 2) - ((strlen(scr_last_mapname) * Sbar_GetScaledCharacterSize()) / 2);
+	y = scr_vrect.y + (scr_vrect.height * 0.1);
+	Draw_CustomScaled_String(x, y, scr_last_mapname, alpha, scr_sbarscale_amount.value);
+}
 
 /* 
 ============================================================================== 
@@ -1374,6 +1434,7 @@ void SCR_UpdateScreen (void)
 		SCR_DrawPause ();
 		SCR_DrawAutoID ();
 		SCR_DrawGrenadeTimer();
+		SCR_DrawMapName();
 		if (nehahra)
 			SHOWLMP_drawall ();
 		SCR_CheckDrawCenterString ();

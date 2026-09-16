@@ -957,36 +957,12 @@ void Draw_Alt_String (int x, int y, char *str, qboolean scale)
 	glEnd ();
 }
 
-byte *StringToRGB (char *s)
-{
-	byte		*col;
-	static	byte	rgb[4];
-
-	Cmd_TokenizeString (s);
-	if (Cmd_Argc() == 3)
-	{
-		rgb[0] = (byte)Q_atoi(Cmd_Argv(0));
-		rgb[1] = (byte)Q_atoi(Cmd_Argv(1));
-		rgb[2] = (byte)Q_atoi(Cmd_Argv(2));
-	}
-	else
-	{
-		col = (byte *)&d_8to24table[(byte)Q_atoi(s)];
-		rgb[0] = col[0];
-		rgb[1] = col[1];
-		rgb[2] = col[2];
-	}
-	rgb[3] = 255;
-
-	return rgb;
-}
-
 /*
 ================
-Draw_CustomScaledString
+Draw_CustomScaled_String
 ================
 */
-void Draw_CustomScaledString (int x, int y, char *str, int scale_amount)
+void Draw_CustomScaled_String (int x, int y, char *str, float alpha, float scale_amount)
 {
 	float	frow, fcol;
 	int	num, size;
@@ -997,12 +973,21 @@ void Draw_CustomScaledString (int x, int y, char *str, int scale_amount)
 	if (!*str)
 		return;
 
+	if (!alpha)
+		return;
+
 	size = (int)(8 * scale_amount);
 
+	if (alpha)
+	{
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glDisable(GL_ALPHA_TEST);
+		glEnable(GL_BLEND);
+		glColor4f(1, 1, 1, alpha);
+	}
+
 	GL_Bind (char_texture);
-
 	glBegin (GL_QUADS);
-
 	while (*str)		// stop rendering when out of characters
 	{
 		if ((num = *str++) != 32)	// skip spaces
@@ -1020,8 +1005,39 @@ void Draw_CustomScaledString (int x, int y, char *str, int scale_amount)
 		}
 		x += size;
 	}
-
 	glEnd ();
+
+	if (alpha)
+	{
+		glDisable(GL_BLEND);
+		glEnable(GL_ALPHA_TEST);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glColor3ubv(color_white);
+	}
+}
+
+byte* StringToRGB(char* s)
+{
+	byte* col;
+	static	byte	rgb[4];
+
+	Cmd_TokenizeString(s);
+	if (Cmd_Argc() == 3)
+	{
+		rgb[0] = (byte)Q_atoi(Cmd_Argv(0));
+		rgb[1] = (byte)Q_atoi(Cmd_Argv(1));
+		rgb[2] = (byte)Q_atoi(Cmd_Argv(2));
+	}
+	else
+	{
+		col = (byte*)&d_8to24table[(byte)Q_atoi(s)];
+		rgb[0] = col[0];
+		rgb[1] = col[1];
+		rgb[2] = col[2];
+	}
+	rgb[3] = 255;
+
+	return rgb;
 }
 
 /*
