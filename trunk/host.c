@@ -1143,8 +1143,7 @@ void Host_Shutdown (void)
 	IN_Shutdown ();
 	Con_Shutdown ();
 
-	if (machine)
-		LOC_Shutdown();
+	LOC_Shutdown();
 
 	if (cls.state != ca_dedicated)
 	{

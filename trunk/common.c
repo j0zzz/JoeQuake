@@ -1229,7 +1229,7 @@ void COM_InitArgv (int argc, char **argv)
 	if (COM_CheckParm("-hipnotic") || COM_CheckParm("-quoth")) //johnfitz -- "-quoth" support
 		hipnotic = 1;
 
-	if (COM_CheckParm("-machine"))
+	if (COM_CheckParm("-machine") || COM_CheckParm("-machine2"))
 		machine = 1;
 
 #ifdef GLQUAKE
@@ -2052,6 +2052,8 @@ void COM_InitFilesystem (void)
 		COM_AddGameDirectory(va("%s/quoth", com_basedir));
 	if (COM_CheckParm("-machine"))
 		COM_AddGameDirectory(va("%s/mg1", com_basedir));
+	if (COM_CheckParm("-machine2"))
+		COM_AddGameDirectory(va("%s/mg3", com_basedir));
 
 #ifdef GLQUAKE
 	if (COM_CheckParm("-nehahra"))
