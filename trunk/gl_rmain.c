@@ -120,6 +120,18 @@ qboolean OnChange_r_skyfog(cvar_t *var, char *string);
 cvar_t	r_skyfog = { "r_skyfog", "0.5", 0, OnChange_r_skyfog };
 cvar_t	r_skyfog_default = { "r_skyfog_default", "0.5" };
 cvar_t	r_scale = { "r_scale", "1" };
+cvar_t	r_crt = { "r_crt", "0" };
+cvar_t	r_crt_curvature = { "r_crt_curvature", "0.02" };
+cvar_t	r_crt_scanline = { "r_crt_scanline", "0.3" };
+cvar_t	r_crt_chroma = { "r_crt_chroma", "0.003" };
+cvar_t	r_crt_vignette = { "r_crt_vignette", "0.5" };
+cvar_t	r_crt_noise = { "r_crt_noise", "0.03" };
+cvar_t	r_crt_downscale = { "r_crt_downscale", "2" };
+cvar_t	r_vintage_grain = { "r_vintage_grain", "0.05" };
+cvar_t	r_vintage_desaturate = { "r_vintage_desaturate", "0.25" };
+cvar_t	r_vintage_warmth = { "r_vintage_warmth", "0.35" };
+cvar_t	r_vintage_contrast = { "r_vintage_contrast", "1.05" };
+cvar_t	r_vintage_gamma = { "r_vintage_gamma", "1.1" };
 qboolean OnChange_r_ambient(cvar_t *var, char *string);
 cvar_t	r_ambient = { "r_ambient", "0", 0, OnChange_r_ambient };
 
@@ -4063,6 +4075,18 @@ void R_Init (void)
 	Cvar_Register (&r_skyfog);
 	Cvar_Register (&r_skyfog_default);
 	Cvar_Register (&r_scale);
+	Cvar_Register (&r_crt);
+	Cvar_Register (&r_crt_curvature);
+	Cvar_Register (&r_crt_scanline);
+	Cvar_Register (&r_crt_chroma);
+	Cvar_Register (&r_crt_vignette);
+	Cvar_Register (&r_crt_noise);
+	Cvar_Register (&r_crt_downscale);
+	Cvar_Register (&r_vintage_grain);
+	Cvar_Register (&r_vintage_desaturate);
+	Cvar_Register (&r_vintage_warmth);
+	Cvar_Register (&r_vintage_contrast);
+	Cvar_Register (&r_vintage_gamma);
 	Cvar_Register (&r_ambient);
 	Cvar_Register (&r_waterquality);
 	Cvar_Register (&r_oldwater);
@@ -4477,6 +4501,229 @@ void R_ScaleView(void)
 	currenttexture = -1;
 }
 
+static GLuint r_crt_texture = 0;
+static GLuint r_crt_program = 0;
+static int r_crt_texture_width = 0, r_crt_texture_height = 0;
+
+static GLuint crtTimeLoc;
+static GLuint crtScanlineLoc;
+static GLuint crtCurvatureLoc;
+static GLuint crtChromaLoc;
+static GLuint crtVignetteLoc;
+static GLuint crtTexSizeLoc;
+static GLuint crtTextureLoc;
+static GLuint crtNoiseLoc;
+
+static GLuint vintageGrainLoc;
+static GLuint vintageDesatLoc;
+static GLuint vintageWarmthLoc;
+static GLuint vintageContrastLoc;
+static GLuint vintageGammaLoc;
+
+static GLuint crtDownscaleLoc;
+
+/*
+=============
+GLSLCrt_CreateShaders
+=============
+*/
+static void GLSLCrt_CreateShaders(void)
+{
+	const GLchar* vertSource =
+		"#version 110\n"
+		"void main(void) {\n"
+		"    gl_Position = vec4(gl_Vertex.xy, 0.0, 1.0);\n"
+		"    gl_TexCoord[0] = gl_MultiTexCoord0;\n"
+		"}\n";
+
+	const GLchar* fragSource =
+		"#version 110\n"
+		"uniform sampler2D CRTTexture;\n"
+		"uniform vec2 TexSize;\n"
+		"uniform float Time;\n"
+		"uniform float ScanlineIntensity;\n"
+		"uniform float Curvature;\n"
+		"uniform float Chroma;\n"
+		"uniform float Vignette;\n"
+		"uniform float Grain;\n"
+		"uniform float Desaturate;\n"
+		"uniform float Warmth;\n"
+		"uniform float Contrast;\n"
+		"uniform float Gamma;\n"
+		"uniform int DownScale; // 1,2,4\n"
+		"\n"
+		"vec3 SampleDownscaled(sampler2D tex, vec2 uv, vec2 texSize, int factor, vec2 chromaOff)\n"
+		"{\n"
+		"    if (factor <= 1) {\n"
+		"        return vec3(texture2D(tex, uv + chromaOff).r,\n"
+		"                    texture2D(tex, uv).g,\n"
+		"                    texture2D(tex, uv - chromaOff).b);\n"
+		"    }\n"
+		"    // emulate rendering to a smaller buffer then nearest-upscale\n"
+		"    vec2 smallSize = texSize / float(factor);\n"
+		"    vec2 coord = floor(uv * smallSize) / smallSize + (0.5 / smallSize);\n"
+		"    return vec3(texture2D(tex, coord + chromaOff).r,\n"
+		"                texture2D(tex, coord).g,\n"
+		"                texture2D(tex, coord - chromaOff).b);\n"
+		"}\n"
+		"void main(void) {\n"
+		"    vec2 uv = gl_TexCoord[0].xy;\n"
+		"\n"
+		"    // barrel distortion (simple)\n"
+		"    vec2 pos = uv * 2.0 - 1.0;\n"
+		"    float r = length(pos);\n"
+		"    float factor = 1.0 + Curvature * r * r;\n"
+		"    vec2 distorted = pos * factor;\n"
+		"    vec2 dUV = (distorted + 1.0) * 0.5;\n"
+		"    if (dUV.x < 0.0 || dUV.x > 1.0 || dUV.y < 0.0 || dUV.y > 1.0) {\n"
+		"        gl_FragColor = vec4(0.0);\n"
+		"        return;\n"
+		"    }\n"
+		"\n"
+		"    vec2 chromaOff = vec2(Chroma) / TexSize;\n"
+		"\n"
+		"    // sample using virtual downscale (nearest upscaling)\n"
+		"    vec3 col = SampleDownscaled(CRTTexture, dUV, TexSize, DownScale, chromaOff);\n"
+		"\n"
+		"    // desaturate slightly\n"
+		"    float lum = dot(col, vec3(0.299, 0.587, 0.114));\n"
+		"    col = mix(col, vec3(lum), Desaturate);\n"
+		"\n"
+		"    // warm tint\n"
+		"    vec3 warmBias = vec3(1.07, 1.02, 0.88);\n"
+		"    col = mix(col, col * warmBias, Warmth);\n"
+		"\n"
+		"    // contrast and gamma-ish curve\n"
+		"    col = (col - 0.5) * Contrast + 0.5;\n"
+		"    col = pow(clamp(col, 0.0, 1.0), vec3(1.0 / max(Gamma, 0.0001)));\n"
+		"\n"
+		"    // scanlines\n"
+		"    float scan = 1.0 - ScanlineIntensity * 0.5 * (1.0 + sin((uv.y * TexSize.y) * 3.14159 + Time * 5.0));\n"
+		"    col *= scan;\n"
+		"\n"
+		"    // film grain (time varying)\n"
+		"    float n = fract(sin(dot(uv * TexSize + Time * 0.1, vec2(12.9898,78.233))) * 43758.5453);\n"
+		"    col += (n - 0.5) * Grain;\n"
+		"\n"
+		"    // vignette\n"
+		"    vec2 cc = uv * 2.0 - 1.0;\n"
+		"    float d = dot(cc, cc);\n"
+		"    float vig = 1.0 - smoothstep(0.0, 1.0, d * Vignette);\n"
+		"    col *= vig;\n"
+		"\n"
+		"    gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);\n"
+		"}\n";
+
+	if (!gl_glsl_able)
+		return;
+
+	r_crt_program = GL_CreateProgram(vertSource, fragSource, 0, NULL);
+
+	// get uniform locations
+	if (r_crt_program)
+	{
+		crtTimeLoc = GL_GetUniformLocation(&r_crt_program, "Time");
+		crtScanlineLoc = GL_GetUniformLocation(&r_crt_program, "ScanlineIntensity");
+		crtCurvatureLoc = GL_GetUniformLocation(&r_crt_program, "Curvature");
+		crtChromaLoc = GL_GetUniformLocation(&r_crt_program, "Chroma");
+		crtVignetteLoc = GL_GetUniformLocation(&r_crt_program, "Vignette");
+		crtTexSizeLoc = GL_GetUniformLocation(&r_crt_program, "TexSize");
+		crtTextureLoc = GL_GetUniformLocation(&r_crt_program, "CRTTexture");
+
+		vintageGrainLoc = GL_GetUniformLocation(&r_crt_program, "Grain");
+		vintageDesatLoc = GL_GetUniformLocation(&r_crt_program, "Desaturate");
+		vintageWarmthLoc = GL_GetUniformLocation(&r_crt_program, "Warmth");
+		vintageContrastLoc = GL_GetUniformLocation(&r_crt_program, "Contrast");
+		vintageGammaLoc = GL_GetUniformLocation(&r_crt_program, "Gamma");
+
+		crtDownscaleLoc = GL_GetUniformLocation(&r_crt_program, "DownScale");
+	}
+}
+
+/*
+=============
+GLSLCrt_ApplyCRT
+=============
+*/
+void GLSLCrt_ApplyCRT(void)
+{
+	float smax, tmax;
+
+	if (!gl_glsl_able || !r_crt.value)
+		return;
+
+	// create render-to-texture texture if needed
+	if (!r_crt_texture)
+	{
+		r_crt_texture = texture_extension_number++;
+		glBindTexture(GL_TEXTURE_2D, r_crt_texture);
+
+		r_crt_texture_width = glwidth;
+		r_crt_texture_height = glheight;
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, r_crt_texture_width, r_crt_texture_height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	}
+
+	// create shader if needed
+	if (!r_crt_program)
+	{
+		GLSLCrt_CreateShaders();
+		if (!r_crt_program)
+			return;
+	}
+
+	// copy the framebuffer to the texture
+	GL_DisableMultitexture();
+	glBindTexture(GL_TEXTURE_2D, r_crt_texture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, glx, gly, glwidth, glheight);
+
+	// use program and set uniforms
+	qglUseProgram(r_crt_program);
+
+	qglUniform1i(crtTextureLoc, 0);
+	qglUniform1f(crtTimeLoc, cl.time);
+	qglUniform1f(crtScanlineLoc, r_crt_scanline.value);
+	qglUniform1f(crtCurvatureLoc, r_crt_curvature.value);
+	qglUniform1f(crtChromaLoc, r_crt_chroma.value);
+	qglUniform1f(crtVignetteLoc, r_crt_vignette.value);
+	qglUniform2f(crtTexSizeLoc, (float)r_crt_texture_width, (float)r_crt_texture_height);
+
+	qglUniform1f(vintageGrainLoc, r_vintage_grain.value);
+	qglUniform1f(vintageDesatLoc, r_vintage_desaturate.value);
+	qglUniform1f(vintageWarmthLoc, r_vintage_warmth.value);
+	qglUniform1f(vintageContrastLoc, r_vintage_contrast.value);
+	qglUniform1f(vintageGammaLoc, r_vintage_gamma.value);
+
+	/* set downscale factor (clamped to 1,2 or 4) */
+	int ds = (int)r_crt_downscale.value;
+	if (ds != 1 && ds != 2 && ds != 4) ds = 1;
+	if (crtDownscaleLoc >= 0) qglUniform1i(crtDownscaleLoc, ds);
+
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_DEPTH_TEST);
+
+	glViewport(glx, gly, glwidth, glheight);
+
+	smax = glwidth / (float)r_crt_texture_width;
+	tmax = glheight / (float)r_crt_texture_height;
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0);
+	glVertex2f(-1, -1);
+	glTexCoord2f(smax, 0);
+	glVertex2f(1, -1);
+	glTexCoord2f(smax, tmax);
+	glVertex2f(1, 1);
+	glTexCoord2f(0, tmax);
+	glVertex2f(-1, 1);
+	glEnd();
+
+	qglUseProgram(0);
+	currenttexture = -1;
+}
+
 /*
 ================
 R_RenderView
@@ -4484,33 +4731,33 @@ R_RenderView
 r_refdef must be set before the first call
 ================
 */
-void R_RenderView (void)
+void R_RenderView(void)
 {
 	double	time1 = 0, time2;
 
 	if (!r_worldentity.model || !cl.worldmodel)
-		Sys_Error ("R_RenderView: NULL worldmodel");
+		Sys_Error("R_RenderView: NULL worldmodel");
 
 	if (r_speeds.value)
 	{
-		glFinish ();
-		time1 = Sys_DoubleTime ();
+		glFinish();
+		time1 = Sys_DoubleTime();
 		c_brush_polys = c_alias_polys = c_md3_polys = 0;
 	}
 
 	if (gl_finish.value)
-		glFinish ();
+		glFinish();
 
 	R_SetupFrame();
 
 	// render normal view
-	R_RenderScene ();
+	R_RenderScene();
 
 	R_ScaleView();
 
 	if (r_speeds.value)
 	{
-		time2 = Sys_DoubleTime ();
-		Con_Printf ("%3i ms  %4i wpoly %4i epoly %4i md3poly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys, c_md3_polys);
+		time2 = Sys_DoubleTime();
+		Con_Printf("%3i ms  %4i wpoly %4i epoly %4i md3poly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys, c_md3_polys);
 	}
 }

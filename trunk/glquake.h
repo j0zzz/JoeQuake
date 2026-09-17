@@ -316,7 +316,8 @@ typedef void (APIENTRY *lpDisableVertexAttribArrayFUNC) (GLuint index);
 typedef GLint(APIENTRY *lpGetUniformLocationFUNC) (GLuint program, const GLchar *name);
 typedef void (APIENTRY *lpUniform1iFUNC) (GLint location, GLint v0);
 typedef void (APIENTRY *lpUniform1ivFUNC) (GLint location, GLsizei count, const GLint *v);
-typedef void (APIENTRY *lpUniform1fFUNC) (GLint location, GLfloat v0);
+typedef void (APIENTRY* lpUniform1fFUNC) (GLint location, GLfloat v0);
+typedef void (APIENTRY *lpUniform2fFUNC) (GLint location, GLfloat v0, GLfloat v1);
 typedef void (APIENTRY *lpUniform3fFUNC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
 typedef void (APIENTRY *lpUniform4fFUNC) (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 typedef void (APIENTRY *lpUniformMatrix4fvFUNC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
@@ -357,6 +358,7 @@ extern lpGetUniformLocationFUNC qglGetUniformLocation;
 extern lpUniform1iFUNC qglUniform1i;
 extern lpUniform1ivFUNC qglUniform1iv;
 extern lpUniform1fFUNC qglUniform1f;
+extern lpUniform2fFUNC qglUniform2f;
 extern lpUniform3fFUNC qglUniform3f;
 extern lpUniform4fFUNC qglUniform4f;
 extern lpUniformMatrix4fvFUNC qglUniformMatrix4fv;
@@ -434,6 +436,7 @@ void R_BrightenScreen (void);
 void R_Q3DamageDraw (void);
 void GLAlias_CreateShaders(void);
 void GLSLGamma_GammaCorrect(void);
+void GLSLCrt_ApplyCRT(void);
 qboolean R_CullModelForEntity(entity_t *ent);
 
 #define NUMVERTEXNORMALS	162

@@ -1467,6 +1467,7 @@ void SCR_UpdateScreen (void)
 		V_UpdatePalette();
 	}
 
+	GLSLCrt_ApplyCRT();
 	GLSLGamma_GammaCorrect();
 
 #ifdef _WIN32
