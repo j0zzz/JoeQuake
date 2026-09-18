@@ -285,6 +285,9 @@
     <ClCompile Include="..\..\trunk\movie_avi.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\trunk\movie_ff-win.c">
+      <Filter>Source Files\Misc</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\trunk\nehahra.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
@@ -603,6 +606,9 @@
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
     <ClInclude Include="..\..\trunk\movie_avi.h">
+      <Filter>Header Files\Misc_h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\trunk\movie_ff-win.h">
       <Filter>Header Files\Misc_h</Filter>
     </ClInclude>
     <ClInclude Include="..\..\trunk\nehahra.h">

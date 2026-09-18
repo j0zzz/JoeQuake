@@ -450,6 +450,7 @@ static void VID_TestMode_f (void)
 	Con_Printf("vid_testmode not supported, use vid_forcemode instead.\n");
 }
 
+extern qboolean ready_for_capture;
 static void VID_ForceMode_f (void)
 {
 	int		i;
@@ -502,6 +503,7 @@ static void VID_ForceMode_f (void)
 	} else {
 		SetMode(width, height, refreshrate, fullscreen);
 	}
+	ready_for_capture = true;
 }
 
 static int CmpModes(sdlmode_t *m1, sdlmode_t *m2)

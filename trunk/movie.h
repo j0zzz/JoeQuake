@@ -26,3 +26,5 @@ void Movie_UpdateScreen (void);
 void Movie_TransferStereo16 (void);
 qboolean Movie_GetSoundtime (void);
 qboolean Movie_IsActive (void);
+void Movie_Stop (void);
+void Movie_CancelCaptureStats (void);

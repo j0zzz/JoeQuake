@@ -1,0 +1,13 @@
+name: Build Windows Executables
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fail_job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Fail Step
+      run: |
+        echo "Building Windows exes is not supported on this branch"
+        exit 1

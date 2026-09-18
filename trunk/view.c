@@ -59,6 +59,8 @@ cvar_t	show_fps = {"show_fps", "0"};
 cvar_t	show_fps_x = {"show_fps_x", "-5"};
 cvar_t	show_fps_y = {"show_fps_y", "-1"};
 
+cvar_t	show_attempts = {"show_attempts", "0"};
+cvar_t	attempt_count = {"attempt_count", "0", CVAR_ARCHIVE};
 cvar_t	show_stats = {"show_stats", "1"};
 cvar_t	show_stats_small = {"show_stats_small", "0"};
 cvar_t	show_stats_length = {"show_stats_length", "0.5"};
@@ -1323,6 +1325,27 @@ float	drawstats_limit;
 
 /*
 ===============
+SCR_DrawAttemptCount
+===============
+*/
+void SCR_DrawAttemptCount (void)
+{
+	int		mins, secs, tens, size;
+	float	scale;
+	extern	mpic_t	*sb_colon, *sb_nums[2][11];
+
+	if (!show_attempts.value)
+		return;
+
+	scale = Sbar_GetScaleAmount();
+	size = Sbar_GetScaledCharacterSize();
+
+    Draw_String (vid.width - (int)(128 * scale), vid.height - (int)(48 * scale), va("%16s", va("attempt: %i", (int)attempt_count.value)), true);
+}
+
+
+/*
+===============
 SCR_DrawStats
 ===============
 */
@@ -1740,6 +1763,17 @@ void V_RenderView (void)
 
 /*
 =============
+V_AttemptCountReset
+=============
+*/
+void V_AttemptCountReset (void)
+{
+	Con_Printf("Reset attempt counter on attempt %i\n", (int)attempt_count.value);
+	Cvar_SetValue(&attempt_count, 0);
+}
+
+/*
+=============
 V_Init
 =============
 */
@@ -1748,6 +1782,7 @@ void V_Init (void)
 	Cmd_AddCommand ("v_cshift", V_cshift_f);
 	Cmd_AddCommand ("bf", V_BonusFlash_f);
 	Cmd_AddCommand ("centerview", V_StartPitchDrift);
+	Cmd_AddCommand ("attempt_count_reset", V_AttemptCountReset);
 
 #ifndef GLQUAKE
 	Cvar_Register (&lcd_x);
@@ -1792,6 +1827,8 @@ void V_Init (void)
 	Cvar_Register (&show_fps_x);
 	Cvar_Register (&show_fps_y);
 
+	Cvar_Register (&show_attempts);
+	Cvar_Register (&attempt_count);
 	Cvar_Register (&show_stats);
 	Cvar_Register (&show_stats_small);
 	Cvar_Register (&show_stats_length);

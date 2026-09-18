@@ -314,6 +314,7 @@
     <ClCompile Include="..\..\trunk\menu.c" />
     <ClCompile Include="..\..\trunk\movie.c" />
     <ClCompile Include="..\..\trunk\movie_avi.c" />
+    <ClCompile Include="..\..\trunk\movie_ff-win.c" />
     <ClCompile Include="..\..\trunk\nehahra.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -379,6 +380,7 @@
     <ClInclude Include="..\..\trunk\modelgen.h" />
     <ClInclude Include="..\..\trunk\movie.h" />
     <ClInclude Include="..\..\trunk\movie_avi.h" />
+    <ClInclude Include="..\..\trunk\movie_ff-win.h" />
     <ClInclude Include="..\..\trunk\nehahra.h" />
     <ClInclude Include="..\..\trunk\sbar.h" />
     <ClInclude Include="..\..\trunk\screen.h" />

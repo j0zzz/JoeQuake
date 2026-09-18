@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // net_dgrm.c
 
+#include <stdint.h>
+
 // This is enables a simple IP banning mechanism
 #define BAN_TEST
 
@@ -36,7 +38,7 @@ struct in_addr
 	{
 		struct { unsigned char s_b1, s_b2, s_b3, s_b4; } S_un_b;
 		struct { unsigned short s_w1, s_w2; } S_un_w;
-		unsigned long S_addr;
+		uint32_t S_addr;
 	} S_un;
 };
 #define	s_addr	S_un.S_addr	/* can be used for most tcp & ip code */
@@ -48,7 +50,7 @@ struct sockaddr_in
 	char		sin_zero[8];
 };
 char *inet_ntoa (struct in_addr in);
-unsigned long inet_addr (const char *cp);
+uint32_t inet_addr (const char *cp);
 #endif
 #endif	// BAN_TEST
 
@@ -96,10 +98,14 @@ char *StrAddr (struct qsockaddr *addr)
 	return buf;
 }
 #endif
+#ifndef _WIN32
+unsigned _lrotl (unsigned x, int s);
+unsigned _lrotr (unsigned x, int s);
+#endif
 
 #ifdef BAN_TEST
-unsigned long	banAddr = 0x00000000;
-unsigned long	banMask = 0xffffffff;
+uint32_t	banAddr = 0x00000000;
+uint32_t	banMask = 0xffffffff;
 
 void NET_Ban_f (void)
 {
@@ -1039,7 +1045,7 @@ qsocket_t *Datagram_Reject (char *message, int acceptsock, struct qsockaddr *add
 }
 
 extern	cvar_t		cl_password;	// joe: password protection from ProQuake
-extern	unsigned long	qsmackAddr;	// joe: allow qsmack bots to connect to server
+extern	uint32_t	qsmackAddr;	// joe: allow qsmack bots to connect to server
 
 static qsocket_t *_Datagram_CheckNewConnections (void)
 {
@@ -1222,7 +1228,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 	// check for a ban
 	if (clientaddr.sa_family == AF_INET)
 	{
-		unsigned long	testAddr;
+		uint32_t	testAddr;
 
 		testAddr = ((struct sockaddr_in *)&clientaddr)->sin_addr.s_addr;
 		if ((testAddr & banMask) == banAddr)

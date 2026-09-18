@@ -21,11 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #ifdef GLQUAKE
-#ifndef _WIN32
-#include "jpeg-linux/jpeglib.h"	// FIXME!!!
-#else
 #include "jpeglib.h"
-#endif
 #endif
 #include "zlib.h"
 
@@ -500,7 +496,11 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 		return NULL;
 	}
 
+#ifdef _WIN32
 	if (setjmp(png_ptr->jmpbuf))
+#else
+	if (setjmp(png_jmpbuf(png_ptr)))
+#endif
 	{
 		png_destroy_read_struct (&png_ptr, &pnginfo, NULL);
 		fclose (fin);
@@ -534,7 +534,11 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 	}
 
 	if (colortype == PNG_COLOR_TYPE_GRAY && bitdepth < 8)
+#ifdef _WIN32
 		png_set_gray_1_2_4_to_8 (png_ptr);
+#else
+		png_set_expand_gray_1_2_4_to_8 (png_ptr);
+#endif
 	
 	if (png_get_valid(png_ptr, pnginfo, PNG_INFO_tRNS))
 		png_set_tRNS_to_alpha (png_ptr);
@@ -620,7 +624,11 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 		return false;
 	}
 
+#ifdef _WIN32
 	if (setjmp(png_ptr->jmpbuf))
+#else
+	if (setjmp(png_jmpbuf(png_ptr)))
+#endif
 	{
 		png_destroy_write_struct (&png_ptr, &info_ptr);
 		fclose (fp);
@@ -693,7 +701,11 @@ int Image_WritePNGPLTE (char *filename, int compression,
 		return false;
 	}
 
+#ifdef _WIN32
 	if (setjmp(png_ptr->jmpbuf))
+#else
+	if (setjmp(png_jmpbuf(png_ptr)))
+#endif
 	{
 		png_destroy_write_struct (&png_ptr, &info_ptr);
 		fclose (fp);

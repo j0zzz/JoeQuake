@@ -396,6 +396,10 @@ When set to `0` bounding boxes are all drawn white.
 
 When set to `1`, the bounding boxes are displayed through walls. Defaults to `0`.
 
+##### `cl_bbox_filter`
+
+When set to anything other than `""`, it will only show bboxes that contain the pattern (case insensitive). Defaults to `""`.
+
 ##### `cl_approx_demo_velocity`
 
 When set to `1`, (and during a demo playback) it will assign the player's velocity based on 4 byte float dx/dt approximation of velocity instead of the compressed single byte representation already used in Quake.
@@ -1414,6 +1418,27 @@ This command is available on all builds.
 ##### `freefly_print_entities
 
 Print's the ID, distance from camera and model of entities near the freefly camera. Can be used to indentify entities for use in ReMaic recams. 
+
+##### `show_attempts`
+##### `attempt_count_reset`
+##### `attempt_count`
+
+`show_attempts` set to `1` will show the number of attempts (demo restarts) on the screen.
+
+Defaults to `0`.
+
+Reset the counter with the `attempt_count_reset` command. You can set or read the attempt count directly in the `attempt_count` variable.
+
+##### `secrethint`
+
+A tool for searching for secrets that doesn't spoil everything. Prints a hint for the nearest `trigger_secret`:
+* `hot` - within around 256 units
+* `warm` - within around 768 units
+* `room temperature` - within around 2048 units
+* `cold` - farther away
+* `none` - there are no secrets left to find
+
+The result is slightly 'fuzzy' in that a randomised (up to 10) percent will be added or removed in each invocation, so that you can't just triangulate the position by finding the threshold.
 
 ##### `togglezoom`
 

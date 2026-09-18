@@ -74,6 +74,7 @@ void W_LoadWadFile (char *filename)
 	wad_base = COM_LoadMallocFile(filename);
 	if (!wad_base)
 	{
+#ifdef _WIN32
 		if (!strcmp(filename, "gfx.wad"))
 		{
 			char* text = "Could not find Quake pak files (pak0.pak, pak1.pak).\n\nThese files should be copied to the id1 folder from a retail Quake installation (eg. Steam / GOG / CD-ROM). See the installation guide at https://speeddemosarchive.com/quake/guide.html\n\nWould you like to navigate to the page now?";
@@ -82,6 +83,7 @@ void W_LoadWadFile (char *filename)
 			Sys_Quit();
 		}
 		else
+#endif
 			Sys_Error("W_LoadWadFile: couldn't load %s", filename);
 	}
 

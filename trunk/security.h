@@ -22,11 +22,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef SECURITY_H
 #define SECURITY_H
 
+#include <stdint.h>
+
 extern	qboolean	security_loaded;
 extern	qboolean	cl_cheatfree;
-extern	unsigned long	qsmackAddr;
+extern	uint32_t	qsmackAddr;
 extern	qboolean	qsmackActive;
-extern	unsigned long	net_seed;
+extern	uint32_t	net_seed;
 
 extern	cvar_t		cl_cvar_cheatfree;
 

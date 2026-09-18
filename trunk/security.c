@@ -29,9 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 qboolean	security_loaded;
 qboolean	cl_cheatfree = false;
-unsigned long	qsmackAddr;
+uint32_t	qsmackAddr;
 qboolean	qsmackActive = false;		// only allow one qsmack connection
-unsigned long	net_seed;
+uint32_t	net_seed;
 
 cvar_t		cl_cvar_cheatfree = {"cl_cheatfree", "0"};
 

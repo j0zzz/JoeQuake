@@ -23,10 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "ghost/demosummary.h"
 #include <time.h>	// easyrecord stats
-
-#ifdef _WIN32
 #include "movie.h"
-#else
+
+#ifndef _WIN32
 #include "errno.h"
 #endif
 
@@ -123,10 +122,7 @@ void CL_StopPlayback (void)
 	if (cls.timedemo)
 		CL_FinishTimeDemo ();
 
-#ifdef _WIN32
 	Movie_StopPlayback ();
-#endif
-
 }
 
 /*
@@ -451,6 +447,21 @@ void CL_Record_f (void)
 	else
 		Q_snprintfz (name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
 
+// count attempts if desired
+	if (show_attempts.value)
+	{ 
+		// guard against overflow; floats can safely store all 7 digit ints
+		if (attempt_count.value >= 9999999) 
+		{
+			Con_Printf("Reset attempt counter on attempt 10,000,000.\nYou should probably take a break...\n");
+			Cvar_SetValue(&attempt_count, 0);
+		}
+		else
+		{
+			Cvar_SetValue(&attempt_count, attempt_count.value + 1);
+		}
+	} 
+
 // start the map up
 	if (c > 2)
 	{
@@ -614,24 +625,24 @@ void StartPlayingOpenedDemo (void)
 // joe: playing demos from .dz files
 static void CheckDZipCompletion (void)
 {
-    dzip_status_t dzip_status;
+	dzip_status_t dzip_status;
 
-    dzip_status = DZip_CheckCompletion(&dzCtx);
+	dzip_status = DZip_CheckCompletion(&dzCtx);
 
-    switch (dzip_status) {
-        case DZIP_NOT_EXTRACTING:
-        case DZIP_EXTRACT_IN_PROGRESS:
-            return;
-        case DZIP_EXTRACT_FAIL:
-            dz_unpacking = dz_playback = cls.demoplayback = false;
-            StopDZPlayback ();
-            return;
-        case DZIP_EXTRACT_SUCCESS:
-            break;
-        default:
-            Sys_Error("Invalid dzip status %d", dzip_status);
-            return;
-    }
+	switch (dzip_status) {
+		case DZIP_NOT_EXTRACTING:
+		case DZIP_EXTRACT_IN_PROGRESS:
+			return;
+		case DZIP_EXTRACT_FAIL:
+			dz_unpacking = dz_playback = cls.demoplayback = false;
+			StopDZPlayback ();
+			return;
+		case DZIP_EXTRACT_SUCCESS:
+			break;
+		default:
+			Sys_Error("Invalid dzip status %d", dzip_status);
+			return;
+	}
 
 	if (!dz_unpacking || !cls.demoplayback)
 	{
@@ -687,9 +698,9 @@ static void PlayDZDemo (void)
 			cls.demofile = NULL;
 			cls.state = ca_connected;
 			break;
-        default:
-            Sys_Error("Invalid dzip status %d", dzip_status);
-            return;
+		default:
+			Sys_Error("Invalid dzip status %d", dzip_status);
+			return;
 	}
 }
 
