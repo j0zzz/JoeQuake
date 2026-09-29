@@ -1330,7 +1330,7 @@ SCR_DrawAttemptCount
 */
 void SCR_DrawAttemptCount (void)
 {
-	int		mins, secs, tens, size;
+	int		size;
 	float	scale;
 	extern	mpic_t	*sb_colon, *sb_nums[2][11];
 
