@@ -24,7 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef _WIN32
 #define qglGetProcAddress wglGetProcAddress
 #else
-#define qglGetProcAddress glXGetProcAddressARB
+void *glXGetProcAddress (const GLubyte *procName);
+#define qglGetProcAddress glXGetProcAddress
 #endif
 
 const	char	*gl_vendor;

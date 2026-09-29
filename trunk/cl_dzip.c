@@ -25,6 +25,7 @@
 
 #ifndef _WIN32
 #define _XOPEN_SOURCE 500	// required for nftw
+#include <limits.h>
 #include <errno.h>
 #include <ftw.h>
 #include <sys/wait.h>

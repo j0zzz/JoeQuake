@@ -4205,6 +4205,37 @@ void R_EmitLine(edict_t * start, edict_t * end, vec3_t color){
 
 extern ddef_t * ED_FindField(char*);
 extern char * PR_ValueString(etype_t type, eval_t *val);
+
+static qboolean R_FilterBbox(edict_t *ed)
+{
+	char * field;
+	char * filter = cl_bbox_filter.string;
+	if (strlen(filter) == 0 || Q_strcasecmp("", filter) == 0)
+		return true;
+
+	field = GETEDICTFIELDNAME(ed, "classname");
+	if (strlen(field) && Q_strcasestr(field, filter) != NULL) 
+		return true;
+
+	field = GETEDICTFIELDNAME(ed, "targetname");
+	if (strlen(field) && Q_strcasestr(field, filter) != NULL) 
+		return true;
+
+	field = GETEDICTFIELDNAME(ed, "target");
+	if (strlen(field) && Q_strcasestr(field, filter) != NULL) 
+		return true;
+
+	field = GETEDICTFIELDNAME(ed, "target2");
+	if (strlen(field) && Q_strcasestr(field, filter) != NULL) 
+		return true;
+
+	field = GETEDICTFIELDNAME(ed, "killtarget");
+	if (strlen(field) && Q_strcasestr(field, filter) != NULL) 
+		return true;
+
+	return false;
+}
+
 void R_DrawEdicts (){
 	int i, j = 0, *v, focused = -1;
 	ddef_t *d;
@@ -4228,6 +4259,8 @@ void R_DrawEdicts (){
 	for (i = 1; i < sv.num_edicts; i++)
 	{
 		ed = EDICT_NUM(i);
+		if (!R_FilterBbox(ed))
+			continue;
 
 		if (ed->free)
 			continue;
@@ -4237,7 +4270,6 @@ void R_DrawEdicts (){
 
 		if (d) {
 			char * class = PR_ValueString(d->type, (eval_t *)v);
-
 			if (strlen(class) == 0)
 				continue;
 

@@ -10,10 +10,10 @@
 *.res
 *.tlog
 *.asm
-*.txt
 *.user
 *.ipch
 *.vs
+build
 trunk/_shelve_*
 Windows/VisualStudio/debug_*
 Windows/VisualStudio/release_*

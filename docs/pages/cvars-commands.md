@@ -396,6 +396,10 @@ When set to `0` bounding boxes are all drawn white.
 
 When set to `1`, the bounding boxes are displayed through walls. Defaults to `0`.
 
+##### `cl_bbox_filter`
+
+When set to anything other than `""`, it will only show bboxes that contain the pattern (case insensitive). Defaults to `""`.
+
 ##### `cl_approx_demo_velocity`
 
 When set to `1`, (and during a demo playback) it will assign the player's velocity based on 4 byte float dx/dt approximation of velocity instead of the compressed single byte representation already used in Quake.
@@ -1001,8 +1005,12 @@ The music volume can be adjusted using the `bgmvolume` cvar.
 
 #### AVI Capture
 
-##### `capture_codec`
+##### `capture_mode`
+`legacy` (default) uses old AVI capturing, not recommended. `raw` captures raw video, which is extremely large. `ffmpeg` is the recommended mode. To use this, on Windows you need `ffmpeg.exe` from ffmpeg.org in your JoeQuake directory. On Linux, installing `ffmpeg` is sufficient. 
 
+The FFMpeg mode captures streams separately, and then muxes them at the end. The muxing can take a few seconds for a marathon video, though it should be still be brief on modern computers.
+
+##### `capture_codec` (Legacy capture only)
 Contains the fourcc code of video codec's, `0` by default (no compression).
 For example `divx` or `xvid`, etc.
 
@@ -1021,16 +1029,19 @@ If set to `1`, the console is also captured, otherwise not.
 Sets the directory where avis to be saved during capturing.
 `capture` by default.
 
-##### `capture_mp3`
+##### `capture_autoquit`
+When set to `1`, will quit automatically on demo capture end.
+
+##### `capture_mp3` (Legacy capture only)
 
 Turns mp3 audio compression on/off, `0` by default.
 
-##### `capture_mp3_kbps`
+##### `capture_mp3_kbps` (Legacy capture only)
 
 Sets mp3 compression's bitrate, `128` by default.
 Only works if `capture_mp3` is `1` (trivial).
 
-##### `capture_avi_split`
+##### `capture_avi_split` (Legacy capture only)
 
 Set this to the number of megabytes at which to split captured video into more
 than one AVI file. The used video capture module has a problem with files
@@ -1038,6 +1049,24 @@ getting corrupted when reaching a size of over 2 gigabytes, so splitting them
 into smaller files is a good idea to avoid this corruption.  
 Default is `1900` megabytes.  
 Setting to `0` disables splitting.
+
+##### `capture_ffmpeg_loglevel` (FFMpeg mode) 
+
+Level of logs to generate with ffmpeg, `error` is default.
+
+##### `capture_ffmpeg_report` (FFMpeg mode)
+
+When set to `1`, extra debug information is printed in ffmpeg output. Defaults to `0`.
+
+##### `capture_ffmpeg_container` (FFMpeg mode)
+Container to capture into. Defaults to `mp4`.
+
+##### `capture_ffmpeg_video_args` (FFMpeg mode)
+
+Arguments to ffmpeg's video capture. Defaults to `-c:v libx264 -preset fast -crf 13 -pix_fmt yuv420p`. Consult ffmpeg's documentation for things you can do with this.
+
+##### `capture_ffmpeg_audio_args` (FFMpeg mode)
+Arguments to ffmpeg's audio capture. Defaults to `-c:a aac -b:a 256k -ar 48000`. Consult ffmpeg's documentation for things you can do with this.
 
 #### Path Tracer
 
@@ -1414,6 +1443,27 @@ This command is available on all builds.
 ##### `freefly_print_entities
 
 Print's the ID, distance from camera and model of entities near the freefly camera. Can be used to indentify entities for use in ReMaic recams. 
+
+##### `show_attempts`
+##### `attempt_count_reset`
+##### `attempt_count`
+
+`show_attempts` set to `1` will show the number of attempts (demo restarts) on the screen.
+
+Defaults to `0`.
+
+Reset the counter with the `attempt_count_reset` command. You can set or read the attempt count directly in the `attempt_count` variable.
+
+##### `secrethint`
+
+A tool for searching for secrets that doesn't spoil everything. Prints a hint for the nearest `trigger_secret`:
+* `hot` - within around 256 units
+* `warm` - within around 768 units
+* `room temperature` - within around 2048 units
+* `cold` - farther away
+* `none` - there are no secrets left to find
+
+The result is slightly 'fuzzy' in that a randomised (up to 10) percent will be added or removed in each invocation, so that you can't just triangulate the position by finding the threshold.
 
 ##### `togglezoom`
 

@@ -61,6 +61,7 @@ cvar_t	cl_deadbodyfilter = {"cl_deadbodyfilter", "0"};
 cvar_t	cl_gibfilter = {"cl_gibfilter", "0"};
 cvar_t	cl_bbox = {"cl_bbox", "0"};
 cvar_t	cl_bbox_wh = {"cl_bbox_wh", "0"};
+cvar_t	cl_bbox_filter = {"cl_bbox_filter", ""};
 cvar_t	cl_bboxcolors = {"cl_bboxcolors", "1"};
 cvar_t	cl_track_edict = {"cl_track_edict", "0"};
 cvar_t	cl_billiards = {"cl_billiards", "0"};
@@ -1539,6 +1540,7 @@ void CL_Init (void)
 	Cvar_Register (&cl_gibfilter);
 	Cvar_Register (&cl_bbox);
 	Cvar_Register (&cl_bbox_wh);
+	Cvar_Register (&cl_bbox_filter);
 	Cvar_Register (&cl_bboxcolors);
 	Cvar_Register (&cl_track_edict);
 	Cvar_Register (&cl_billiards);
@@ -1568,7 +1570,7 @@ void CL_Init (void)
 	Cmd_AddCommand ("demoskip", CL_DemoSkip_f);
 	Cmd_AddCommand ("demoseek", CL_DemoSeek_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
-	Cmd_AddCommand("keepdemo", CL_KeepDemo_f);
+	Cmd_AddCommand ("keepdemo", CL_KeepDemo_f);
 
 
 }

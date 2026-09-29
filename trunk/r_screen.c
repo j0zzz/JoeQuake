@@ -21,9 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "r_local.h"
-#ifdef _WIN32
 #include "movie.h"
-#endif
 
 // only the refresh window will be updated unless these variables are flagged 
 int		scr_copytop;
@@ -336,9 +334,7 @@ void SCR_Init (void)
 	scr_net = Draw_PicFromWad ("net");
 	scr_turtle = Draw_PicFromWad ("turtle");
 
-#ifdef _WIN32
 	Movie_Init ();
-#endif
 
 	scr_initialized = true;
 }

@@ -21,9 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "bgmusic.h"
-#ifdef _WIN32
 #include "movie.h"
-#endif
 #ifndef GLQUAKE
 #include "r_local.h"
 #endif
@@ -577,10 +575,8 @@ qboolean Host_FilterTime (double time)
 
 	if (host_framerate.value > 0 || (cls.demoplayback && cl_demospeed.value != 1))
 		frametime = MinPhysFrameTime();
-#ifdef _WIN32
 	else if (Movie_IsActive())
 		frametime = Movie_FrameTime();
-#endif
 	else
 		frametime = 1.0 / (!cl_maxfps.value ? 100000 : bound(10, cl_maxfps.value, 100000));
 
@@ -588,11 +584,9 @@ qboolean Host_FilterTime (double time)
 
 	if (cls.capturedemo || cls.timedemo || realtime - oldrealtime >= frametime)
 	{
-#ifdef _WIN32
 		if (Movie_IsActive())
 			host_frametime = frametime;
 		else
-#endif
 			host_frametime = realtime - oldrealtime;
 		if (cls.demoplayback)
 			host_frametime *= bound(0, cl_demospeed.value, 20);
@@ -712,9 +706,7 @@ void _Host_Frame (double time)
 	if (!cl_independentphysics.value || 
 		host_framerate.value > 0 ||
 		(cls.demoplayback && cl_demospeed.value != 1)
-#ifdef _WIN32
 		|| Movie_IsActive()
-#endif
 		)
 	{
 		physframe = true;
@@ -1116,6 +1108,13 @@ void Host_Shutdown (void)
 		return;
 	}
 	isdown = true;
+
+	if (Movie_IsActive ())
+	{
+		Con_Printf ("Finishing capture before exit...\n");
+		Movie_CancelCaptureStats ();
+		Movie_Stop ();
+	}
 
 // keep Con_Printf from trying to update the screen
 	scr_disabled_for_loading = true;

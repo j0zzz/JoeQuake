@@ -6890,8 +6890,8 @@ void M_Quit_Draw (void)
 	"1",
 	"0Programming",
 	"1Jozsef Szalontai",
-	"1Sphere",
-	"1Matthew Earl",
+	"1Sphere, Matthew Earl",
+    "1Karol Urbanski",
 	"1",
 	"0Id Software is not responsible for",
 	"0providing technical support for",
@@ -8323,7 +8323,7 @@ void M_ServerList_Draw (void)
 	M_DrawCharacter (MENU_X + 8, (slist_cursor - slist_mins + 1) * 8 + MENU_Y, 12+((int)(realtime*4)&1));
 }
 
-void M_ServerList_Key (key)
+void M_ServerList_Key (int key)
 {
 	int	slist_length;
 

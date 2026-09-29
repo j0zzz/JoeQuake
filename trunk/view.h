@@ -29,6 +29,8 @@ extern	cvar_t	show_speed;
 extern	cvar_t	show_fps;
 extern	cvar_t	cl_hand;
 extern	cvar_t	v_gunkick;
+extern	cvar_t	show_attempts;
+extern	cvar_t	attempt_count;
 extern	cvar_t	show_stats;
 extern	cvar_t	show_stats_small;
 extern	cvar_t	show_movekeys;
@@ -60,8 +62,8 @@ extern	byte	current_pal[768];
 extern	cvar_t	lcd_x, lcd_yaw;
 #endif
 
-int _view_temp_int;
-float _view_temp_float;
+static int _view_temp_int;
+static float _view_temp_float;
 
 #define	ELEMENT_X_COORD(var)	\
 (_view_temp_int = Sbar_GetScaledCharacterSize(),\
@@ -80,11 +82,13 @@ void V_Init (void);
 void V_RenderView (void);
 
 void V_CalcBlend (void);
+void V_AttemptCountReset (void);
 char *LocalTime (char *format);
 void SCR_DrawClock (void);
 void SCR_DrawSpeed (void);
 void SCR_DrawFPS (void);
 void SCR_DrawStats (void);
+void SCR_DrawAttemptCount (void);
 void SCR_DrawEdictTracker (void);
 void SCR_DrawVolume (void);
 void SCR_DrawMovementKeys(void);

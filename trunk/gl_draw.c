@@ -1636,6 +1636,9 @@ void Draw_BeginDisc (void)
 {
 	float	scale;
 
+#ifndef _WIN32
+	return;
+#endif
 	if (!draw_disc)
 		return;
 

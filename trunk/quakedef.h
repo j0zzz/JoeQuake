@@ -30,6 +30,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef _WIN32
+#include <limits.h>  // PATH_MAX
+#endif
 #include "png.h"
 
 #if defined(_WIN32) && !defined(WINDED)
@@ -63,7 +66,11 @@ void VID_UnlockBuffer (void);
 
 
 #define	MAX_QPATH		64			// max length of a quake game pathname
+#ifdef _WIN32
 #define	MAX_OSPATH		_MAX_PATH	// max length of a filesystem pathname
+#else
+#define	MAX_OSPATH		PATH_MAX	// max length of a filesystem pathname
+#endif
 
 #define	ON_EPSILON		0.1		// point on plane side epsilon
 

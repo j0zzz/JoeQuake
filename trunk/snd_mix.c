@@ -22,9 +22,7 @@
 
 #include "quakedef.h"
 
-#ifdef _WIN32
 #include "movie.h"
-#endif
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -128,9 +126,7 @@ static void S_TransferStereo16 (int endtime)
 		snd_p += snd_linear_count;
 		lpaintedtime += (snd_linear_count >> 1);
 
-#ifdef _WIN32
 		Movie_TransferStereo16 ();
-#endif
 	}
 
 #if defined(_WIN32) && !defined(SDL2)

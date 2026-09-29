@@ -22,9 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "sound.h"
 #include "winquake.h"
-#ifdef _WIN32
 #include "movie.h"
-#endif
 #include "bgmusic.h"
 #include "snd_codec.h"
 
@@ -61,6 +59,16 @@ float	sound_nominal_clip_dist=1000.0;
 
 int		soundtime;		// sample PAIRS
 int   	paintedtime; 	// sample PAIRS
+
+/*
+ * GetSoundtime tracks DMA buffer wraps across calls. Kept at file scope so
+ * S_ResetTime can rebaseline the audio clock when the synthetic capture
+ * clock used by Movie_GetSoundtime is torn down — otherwise paintedtime
+ * stays N seconds ahead of the real DMA cursor and S_PaintChannels writes
+ * nothing until real time catches up (audio "freezes" for N seconds).
+ */
+static int	snd_dma_buffers;
+static int	snd_dma_oldsamplepos;
 
 int     s_rawend;
 portable_samplepair_t s_rawsamples[MAX_RAW_SAMPLES];
@@ -864,12 +872,9 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 void GetSoundtime (void)
 {
 	int		samplepos, fullsamples;
-	static	int	buffers, oldsamplepos;
 	
-#ifdef _WIN32
 	if (Movie_GetSoundtime())
 		return;
-#endif
 
 	fullsamples = shm->samples / shm->channels;
 
@@ -877,30 +882,44 @@ void GetSoundtime (void)
 // calls to S_Update. Oh well.
 	samplepos = SNDDMA_GetDMAPos ();
 
-	if (samplepos < oldsamplepos)
+	if (samplepos < snd_dma_oldsamplepos)
 	{
-		buffers++;					// buffer wrapped
+		snd_dma_buffers++;					// buffer wrapped
 		
 		if (paintedtime > 0x40000000)
 		{	// time to chop things off to avoid 32 bit limits
-			buffers = 0;
+			snd_dma_buffers = 0;
 			paintedtime = fullsamples;
 			S_StopAllSounds (true);
 		}
 	}
-	oldsamplepos = samplepos;
+	snd_dma_oldsamplepos = samplepos;
 
-	soundtime = buffers * fullsamples + samplepos / shm->channels;
+	soundtime = snd_dma_buffers * fullsamples + samplepos / shm->channels;
+}
+
+/*
+ * Reset the audio clock and DMA-wrap tracking. Used when leaving a mode
+ * that drove soundtime synthetically (e.g. movie capture). Without this,
+ * paintedtime is left far ahead of the real DMA cursor and the mixer
+ * stops painting new audio until real time catches up.
+ */
+void S_ResetTime (void)
+{
+	soundtime = 0;
+	paintedtime = 0;
+	snd_dma_buffers = 0;
+	snd_dma_oldsamplepos = 0;
 }
 
 void S_ExtraUpdate (void)
 {
 	extern void IN_Accumulate (void);
 
-#ifdef _WIN32
 	if (Movie_IsActive())
 		return;
 
+#ifdef _WIN32
 	IN_Accumulate ();
 #endif
 
