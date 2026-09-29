@@ -4501,7 +4501,7 @@ void R_ScaleView(void)
 	currenttexture = -1;
 }
 
-static GLuint r_crt_texture = 0;
+GLuint r_crt_texture = 0;
 static GLuint r_crt_program = 0;
 static int r_crt_texture_width = 0, r_crt_texture_height = 0;
 

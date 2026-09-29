@@ -312,6 +312,8 @@ static qboolean VID_ValidMode (int width, int height, int refreshrate, qboolean 
 
 extern void GL_Init (void);
 extern GLuint r_gamma_texture;
+extern GLuint r_crt_texture;
+
 static void SetMode (int width, int height, int refreshrate, qboolean fullscreen)
 {
 	int		temp;
@@ -394,6 +396,7 @@ static void SetMode (int width, int height, int refreshrate, qboolean fullscreen
 	vid.numpages = 2;
 	vid.recalc_refdef = 1;
 	r_gamma_texture = 0;
+	r_crt_texture = 0;
 	Draw_AdjustConback();
 
 // read the obtained z-buffer depth

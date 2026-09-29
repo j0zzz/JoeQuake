@@ -113,6 +113,7 @@ qboolean	customgamma = false;
 void RestoreHWGamma (void);
 
 extern GLuint r_gamma_texture;
+extern GLuint r_crt_texture;
 
 HWND WINAPI InitializeWindow (HINSTANCE hInstance, int nCmdShow);
 
@@ -599,6 +600,7 @@ int VID_SetMode (int modenum, unsigned char *palette)
 
 	// force reloading GLSL gamma after mode change
 	r_gamma_texture = 0;
+	r_crt_texture = 0;
 
 	return true;
 }
