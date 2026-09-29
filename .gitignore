@@ -19,7 +19,7 @@ Windows/VisualStudio/debug_*
 Windows/VisualStudio/release_*
 Windows/VisualStudio/JoeQuake.sdf
 Windows/VisualStudio/joequake.aps
-
+Windows/SDL2/*.txt
 _site
 Gemfile.lock
 .sass-cache
