@@ -55,9 +55,10 @@ their filetypes.
 
 ### Avi capturing
 
-JoeQuake uses avi capturing written by Anthony Bailey.
+JoeQuake uses avi capturing written by Anthony Bailey. Also added is the capability to capture using ffmpeg, for Windows and Linux.
 An important thing you should know about: this is mainly for capturing demos,
 not gameplay.
+
 
 #### Commands
 
@@ -67,14 +68,27 @@ not gameplay.
 
 #### Cvars
 
+- `capture_mode`: `legacy` (default) uses old AVI capturing, not recommended. `raw` captures raw video, which is extremely large. `ffmpeg` is the recommended mode. To use this, on Windows you need `ffmpeg.exe` from ffmpeg.org in your JoeQuake directory. On Linux, installing `ffmpeg` is sufficient. 
+
+For legacy mode:
 - `capture_avi [0|1]`: When set to `1`, the captured video stream will be saved to an AVI file. Otherwise every captured frame will be saved as an individual TGA image.
 - `capture_avi_split <value>`: This to the number of megabytes at which to split captured video into more than one AVI file. The used video capture module has a problem with files getting corrupted when reaching a size of over 2 gigabytes, so splitting them into smaller files is a good idea to avoid this corruption. Default is 1900 megabytes. Setting to 0 disables splitting.
 - `capture_codec <codec_fourcc>`: Look for the codec having the specified fourcc code to compress the video with. If the fourcc code is set to `0`, the created AVI file will be uncompressed.
-- `capture_fps <value>`: Set on how many frames/sec you wish the video to be captured.
-- `capture_dir <path>`: Set the directory path where avis to be saved while capturing. You can define relative and absolute paths: e.g. `capture` would mean the subfolder in your Quake root directory and e.g. `c:\My captures` is an absolute path.
 - `capture_mp3 [0|1]`: When set to `1`, the captured audio will be mp3 compressed, otherwise uncompressed.
 - `capture_mp3_kbps <value>`: Set mp3 compression bitrate, only works if `capture_mp3` is set to `1`.
+
+For ffmpeg mode:
+- `capture_ffmpeg_loglevel <value>`: level of logs to generate with ffmpeg, `error` is default
+- `capture_ffmpeg_report [0|1]`: when set to `1`, extra debug information is printed in ffmpeg output. Defaults to `0`.
+- `capture_ffmpeg_container <container>`: container to capture into. Defaults to `mp4`.
+- `capture_ffmpeg_video_args <value>`: arguments to ffmpeg's video capture. Defaults to `-c:v libx264 -preset fast -crf 13 -pix_fmt yuv420p`. Consult ffmpeg's documentation for things you can do with this.
+- `capture_ffmpeg_audio_args <value>`: arguments to ffmpeg's audio capture. Defaults to `-c:a aac -b:a 256k -ar 48000`. Consult ffmpeg's documentation for things you can do with this.
+
+For all modes:
+- `capture_fps <value>`: Set on how many frames/sec you wish the video to be captured.
+- `capture_dir <path>`: Set the directory path where avis to be saved while capturing. You can define relative and absolute paths: e.g. `capture` would mean the subfolder in your Quake root directory and e.g. `c:\My captures` is an absolute path.
 - `capture_console [0|1]`: When set to `0`, capturing will be suspended while the console is pulled down.
+- `capture_autoquit [0|1]`: When set to `0`, JoeQuake will autoquit on finishing capture of demo.
 
 Sound issues: capturing supports up to 44 KHz sounds too, but I personally don't recommend recording the audio on that sample. The reason is that all the Quake sounds are originally recorded on 11 KHz, and simply playing them on higher sample doesn't actually make them sound better. If you want to use 22 or 44 KHz sounds at any price, I advise you to get a good editor (like SoundForge), and resample the audio using that.
 

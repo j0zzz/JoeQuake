@@ -26,11 +26,8 @@ extern void Movie_Stop (void);
 extern void Movie_MaybeAutoQuit (void);
 extern void Movie_CancelCaptureStats (void);
 
-extern cvar_t capture_ffmpeg_video_buf_mb;
-extern cvar_t capture_ffmpeg_audio_buf_mb;
 extern cvar_t capture_ffmpeg_loglevel;
 extern cvar_t capture_ffmpeg_report;
-extern cvar_t capture_ffmpeg_write_timeout_ms;
 extern cvar_t capture_ffmpeg_container;
 extern cvar_t capture_ffmpeg_video_args;
 extern cvar_t capture_ffmpeg_audio_args;

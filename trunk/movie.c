@@ -73,11 +73,6 @@ cvar_t	capture_mode = {"capture_mode", "legacy"};
 /* If non-zero, queue a 'quit' after a capture finishes (manual stop, demo end, or encode abort). */
 cvar_t	capture_autoquit = {"capture_autoquit", "0"};
 cvar_t	capture_console	= {"capture_console", "1"};
-#ifdef _WIN32
-cvar_t	capture_ffmpeg_video_buf_mb     = {"capture_ffmpeg_video_buf_mb", "32"};
-cvar_t	capture_ffmpeg_audio_buf_mb     = {"capture_ffmpeg_audio_buf_mb", "4"};
-cvar_t	capture_ffmpeg_write_timeout_ms = {"capture_ffmpeg_write_timeout_ms", "5000"};
-#endif
 cvar_t	capture_ffmpeg_loglevel         = {"capture_ffmpeg_loglevel", "error"};
 cvar_t	capture_ffmpeg_report           = {"capture_ffmpeg_report", "0"};
 cvar_t	capture_ffmpeg_container        = {"capture_ffmpeg_container", "mp4"};
@@ -542,9 +537,6 @@ void Movie_Init (void)
 	Cvar_Register (&capture_codec);
 	Cvar_Register (&capture_avi);
 	Cvar_Register (&capture_avi_split);
-	Cvar_Register (&capture_ffmpeg_video_buf_mb);
-	Cvar_Register (&capture_ffmpeg_audio_buf_mb);
-	Cvar_Register (&capture_ffmpeg_write_timeout_ms);
 #endif
 	Cvar_Register (&capture_ffmpeg_loglevel);
 	Cvar_Register (&capture_ffmpeg_report);
