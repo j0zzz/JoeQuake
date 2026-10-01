@@ -20,12 +20,11 @@ JoeQuake features several improvements over the vanilla GLQuake client, just to 
 
 ### Windows
 
-You can download JoeQuake Windows (x86) releases here:
+You can download JoeQuake Windows (x86) releases [here](https://github.com/j0zzz/JoeQuake/releases)
 
-http://joequake.runecentral.com/downloads.html
+You can also download the latest development binaries [here](https://github.com/j0zzz/JoeQuake/releases/tag/dev-build)
 
-To build, use Visual Studio 2022 or 2026 with the v143 build tools. GL headers from khronos.org also need to be installed
-in your include path.
+To build manually, use Visual Studio 2022 or 2026 with the v143 build tools.
 
 ### Linux
 
