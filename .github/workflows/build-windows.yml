@@ -1,0 +1,74 @@
+name: Build Windows
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+      
+      - name: Build GL Release
+        shell: pwsh
+        working-directory: Windows/VisualStudio
+        run: |
+          msbuild JoeQuake.vcxproj `
+            /p:Configuration="GL Release" `
+            /p:Platform=Win32 `
+            /m `
+            /v:minimal
+
+      - name: Build SDL Release
+        shell: pwsh
+        working-directory: Windows/VisualStudio
+        run: |
+          msbuild JoeQuake.vcxproj `
+            /p:Configuration="SDL Release" `
+            /p:Platform=Win32 `
+            /m `
+            /v:minimal
+            
+      - name: Upload GL binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: JoeQuake-GL-Windows
+          path: Windows/VisualStudio/release_gl/joequake-gl.exe
+
+      - name: Upload SDL binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: JoeQuake-SDL-Windows
+          path: Windows/VisualStudio/release_sdl/joequake-gl-sdl.exe
+
+      # Only the main branch gets published as the public development build.
+      - name: Package development build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: Windows/VisualStudio
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path release_gl/joequake-gl.exe, release_sdl/joequake-gl-sdl.exe `
+            -DestinationPath JoeQuake-Windows-Dev.zip `
+            -Force
+
+      - name: Publish latest development build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: dev-build
+          name: Latest Development Build
+          prerelease: true
+          make_latest: false
+          body: |
+            Automatically generated development build from the latest commit on main.
+
+            This build is not an official release and may contain unfinished or experimental changes.
+          files: Windows/VisualStudio/JoeQuake-Windows-Dev.zip
