@@ -48,9 +48,9 @@ jobs:
           name: JoeQuake-SDL-Windows
           path: Windows/VisualStudio/release_sdl/joequake-gl-sdl.exe
 
-      # Only the main branch gets published as the public development build.
+      # Only the master branch gets published as the public development build.
       - name: Package development build
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         working-directory: Windows/VisualStudio
         shell: pwsh
         run: |
@@ -60,7 +60,7 @@ jobs:
             -Force
 
       - name: Publish latest development build
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: dev-build
@@ -68,7 +68,7 @@ jobs:
           prerelease: true
           make_latest: false
           body: |
-            Automatically generated development build from the latest commit on main.
+            Automatically generated development build from the latest commit on master.
 
             This build is not an official release and may contain unfinished or experimental changes.
           files: Windows/VisualStudio/JoeQuake-Windows-Dev.zip
