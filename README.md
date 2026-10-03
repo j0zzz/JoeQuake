@@ -55,6 +55,22 @@ Further documentation:
 This branch is heavily based on
 [Sphere's Linux fork of JoeQuake](https://github.com/kugelrund/JoeQuake/tree/linux).
 
+### macOS
+
+Builds natively with Homebrew (tested on Apple Silicon):
+
+```bash
+brew install cmake pkgconf sdl2 libpng jpeg-turbo libvorbis mad
+```
+
+...then build as for Linux; the binary is written to `<repo root>/build/trunk/joequake-gl`.
+Run it from your Quake directory (the one holding `id1` and `joequake`) or pass `-basedir <dir>`.
+If a map stops loading with "Not enough RAM allocated", add `-mem 512`.
+
+macOS gives this renderer OpenGL 2.1, so the GLSL alias and world shaders are switched off and
+the classic renderer draws instead; GLSL gamma still works. To play `.dz` demos, put a macOS build of
+[dzip](https://github.com/kugelrund/dzip) in your Quake directory named `dzip-linux` (the name the SDL build runs).
+
 ## License and Warranty
 
 JoeQuake is released under the GNU GPL license.

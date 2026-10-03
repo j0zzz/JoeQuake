@@ -31,8 +31,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // FAKEGL - switch include files
 #ifndef USEFAKEGL
+#ifdef __APPLE__
+#define GL_SILENCE_DEPRECATION
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
+// GL 3.1 enums missing from macOS's legacy (2.1) headers; only used when
+// the runtime check in vid_common_gl.c finds the matching functions
+#ifndef GL_TEXTURE_BUFFER
+#define GL_TEXTURE_BUFFER 0x8C2A
+#endif
+#ifndef GL_UNIFORM_BUFFER
+#define GL_UNIFORM_BUFFER 0x8A11
+#endif
+#ifndef GL_R8UI
+#define GL_R8UI 0x8232
+#endif
+#else
 #include <GL/gl.h>
 #include <GL/glext.h>
+#endif
 #else
 #include "fakegl.h"
 #endif
