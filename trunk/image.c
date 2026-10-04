@@ -861,7 +861,9 @@ int Image_WriteJPEG (char *filename, int compression, byte *pixels, int width, i
 
 	while (cinfo.next_scanline < height)
 	{
-		scanline = &pixels[cinfo.next_scanline*width*3];
+		// signed: width is negative for bottom-up screenshots, and an unsigned
+		// offset runs 4 GB past the buffer on 64-bit builds
+		scanline = &pixels[(int)cinfo.next_scanline*width*3];
 		jpeg_write_scanlines (&cinfo, &scanline, 1);
 	}
 
