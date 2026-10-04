@@ -1,0 +1,45 @@
+name: Build Ubuntu binary
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build an Ubuntu Linux binary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - uses: ConorMacBride/install-package@v1
+        with:
+          apt: cmake build-essential libz-dev libsdl2-dev libjpeg-dev libgl1-mesa-dev libpng-dev libcurl4-openssl-dev libmad0-dev libvorbis-dev
+
+      - name: Build release
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make
+
+      - name: Upload GL binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: joequake-gl
+          path: build/trunk/joequake-gl
+
+      - name: Publish latest development build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: dev-build
+          name: Latest Development Build
+          prerelease: true
+          make_latest: false
+          body: |
+            Automatically generated development build from the latest commit on master.
+
+            This build is not an official release and may contain unfinished or experimental changes.
+          files: build/trunk/joequake-gl
