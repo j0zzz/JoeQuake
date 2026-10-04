@@ -50,7 +50,7 @@ jobs:
 
       # Only the master branch gets published as the public development build.
       - name: Package development build
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/action'
         working-directory: Windows/VisualStudio
         shell: pwsh
         run: |
@@ -60,7 +60,7 @@ jobs:
             -Force
 
       - name: Publish latest development build
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/action'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: dev-build
