@@ -181,6 +181,20 @@ add_executable(joequake-gl
 target_compile_definitions(joequake-gl
     PRIVATE GLQUAKE SDL2 USE_CODEC_VORBIS USE_CODEC_MP3
 )
-target_link_libraries(joequake-gl
-    PRIVATE joequake_minizip png jpeg GL m dl vorbisfile vorbis ogg mad curl ${SDL2_LIBRARIES}
-)
+if (APPLE)
+  find_package(OpenGL REQUIRED)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(MACDEPS REQUIRED libpng libjpeg vorbisfile vorbis ogg mad)
+  target_include_directories(joequake-gl PRIVATE ${MACDEPS_INCLUDE_DIRS})
+  target_link_directories(joequake-gl PRIVATE ${MACDEPS_LIBRARY_DIRS})
+  # Apple clang fuses a*b+c into FMA on arm64, which rounds differently from
+  # the x86 builds; keep the physics maths the same as Windows and Linux
+  target_compile_options(joequake-gl PRIVATE -ffp-contract=off)
+  target_link_libraries(joequake-gl
+      PRIVATE joequake_minizip png jpeg OpenGL::GL m vorbisfile vorbis ogg mad curl ${SDL2_LIBRARIES}
+  )
+else()
+  target_link_libraries(joequake-gl
+      PRIVATE joequake_minizip png jpeg GL m dl vorbisfile vorbis ogg mad curl ${SDL2_LIBRARIES}
+  )
+endif()

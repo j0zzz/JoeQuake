@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 #define qglGetProcAddress wglGetProcAddress
+#elif defined(__APPLE__)
+#include <SDL.h>
+#define qglGetProcAddress SDL_GL_GetProcAddress
 #else
 void *glXGetProcAddress (const GLubyte *procName);
 #define qglGetProcAddress glXGetProcAddress
@@ -126,6 +129,15 @@ void CheckGenerateMipmapExtension (void)
 	{
 		qglGenerateMipmap = (void *)qglGetProcAddress("glGenerateMipmap");
 	}
+#ifdef __APPLE__
+	// macOS's 2.1 context: the legacy GL_GENERATE_MIPMAP fallback crashes its
+	// driver in glCopyTexSubImage2D (R_UpdateWarpTextures, the moment a map
+	// with water loads); EXT_framebuffer_object has the explicit call
+	else if (CheckExtension("GL_EXT_framebuffer_object"))
+	{
+		qglGenerateMipmap = (void *)qglGetProcAddress("glGenerateMipmapEXT");
+	}
+#endif
 }
 
 void CheckMultiTextureExtensions (void)
@@ -292,6 +304,14 @@ void CheckGLSLExtensions(void)
 		gl_glsl_gamma_able = true;
 
 	// GLSL alias model rendering
+#ifdef __APPLE__
+	// macOS resolves every GL function whatever the context, so the checks
+	// above pass on its 2.1 context; its GLSL 1.20 can't build the alias and
+	// world shaders (#version 130/150). The 1.10 gamma shader still works.
+	if (gl_version_major < 3)
+		gl_glsl_alias_able = false;
+	else
+#endif
 	if (!COM_CheckParm("-noglslalias") && gl_glsl_able && gl_vbo_able && gl_textureunits >= 4)
 	{
 		gl_glsl_alias_able = true;

@@ -599,7 +599,8 @@ the best solution I found is to load it to the texture buffer
 */
 void GL_BuildTextureBufferWithLightData(void)
 {
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+	// only the GLSL alias shader reads these (its gate covers the old one)
+	if (!gl_glsl_alias_able)
 		return;
 
 	qglGenBuffers(1, &tbo);
@@ -622,7 +623,8 @@ so let's load them to a uniform buffer instead of sending it to the shader every
 */
 void GL_BuildUniformBufferWithAnormData(void)
 {
-	if (!(gl_glsl_able && gl_vbo_able && gl_textureunits >= 4))
+	// only the GLSL alias shader reads these (its gate covers the old one)
+	if (!gl_glsl_alias_able)
 		return;
 
 	qglGenBuffers(1, &ubo);
