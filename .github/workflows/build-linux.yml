@@ -31,7 +31,7 @@ jobs:
           path: build/trunk/joequake-gl
 
       - name: Publish latest development build
-        if: github.event_name == 'push' && github.ref == 'refs/heads/action'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: dev-build
