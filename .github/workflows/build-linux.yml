@@ -13,6 +13,10 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v6
 
+      - uses: ConorMacBride/install-package@v1
+        with:
+          apt: cmake build-essential libz-dev libsdl2-dev libjpeg-dev libgl1-mesa-dev libpng-dev libcurl4-openssl-dev
+
       - name: Build release
         run: |
           mkdir build
