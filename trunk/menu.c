@@ -4290,7 +4290,7 @@ qboolean M_Sound_Mouse_Event(const mouse_state_t *ms)
 
 #ifdef GLQUAKE
 
-#define	VIEW_ITEMS	19
+#define	VIEW_ITEMS	20
 
 int	view_cursor = 0;
 
@@ -4298,6 +4298,8 @@ menu_window_t view_window;
 menu_window_t view_slider_viewsize_window;
 menu_window_t view_slider_gamma_window;
 menu_window_t view_slider_contrast_window;
+menu_window_t view_slider_saturation_window;
+menu_window_t view_slider_vibrance_window;
 menu_window_t view_slider_fov_window;
 menu_window_t view_slider_outline_players_window;
 menu_window_t view_slider_outline_monsters_window;
@@ -4332,19 +4334,27 @@ void M_View_Draw (void)
 	r = v_contrast.value - 1.0;
 	M_DrawSliderFloat(220, 48, r, v_contrast.value, &view_slider_contrast_window);
 
-	M_Print_GetPoint(16, 64, &lx, &ly, "         Field of view", view_cursor == 4);
+	M_Print_GetPoint(16, 56, &lx, &ly, "            Saturation", view_cursor == 3);
+	r = v_saturation.value / 2.0;
+	M_DrawSliderFloat(220, 56, r, v_saturation.value, &view_slider_saturation_window);
+
+	M_Print_GetPoint(16, 64, &lx, &ly, "      Digital vibrance", view_cursor == 4);
+	r = (v_vibrance.value + 1.0) / 2.0;
+	M_DrawSliderFloat(220, 64, r, v_vibrance.value, &view_slider_vibrance_window);
+
+	M_Print_GetPoint(16, 72, &lx, &ly, "         Field of view", view_cursor == 5);
 	r = (scr_fov.value - 90) / (130 - 90);
-	M_DrawSliderInt(220, 64, r, scr_fov.value, &view_slider_fov_window);
+	M_DrawSliderInt(220, 72, r, scr_fov.value, &view_slider_fov_window);
 
-	M_Print_GetPoint(16, 72, &lx, &ly, "        Widescreen fov", view_cursor == 5);
-	M_DrawCheckbox(220, 72, scr_widescreen_fov.value);
+	M_Print_GetPoint(16, 80, &lx, &ly, "        Widescreen fov", view_cursor == 6);
+	M_DrawCheckbox(220, 80, scr_widescreen_fov.value);
 
-	M_Print_GetPoint(16, 80, &lx, &ly, "             Solid sky", view_cursor == 6);
-	M_DrawCheckbox(220, 80, r_fastsky.value);
+	M_Print_GetPoint(16, 88, &lx, &ly, "             Solid sky", view_cursor == 7);
+	M_DrawCheckbox(220, 88, r_fastsky.value);
 
-	M_Print_GetPoint(16, 88, &lx, &ly, "       Solid sky color", view_cursor == 7);
+	M_Print_GetPoint(16, 96, &lx, &ly, "       Solid sky color", view_cursor == 8);
 	x = 220 + ((menuwidth - 320) >> 1);
-	y = 88 + m_yofs;
+	y = 96 + m_yofs;
 	col = StringToRGB(r_skycolor.string);
 	glDisable(GL_TEXTURE_2D);
 	glColor3ubv(col);
@@ -4357,23 +4367,23 @@ void M_View_Draw (void)
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
 
-	M_Print_GetPoint(16, 96, &lx, &ly, "          Powerup glow", view_cursor == 8);
-	M_DrawCheckbox(220, 96, r_powerupglow.value);
+	M_Print_GetPoint(16, 104, &lx, &ly, "          Powerup glow", view_cursor == 9);
+	M_DrawCheckbox(220, 104, r_powerupglow.value);
 
-	M_Print_GetPoint(16, 112, &lx, &ly, "        Show player id", view_cursor == 10);
-	M_DrawCheckbox(220, 112, scr_autoid.value);
+	M_Print_GetPoint(16, 120, &lx, &ly, "        Show player id", view_cursor == 11);
+	M_DrawCheckbox(220, 120, scr_autoid.value);
 
-	M_Print_GetPoint(16, 120, &lx, &ly, "  Show player outlines", view_cursor == 11);
+	M_Print_GetPoint(16, 128, &lx, &ly, "  Show player outlines", view_cursor == 12);
 	r = r_outline_players.value / 3.0f;
-	M_DrawSliderInt(220, 120, r, r_outline_players.value, &view_slider_outline_players_window);
+	M_DrawSliderInt(220, 128, r, r_outline_players.value, &view_slider_outline_players_window);
 
-	M_Print_GetPoint(16, 128, &lx, &ly, " Show monster outlines", view_cursor == 12);
+	M_Print_GetPoint(16, 136, &lx, &ly, " Show monster outlines", view_cursor == 13);
 	r = r_outline_monsters.value / 3.0f;
-	M_DrawSliderInt(220, 128, r, r_outline_monsters.value, &view_slider_outline_monsters_window);
+	M_DrawSliderInt(220, 136, r, r_outline_monsters.value, &view_slider_outline_monsters_window);
 
-	M_Print_GetPoint(16, 136, &lx, &ly, "         Outline color", view_cursor == 13);
+	M_Print_GetPoint(16, 144, &lx, &ly, "         Outline color", view_cursor == 14);
 	x = 220 + ((menuwidth - 320) >> 1);
-	y = 136 + m_yofs;
+	y = 144 + m_yofs;
 	col = StringToRGB(r_outline_color.string);
 	glDisable(GL_TEXTURE_2D);
 	glColor3ubv(col);
@@ -4386,51 +4396,47 @@ void M_View_Draw (void)
 	glEnable(GL_TEXTURE_2D);
 	glColor3ubv(color_white);
 
-	M_Print_GetPoint(16, 144, &lx, &ly, "   Show bounding boxes", view_cursor == 14);
-	M_Print(220, 144, cl_bbox.value == CL_BBOX_MODE_ON
+	M_Print_GetPoint(16, 152, &lx, &ly, "   Show bounding boxes", view_cursor == 15);
+	M_Print(220, 152, cl_bbox.value == CL_BBOX_MODE_ON
 						? "on" : cl_bbox.value == CL_BBOX_MODE_DEMO
 						? "demo only" : cl_bbox.value == CL_BBOX_MODE_LIVE
 						? "live only" : "off");
 
-	M_Print_GetPoint(16, 152, &lx, &ly, "      Fullbright skins", view_cursor == 15);
-	M_Print(220, 152, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
+	M_Print_GetPoint(16, 160, &lx, &ly, "      Fullbright skins", view_cursor == 16);
+	M_Print(220, 160, !r_fullbrightskins.value ? "off" : r_fullbrightskins.value == 2 ? "players + monsters" : "players");
 
-	M_Print_GetPoint(16, 160, &lx, &ly, "Rotating items bobbing", view_cursor == 16);
-	M_DrawCheckbox(220, 160, cl_bobbing.value);
+	M_Print_GetPoint(16, 168, &lx, &ly, "Rotating items bobbing", view_cursor == 17);
+	M_DrawCheckbox(220, 168, cl_bobbing.value);
 
-	M_Print_GetPoint(16, 168, &lx, &ly, "      Hide dead bodies", view_cursor == 17);
-	M_DrawCheckbox(220, 168, cl_deadbodyfilter.value);
+	M_Print_GetPoint(16, 176, &lx, &ly, "      Hide dead bodies", view_cursor == 18);
+	M_DrawCheckbox(220, 176, cl_deadbodyfilter.value);
 
-	M_Print_GetPoint(16, 176, &lx, &ly, "             Hide gibs", view_cursor == 18);
-	M_DrawCheckbox(220, 176, cl_gibfilter.value);
+	M_Print_GetPoint(16, 184, &lx, &ly, "             Hide gibs", view_cursor == 19);
+	M_DrawCheckbox(220, 184, cl_gibfilter.value);
 
 	view_window.w = (24 + 17) * 8; // presume 8 pixels for each letter
 	view_window.h = ly - view_window.y + 8;
 
-	// don't draw cursor if we're on a spacing line
-	if (view_cursor == 3 || view_cursor == 9)
-		return;
-
 	// cursor
 	M_DrawCharacter (200, 32 + view_cursor * 8, 12+((int)(realtime*4)&1));
 
-	if (view_cursor == 10)
+	if (view_cursor == 11)
 	{
-		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 176 + 8 * 3, "Shows the player's name on top");
-		M_Print(2 * 8, 176 + 8 * 4, "of him when watching from outside");
-	}
-	else if (view_cursor == 11)
-	{
-		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 176 + 8 * 3, "Shows outlines of coop teammates");
-		M_Print(2 * 8, 176 + 8 * 4, "through walls");
+		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 192 + 8 * 3, "Shows the player's name on top");
+		M_Print(2 * 8, 192 + 8 * 4, "of him when watching from outside");
 	}
 	else if (view_cursor == 12)
 	{
-		M_PrintWhite(2 * 8, 176 + 8 * 2, "Hint:");
-		M_Print(2 * 8, 176 + 8 * 3, "Shows outlines of monsters through");
-		M_Print(2 * 8, 176 + 8 * 4, "walls (disabled for demo recording)");
+		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 192 + 8 * 3, "Shows outlines of coop teammates");
+		M_Print(2 * 8, 192 + 8 * 4, "through walls");
+	}
+	else if (view_cursor == 13)
+	{
+		M_PrintWhite(2 * 8, 192 + 8 * 2, "Hint:");
+		M_Print(2 * 8, 192 + 8 * 3, "Shows outlines of monsters through");
+		M_Print(2 * 8, 192 + 8 * 4, "walls (disabled for demo recording)");
 	}
 }
 
@@ -4458,19 +4464,31 @@ void M_View_KeyboardSlider(int dir)
 		Cvar_SetValue(&v_contrast, v_contrast.value);
 		break;
 
-	case 4:// fov
+	case 3:	// saturation
+		v_saturation.value += dir * 0.1;
+		v_saturation.value = bound(0, v_saturation.value, 2);
+		Cvar_SetValue(&v_saturation, v_saturation.value);
+		break;
+
+	case 4:	// digital vibrance
+		v_vibrance.value += dir * 0.1;
+		v_vibrance.value = bound(-1, v_vibrance.value, 1);
+		Cvar_SetValue(&v_vibrance, v_vibrance.value);
+		break;
+
+	case 5:// fov
 		scr_fov.value += dir * 5;
 		scr_fov.value = bound(90, scr_fov.value, 130);
 		Cvar_SetValue(&scr_fov, scr_fov.value);
 		break;
 
-	case 11:// player outlines
+	case 12:// player outlines
 		r_outline_players.value += dir * 1;
 		r_outline_players.value = bound(0, r_outline_players.value, 3);
 		Cvar_SetValue(&r_outline_players, r_outline_players.value);
 		break;
 
-	case 12:// monster outlines
+	case 13:// monster outlines
 		r_outline_monsters.value += dir * 1;
 		r_outline_monsters.value = bound(0, r_outline_monsters.value, 3);
 		Cvar_SetValue(&r_outline_monsters, r_outline_monsters.value);
@@ -4530,50 +4548,50 @@ void M_View_Key (int k)
 		S_LocalSound ("misc/menu2.wav");
 		switch (view_cursor)
 		{
-		case 5:
+		case 6:
 			Cvar_SetValue(&scr_widescreen_fov, !scr_widescreen_fov.value);
 			break;
 
-		case 6:
+		case 7:
 			Cvar_SetValue(&r_fastsky, !r_fastsky.value);
 			break;
 
-		case 7:
+		case 8:
 			M_Menu_Sky_ColorChooser_f();
 			break;
 
-		case 8:
+		case 9:
 			Cvar_SetValue(&r_powerupglow, !r_powerupglow.value);
 			break;
 
-		case 10:
+		case 11:
 			Cvar_SetValue(&scr_autoid, !scr_autoid.value);
 			break;
 
-		case 13:
+		case 14:
 			M_Menu_Outline_ColorChooser_f();
 			break;
 
-		case 14:
+		case 15:
 			Cvar_SetValue(&cl_bbox, ((int)cl_bbox.value + 1) % NUM_BBOX_MODE);
 			break;
 
-		case 15:
+		case 16:
 			newvalue = r_fullbrightskins.value + 1;
 			if (newvalue > 2)
 				newvalue = 0;
 			Cvar_SetValue(&r_fullbrightskins, newvalue);
 			break;
 
-		case 16:
+		case 17:
 			Cvar_SetValue(&cl_bobbing, !cl_bobbing.value);
 			break;
 
-		case 17:
+		case 18:
 			Cvar_SetValue(&cl_deadbodyfilter, !cl_deadbodyfilter.value);
 			break;
 
-		case 18:
+		case 19:
 			Cvar_SetValue(&cl_gibfilter, !cl_gibfilter.value);
 			break;
 
@@ -4582,9 +4600,9 @@ void M_View_Key (int k)
 		}
 	}
 
-	if (k == K_UPARROW && (view_cursor == 3 || view_cursor == 9))
+	if (k == K_UPARROW && view_cursor == 10)
 		view_cursor--;
-	else if (k == K_DOWNARROW && (view_cursor == 3 || view_cursor == 9))
+	else if (k == K_DOWNARROW && view_cursor == 10)
 		view_cursor++;
 }
 
@@ -4618,19 +4636,31 @@ void M_View_MouseSlider(int k, const mouse_state_t *ms)
 			Cvar_SetValue(&v_contrast, v_contrast.value);
 			break;
 
-		case 4:// fov
+		case 3:	// saturation
+			M_Mouse_Select_Column(&view_slider_saturation_window, ms, 21, &slider_pos);
+			v_saturation.value = bound(0, slider_pos * 0.1, 2);
+			Cvar_SetValue(&v_saturation, v_saturation.value);
+			break;
+
+		case 4:	// digital vibrance
+			M_Mouse_Select_Column(&view_slider_vibrance_window, ms, 21, &slider_pos);
+			v_vibrance.value = bound(-1, (slider_pos * 0.1) - 1, 1);
+			Cvar_SetValue(&v_vibrance, v_vibrance.value);
+			break;
+
+		case 5:// fov
 			M_Mouse_Select_Column(&view_slider_fov_window, ms, 9, &slider_pos);
 			scr_fov.value = bound(90, (slider_pos * 5) + 90, 130);
 			Cvar_SetValue(&scr_fov, scr_fov.value);
 			break;
 
-		case 11:// player outlines
+		case 12:// player outlines
 			M_Mouse_Select_Column(&view_slider_outline_players_window, ms, 4, &slider_pos);
 			r_outline_players.value = bound(0, slider_pos, 3);
 			Cvar_SetValue(&r_outline_players, r_outline_players.value);
 			break;
 
-		case 12:// monster outlines
+		case 13:// monster outlines
 			M_Mouse_Select_Column(&view_slider_outline_monsters_window, ms, 4, &slider_pos);
 			r_outline_monsters.value = bound(0, slider_pos, 3);
 			Cvar_SetValue(&r_outline_monsters, r_outline_monsters.value);
