@@ -21,6 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern	cvar_t	v_gamma;
 extern	cvar_t	v_contrast;
+#ifdef GLQUAKE
+extern	cvar_t	v_saturation;
+extern	cvar_t	v_vibrance;
+#endif
 extern	cvar_t	crosshair;
 extern	cvar_t	crosshairsize;
 extern	cvar_t	crosshaircolor;

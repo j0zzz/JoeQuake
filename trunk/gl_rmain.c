@@ -322,6 +322,8 @@ static int r_gamma_texture_width, r_gamma_texture_height;
 // uniforms used in gamma shader
 static GLuint gammaLoc;
 static GLuint contrastLoc;
+static GLuint saturationLoc;
+static GLuint vibranceLoc;
 static GLuint textureLoc;
 
 /*
@@ -345,10 +347,21 @@ static void GLSLGamma_CreateShaders(void)
 		"uniform sampler2D GammaTexture;\n"
 		"uniform float GammaValue;\n"
 		"uniform float ContrastValue;\n"
+		"uniform float SaturationValue;\n"
+		"uniform float VibranceValue;\n"
 		"\n"
 		"void main(void) {\n"
 		"	  vec4 frag = texture2D(GammaTexture, gl_TexCoord[0].xy);\n"
 		"	  frag.rgb = frag.rgb * ContrastValue;\n"
+		"	  if (SaturationValue != 1.0 || VibranceValue != 0.0) {\n"
+		"	    float gray = dot(frag.rgb, vec3(0.299, 0.587, 0.114));\n"
+		"	    float maxColor = max(frag.r, max(frag.g, frag.b));\n"
+		"	    float minColor = min(frag.r, min(frag.g, frag.b));\n"
+		"	    float colorfulness = (maxColor - minColor) / max(maxColor, 0.0001);\n"
+		"	    float colorStrength = SaturationValue * (1.0 + VibranceValue * (1.0 - colorfulness));\n"
+		"	    frag.rgb = vec3(gray) + (frag.rgb - vec3(gray)) * colorStrength;\n"
+		"	    frag.rgb = clamp(frag.rgb, vec3(0.0), vec3(1.0));\n"
+		"	  }\n"
 		"	  gl_FragColor = vec4(pow(frag.rgb, vec3(GammaValue)), 1.0);\n"
 		"}\n";
 
@@ -360,6 +373,8 @@ static void GLSLGamma_CreateShaders(void)
 	// get uniform locations
 	gammaLoc = GL_GetUniformLocation(&r_gamma_program, "GammaValue");
 	contrastLoc = GL_GetUniformLocation(&r_gamma_program, "ContrastValue");
+	saturationLoc = GL_GetUniformLocation(&r_gamma_program, "SaturationValue");
+	vibranceLoc = GL_GetUniformLocation(&r_gamma_program, "VibranceValue");
 	textureLoc = GL_GetUniformLocation(&r_gamma_program, "GammaTexture");
 }
 
@@ -375,7 +390,8 @@ void GLSLGamma_GammaCorrect(void)
 	if (!gl_glsl_gamma_able)
 		return;
 
-	if (v_gamma.value == 1 && v_contrast.value == 1)
+	if (v_gamma.value == 1 && v_contrast.value == 1 &&
+		v_saturation.value == 1 && v_vibrance.value == 0)
 		return;
 
 	// create render-to-texture texture if needed
@@ -409,6 +425,8 @@ void GLSLGamma_GammaCorrect(void)
 	qglUseProgram(r_gamma_program);
 	qglUniform1f(gammaLoc, v_gamma.value);
 	qglUniform1f(contrastLoc, bound(1.0, v_contrast.value, 3.0));
+	qglUniform1f(saturationLoc, bound(0.0, v_saturation.value, 2.0));
+	qglUniform1f(vibranceLoc, bound(-1.0, v_vibrance.value, 1.0));
 	qglUniform1i(textureLoc, 0); // use texture unit 0
 
 	glDisable(GL_ALPHA_TEST);

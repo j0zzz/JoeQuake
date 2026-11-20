@@ -286,6 +286,8 @@ cvar_t		gl_hwblend = {"gl_hwblend", "0"};
 float		v_blend[4];		// rgba 0.0 - 1.0
 cvar_t		v_gamma = {"gl_gamma", "0.8", CVAR_ARCHIVE};
 cvar_t		v_contrast = {"gl_contrast", "1.6", CVAR_ARCHIVE};
+cvar_t		v_saturation = {"gl_saturation", "1", CVAR_ARCHIVE};
+cvar_t		v_vibrance = {"gl_vibrance", "0", CVAR_ARCHIVE};
 unsigned short	ramps[3][256];
 
 #else
@@ -1867,6 +1869,8 @@ void V_Init (void)
 	Cvar_Register (&v_contrast);
 
 #ifdef GLQUAKE
+	Cvar_Register (&v_saturation);
+	Cvar_Register (&v_vibrance);
 	Cmd_AddLegacyCommand ("gamma", v_gamma.name);
 	Cmd_AddLegacyCommand ("contrast", v_contrast.name);
 #endif
